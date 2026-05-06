@@ -6,6 +6,8 @@ import type { ChannelState } from '@/types/chat';
 import { addMessage, msg } from '@/utils/message';
 import type { Payload } from './guard.ts';
 
+const MAX_QUEUED_MESSAGES = 10;
+
 type TextChunk = { type?: string; text?: string };
 function isTextChunk(b: unknown): b is TextChunk {
   return typeof b === 'object' && b !== null;
@@ -13,59 +15,79 @@ function isTextChunk(b: unknown): b is TextChunk {
 
 // ── Helpers ──
 
+type Message = ChannelState['messages'][number];
+
+function deduplicateUserMessage(
+  messages: Message[],
+  uuid: string,
+  text: string,
+): { messages: Message[]; matched: boolean } {
+  for (let i = messages.length - 1; i >= 0; i--) {
+    const m = messages[i];
+    if (!m) continue;
+    if (m.cliUuid === uuid) return { messages, matched: true };
+    if (m.role === 'user' && m.type === 'text' && m.content === text && !m.cliUuid) {
+      const next = [...messages];
+      next[i] = { ...m, cliUuid: uuid } as Message;
+      return { messages: next, matched: true };
+    }
+  }
+  return { messages, matched: false };
+}
+
+function extractToolResultText(rawContent: unknown): string {
+  if (Array.isArray(rawContent)) {
+    return rawContent
+      .filter(isTextChunk)
+      .filter((b) => b.type === 'text')
+      .map((b) => b.text ?? '')
+      .join('\n');
+  }
+  return String(rawContent ?? '');
+}
+
 function applyUserContent(
   state: ChannelState,
   content: ContentBlock[],
   uuid?: string,
-  source?: 'typed' | 'skill' | 'command' | 'reminder',
+  history?: boolean,
+  renderAs?: 'markdown' | 'plain',
 ): ChannelState {
   let messages = [...state.messages];
-  const resolvedSource = source ?? 'typed';
+  let historyMessages = [...state.historyMessages];
   for (const block of content) {
     if (block.type === 'text') {
       // Search from the end for the most recent matching local user msg.
       // Streaming events (assistant placeholder, etc.) often land between
       // sendMessage and the CLI's user-replay echo, so the matching msg is
       // not always last. Scan back to find it.
-      let matched = false;
       if (uuid) {
-        for (let i = messages.length - 1; i >= 0; i--) {
-          const m = messages[i];
-          if (!m) continue;
-          if (m.cliUuid === uuid) {
-            // Same uuid already attached — idempotent no-op.
-            matched = true;
-            break;
-          }
-          if (m.role === 'user' && m.type === 'text' && m.content === block.text && !m.cliUuid) {
-            messages = [...messages];
-            messages[i] = {
-              ...m,
-              cliUuid: uuid,
-              meta: { ...m.meta, source: resolvedSource },
-            } as typeof m;
-            matched = true;
-            break;
-          }
+        const result = deduplicateUserMessage(messages, uuid, block.text);
+        messages = result.messages;
+        if (result.matched) continue;
+      }
+      const isInterrupt = block.text?.startsWith('[Request interrupted');
+      const m = isInterrupt
+        ? msg({ role: 'user', type: 'interrupt', content: block.text })
+        : msg({
+            role: 'user',
+            type: 'text',
+            content: block.text,
+            meta: {
+              ...(history !== undefined ? { history } : {}),
+              ...(renderAs !== undefined ? { renderAs } : {}),
+            },
+          });
+      const entry = uuid ? { ...m, cliUuid: uuid } : m;
+      messages = [...messages, entry];
+      if (!isInterrupt) {
+        const trimmed = block.text?.trim();
+        if (history === true && trimmed) {
+          historyMessages = [...historyMessages, trimmed];
         }
       }
-      if (matched) continue;
-      const m = msg({
-        role: 'user',
-        type: 'text',
-        content: block.text,
-        meta: { source: resolvedSource },
-      });
-      messages = [...messages, uuid ? { ...m, cliUuid: uuid } : m];
     } else if (block.type === 'tool_result') {
-      const rawContent = block.content;
-      const textContent = Array.isArray(rawContent)
-        ? rawContent
-            .filter(isTextChunk)
-            .filter((b) => b.type === 'text')
-            .map((b) => b.text ?? '')
-            .join('\n')
-        : String(rawContent ?? '');
+      const textContent = extractToolResultText(block.content);
       messages = [
         ...messages,
         msg({
@@ -77,13 +99,63 @@ function applyUserContent(
       ];
     }
   }
-  return { ...state, messages };
+  return { ...state, messages, historyMessages };
 }
 
 // ── On handlers ──
 
+function applyAssistantBlock(
+  state: ChannelState,
+  block: ContentBlock,
+  parentToolUseId?: string,
+): ChannelState {
+  switch (block.type) {
+    case 'text':
+      return addMessage(state, {
+        role: 'assistant',
+        type: 'text',
+        content: block.text,
+        parentToolUseId,
+      });
+    case 'thinking':
+      return addMessage(state, {
+        role: 'assistant',
+        type: 'thinking',
+        content: block.thinking,
+        parentToolUseId,
+      });
+    case 'tool_use':
+      return addMessage(state, {
+        role: 'assistant',
+        type: 'tool_use',
+        content: block.toolName,
+        meta: {
+          toolId: block.toolId,
+          input: block.input as Record<string, unknown>,
+          ...(block.model ? { model: block.model } : {}),
+        },
+        parentToolUseId,
+      });
+    default:
+      return state;
+  }
+}
+
+export function onMessageAssistant(
+  state: ChannelState,
+  p: Payload<'message:assistant'>,
+  skipText = false,
+  skipThinking = false,
+): ChannelState {
+  return p.content.reduce((s, block) => {
+    if (block.type === 'text' && skipText) return s;
+    if (block.type === 'thinking' && skipThinking) return s;
+    return applyAssistantBlock(s, block, p.parentToolUseId);
+  }, state);
+}
+
 function onMessageUser(state: ChannelState, p: Payload<'message:user'>): ChannelState {
-  return applyUserContent(state, p.content, p.uuid, p.source);
+  return applyUserContent(state, p.content, p.uuid, p.history, p.renderAs);
 }
 
 function onStreamText(state: ChannelState, p: Payload<'stream:text'>): ChannelState {
@@ -134,13 +206,18 @@ export function createMessageActions({
 } {
   function sendMessage(message: string): void {
     if (statusRef.current === 'processing') {
-      if (messageQueueRef.current.length < 10) messageQueueRef.current.push(message);
+      if (messageQueueRef.current.length < MAX_QUEUED_MESSAGES)
+        messageQueueRef.current.push(message);
     } else {
       channelEmit(socket, channelId, 'chat:send', { message });
     }
     setChannelState((s) => ({
-      ...s,
-      messages: [...s.messages, msg({ role: 'user', type: 'text', content: message })],
+      ...addMessage(s, {
+        role: 'user',
+        type: 'text',
+        content: message,
+        meta: { history: true, renderAs: 'plain' as const },
+      }),
       ...(s.status !== 'processing' ? { status: 'processing' as const } : {}),
     }));
   }
@@ -158,5 +235,5 @@ export function createMessageActions({
     setChannelState((s) => addMessage(s, fields));
   }
 
-  return { sendMessage: sendMessage, abort: abort, kill: kill, appendMessage: appendMessage };
+  return { sendMessage, abort, kill, appendMessage };
 }

@@ -53,8 +53,8 @@ describe('ChannelProvider', () => {
     await project.launchSession();
     await sendUserMessage(user);
     await act(async () => {
-      await claude.emit(s.signatureDelta('sig'));
-      await claude.emit(s.result());
+      await claude.emitSegment(s.signatureDelta('sig'));
+      await claude.emitSegment(s.result());
     });
 
     expect(screen.queryAllByText(/unhandled|signature/i)).toHaveLength(0);
@@ -66,8 +66,8 @@ describe('ChannelProvider', () => {
     await project.launchSession();
     await sendUserMessage(user);
     await act(async () => {
-      await claude.emit(s.controlResponse('req-fake'));
-      await claude.emit(s.result());
+      await claude.emitSegment(s.controlResponse('req-fake'));
+      await claude.emitSegment(s.result());
     });
 
     expect(screen.queryAllByText(/unhandled|control_response/i)).toHaveLength(0);
@@ -88,7 +88,7 @@ describe('ChannelProvider', () => {
   it('auth_url event does not crash', async () => {
     const { claude } = await setupWithTurn();
     await act(async () => {
-      await claude.emit(s.authUrl('https://auth.example.com', 'browser'));
+      await claude.emitSegment(s.authUrl('https://auth.example.com', 'browser'));
     });
 
     expect(screen.getByText('hi')).toBeInTheDocument();
@@ -97,7 +97,7 @@ describe('ChannelProvider', () => {
   it('bridge_state does not crash', async () => {
     const { claude } = await setupWithTurn();
     await act(async () => {
-      await claude.emit(s.bridgeState('ready'));
+      await claude.emitSegment(s.bridgeState('ready'));
     });
 
     expect(screen.getByText('hi')).toBeInTheDocument();
@@ -106,7 +106,7 @@ describe('ChannelProvider', () => {
   it('unknown raw event does not crash', async () => {
     const { claude } = await setupWithTurn();
     await act(async () => {
-      await claude.emit(s.rawUnknown('some_future_event', { data: 'test' }));
+      await claude.emitSegment(s.rawUnknown('some_future_event', { data: 'test' }));
     });
 
     expect(screen.getByText('hi')).toBeInTheDocument();
@@ -115,7 +115,7 @@ describe('ChannelProvider', () => {
   it('new_session_notification does not crash', async () => {
     const { claude } = await setupWithTurn();
     await act(async () => {
-      await claude.emit(s.newSessionNotification());
+      await claude.emitSegment(s.newSessionNotification());
     });
 
     expect(screen.getByText('hi')).toBeInTheDocument();
@@ -124,7 +124,7 @@ describe('ChannelProvider', () => {
   it('open_in_editor control_request does not crash', async () => {
     const { claude } = await setupWithTurn();
     await act(async () => {
-      await claude.emit(s.controlRequestOpenInEditor('oe-1'));
+      await claude.emitSegment(s.controlRequestOpenInEditor('oe-1'));
     });
 
     expect(screen.getByText('hi')).toBeInTheDocument();
@@ -133,8 +133,8 @@ describe('ChannelProvider', () => {
   it('speech:message does not crash', async () => {
     const { claude } = await setupWithTurn();
     await act(async () => {
-      await claude.emit(s.speechToTextMessage('ch-1', 'Hello'));
-      await claude.emit(s.speechToTextMessage('ch-1', 'Hello world', true));
+      await claude.emitSegment(s.speechToTextMessage('ch-1', 'Hello'));
+      await claude.emitSegment(s.speechToTextMessage('ch-1', 'Hello world', true));
     });
 
     expect(screen.getByText('hi')).toBeInTheDocument();

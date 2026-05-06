@@ -4,6 +4,7 @@ import { defineConfig } from 'vitest/config';
 
 export default defineConfig({
   plugins: [tsconfigPaths(), react()],
+  assetsInclude: ['**/*.mjs'],
   test: {
     environment: 'happy-dom',
     setupFiles: ['./src/test/setup.ts'],

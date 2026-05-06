@@ -57,16 +57,21 @@ async function setup(sessionId = 'cli-sess') {
 const summoner = createFakeSummoner(server);
 
 summoner.claude()                  // lazy-init FakeClaude
-summoner.socket                    // socket.io client（注入到 SocketProvider）
+summoner.socket                    // FakeSocket（注入到 SocketProvider）
 summoner.filesystem()              // FakeFilesystemService
 summoner.git()                     // FakeGitService（可 undefined）
+summoner.openspec()                // FakeOpenspecService（可 undefined）
+summoner.pluginCli()               // FakePluginCliService（可 undefined）
 summoner.connected                 // boolean
 summoner.disconnect()
 
-await summoner.send<T>(event, payload)   // 透過 socket 送（等 ack）
-summoner.events()                         // 收到的所有 server events
-summoner.events('session:init')           // 過濾特定 event
-summoner.on(event, fn)
+await summoner.send<T>(event, payload)     // 透過 socket 送（等 ack）
+summoner.receivedEvents()                  // 收到的所有 server → client events
+summoner.receivedEvents('session:init')    // 過濾特定 event
+summoner.sentEvents()                      // 所有 client → server emits
+summoner.sentEvents('session:launch')      // 過濾特定 sent event
+summoner.on(event, fn)                     // subscribe
+summoner.holdEmit(event)                   // 攔截下一次 emit 的 ACK（見下節）
 ```
 
 ## FakeClaude API
@@ -79,31 +84,56 @@ await claude.initialize(initSeg?)                      // 完整流程
 await claude.initialize({ launch: { cwd, ... } }, seg) // with launch params
 claude.prepareInit(segment)                             // 預備 init，不自動跑（等外部 launch）
 
-// Protocol 發送
-await claude.emit(s.assistant('Hi'))    // CLI → server → client
-await claude.emit(s.result())
-await claude.emit(s.controlRequest('r1', 'can_use_tool', 'Bash', { command: 'ls' }))
+// Protocol 發送（CLI → server → client）
+await claude.emitSegment(s.assistant('Hi'))
+await claude.emitSegment(s.result())
+await claude.emitSegment(s.controlRequest('r1', 'can_use_tool', 'Bash', { command: 'ls' }))
 
 // Socket send（等 ack）
 await claude.send<LaunchOk>('session:launch', { channelId: 'ch-1' })
 await claude.send('chat:send', { channelId, message: 'go' })
 await claude.send('chat:respond', { channelId, requestId, response })
 
-// 查 events
-claude.events()                          // 所有
-claude.events<E>('message:assistant')    // 帶型別
-claude.received()                        // CLI stdin 收到的訊息
-claude.received<T>('control_response')   // 帶型別
+// 查 events（server → client broadcast）
+claude.receivedEvents()                          // 所有
+claude.receivedEvents<E>('message:assistant')    // 帶型別
+claude.received()                                // CLI stdin 收到的訊息
+claude.received<T>('control_response')           // 帶型別
 
-// Control request handler
-claude.onControlRequest((req) => { ... })  // 見下節
+// Control request handler（自訂回應）
+claude.setControlRequestHandler((req) => { ... })
+
+// Server push simulation
+claude.pushServerEvent('event', payload)         // 模擬 server broadcast
+claude.pushSessionState(channelId, state, opts)  // 模擬 session:states
+claude.pushSessionClosed(channelId, error?)      // 模擬 session:closed
 
 // Process 層
 claude.provider                           // FakeProcessProvider
 claude.handle                             // FakeProcessHandle（可 abort 模擬 exit）
+claude.lastInitRequestId                  // 最後一次 initialize 的 request_id
 claude.connected
 claude.disconnect()
 ```
+
+## FakeSocket 架構
+
+`createFakeSocket()` 建立一個 dual-emitter：
+- **client → server**: 同步 delivery（callback pattern 需立即回應）
+- **server → client**: async via `queueMicrotask`（模擬真實 socket.io 網路延遲）
+
+```ts
+interface FakeSocket {
+  id: string;
+  connected: boolean;
+  serverSocket: FakeServerSocket;  // server 端 emitter
+  connect(): FakeSocket;
+  disconnect(): FakeSocket;
+  on / once / off / emit / listeners
+}
+```
+
+`serverSocket.lastHandlerPromise` — 等待最後一個 server handler 的 async 完成（`send()` 內部使用）。
 
 ## 常見 pipeline：message 往返
 
@@ -111,22 +141,22 @@ claude.disconnect()
 const { claude, channelId } = await setup();
 
 await claude.send('chat:send', { channelId, message: 'hi' });
-await claude.emit(s.assistant('Hello!'));
-await claude.emit(s.result());
+await claude.emitSegment(s.assistant('Hello!'));
+await claude.emitSegment(s.result());
 
-const events = claude.events('message:assistant');
+const events = claude.receivedEvents('message:assistant');
 expect(events[0].content[0].text).toBe('Hello!');
 ```
 
 ## Tool use + permission 流程
 
 ```ts
-await claude.emit(
+await claude.emitSegment(
   s.assistant({ toolUse: { id: 'toolu_1', name: 'Bash', input: { command: 'ls' } } })
 );
-await claude.emit(s.controlRequest('req-1', 'can_use_tool', 'Bash', { command: 'ls' }));
+await claude.emitSegment(s.controlRequest('req-1', 'can_use_tool', 'Bash', { command: 'ls' }));
 
-const permEvents = claude.events('control:permission');
+const permEvents = claude.receivedEvents('control:permission');
 expect(permEvents[0].requestId).toBe('req-1');
 
 await claude.send('chat:respond', {
@@ -139,7 +169,7 @@ await claude.send('chat:respond', {
 ## Control request handler（自訂回應）
 
 ```ts
-claude.onControlRequest((req) => {
+claude.setControlRequestHandler((req) => {
   if (req.subtype === 'side_question') {
     return { response: 'The answer is 42', synthetic: false };
   }
@@ -156,6 +186,22 @@ claude.onControlRequest((req) => {
 - `can_use_tool` — MCP 工具授權
 - `open_diff` — 檔案 diff 預覽
 
+## holdEmit（攔截 ACK delivery）
+
+```ts
+const held = summoner.holdEmit('session:join');
+
+// emit 會送到 server（handler 執行），但 ACK callback 被攔截
+summoner.send('session:join', { channelId });
+
+// 此時 client 還沒收到 ACK — 適合測 loading/connecting 中間狀態
+// ...
+
+held.release();  // 釋放 ACK → callback 執行
+```
+
+只攔截第一次 matching emit；後續同名 emit 正常通過。
+
 ## 多 window 在同一 channel（join pattern）
 
 ```ts
@@ -166,7 +212,7 @@ const window2 = createFakeSummoner(server);
 const channelId = await window1.claude().initialize();
 await window2.send('session:join', { channelId });
 
-const initEvents = window2.events('session:init');
+const initEvents = window2.claude().receivedEvents('session:init');
 expect(initEvents[0].model).toBe('claude-opus-4-6');
 ```
 
@@ -185,7 +231,7 @@ await new Promise<void>((r) => queueMicrotask(r));
 // 新 summoner join — 從 DB 還原
 const summoner2 = createFakeSummoner(server);
 await summoner2.send('session:join', { channelId });
-expect(summoner2.events('session:init')[0].model).toBe('claude-opus-4-6');
+expect(summoner2.claude().receivedEvents('session:init')[0].model).toBe('claude-opus-4-6');
 ```
 
 ## 外部 launch（prepareInit）
@@ -201,7 +247,7 @@ await claude.send<LaunchOk>('session:launch', { channelId: 'ch-1' });
 
 ## 時序陷阱
 
-**忘記 `await`**：`claude.emit()` 是 async，必須 await 才會 flush microtask。
+**忘記 `await`**：`claude.emitSegment()` 是 async，必須 await 才會 flush microtask。
 **觀察 event 前要讓 delivery 完成**：server → client 是 async，驗證前可加 `await new Promise(r => queueMicrotask(r))`。
 **open_diff 之類的 notification 有額外 delay**：可能需 `setTimeout(r, 50)` 等通知流程完成。
 
@@ -226,7 +272,7 @@ it('test 2', async () => {
 claude.disconnect();            // socket 斷
 claude.handle.abort();          // process 退出
 await new Promise<void>((r) => queueMicrotask(r));
-expect(claude.events('session:closed').length).toBeGreaterThan(0);
+expect(claude.receivedEvents('session:closed').length).toBeGreaterThan(0);
 ```
 
 ## Channel / 單元測試需要 ProcessRunner
@@ -256,7 +302,7 @@ Handler 測試預設多層驗證（FakeSummoner 給真 DB + 真 socket + 真 pro
 | 層 | API | 抓的 bug |
 |---|---|---|
 | ① RPC response | `await claude.send('event', payload)` return value | RPC shape 錯 |
-| ② Broadcast | `summoner.otherClient().events('event:name')` / 另一 FakeClaude 監聽 | broadcast 漏、channel filter 錯 |
+| ② Broadcast | `claude.receivedEvents('event:name')` / 另一 FakeClaude 監聽 | broadcast 漏、channel filter 錯 |
 | ③ **DB / Store** | `container.get(TYPES.XxxStore).getByY(...)` | store 邏輯、composite fan-out、transaction |
 | ④ CLI stdin | `claude.received('cmd_type')` | controller → CLI writes |
 
@@ -265,7 +311,7 @@ Handler 測試預設多層驗證（FakeSummoner 給真 DB + 真 socket + 真 pro
 ```ts
 const res = await claude.send('projects:add', { path: '/tmp/x' });
 expect(res).not.toHaveProperty('error');                              // ①
-expect(claude.events('projects:added').length).toBeGreaterThan(0);    // ②
+expect(claude.receivedEvents('projects:added').length).toBeGreaterThan(0);    // ②
 expect(await projectStore.getByPath('/tmp/x')).not.toBeNull();        // ③
 ```
 
@@ -275,12 +321,13 @@ expect(await projectStore.getByPath('/tmp/x')).not.toBeNull();        // ③
 
 | 情境 | 採用 |
 |---|---|
-| fake socket | `createFakeSummoner()` 提供的 dual-emitter socket |
+| fake socket | `createFakeSummoner()` 提供的 dual-emitter FakeSocket |
 | fake ProcessRunner | `new ProcessRunner({ adapter, processProvider: new FakeProcessProvider() })` |
-| protocol event 建構 | `segments.*()` builder |
+| protocol event 建構 | `segments.*()` builder（`s.assistant()`, `s.result()`, etc.） |
 | 啟動 FakeClaude | `createFakeSummoner().claude().initialize()` |
 | 測啟動流程 | `initialize()` 或 `prepareInit()`（外部 launch） |
 | 副作用驗證 | 多層（RPC + emit + store + stdin）都驗，不要只驗 RPC |
+| 攔截 ACK | `summoner.holdEmit(event)` → `held.release()` |
 
 ## 相關 skill
 

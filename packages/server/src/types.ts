@@ -17,7 +17,7 @@ import type { UsageTracker } from './services/usage-tracker.ts';
 import type { ChannelEmitter } from './socket/channel-emitter.ts';
 import type { ChannelManager } from './socket/channel-manager.ts';
 import type { PlanApi } from './socket/handlers/plan.ts';
-import type { SessionHistory } from './socket/session-history.ts';
+import type { SessionHistory } from './socket/handlers/session/history.ts';
 
 export interface RunnerFactory {
   create(opts?: LaunchOptions, spawnOptions?: Record<string, unknown>): ProcessRunner;

@@ -1,5 +1,4 @@
-import { ArchiveBoxIcon, QuestionMarkCircleIcon } from '@heroicons/react/24/outline';
-import type { Message } from '@/types/ui';
+import type { Message, TextMeta } from '@/types/ui';
 import { JsonViewer } from '../renderers/JsonViewer.tsx';
 import { MarkdownContent } from '../renderers/MarkdownContent.tsx';
 import { CitationsPanel } from '../session/CitationsPanel.tsx';
@@ -25,6 +24,7 @@ import {
   ToolResultBlock,
   ToolUseBlock,
 } from '../tool-use/message-blocks/index.ts';
+import { renderIcon } from '../tool-use/message-blocks/message-type-icons.tsx';
 import { CollapsibleBlock } from '../tool-use/message-blocks/primitives.tsx';
 import { ThinkingBlock } from './ThinkingBlock.tsx';
 
@@ -32,16 +32,16 @@ const JSON_VIEWER_CLASS =
   'bg-code-block p-3 rounded-lg overflow-x-auto text-xs border border-border';
 
 function CollapsibleDataContent({
-  icon,
+  type,
   content,
   meta,
 }: {
-  icon: React.ReactNode;
+  type: string;
   content: string;
   meta?: Record<string, unknown>;
 }) {
   return (
-    <CollapsibleBlock icon={icon} label={content}>
+    <CollapsibleBlock icon={renderIcon(type)} label={content}>
       {meta?.data != null && <JsonViewer data={meta.data} className={JSON_VIEWER_CLASS} />}
     </CollapsibleBlock>
   );
@@ -49,10 +49,7 @@ function CollapsibleDataContent({
 
 function UnhandledContent({ content, meta }: { content: string; meta?: Record<string, unknown> }) {
   return (
-    <CollapsibleBlock
-      icon={<QuestionMarkCircleIcon className="w-4 h-4 shrink-0" />}
-      label={content}
-    >
+    <CollapsibleBlock icon={renderIcon('unknown_delta')} label={content}>
       {meta?.event != null && <JsonViewer data={meta.event} className={JSON_VIEWER_CLASS} />}
     </CollapsibleBlock>
   );
@@ -60,15 +57,9 @@ function UnhandledContent({ content, meta }: { content: string; meta?: Record<st
 
 function renderUserText(message: Message & { type: 'text' }): React.ReactNode {
   if (message.role !== 'user') return <MarkdownContent content={message.content} />;
-  switch (message.meta?.source ?? 'typed') {
-    case 'skill':
-      return <MarkdownContent content={message.content} />;
-    case 'command':
-    case 'reminder':
-      return null;
-    default:
-      return message.content;
-  }
+  if ((message.meta as TextMeta | undefined)?.renderAs === 'markdown')
+    return <MarkdownContent content={message.content} />;
+  return message.content;
 }
 
 export function renderBody(
@@ -129,21 +120,9 @@ export function renderBody(
     case 'hook_diagnostics':
       return <HookDiagnosticsContent content={content} meta={message.meta} />;
     case 'unknown_delta':
-      return (
-        <CollapsibleDataContent
-          icon={<QuestionMarkCircleIcon className="w-4 h-4 shrink-0" />}
-          content={content}
-          meta={message.meta}
-        />
-      );
+      return <CollapsibleDataContent type="unknown_delta" content={content} meta={message.meta} />;
     case 'raw_event':
-      return (
-        <CollapsibleDataContent
-          icon={<ArchiveBoxIcon className="w-4 h-4 shrink-0" />}
-          content={content}
-          meta={message.meta}
-        />
-      );
+      return <CollapsibleDataContent type="raw_event" content={content} meta={message.meta} />;
     case 'unhandled':
       return <UnhandledContent content={content} meta={message.meta} />;
     case 'image':

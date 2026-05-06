@@ -15,10 +15,10 @@ describe('Channel.bindRunner', () => {
       const { claude, channelId } = await setup();
 
       await claude.send('chat:send', { channelId, message: 'go' });
-      await claude.emit(s.assistant('Hello!'));
-      await claude.emit(s.result());
+      await claude.emitSegment(s.assistant('Hello!'));
+      await claude.emitSegment(s.result());
 
-      const events = claude.events('message:assistant');
+      const events = claude.receivedEvents('message:assistant');
       expect(events.length).toBeGreaterThan(0);
       expect(events[0]!.channelId).toBe(channelId);
       expect(events[0]!.content[0]).toMatchObject({ type: 'text', text: 'Hello!' });
@@ -28,10 +28,12 @@ describe('Channel.bindRunner', () => {
       const { claude, channelId } = await setup();
 
       await claude.send('chat:send', { channelId, message: 'go' });
-      await claude.emit(s.assistant({ toolUse: { id: 'toolu_1', name: 'Read', input: {} } }));
-      await claude.emit(s.controlRequest('req-1', 'can_use_tool', 'Read', {}));
+      await claude.emitSegment(
+        s.assistant({ toolUse: { id: 'toolu_1', name: 'Read', input: {} } }),
+      );
+      await claude.emitSegment(s.controlRequest('req-1', 'can_use_tool', 'Read', {}));
 
-      const events = claude.events('control:permission');
+      const events = claude.receivedEvents('control:permission');
       expect(events.length).toBeGreaterThan(0);
       expect(events[0]!.channelId).toBe(channelId);
       expect(events[0]!.toolName).toBe('Read');
@@ -41,9 +43,9 @@ describe('Channel.bindRunner', () => {
       const { claude, channelId } = await setup();
 
       await claude.send('chat:send', { channelId, message: 'go' });
-      await claude.emit(s.status({ permissionMode: 'plan' }));
+      await claude.emitSegment(s.status({ permissionMode: 'plan' }));
 
-      const events = claude.events('session:status');
+      const events = claude.receivedEvents('session:status');
       expect(events.length).toBeGreaterThan(0);
       expect(events[0]!.permissionMode).toBe('plan');
     });
@@ -52,10 +54,10 @@ describe('Channel.bindRunner', () => {
       const { claude, channelId } = await setup();
 
       await claude.send('chat:send', { channelId, message: 'go' });
-      await claude.emit(s.assistant('test'));
-      await claude.emit(s.result());
+      await claude.emitSegment(s.assistant('test'));
+      await claude.emitSegment(s.result());
 
-      const events = claude.events('message:assistant');
+      const events = claude.receivedEvents('message:assistant');
       expect(events.length).toBeGreaterThan(0);
     });
   });
@@ -65,8 +67,10 @@ describe('Channel.bindRunner', () => {
       const { claude, channelId } = await setup();
 
       await claude.send('chat:send', { channelId, message: 'go' });
-      await claude.emit(s.assistant({ toolUse: { id: 'toolu_1', name: 'Read', input: {} } }));
-      await claude.emit(s.controlRequest('req-1', 'can_use_tool', 'Read', {}));
+      await claude.emitSegment(
+        s.assistant({ toolUse: { id: 'toolu_1', name: 'Read', input: {} } }),
+      );
+      await claude.emitSegment(s.controlRequest('req-1', 'can_use_tool', 'Read', {}));
 
       await claude.send('chat:respond', {
         channelId,
@@ -83,8 +87,10 @@ describe('Channel.bindRunner', () => {
       const { claude, channelId } = await setup();
 
       await claude.send('chat:send', { channelId, message: 'go' });
-      await claude.emit(s.assistant({ toolUse: { id: 'toolu_1', name: 'Read', input: {} } }));
-      await claude.emit(s.controlRequest('req-1', 'can_use_tool', 'Read', {}));
+      await claude.emitSegment(
+        s.assistant({ toolUse: { id: 'toolu_1', name: 'Read', input: {} } }),
+      );
+      await claude.emitSegment(s.controlRequest('req-1', 'can_use_tool', 'Read', {}));
 
       await claude.send('chat:respond', {
         channelId,
@@ -103,7 +109,7 @@ describe('Channel.bindRunner', () => {
       claude.handle.abort();
       await new Promise<void>((r) => queueMicrotask(r));
 
-      const closedEvents = claude.events('session:closed');
+      const closedEvents = claude.receivedEvents('session:closed');
       expect(closedEvents.length).toBeGreaterThan(0);
       expect(closedEvents[0]!.channelId).toBe(channelId);
     });
@@ -145,17 +151,17 @@ describe('Channel.bindRunner', () => {
     it('destroy removes all listeners — no more events after destroy', async () => {
       const { claude, channelId } = await setup();
 
-      const countBefore = claude.events('message:assistant').length;
+      const countBefore = claude.receivedEvents('message:assistant').length;
 
       await claude.send('session:close', { channelId });
 
       try {
-        await claude.emit(s.assistant('should not arrive'));
+        await claude.emitSegment(s.assistant('should not arrive'));
       } catch {
         /* aborted handle */
       }
 
-      expect(claude.events('message:assistant').length).toBe(countBefore);
+      expect(claude.receivedEvents('message:assistant').length).toBe(countBefore);
     });
   });
 });

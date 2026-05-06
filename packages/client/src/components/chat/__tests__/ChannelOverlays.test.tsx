@@ -19,7 +19,7 @@ describe('ChannelOverlays', () => {
   it('shows ContentPreviewDialog when pendingDiffReview is set', async () => {
     const { claude } = await renderWithChannel(<ChannelOverlays />);
     await act(async () => {
-      await claude.emit(
+      await claude.emitSegment(
         s.controlRequestOpenDiff('diff-1', {
           originalFilePath: '/tmp/old.ts',
           newFilePath: '/tmp/new.ts',
@@ -32,7 +32,9 @@ describe('ChannelOverlays', () => {
   it('shows ElicitationDialog when pendingElicitation is set', async () => {
     const { claude } = await renderWithChannel(<ChannelOverlays />);
     await act(async () => {
-      await claude.emit(s.controlRequestElicitation('elic-1', { message: 'Please confirm' }));
+      await claude.emitSegment(
+        s.controlRequestElicitation('elic-1', { message: 'Please confirm' }),
+      );
     });
     expect(screen.queryAllByText(/confirm/i).length).toBeGreaterThan(0);
   });

@@ -1,12 +1,4 @@
-import {
-  type ChatStats,
-  type ContentBlock,
-  EVENTS,
-  historyAssistantSchema,
-  historyResultSchema,
-  historyUserSchema,
-  type SessionStats,
-} from '@code-quest/shared';
+import type { ChatStats, SessionStats } from '@code-quest/shared';
 import type { ChannelState } from '../types/chat.ts';
 import type { Message } from '../types/ui.ts';
 
@@ -39,25 +31,14 @@ export function systemMessage(type: string, content: string): Message {
 
 /** Append a message to channel state. */
 export function addMessage(state: ChannelState, fields: Parameters<typeof msg>[0]): ChannelState {
-  return { ...state, messages: [...state.messages, msg(fields)] };
-}
-
-/**
- * Transform the last message in channel state via `mapper`. No-op when empty.
- * Used by streaming handlers that incrementally update the latest message.
- */
-export function updateLastMessage(
-  setState: (fn: (prev: ChannelState) => ChannelState) => void,
-  mapper: (last: Message) => Message,
-): void {
-  setState((prev) => {
-    if (prev.messages.length === 0) return prev;
-    const msgs = [...prev.messages];
-    const last = msgs[msgs.length - 1];
-    if (!last) return prev;
-    msgs[msgs.length - 1] = mapper(last);
-    return { ...prev, messages: msgs };
-  });
+  const m = msg(fields);
+  const trimmed = m.content.trim();
+  const isHistory = trimmed && (m.meta as { history?: boolean } | undefined)?.history === true;
+  return {
+    ...state,
+    messages: [...state.messages, m],
+    historyMessages: isHistory ? [...state.historyMessages, trimmed] : state.historyMessages,
+  };
 }
 
 /**
@@ -67,111 +48,4 @@ export function updateLastMessage(
  */
 export function patchMeta(m: Message, patch: Record<string, unknown>): Message {
   return { ...m, meta: { ...m.meta, ...patch } } as Message;
-}
-
-interface ClientMessage {
-  name: string;
-  payload: Record<string, unknown>;
-}
-
-function messagesFromAssistantBlock(block: ContentBlock, parentToolUseId?: string): Message | null {
-  switch (block.type) {
-    case 'text':
-      return msg({ role: 'assistant', type: 'text', content: block.text, parentToolUseId });
-    case 'thinking':
-      return msg({ role: 'assistant', type: 'thinking', content: block.thinking });
-    case 'tool_use':
-      return msg({
-        role: 'assistant',
-        type: 'tool_use',
-        content: block.toolName,
-        meta: { toolId: block.toolId, input: block.input },
-        parentToolUseId,
-      });
-    default:
-      return null;
-  }
-}
-
-function extractToolResultContent(rawContent: unknown): {
-  textContent: string;
-  arrayContent: unknown[] | undefined;
-} {
-  if (typeof rawContent === 'string') return { textContent: rawContent, arrayContent: undefined };
-  if (Array.isArray(rawContent)) {
-    const textContent = rawContent
-      .filter((b: Record<string, unknown>) => b.type === 'text')
-      .map((b: Record<string, unknown>) => String(b.text ?? ''))
-      .join('\n');
-    return { textContent, arrayContent: rawContent };
-  }
-  return { textContent: '', arrayContent: undefined };
-}
-
-function messagesFromUserBlock(
-  block: ContentBlock,
-  parentToolUseId?: string,
-  uuid?: string,
-  source?: 'typed' | 'skill' | 'command' | 'reminder',
-): Message | null {
-  switch (block.type) {
-    case 'tool_result': {
-      const { textContent, arrayContent } = extractToolResultContent(block.content);
-      return msg({
-        role: 'assistant',
-        type: 'tool_result',
-        content: textContent,
-        meta: {
-          toolId: block.toolUseId,
-          name: block.toolName,
-          is_error: block.isError,
-          arrayContent,
-        },
-        parentToolUseId,
-      });
-    }
-    case 'text': {
-      const m = msg({
-        role: 'user',
-        type: 'text',
-        content: block.text,
-        meta: { source: source ?? 'typed' },
-      });
-      return uuid ? { ...m, cliUuid: uuid } : m;
-    }
-    default:
-      return null;
-  }
-}
-
-export function buildMessagesFromHistory(events: ClientMessage[]): Message[] {
-  const messages: Message[] = [];
-  for (const event of events) {
-    if (event.name === EVENTS.message.assistant) {
-      const parsed = historyAssistantSchema.safeParse(event.payload);
-      if (!parsed.success) continue;
-      for (const block of parsed.data.content) {
-        const m = messagesFromAssistantBlock(block, parsed.data.parentToolUseId);
-        if (m) messages.push(m);
-      }
-    } else if (event.name === EVENTS.message.user) {
-      const parsed = historyUserSchema.safeParse(event.payload);
-      if (!parsed.success) continue;
-      for (const block of parsed.data.content) {
-        const m = messagesFromUserBlock(
-          block,
-          parsed.data.parentToolUseId,
-          parsed.data.uuid,
-          parsed.data.source,
-        );
-        if (m) messages.push(m);
-      }
-    } else if (event.name === EVENTS.message.result) {
-      const parsed = historyResultSchema.safeParse(event.payload);
-      if (!parsed.success) continue;
-      const stats = mapSessionStats(parsed.data.stats);
-      messages.push(msg({ role: 'system', type: 'result', content: '', meta: { stats } }));
-    }
-  }
-  return messages;
 }

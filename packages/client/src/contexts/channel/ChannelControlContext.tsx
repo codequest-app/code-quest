@@ -22,6 +22,7 @@ import {
   controlHandlers,
   createControlActions,
 } from './handlers/permission.ts';
+import { resetStreaming } from './handlers/streaming.ts';
 
 interface ChannelControlValue {
   pendingControls: PendingControl[];
@@ -57,11 +58,9 @@ export function useChannelControl(): ChannelControlValue {
 }
 
 export function ChannelControlProvider({
-  resetStreamingRefs,
   initialPendingControls,
   children,
 }: {
-  resetStreamingRefs: () => void;
   initialPendingControls?: PendingControl[];
   children: ReactNode;
 }): React.JSX.Element {
@@ -100,10 +99,10 @@ export function ChannelControlProvider({
     messageRole: 'assistant' | 'system',
     messageContent: string,
   ) {
-    resetStreamingRefs();
     setControls((prev) => [...prev, control]);
     setChannelState((s) => ({
       ...s,
+      ...resetStreaming,
       messages: [
         ...s.messages,
         msg({
@@ -145,18 +144,9 @@ export function ChannelControlProvider({
     );
   }
 
-  function onSessionClosed(payload: Payload<'session:closed'>) {
-    resetStreamingRefs();
+  function resetControlsOnClose() {
+    setChannelState((s) => ({ ...s, ...resetStreaming }));
     setControls([]);
-    setChannelState((prev) => ({
-      ...prev,
-      messages: [
-        ...prev.messages,
-        ...(payload.error ? [msg({ role: 'system', type: 'error', content: payload.error })] : []),
-        msg({ role: 'system', type: 'text', content: 'CLI session has ended.' }),
-      ],
-      status: 'idle',
-    }));
   }
 
   const router = useChannelSocketRouter();
@@ -176,7 +166,7 @@ export function ChannelControlProvider({
     if (!channelId) return;
     const off1 = router.on(EVENTS.control.permission, onControlPermission);
     const off2 = router.on(EVENTS.control.hook_callback, onControlHookCallback);
-    const off3 = router.on(EVENTS.session.closed, onSessionClosed);
+    const off3 = router.on(EVENTS.session.closed, resetControlsOnClose);
     return () => {
       off1();
       off2();

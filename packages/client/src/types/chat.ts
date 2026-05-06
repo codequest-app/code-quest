@@ -19,6 +19,7 @@ export type PendingDiffReview = Omit<ControlDiffReviewPayload, 'channelId'>;
 export interface ChannelState {
   channelId: string;
   messages: Message[];
+  historyMessages: string[];
   status: SessionStatus;
   stats: ChatStats | null;
   statusText: string | null;
@@ -26,12 +27,16 @@ export interface ChannelState {
   modifiedFiles: Record<string, { oldContent?: string | null; newContent?: string | null }>;
   planComments: PlanCommentData[];
   terminalSessions: Record<string, TerminalSession>;
+  isTextStreaming: boolean;
+  isThinkingStreaming: boolean;
+  wasStreamedViaDelta: boolean;
 }
 
 export function initialChannelState(channelId: string): ChannelState {
   return {
     channelId,
     messages: [],
+    historyMessages: [],
     status: 'idle',
     stats: null,
     statusText: null,
@@ -39,6 +44,9 @@ export function initialChannelState(channelId: string): ChannelState {
     modifiedFiles: {},
     planComments: [],
     terminalSessions: {},
+    isTextStreaming: false,
+    isThinkingStreaming: false,
+    wasStreamedViaDelta: false,
   };
 }
 

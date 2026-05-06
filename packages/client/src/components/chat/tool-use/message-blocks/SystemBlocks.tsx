@@ -1,9 +1,8 @@
-import { ExclamationTriangleIcon } from '@heroicons/react/24/outline';
-import { BoltIcon, RocketLaunchIcon } from '@heroicons/react/24/solid';
 import { MarkdownContent } from '@/components/chat/renderers/MarkdownContent';
 import type { DocumentMeta, ImageMeta, RateLimitMeta, ResultMeta } from '@/types/ui';
 import { cn } from '@/utils/cn';
 import { AlertBanner } from './AlertBanner.tsx';
+import { renderIcon } from './message-type-icons.tsx';
 import { CenterDivider, CODE_BLOCK_CLASS, CollapsibleBlock, StatusLine } from './primitives.tsx';
 
 const SET_MODEL_PREFIX = /^Set model to /;
@@ -79,10 +78,7 @@ export function CompactBoundaryContent(): React.ReactNode {
 
 export function InterruptContent(): React.ReactNode {
   return (
-    <StatusLine
-      icon={<ExclamationTriangleIcon className="w-4 h-4 shrink-0" />}
-      className="text-warning"
-    >
+    <StatusLine icon={renderIcon('interrupt')} className="text-warning">
       <span className="italic">Interrupted by user</span>
     </StatusLine>
   );
@@ -120,18 +116,21 @@ export function RateLimitContent({
   const info = meta?.rateLimitInfo;
   return (
     <AlertBanner className="bg-warning-bg border-l-warning px-4 py-2.5">
-      <span className="text-warning text-sm font-medium">⏳ {content}</span>
+      <span className="text-warning text-sm font-medium flex items-center gap-1">
+        {renderIcon('rate_limit_event')}
+        {content}
+      </span>
       {info && (
-        <span className="ml-2 text-xs text-text-muted">
-          {info.rateLimitType ? <span className="mr-2">{String(info.rateLimitType)}</span> : null}
+        <span className="ml-2 text-xs text-text-muted flex items-center gap-2">
+          {info.rateLimitType ? <span>{String(info.rateLimitType)}</span> : null}
           {info.resetsAt ? (
             <span>resets {new Date(Number(info.resetsAt)).toLocaleTimeString()}</span>
           ) : null}
           {info.isUsingOverage === true && (
-            <span className="ml-2 text-danger font-medium">Overage active</span>
+            <span className="text-danger font-medium">Overage active</span>
           )}
           {info.overageStatus && info.isUsingOverage !== true ? (
-            <span className="ml-2 text-warning">Overage: {String(info.overageStatus)}</span>
+            <span className="text-warning">Overage: {String(info.overageStatus)}</span>
           ) : null}
         </span>
       )}
@@ -147,10 +146,7 @@ export function TaskStartedContent({
   meta?: Record<string, unknown>;
 }): React.ReactNode {
   return (
-    <StatusLine
-      icon={<RocketLaunchIcon className="w-4 h-4 shrink-0" />}
-      className="text-text-muted"
-    >
+    <StatusLine icon={renderIcon('task_started')} className="text-text-muted">
       <span>{content}</span>
       {meta?.taskType != null && (
         <span className="px-1.5 py-0.5 rounded bg-accent/20 text-accent text-xs font-mono">
@@ -174,7 +170,7 @@ export function StreamlinedTextContent({ content }: { content: string }): React.
 
 export function StreamlinedToolSummaryContent({ content }: { content: string }): React.ReactNode {
   return (
-    <CollapsibleBlock icon={<BoltIcon className="w-4 h-4 shrink-0" />} label="Tool Summary">
+    <CollapsibleBlock icon={renderIcon('streamlined_tool_use_summary')} label="Tool Summary">
       <pre className={CODE_BLOCK_CLASS}>{content}</pre>
     </CollapsibleBlock>
   );

@@ -16,6 +16,8 @@ interface DialogContentProps {
   hideTitle?: boolean;
   hideTitleDivider?: boolean;
   size?: DialogSize;
+  /** When false, disables overflow-y-auto so inner content can manage its own scrollbar. Default true. */
+  scrollable?: boolean;
   /** Portal target. When set, overlay + content render inside the given
    *  element (which SHOULD be `position: relative`) instead of document.body
    *  — use for dialogs scoped to a panel region (e.g. ChatPanel). */
@@ -36,15 +38,14 @@ export function DialogContent({
   hideTitle = false,
   hideTitleDivider = false,
   size = 'md',
+  scrollable = true,
   container,
 }: DialogContentProps): React.JSX.Element {
   // When portaled into a scoped container, position with `absolute` instead
   // of `fixed` so overlay + content are bounded by that container's box.
   const scoped = container != null;
   const overlayPos = scoped ? 'absolute inset-0' : 'fixed inset-0';
-  const contentPos = scoped
-    ? 'absolute z-modal left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2'
-    : 'fixed z-modal left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2';
+  const contentPos = `${scoped ? 'absolute' : 'fixed'} z-modal left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2`;
 
   return (
     <RadixDialog.Portal container={container ?? undefined}>
@@ -52,7 +53,8 @@ export function DialogContent({
       <RadixDialog.Content
         className={cn(
           contentPos,
-          'bg-surface text-text border border-border rounded-lg shadow-xl overflow-y-auto outline-none',
+          'bg-surface text-text border border-border rounded-lg shadow-xl outline-none',
+          scrollable ? 'overflow-y-auto' : 'overflow-hidden flex flex-col',
           SIZE_CLASSES[size],
           className,
         )}

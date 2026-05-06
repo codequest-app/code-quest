@@ -26,8 +26,8 @@ function MessagesProbe() {
   );
 }
 
-describe('message:user handler — meta.source propagation', () => {
-  function SourceProbe() {
+describe('message:user handler — meta.history propagation', () => {
+  function HistoryProbe() {
     const { messages } = useChannelMessages();
     const texts = messages.filter((m) => m.role === 'user' && m.type === 'text');
     return (
@@ -37,7 +37,7 @@ describe('message:user handler — meta.source propagation', () => {
             key={m.id}
             role="status"
             aria-label={`text-${i}`}
-            data-source={(m.meta as { source?: string } | undefined)?.source ?? ''}
+            data-history={String((m.meta as { history?: boolean } | undefined)?.history ?? false)}
           >
             {m.content}
           </li>
@@ -46,10 +46,10 @@ describe('message:user handler — meta.source propagation', () => {
     );
   }
 
-  it('isSynthetic event sets meta.source="skill"', async () => {
-    const { claude } = await renderWithChannel(<SourceProbe />);
+  it('isSynthetic event sets meta.history=false', async () => {
+    const { claude } = await renderWithChannel(<HistoryProbe />);
     await act(async () => {
-      await claude.emit(
+      await claude.emitSegment(
         JSON.stringify({
           type: 'user',
           isSynthetic: true,
@@ -61,16 +61,16 @@ describe('message:user handler — meta.source propagation', () => {
       );
     });
     const el = screen.getByRole('status', { name: 'text-0' });
-    expect(el.getAttribute('data-source')).toBe('skill');
+    expect(el.getAttribute('data-history')).toBe('false');
   });
 
-  it('plain user input defaults meta.source to "typed"', async () => {
-    const { claude } = await renderWithChannel(<SourceProbe />);
+  it('plain user input sets meta.history=true', async () => {
+    const { claude } = await renderWithChannel(<HistoryProbe />);
     await act(async () => {
-      await claude.emit(s.user('plain typed text'));
+      await claude.emitSegment(s.user('plain typed text'));
     });
     const el = screen.getByRole('status', { name: 'text-0' });
-    expect(el.getAttribute('data-source')).toBe('typed');
+    expect(el.getAttribute('data-history')).toBe('true');
   });
 });
 
@@ -91,7 +91,7 @@ describe('message:user handler — cliUuid (fix-fork-message-uuid)', () => {
     expect(before.getAttribute('data-cli-uuid')).toBe('');
 
     await act(async () => {
-      await claude.emit(s.user('hello-from-test', { uuid: 'cli-real-uuid-1' }));
+      await claude.emitSegment(s.user('hello-from-test', { uuid: 'cli-real-uuid-1' }));
     });
 
     const after = screen.getByRole('status', { name: 'umsg-0' });
@@ -103,7 +103,7 @@ describe('message:user handler — cliUuid (fix-fork-message-uuid)', () => {
     const { claude } = await renderWithChannel(<MessagesProbe />);
 
     await act(async () => {
-      await claude.emit(s.user('orphan-echo', { uuid: 'cli-real-uuid-2' }));
+      await claude.emitSegment(s.user('orphan-echo', { uuid: 'cli-real-uuid-2' }));
     });
 
     const items = screen
@@ -131,12 +131,12 @@ describe('message:user handler — cliUuid (fix-fork-message-uuid)', () => {
 
     // Simulate streaming-induced message before the user echo arrives.
     await act(async () => {
-      await claude.emit(s.streamlinedText('partial assistant…'));
+      await claude.emitSegment(s.streamlinedText('partial assistant…'));
     });
 
     // User echo arrives AFTER the assistant placeholder (NOT the last msg).
     await act(async () => {
-      await claude.emit(s.user('dedup-after-stream', { uuid: 'echo-after-stream' }));
+      await claude.emitSegment(s.user('dedup-after-stream', { uuid: 'echo-after-stream' }));
     });
 
     const items = screen
@@ -158,12 +158,12 @@ describe('message:user handler — cliUuid (fix-fork-message-uuid)', () => {
     await user.click(screen.getByText('TriggerSend'));
 
     await act(async () => {
-      await claude.emit(s.user('idempotent-test', { uuid: 'same-uuid' }));
+      await claude.emitSegment(s.user('idempotent-test', { uuid: 'same-uuid' }));
     });
     const idAfterFirst = screen.getByRole('status', { name: 'umsg-0' }).getAttribute('data-id');
 
     await act(async () => {
-      await claude.emit(s.user('idempotent-test', { uuid: 'same-uuid' }));
+      await claude.emitSegment(s.user('idempotent-test', { uuid: 'same-uuid' }));
     });
 
     const items = screen

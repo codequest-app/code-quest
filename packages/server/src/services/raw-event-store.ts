@@ -2,7 +2,7 @@ import type { RawEvent } from '@code-quest/summoner';
 import { z } from 'zod';
 import { logger } from '../logger.ts';
 
-export const sessionPreviewSchema: z.ZodObject<{
+const sessionPreviewSchema: z.ZodObject<{
   lastAssistant: z.ZodOptional<z.ZodString>;
   firstUser: z.ZodOptional<z.ZodString>;
 }> = z.object({
@@ -49,4 +49,8 @@ export interface RawEventStore {
    * with identical primary keys.
    */
   cloneEvents(fromSessionId: string, toSessionId: string, ids?: string[]): Promise<void>;
+  /** Returns true if the session has at least one stdout event of type "user" (stdout user echo). */
+  hasUserEcho(sessionId: string): Promise<boolean>;
+  /** Yields events in batches of `batchSize`. */
+  streamBySession(sessionId: string, batchSize: number): AsyncGenerator<RawEvent[]>;
 }

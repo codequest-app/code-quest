@@ -66,7 +66,7 @@ describe('transform — user events', () => {
     expect(result).toBeNull();
   });
 
-  it('isSynthetic user event tagged source="skill" (regardless of prefix)', () => {
+  it('isSynthetic user event sets history: false', () => {
     const line = JSON.stringify({
       type: 'user',
       isSynthetic: true,
@@ -83,10 +83,10 @@ describe('transform — user events', () => {
     const result = toClientMessage(line);
     const event = Array.isArray(result) ? result[0] : result;
     expect(event?.name).toBe('message:user');
-    expect(event?.payload).toMatchObject({ source: 'skill' });
+    expect(event?.payload).toMatchObject({ history: false });
   });
 
-  it('isSynthetic slash-command body (no "Base directory" prefix) still source="skill"', () => {
+  it('isSynthetic slash-command body sets history: false', () => {
     const line = JSON.stringify({
       type: 'user',
       isSynthetic: true,
@@ -102,10 +102,10 @@ describe('transform — user events', () => {
     });
     const result = toClientMessage(line);
     const event = Array.isArray(result) ? result[0] : result;
-    expect(event?.payload).toMatchObject({ source: 'skill' });
+    expect(event?.payload).toMatchObject({ history: false });
   });
 
-  it('non-synthetic text that happens to contain "Base directory for this skill:" stays typed', () => {
+  it('non-synthetic text sets history: true regardless of content', () => {
     const line = JSON.stringify({
       type: 'user',
       message: {
@@ -117,14 +117,14 @@ describe('transform — user events', () => {
     });
     const result = toClientMessage(line);
     const event = Array.isArray(result) ? result[0] : result;
-    expect(event?.payload).toMatchObject({ source: 'typed' });
+    expect(event?.payload).toMatchObject({ history: true });
   });
 
-  it('plain typed user input tagged source="typed"', () => {
+  it('plain typed user input sets history: true', () => {
     const segment = s.user('hello plain', { uuid: 'u-1' });
     const result = toClientMessage(segment);
     const event = Array.isArray(result) ? result[0] : result;
-    expect(event?.payload).toMatchObject({ source: 'typed' });
+    expect(event?.payload).toMatchObject({ history: true });
   });
 
   it('text user echo (--replay-user-messages) carries uuid through transform', () => {
@@ -136,5 +136,34 @@ describe('transform — user events', () => {
       content: [{ type: 'text', text: 'hello-from-user' }],
       uuid: 'real-cli-echo-uuid',
     });
+  });
+
+  it('plain user echo (no isSynthetic, no parent_tool_use_id) sets history: true', () => {
+    const segment = s.user('typed by user', { uuid: 'u-typed' });
+    const result = toClientMessage(segment);
+    const event = Array.isArray(result) ? result[0] : result;
+    expect(event?.payload).toMatchObject({ history: true });
+  });
+
+  it('isSynthetic user event with plain text sets history: false', () => {
+    const line = JSON.stringify({
+      type: 'user',
+      isSynthetic: true,
+      message: { role: 'user', content: [{ type: 'text', text: 'skill body' }] },
+    });
+    const result = toClientMessage(line);
+    const event = Array.isArray(result) ? result[0] : result;
+    expect(event?.payload).toMatchObject({ history: false });
+  });
+
+  it('user event with parent_tool_use_id (loop wakeup) sets history: false', () => {
+    const line = JSON.stringify({
+      type: 'user',
+      parent_tool_use_id: 'toolu_loop123',
+      message: { role: 'user', content: [{ type: 'text', text: 'wake up' }] },
+    });
+    const result = toClientMessage(line);
+    const event = Array.isArray(result) ? result[0] : result;
+    expect(event?.payload).toMatchObject({ history: false });
   });
 });

@@ -13,7 +13,7 @@ describe('task_started event', () => {
     await user.click(textarea);
     await user.type(textarea, 'go');
     await user.keyboard('{Enter}');
-    await claude.emit(s.taskStarted('toolu_1', 'Analyze code'));
+    await claude.emitSegment(s.taskStarted('toolu_1', 'Analyze code'));
     await emitAssistantTurn(claude, 'done');
 
     expect(screen.getByText(/Analyze code/)).toBeInTheDocument();

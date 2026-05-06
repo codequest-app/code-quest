@@ -17,7 +17,7 @@ async function setup(sessionId = 'cli-sess') {
 
 function waitForDiffReview(claude: FakeClaude): Promise<void> {
   return vi.waitFor(() => {
-    expect(claude.events('control:diff_review').length).toBeGreaterThan(0);
+    expect(claude.receivedEvents('control:diff_review').length).toBeGreaterThan(0);
   });
 }
 
@@ -27,12 +27,14 @@ describe('ChatHandler > control', () => {
       const { claude, channelId } = await setup();
 
       await claude.send('chat:send', { channelId, message: 'go' });
-      await claude.emit(
+      await claude.emitSegment(
         s.assistant({ toolUse: { id: 'toolu_1', name: 'Bash', input: { command: 'ls' } } }),
       );
-      await claude.emit(s.controlRequest('req-1', 'can_use_tool', 'Bash', { command: 'ls' }));
+      await claude.emitSegment(
+        s.controlRequest('req-1', 'can_use_tool', 'Bash', { command: 'ls' }),
+      );
 
-      const permEvents = claude.events('control:permission');
+      const permEvents = claude.receivedEvents('control:permission');
       expect(permEvents.length).toBeGreaterThan(0);
       expect(permEvents[0]!.toolName).toBe('Bash');
       expect(permEvents[0]!.requestId).toBe('req-1');
@@ -44,10 +46,12 @@ describe('ChatHandler > control', () => {
       const { container, claude, channelId } = await setup();
 
       await claude.send('chat:send', { channelId, message: 'go' });
-      await claude.emit(
+      await claude.emitSegment(
         s.assistant({ toolUse: { id: 'toolu_1', name: 'Bash', input: { command: 'ls' } } }),
       );
-      await claude.emit(s.controlRequest('req-1', 'can_use_tool', 'Bash', { command: 'ls' }));
+      await claude.emitSegment(
+        s.controlRequest('req-1', 'can_use_tool', 'Bash', { command: 'ls' }),
+      );
 
       const { ChannelManager } = await import('../socket/channel-manager.ts');
       const mgr = container.get(TYPES.ChannelManager) as InstanceType<typeof ChannelManager>;
@@ -58,10 +62,12 @@ describe('ChatHandler > control', () => {
       const { container, claude, channelId } = await setup();
 
       await claude.send('chat:send', { channelId, message: 'go' });
-      await claude.emit(
+      await claude.emitSegment(
         s.assistant({ toolUse: { id: 'toolu_1', name: 'Bash', input: { command: 'ls' } } }),
       );
-      await claude.emit(s.controlRequest('req-1', 'can_use_tool', 'Bash', { command: 'ls' }));
+      await claude.emitSegment(
+        s.controlRequest('req-1', 'can_use_tool', 'Bash', { command: 'ls' }),
+      );
 
       await claude.send('chat:respond', {
         channelId,
@@ -79,9 +85,9 @@ describe('ChatHandler > control', () => {
       const { claude, channelId } = await setup();
 
       await claude.send('chat:send', { channelId, message: 'go' });
-      await claude.emit(s.controlRequest('hook-1', 'hook_callback'));
+      await claude.emitSegment(s.controlRequest('hook-1', 'hook_callback'));
 
-      const hookEvents = claude.events('control:hook_callback');
+      const hookEvents = claude.receivedEvents('control:hook_callback');
       expect(hookEvents.length).toBeGreaterThan(0);
     });
 
@@ -89,11 +95,13 @@ describe('ChatHandler > control', () => {
       const { container, claude, channelId } = await setup();
 
       await claude.send('chat:send', { channelId, message: 'go' });
-      await claude.emit(s.assistant({ toolUse: { id: 'toolu_1', name: 'Bash', input: {} } }));
-      await claude.emit(s.controlRequest('req-1', 'can_use_tool', 'Bash', {}));
-      await claude.emit(s.controlCancelRequest('req-1'));
+      await claude.emitSegment(
+        s.assistant({ toolUse: { id: 'toolu_1', name: 'Bash', input: {} } }),
+      );
+      await claude.emitSegment(s.controlRequest('req-1', 'can_use_tool', 'Bash', {}));
+      await claude.emitSegment(s.controlCancelRequest('req-1'));
 
-      const cancelEvents = claude.events('chat:cancel_request');
+      const cancelEvents = claude.receivedEvents('chat:cancel_request');
       expect(cancelEvents.length).toBeGreaterThan(0);
       expect(cancelEvents[0]!.targetRequestId).toBe('req-1');
 
@@ -107,11 +115,13 @@ describe('ChatHandler > control', () => {
         const { claude, channelId } = await setup();
 
         await claude.send('chat:send', { channelId, message: 'go' });
-        await claude.emit(s.assistant({ toolUse: { id: 'toolu_1', name: 'Read', input: {} } }));
-        await claude.emit(s.controlRequest('req-1', 'can_use_tool', 'Read', {}));
-        await claude.emit(s.controlRequest('req-2', 'can_use_tool', 'Write', {}));
+        await claude.emitSegment(
+          s.assistant({ toolUse: { id: 'toolu_1', name: 'Read', input: {} } }),
+        );
+        await claude.emitSegment(s.controlRequest('req-1', 'can_use_tool', 'Read', {}));
+        await claude.emitSegment(s.controlRequest('req-2', 'can_use_tool', 'Write', {}));
 
-        const permEvents = claude.events('control:permission');
+        const permEvents = claude.receivedEvents('control:permission');
         expect(permEvents.length).toBe(2);
         expect(permEvents[0]!.requestId).toBe('req-1');
         expect(permEvents[1]!.requestId).toBe('req-2');
@@ -121,9 +131,11 @@ describe('ChatHandler > control', () => {
         const { claude, channelId } = await setup();
 
         await claude.send('chat:send', { channelId, message: 'go' });
-        await claude.emit(s.assistant({ toolUse: { id: 'toolu_1', name: 'Read', input: {} } }));
-        await claude.emit(s.controlRequest('req-1', 'can_use_tool', 'Read', {}));
-        await claude.emit(s.controlRequest('req-2', 'can_use_tool', 'Write', {}));
+        await claude.emitSegment(
+          s.assistant({ toolUse: { id: 'toolu_1', name: 'Read', input: {} } }),
+        );
+        await claude.emitSegment(s.controlRequest('req-1', 'can_use_tool', 'Read', {}));
+        await claude.emitSegment(s.controlRequest('req-2', 'can_use_tool', 'Write', {}));
 
         await claude.send('chat:respond', {
           channelId,
@@ -146,7 +158,7 @@ describe('ChatHandler > control', () => {
       const { claude, channelId } = await setup();
 
       await claude.send('chat:send', { channelId, message: 'go' });
-      await claude.emit(
+      await claude.emitSegment(
         s.controlRequestOpenDiff('diff-1', {
           originalFilePath: '/tmp/old.ts',
           newFilePath: '/tmp/new.ts',
@@ -167,7 +179,7 @@ describe('ChatHandler > control', () => {
       const { claude, channelId } = await setup();
 
       await claude.send('chat:send', { channelId, message: 'go' });
-      await claude.emit(
+      await claude.emitSegment(
         s.controlRequestOpenDiff('diff-1', {
           originalFilePath: '/tmp/old.ts',
           newFilePath: '/tmp/new.ts',
@@ -190,9 +202,9 @@ describe('ChatHandler > control', () => {
       const { claude, channelId } = await setup();
 
       await claude.send('chat:send', { channelId, message: 'go' });
-      await claude.emit(s.controlRequestElicitation('elicit-1', { message: 'Enter URL' }));
+      await claude.emitSegment(s.controlRequestElicitation('elicit-1', { message: 'Enter URL' }));
 
-      const elicitEvents = claude.events('control:elicitation');
+      const elicitEvents = claude.receivedEvents('control:elicitation');
       expect(elicitEvents.length).toBeGreaterThan(0);
       expect(elicitEvents[0]!.requestId).toBe('elicit-1');
     });
@@ -201,7 +213,7 @@ describe('ChatHandler > control', () => {
       const { claude, channelId } = await setup();
 
       await claude.send('chat:send', { channelId, message: 'go' });
-      await claude.emit(s.controlRequestElicitation('elicit-1', { message: 'Enter URL' }));
+      await claude.emitSegment(s.controlRequestElicitation('elicit-1', { message: 'Enter URL' }));
 
       await claude.send('chat:respond', {
         requestId: 'elicit-1',
@@ -215,7 +227,7 @@ describe('ChatHandler > control', () => {
       const { claude, channelId } = await setup();
 
       await claude.send('chat:send', { channelId, message: 'go' });
-      await claude.emit(s.controlRequestElicitation('elicit-1', { message: 'Enter URL' }));
+      await claude.emitSegment(s.controlRequestElicitation('elicit-1', { message: 'Enter URL' }));
 
       await claude.send('chat:respond', {
         requestId: 'elicit-1',
@@ -229,7 +241,7 @@ describe('ChatHandler > control', () => {
       const { claude, channelId } = await setup();
 
       await claude.send('chat:send', { channelId, message: 'go' });
-      await claude.emit(
+      await claude.emitSegment(
         s.controlRequestElicitation('elicit-url', {
           message: 'Enter URL',
           mode: 'url',
@@ -237,7 +249,7 @@ describe('ChatHandler > control', () => {
         }),
       );
 
-      const elicitEvents = claude.events('control:elicitation');
+      const elicitEvents = claude.receivedEvents('control:elicitation');
       expect(elicitEvents.length).toBeGreaterThan(0);
     });
 
@@ -245,7 +257,7 @@ describe('ChatHandler > control', () => {
       const { claude, channelId } = await setup();
 
       await claude.send('chat:send', { channelId, message: 'go' });
-      await claude.emit(
+      await claude.emitSegment(
         s.controlRequestElicitation('elicit-form', {
           message: 'Pick option',
           mode: 'form',
@@ -253,7 +265,7 @@ describe('ChatHandler > control', () => {
         }),
       );
 
-      const elicitEvents = claude.events('control:elicitation');
+      const elicitEvents = claude.receivedEvents('control:elicitation');
       expect(elicitEvents.length).toBeGreaterThan(0);
     });
   });
@@ -264,7 +276,7 @@ describe('ChatHandler > control', () => {
 
       await claude.initialize();
 
-      const configEvents = claude.events('settings:update');
+      const configEvents = claude.receivedEvents('settings:update');
       expect(configEvents.length).toBeGreaterThan(0);
     });
 
@@ -282,7 +294,7 @@ describe('ChatHandler > control', () => {
       const { claude, channelId } = await setup();
 
       await claude.send('chat:send', { channelId, message: 'go' });
-      await claude.emit(
+      await claude.emitSegment(
         s.controlRequestOpenDiff('diff-1', {
           originalFilePath: '/tmp/old.ts',
           newFilePath: '/tmp/new.ts',
@@ -297,9 +309,9 @@ describe('ChatHandler > control', () => {
       const { claude, channelId } = await setup();
 
       await claude.send('chat:send', { channelId, message: 'go' });
-      await claude.emit(s.controlRequestOpenInEditor('open-1'));
+      await claude.emitSegment(s.controlRequestOpenInEditor('open-1'));
 
-      const rawEvents = claude.events('raw:event');
+      const rawEvents = claude.receivedEvents('raw:event');
       expect(rawEvents.length).toBeGreaterThan(0);
       expect(rawEvents[0]!.rawType).toBe('control_request/open_in_editor');
     });
@@ -316,7 +328,7 @@ describe('ChatHandler > control', () => {
         }),
       );
 
-      const stateUpdates = claude.events('settings:update');
+      const stateUpdates = claude.receivedEvents('settings:update');
       const accountUpdate = stateUpdates.find((e) => e.accountInfo);
       expect(accountUpdate).toBeDefined();
       expect(accountUpdate!.accountInfo!.email).toBe('user@test.com');
@@ -328,7 +340,7 @@ describe('ChatHandler > control', () => {
       const { claude, channelId } = await setup();
 
       await claude.send('chat:send', { channelId, message: 'go' });
-      await claude.emit(
+      await claude.emitSegment(
         s.controlRequestElicitation('elicit-form-opts', {
           message: 'Pick option',
           mode: 'form',
@@ -338,7 +350,7 @@ describe('ChatHandler > control', () => {
         }),
       );
 
-      const elicitEvents = claude.events('control:elicitation');
+      const elicitEvents = claude.receivedEvents('control:elicitation');
       expect(elicitEvents.length).toBeGreaterThan(0);
       expect(elicitEvents[0]!.requestId).toBe('elicit-form-opts');
     });
@@ -347,7 +359,7 @@ describe('ChatHandler > control', () => {
       const { claude, channelId } = await setup();
 
       await claude.send('chat:send', { channelId, message: 'go' });
-      await claude.emit(
+      await claude.emitSegment(
         s.controlRequestElicitation('elicit-url-field', {
           message: 'Enter URL',
           mode: 'url',
@@ -355,7 +367,7 @@ describe('ChatHandler > control', () => {
         }),
       );
 
-      const elicitEvents = claude.events('control:elicitation');
+      const elicitEvents = claude.receivedEvents('control:elicitation');
       expect(elicitEvents.length).toBeGreaterThan(0);
       expect(elicitEvents[0]!.requestId).toBe('elicit-url-field');
     });
@@ -377,7 +389,7 @@ describe('ChatHandler > control', () => {
       const channelId = await claude.initialize(s.init('cli-sess'));
 
       await claude.send('chat:send', { channelId, message: 'go' });
-      await claude.emit(
+      await claude.emitSegment(
         s.controlRequestOpenDiff('diff-err', {
           originalFilePath: '/tmp/old.ts',
           newFilePath: '/tmp/new.ts',
@@ -403,7 +415,7 @@ describe('ChatHandler > control', () => {
         const { claude, channelId } = await setup();
 
         await claude.send('chat:send', { channelId, message: 'go' });
-        await claude.emit(
+        await claude.emitSegment(
           s.controlRequestOpenDiff('diff-content-1', {
             originalFilePath: origPath,
             newFilePath: newPath,
@@ -419,7 +431,7 @@ describe('ChatHandler > control', () => {
       const { claude, channelId } = await setup();
 
       await claude.send('chat:send', { channelId, message: 'go' });
-      await claude.emit(
+      await claude.emitSegment(
         s.controlRequestOpenDiff('diff-nofile', {
           originalFilePath: '/nonexistent/original.ts',
           newFilePath: '/nonexistent/new.ts',
@@ -434,9 +446,9 @@ describe('ChatHandler > control', () => {
       const { claude, channelId } = await setup();
 
       await claude.send('chat:send', { channelId, message: 'go' });
-      await claude.emit(s.controlRequestOpenInEditor('open-url-1'));
+      await claude.emitSegment(s.controlRequestOpenInEditor('open-url-1'));
 
-      const rawEvents = claude.events('raw:event');
+      const rawEvents = claude.receivedEvents('raw:event');
       expect(rawEvents.length).toBeGreaterThan(0);
       expect(rawEvents[0]!.rawType).toBe('control_request/open_in_editor');
     });
@@ -447,9 +459,11 @@ describe('ChatHandler > control', () => {
       const { container, claude, channelId } = await setup();
 
       await claude.send('chat:send', { channelId, message: 'go' });
-      await claude.emit(s.assistant({ toolUse: { id: 'toolu_p1', name: 'Read', input: {} } }));
-      await claude.emit(s.controlRequest('req-a', 'can_use_tool', 'Read', {}));
-      await claude.emit(s.controlRequest('req-b', 'can_use_tool', 'Write', {}));
+      await claude.emitSegment(
+        s.assistant({ toolUse: { id: 'toolu_p1', name: 'Read', input: {} } }),
+      );
+      await claude.emitSegment(s.controlRequest('req-a', 'can_use_tool', 'Read', {}));
+      await claude.emitSegment(s.controlRequest('req-b', 'can_use_tool', 'Write', {}));
 
       // Respond to req-a only
       await claude.send('chat:respond', {
@@ -470,10 +484,10 @@ describe('ChatHandler > control', () => {
 
     await claude.send('chat:send', { channelId, message: 'go' });
 
-    await claude.emit(s.assistant({ toolUse: { id: 'toolu_1', name: 'Write', input: {} } }));
-    await claude.emit(s.controlRequest('req-1', 'can_use_tool', 'Write', {}));
+    await claude.emitSegment(s.assistant({ toolUse: { id: 'toolu_1', name: 'Write', input: {} } }));
+    await claude.emitSegment(s.controlRequest('req-1', 'can_use_tool', 'Write', {}));
 
-    const permEvents = claude.events('control:permission');
+    const permEvents = claude.receivedEvents('control:permission');
     expect(permEvents.length).toBeGreaterThan(0);
 
     await claude.send('chat:respond', {
@@ -482,10 +496,10 @@ describe('ChatHandler > control', () => {
       response: { behavior: 'allow', updatedInput: {} },
     });
 
-    await claude.emit(s.toolResult('toolu_1', 'ok'));
-    await claude.emit(s.result());
+    await claude.emitSegment(s.toolResult('toolu_1', 'ok'));
+    await claude.emitSegment(s.result());
 
-    const resultEvents = claude.events('message:result');
+    const resultEvents = claude.receivedEvents('message:result');
     expect(resultEvents.length).toBeGreaterThan(0);
   });
 
@@ -494,10 +508,10 @@ describe('ChatHandler > control', () => {
 
     await claude.send('chat:send', { channelId, message: 'go' });
 
-    await claude.emit(s.assistant({ toolUse: { id: 'toolu_3', name: 'Write', input: {} } }));
-    await claude.emit(s.controlRequest('req-resp-1', 'can_use_tool', 'Write', {}));
+    await claude.emitSegment(s.assistant({ toolUse: { id: 'toolu_3', name: 'Write', input: {} } }));
+    await claude.emitSegment(s.controlRequest('req-resp-1', 'can_use_tool', 'Write', {}));
 
-    const permEvents = claude.events('control:permission');
+    const permEvents = claude.receivedEvents('control:permission');
     expect(permEvents.length).toBeGreaterThan(0);
 
     await claude.send('chat:respond', {
@@ -506,10 +520,10 @@ describe('ChatHandler > control', () => {
       response: { behavior: 'allow', updatedInput: {} },
     });
 
-    await claude.emit(s.toolResult('toolu_3', 'ok'));
-    await claude.emit(s.result());
+    await claude.emitSegment(s.toolResult('toolu_3', 'ok'));
+    await claude.emitSegment(s.result());
 
-    const resultEvents = claude.events('message:result');
+    const resultEvents = claude.receivedEvents('message:result');
     expect(resultEvents.length).toBeGreaterThan(0);
   });
 
@@ -518,8 +532,10 @@ describe('ChatHandler > control', () => {
       const { container, claude, channelId } = await setup();
 
       await claude.send('chat:send', { channelId, message: 'go' });
-      await claude.emit(s.assistant({ toolUse: { id: 'toolu_p', name: 'Bash', input: {} } }));
-      await claude.emit(s.controlRequest('req-pending', 'can_use_tool', 'Bash', {}));
+      await claude.emitSegment(
+        s.assistant({ toolUse: { id: 'toolu_p', name: 'Bash', input: {} } }),
+      );
+      await claude.emitSegment(s.controlRequest('req-pending', 'can_use_tool', 'Bash', {}));
 
       const { ChannelManager } = await import('../socket/channel-manager.ts');
       const mgr = container.get(TYPES.ChannelManager) as InstanceType<typeof ChannelManager>;
@@ -534,14 +550,16 @@ describe('ChatHandler > control', () => {
       await windowA.send('chat:send', { channelId, message: 'go' });
       await windowA
         .claude()
-        .emit(s.assistant({ toolUse: { id: 'toolu_r', name: 'Read', input: {} } }));
-      await windowA.claude().emit(s.controlRequest('req-replay', 'can_use_tool', 'Read', {}));
+        .emitSegment(s.assistant({ toolUse: { id: 'toolu_r', name: 'Read', input: {} } }));
+      await windowA
+        .claude()
+        .emitSegment(s.controlRequest('req-replay', 'can_use_tool', 'Read', {}));
 
       const windowB = createFakeSummoner(server);
       await windowB.send('session:join', { channelId });
 
       await vi.waitFor(() => {
-        const bPermEvents = windowB.events('control:permission');
+        const bPermEvents = windowB.receivedEvents('control:permission');
         expect(bPermEvents.length).toBeGreaterThan(0);
         expect(bPermEvents[0].requestId).toBe('req-replay');
       });
@@ -551,7 +569,7 @@ describe('ChatHandler > control', () => {
       const { claude, channelId } = await setup();
 
       await claude.send('chat:send', { channelId, message: 'go' });
-      await claude.emit(
+      await claude.emitSegment(
         s.controlRequest('mcp-kill', 'mcp_message', undefined, {
           server_name: 'test',
           message: { jsonrpc: '2.0', method: 'test', id: 1 },

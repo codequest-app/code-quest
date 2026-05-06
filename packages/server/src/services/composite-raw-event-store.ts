@@ -11,6 +11,7 @@ export class CompositeRawEventStore implements RawEventStore {
       throw new Error('CompositeRawEventStore requires at least one store');
     }
     this.stores = stores;
+    // Safe: constructor throws if stores is empty (checked above).
     this.primary = stores[0] as RawEventStore;
   }
 
@@ -26,6 +27,14 @@ export class CompositeRawEventStore implements RawEventStore {
 
   getPreview(sessionId: string): Promise<SessionPreview> {
     return this.primary.getPreview(sessionId);
+  }
+
+  hasUserEcho(sessionId: string): Promise<boolean> {
+    return this.primary.hasUserEcho(sessionId);
+  }
+
+  streamBySession(sessionId: string, batchSize: number): AsyncGenerator<RawEvent[]> {
+    return this.primary.streamBySession(sessionId, batchSize);
   }
 
   async cloneEvents(fromSessionId: string, toSessionId: string): Promise<void> {

@@ -19,8 +19,8 @@ export function SendButton({ message = 'test' }: { message?: string } = {}): Rea
 /** Emit a complete assistant turn (assistant message + result). Wraps with act() for React. */
 export async function emitAssistantTurn(claude: FakeClaude, message = 'hi'): Promise<void> {
   await act(async () => {
-    await claude.emit(s.assistant(message));
-    await claude.emit(s.result());
+    await claude.emitSegment(s.assistant(message));
+    await claude.emitSegment(s.result());
   });
 }
 
@@ -32,7 +32,7 @@ export async function emitUserEcho(
 ): Promise<string> {
   const segment = s.user(text, uuid ? { uuid } : undefined);
   await act(async () => {
-    await claude.emit(segment);
+    await claude.emitSegment(segment);
   });
   return JSON.parse(segment).uuid as string;
 }

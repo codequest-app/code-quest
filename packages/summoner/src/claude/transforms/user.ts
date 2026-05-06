@@ -1,4 +1,4 @@
-import type { ContentBlock, UserSource } from '@code-quest/shared';
+import type { ContentBlock } from '@code-quest/shared';
 import type { z } from 'zod';
 import type { ClientMessage } from '../../types.ts';
 import { asString } from '../../utils.ts';
@@ -39,9 +39,10 @@ export function transformUser(raw: UserMessage): ClientMessage | null {
   }
 
   const uuid = typeof raw.uuid === 'string' ? raw.uuid : undefined;
-  const source: UserSource = raw.isSynthetic === true ? 'skill' : 'typed';
+  const history = raw.isSynthetic !== true && !parentToolUseId;
+  const renderAs = raw.isSynthetic === true ? 'markdown' : 'plain';
   return {
     name: 'message:user',
-    payload: { ...buildMessagePayload(blocks, parentToolUseId, uuid), source },
+    payload: { ...buildMessagePayload(blocks, parentToolUseId, uuid), history, renderAs },
   };
 }

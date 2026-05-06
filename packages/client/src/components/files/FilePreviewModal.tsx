@@ -1,35 +1,14 @@
-import { EVENTS, fsReadResponseSchema } from '@code-quest/shared';
-import { useEffect, useMemo, useState } from 'react';
+import { CONTENT_TYPE, EVENTS, fsReadResponseSchema } from '@code-quest/shared';
+import { lazy, Suspense, useEffect, useState } from 'react';
 import { useSocket } from '@/contexts/SocketContext';
 import { rpc } from '@/socket/rpc';
+import { langFromContentType } from '@/utils/lang-from-path';
 import { CodeBlock } from '../chat/renderers/CodeBlock.tsx';
 import { MarkdownContent } from '../chat/renderers/MarkdownContent.tsx';
 import { Button } from '../ui/Button.tsx';
 import { Dialog, DialogContent } from '../ui/Dialog.tsx';
 
-const EXT_TO_LANG: Record<string, string> = {
-  ts: 'typescript',
-  tsx: 'tsx',
-  js: 'javascript',
-  jsx: 'jsx',
-  json: 'json',
-  md: 'markdown',
-  html: 'html',
-  css: 'css',
-  yaml: 'yaml',
-  yml: 'yaml',
-  sh: 'bash',
-  py: 'python',
-};
-
-function languageFor(path: string): string | undefined {
-  const ext = path.split('.').pop()?.toLowerCase();
-  return ext ? EXT_TO_LANG[ext] : undefined;
-}
-
-function isMarkdown(path: string): boolean {
-  return path.split('.').pop()?.toLowerCase() === 'md';
-}
+const PdfViewer = lazy(() => import('./PdfViewer.tsx').then((m) => ({ default: m.PdfViewer })));
 
 /** UTF-16 code units, not bytes — `string.length`. Files this big take
  *  hundreds of ms to syntax-highlight, which is what we actually want to
@@ -47,12 +26,11 @@ export function FilePreviewModal({
   onClose,
   onMention,
 }: FilePreviewModalProps): React.JSX.Element {
-  const language = useMemo(() => languageFor(path), [path]);
-  const md = useMemo(() => isMarkdown(path), [path]);
   const { socket } = useSocket();
   const [state, setState] = useState<
     | { kind: 'loading' }
-    | { kind: 'ready'; content: string }
+    | { kind: 'ready'; content: string; contentType: string }
+    | { kind: 'pdf'; data: string }
     | { kind: 'too-large' }
     | { kind: 'error'; message: string }
   >({ kind: 'loading' });
@@ -73,23 +51,32 @@ export function FilePreviewModal({
         setState({ kind: 'error', message: parsed.data.error });
         return;
       }
-      const { content } = parsed.data;
+      const { content, contentType, encoding } = parsed.data;
+      if (encoding === 'base64' && contentType === CONTENT_TYPE.pdf) {
+        setState({ kind: 'pdf', data: content });
+        return;
+      }
       if (content.length > PREVIEW_CHAR_LIMIT) {
         setState({ kind: 'too-large' });
         return;
       }
-      setState({ kind: 'ready', content });
+      setState({ kind: 'ready', content, contentType });
     })();
     return () => {
       cancelled = true;
     };
   }, [path, socket]);
 
+  const isPdf = state.kind === 'pdf';
+  const isMarkdown = state.kind === 'ready' && state.contentType === CONTENT_TYPE.markdown;
+  const language =
+    state.kind === 'ready' ? langFromContentType(state.contentType, path) : undefined;
+
   return (
     <Dialog open onOpenChange={(open) => !open && onClose()}>
-      <DialogContent title={path} size="lg">
-        <div className="flex flex-col gap-3">
-          {md && state.kind === 'ready' && (
+      <DialogContent title={path} size="lg" scrollable={!isPdf}>
+        <div className={`flex flex-col gap-3 ${isPdf ? 'h-full min-h-0' : ''}`}>
+          {isMarkdown && (
             <div className="flex gap-1 self-end">
               <Button
                 variant={viewMode === 'preview' ? 'primary' : 'ghost'}
@@ -107,7 +94,18 @@ export function FilePreviewModal({
               </Button>
             </div>
           )}
-          <PreviewBody state={state} language={language} md={md} viewMode={viewMode} />
+          {state.kind === 'pdf' ? (
+            <Suspense fallback={<div className="text-sm text-text-muted">Loading…</div>}>
+              <PdfViewer data={state.data} className="flex-1 min-h-0" />
+            </Suspense>
+          ) : (
+            <PreviewBody
+              state={state}
+              language={language}
+              isMarkdown={isMarkdown}
+              viewMode={viewMode}
+            />
+          )}
           <div className="flex gap-2 pt-2 border-t border-border">
             <Button variant="primary" size="sm" onClick={() => onMention(path)}>
               Mention
@@ -134,16 +132,16 @@ export function FilePreviewModal({
 function PreviewBody({
   state,
   language,
-  md,
+  isMarkdown,
   viewMode,
 }: {
   state:
     | { kind: 'loading' }
-    | { kind: 'ready'; content: string }
+    | { kind: 'ready'; content: string; contentType: string }
     | { kind: 'too-large' }
     | { kind: 'error'; message: string };
   language?: string;
-  md: boolean;
+  isMarkdown: boolean;
   viewMode: 'preview' | 'raw';
 }) {
   if (state.kind === 'loading') {
@@ -155,7 +153,7 @@ function PreviewBody({
   if (state.kind === 'error') {
     return <div className="text-sm text-warn">{state.message}</div>;
   }
-  if (md && viewMode === 'preview') {
+  if (isMarkdown && viewMode === 'preview') {
     return (
       <div className="overflow-auto max-h-dialog-body">
         <MarkdownContent content={state.content} />

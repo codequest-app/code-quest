@@ -168,7 +168,6 @@ function StoryProviders({
   pendingControls?: PendingControl[];
   children: React.ReactNode;
 }) {
-  const resetStreamingRefsRef = useRef(() => {});
   const messageQueueRef = useRef<string[]>([]);
 
   useLayoutEffect(() => {
@@ -185,12 +184,8 @@ function StoryProviders({
           initialState={messages}
           dequeueMessage={() => messageQueueRef.current.shift()}
           messageQueueRef={messageQueueRef}
-          resetStreamingRefsRef={resetStreamingRefsRef}
         >
-          <ChannelControlProvider
-            resetStreamingRefs={() => resetStreamingRefsRef.current()}
-            initialPendingControls={pendingControls}
-          >
+          <ChannelControlProvider initialPendingControls={pendingControls}>
             <ChannelConfigProvider initialConfig={config}>
               <MessageVisibilityProvider>
                 <CommandPaletteProvider>

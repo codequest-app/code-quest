@@ -58,7 +58,7 @@ describe('SessionContext — auth callbacks (FakeSummoner)', () => {
 
     it('sets status to error when server returns { ok: false }', async () => {
       // NOTE: `auth:oauth_code` failure can't be driven via the fake server —
-      // `FakeClaude.onControlRequest` only supports success responses. Until
+      // `FakeClaude.setControlRequestHandler` only supports success responses. Until
       // the summoner harness exposes an error-response API, override the
       // socket.emit ack directly to exercise the client's SessionContext
       // error-handling path.

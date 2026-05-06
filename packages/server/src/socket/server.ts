@@ -33,12 +33,12 @@ import * as projects from './handlers/projects.ts';
 import * as sessionCommand from './handlers/session/command.ts';
 import * as sessionConnect from './handlers/session/connect.ts';
 import * as sessionFork from './handlers/session/fork.ts';
+import type { SessionHistory } from './handlers/session/history.ts';
 import * as sessionQuery from './handlers/session/query.ts';
 import * as settings from './handlers/settings.ts';
 import * as speech from './handlers/speech.ts';
 import * as terminal from './handlers/terminal.ts';
 import * as usage from './handlers/usage.ts';
-import type { SessionHistory } from './session-history.ts';
 import type { TransportHandle } from './transport.ts';
 
 @injectable()

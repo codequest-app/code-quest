@@ -70,10 +70,10 @@ describe('ChatSession', () => {
     const textarea = screen.getByPlaceholderText(COMPOSE_PLACEHOLDER);
     await userEvent.type(textarea, 'go{Enter}');
     await act(async () => {
-      await claude.emit(
+      await claude.emitSegment(
         s.assistant({ toolUse: { id: 'toolu_1', name: 'Bash', input: { command: 'ls' } } }),
       );
-      await claude.emit(s.controlRequestBash('r1', { command: 'ls' }));
+      await claude.emitSegment(s.controlRequestBash('r1', { command: 'ls' }));
     });
     expect(screen.getByText('Yes')).toBeInTheDocument();
   });
@@ -123,16 +123,18 @@ describe('ChatSession', () => {
       const textarea = screen.getByPlaceholderText(COMPOSE_PLACEHOLDER);
       await userEvent.type(textarea, 'go{Enter}');
       await act(async () => {
-        await claude.emit(s.textDelta('Before tool'));
-        await claude.emit(s.assistant({ toolUse: { id: 'toolu_1', name: 'Read', input: {} } }));
-        await claude.emit(s.controlRequest('req-1', 'can_use_tool', 'Read', {}));
+        await claude.emitSegment(s.textDelta('Before tool'));
+        await claude.emitSegment(
+          s.assistant({ toolUse: { id: 'toolu_1', name: 'Read', input: {} } }),
+        );
+        await claude.emitSegment(s.controlRequest('req-1', 'can_use_tool', 'Read', {}));
       });
 
       const yesButton = await screen.findByText('Yes');
       await userEvent.click(yesButton);
 
       await act(async () => {
-        await claude.emit(s.toolResult('toolu_1', 'file content'));
+        await claude.emitSegment(s.toolResult('toolu_1', 'file content'));
       });
       await emitAssistantTurn(claude, 'After tool');
 
@@ -145,15 +147,17 @@ describe('ChatSession', () => {
       const textarea = screen.getByPlaceholderText(COMPOSE_PLACEHOLDER);
       await userEvent.type(textarea, 'go{Enter}');
       await act(async () => {
-        await claude.emit(s.assistant({ toolUse: { id: 'toolu_1', name: 'Read', input: {} } }));
-        await claude.emit(s.controlRequest('r1', 'can_use_tool', 'Read', {}));
+        await claude.emitSegment(
+          s.assistant({ toolUse: { id: 'toolu_1', name: 'Read', input: {} } }),
+        );
+        await claude.emitSegment(s.controlRequest('r1', 'can_use_tool', 'Read', {}));
       });
 
       const yesButton = await screen.findByText('Yes');
       await userEvent.click(yesButton);
 
       await act(async () => {
-        await claude.emit(s.toolResult('toolu_1', 'file contents'));
+        await claude.emitSegment(s.toolResult('toolu_1', 'file contents'));
       });
       await emitAssistantTurn(claude, 'Done');
 
@@ -166,7 +170,9 @@ describe('ChatSession', () => {
       const textarea = screen.getByPlaceholderText(COMPOSE_PLACEHOLDER);
       await userEvent.type(textarea, 'go{Enter}');
       await act(async () => {
-        await claude.emit(s.controlRequestElicitation('elic-1', { message: 'Please confirm' }));
+        await claude.emitSegment(
+          s.controlRequestElicitation('elic-1', { message: 'Please confirm' }),
+        );
       });
 
       expect(screen.queryAllByText(/confirm/i).length).toBeGreaterThan(0);
@@ -177,15 +183,17 @@ describe('ChatSession', () => {
       const textarea = screen.getByPlaceholderText(COMPOSE_PLACEHOLDER);
       await userEvent.type(textarea, 'go{Enter}');
       await act(async () => {
-        await claude.emit(s.assistant({ toolUse: { id: 'toolu_1', name: 'bash', input: {} } }));
-        await claude.emit(s.controlRequest('r1', 'can_use_tool', 'bash', {}));
+        await claude.emitSegment(
+          s.assistant({ toolUse: { id: 'toolu_1', name: 'bash', input: {} } }),
+        );
+        await claude.emitSegment(s.controlRequest('r1', 'can_use_tool', 'bash', {}));
       });
 
       expect(screen.getByText('Yes')).toBeInTheDocument();
 
       await act(async () => {
-        await claude.emit(s.controlCancelRequest('r1'));
-        await claude.emit(s.result());
+        await claude.emitSegment(s.controlCancelRequest('r1'));
+        await claude.emitSegment(s.result());
       });
 
       expect(screen.queryByText('Yes')).not.toBeInTheDocument();
@@ -197,7 +205,7 @@ describe('ChatSession', () => {
       const textarea = screen.getByPlaceholderText(COMPOSE_PLACEHOLDER);
       await userEvent.type(textarea, 'go{Enter}');
       await act(async () => {
-        await claude.emit(
+        await claude.emitSegment(
           s.controlRequestShowNotification('notif-1', {
             message: 'Something went wrong',
             severity: 'error',
@@ -213,7 +221,7 @@ describe('ChatSession', () => {
       const textarea = screen.getByPlaceholderText(COMPOSE_PLACEHOLDER);
       await userEvent.type(textarea, 'go{Enter}');
       await act(async () => {
-        await claude.emit(
+        await claude.emitSegment(
           s.controlRequestShowNotification('notif-2', {
             message: 'Be careful',
             severity: 'warning',
@@ -229,7 +237,7 @@ describe('ChatSession', () => {
       const textarea = screen.getByPlaceholderText(COMPOSE_PLACEHOLDER);
       await userEvent.type(textarea, 'go{Enter}');
       await act(async () => {
-        await claude.emit(
+        await claude.emitSegment(
           s.controlRequestShowNotification('notif-3', {
             message: 'Retry?',
             severity: 'info',
@@ -247,7 +255,7 @@ describe('ChatSession', () => {
       await userEvent.type(textarea, 'go{Enter}');
       await emitAssistantTurn(claude);
       await act(async () => {
-        await claude.emit(
+        await claude.emitSegment(
           s.controlRequestOpenDiff('diff-1', {
             originalFilePath: '/tmp/old.ts',
             newFilePath: '/tmp/new.ts',
@@ -277,7 +285,7 @@ describe('ChatSession', () => {
       await userEvent.type(textarea, 'go{Enter}');
 
       await act(async () => {
-        await claude.emit(s.resultError({ errors: ['Something failed'] }));
+        await claude.emitSegment(s.resultError({ errors: ['Something failed'] }));
       });
 
       expect((await screen.findAllByText(/Something failed/)).length).toBeGreaterThan(0);
@@ -290,8 +298,8 @@ describe('ChatSession', () => {
       await userEvent.type(textarea, 'go{Enter}');
 
       await act(async () => {
-        await claude.emit(s.textDelta('Hello '));
-        await claude.emit(s.textDelta('World'));
+        await claude.emitSegment(s.textDelta('Hello '));
+        await claude.emitSegment(s.textDelta('World'));
       });
       await emitAssistantTurn(claude, 'Hello World');
 
@@ -304,13 +312,13 @@ describe('ChatSession', () => {
       await userEvent.type(textarea, 'go{Enter}');
       await emitAssistantTurn(claude);
       await act(async () => {
-        await claude.emit(
+        await claude.emitSegment(
           s.controlRequestOpenDiff('diff-gone', {
             originalFilePath: '/tmp/a',
             newFilePath: '/tmp/b',
           }),
         );
-        await claude.emit(s.controlCancelRequest('diff-gone'));
+        await claude.emitSegment(s.controlCancelRequest('diff-gone'));
       });
 
       expect(screen.getByText('hi')).toBeInTheDocument();

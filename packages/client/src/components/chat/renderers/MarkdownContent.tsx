@@ -6,6 +6,7 @@ import { copyToClipboard } from '@/utils/clipboard';
 import { cn } from '@/utils/cn';
 import { CopyButton, HOVER_COPY_BASE } from '../tool-use/message-blocks/CopyButton.tsx';
 import { CodeBlock } from './CodeBlock.tsx';
+import { MermaidDiagram } from './MermaidDiagram.tsx';
 
 function isElementWithLanguageClass(node: React.ReactNode): boolean {
   if (!isValidElement<{ className?: string }>(node)) return false;
@@ -55,11 +56,10 @@ function LinkWithContextMenu({ href, children }: { href?: string; children: Reac
 
 const components: Components = {
   code({ className, children }) {
-    const match = /language-(\w+)/.exec(className ?? '');
+    const lang = /language-(\w+)/.exec(className ?? '')?.[1];
     const code = String(children).replace(/\n$/, '');
-    if (match?.[1]) {
-      return <CodeBlock code={code} language={match[1]} className={className} />;
-    }
+    if (lang === 'mermaid') return <MermaidDiagram code={code} />;
+    if (lang) return <CodeBlock code={code} language={lang} className={className} />;
     return <code className={className}>{children}</code>;
   },
   pre({ children }) {

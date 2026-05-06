@@ -42,4 +42,12 @@ export class RawEventService {
   cloneEvents(fromSessionId: string, toSessionId: string): Promise<void> {
     return this.eventStore.cloneEvents(fromSessionId, toSessionId);
   }
+
+  hasUserEcho(sessionId: string): Promise<boolean> {
+    return this.eventStore.hasUserEcho(sessionId);
+  }
+
+  streamBySession(sessionId: string, batchSize: number): AsyncGenerator<RawEvent[]> {
+    return this.eventStore.streamBySession(sessionId, batchSize);
+  }
 }

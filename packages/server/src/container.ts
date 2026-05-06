@@ -42,9 +42,9 @@ import { UsageTracker } from './services/usage-tracker.ts';
 import { ChannelEmitter } from './socket/channel-emitter.ts';
 import { ChannelManager, type SessionLookup } from './socket/channel-manager.ts';
 import { matchesFs, matchesGit, matchesOpenspec } from './socket/dirty-matchers.ts';
+import { SessionHistory } from './socket/handlers/session/history.ts';
 import { RawRecorder } from './socket/raw-recorder.ts';
 import { SocketServer } from './socket/server.ts';
-import { SessionHistory } from './socket/session-history.ts';
 import { type RunnerFactory, TYPES } from './types.ts';
 
 export interface StoreConfig {
@@ -59,6 +59,7 @@ export interface ContainerOptions {
   storeConfig?: StoreConfig;
   /** Override WatchService — tests pass FakeWatchService to avoid real chokidar. */
   watchService?: WatchService;
+  historyBatchSize?: number;
 }
 
 export function createContainer(options: ContainerOptions): Container {
@@ -145,7 +146,13 @@ export function createContainer(options: ContainerOptions): Container {
       openspec: openspecDirtyBroadcaster,
     },
   );
-  sessionHistory = new SessionHistory(rawEventService, sessionStore, adapter, channelManager);
+  sessionHistory = new SessionHistory(
+    rawEventService,
+    sessionStore,
+    adapter,
+    channelManager,
+    options.historyBatchSize,
+  );
   container.bind<ChannelManager>(TYPES.ChannelManager).toConstantValue(channelManager);
   container.bind<SessionHistory>(TYPES.SessionHistory).toConstantValue(sessionHistory);
   container.bind<ChannelEmitter>(TYPES.ChannelEventRouter).toConstantValue(emitter);

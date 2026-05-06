@@ -46,53 +46,9 @@ export const messageAssistantPayloadSchema: z.ZodObject<
 > = messagePayloadBaseSchema;
 export type MessageAssistantPayload = z.infer<typeof messageAssistantPayloadSchema>;
 
-export const userSourceSchema: z.ZodEnum<{
-  command: 'command';
-  typed: 'typed';
-  skill: 'skill';
-  reminder: 'reminder';
-}> = z.enum(['typed', 'skill', 'command', 'reminder']);
-export type UserSource = z.infer<typeof userSourceSchema>;
-
-export const messageUserPayloadSchema: z.ZodObject<
-  {
-    channelId: z.ZodString;
-    content: z.ZodArray<
-      z.ZodUnion<
-        readonly [
-          z.ZodObject<{ type: z.ZodLiteral<'text'>; text: z.ZodString }, z.core.$strip>,
-          z.ZodObject<{ type: z.ZodLiteral<'thinking'>; thinking: z.ZodString }, z.core.$strip>,
-          z.ZodObject<
-            {
-              type: z.ZodLiteral<'tool_use'>;
-              toolId: z.ZodString;
-              toolName: z.ZodString;
-              input: z.ZodUnknown;
-            },
-            z.core.$strip
-          >,
-          z.ZodObject<
-            {
-              type: z.ZodLiteral<'tool_result'>;
-              toolUseId: z.ZodString;
-              toolName: z.ZodOptional<z.ZodString>;
-              content: z.ZodUnknown;
-              isError: z.ZodOptional<z.ZodBoolean>;
-            },
-            z.core.$strip
-          >,
-        ]
-      >
-    >;
-    parentToolUseId: z.ZodOptional<z.ZodString>;
-    uuid: z.ZodOptional<z.ZodString>;
-    source: z.ZodOptional<
-      z.ZodEnum<{ command: 'command'; typed: 'typed'; skill: 'skill'; reminder: 'reminder' }>
-    >;
-  },
-  z.core.$strip
-> = messagePayloadBaseSchema.extend({
-  source: userSourceSchema.optional(),
+export const messageUserPayloadSchema = messagePayloadBaseSchema.extend({
+  history: z.boolean().optional(),
+  renderAs: z.enum(['markdown', 'plain']).optional(),
 });
 export type MessageUserPayload = z.infer<typeof messageUserPayloadSchema>;
 

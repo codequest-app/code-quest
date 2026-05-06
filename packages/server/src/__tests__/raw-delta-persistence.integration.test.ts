@@ -44,10 +44,10 @@ async function runTurn(sessionId: string) {
   await claude.initialize(s.init(sessionId));
 
   await claude.send('chat:send', { channelId: sessionId, message: 'hi' });
-  await claude.emit(deltaLine('Hel'));
-  await claude.emit(deltaLine('lo'));
-  await claude.emit(s.assistant('Hello'));
-  await claude.emit(s.result());
+  await claude.emitSegment(deltaLine('Hel'));
+  await claude.emitSegment(deltaLine('lo'));
+  await claude.emitSegment(s.assistant('Hello'));
+  await claude.emitSegment(s.result());
 
   // Wait until the assistant + result rows are persisted (instead of a
   // fixed sleep — flaky on slow CI, wasteful on fast machines).

@@ -80,9 +80,9 @@ describe('FakeSummoner', () => {
     const claude = summoner.claude();
     await claude.initialize();
 
-    await claude.emit(s.assistant('hello'));
+    await claude.emitSegment(s.assistant('hello'));
 
-    const all = claude.events();
+    const all = claude.receivedEvents();
     expect(all.length).toBeGreaterThan(0);
     expect(all.some((e) => e.event === 'message:assistant')).toBe(true);
   });
@@ -92,9 +92,9 @@ describe('FakeSummoner', () => {
     const claude = summoner.claude();
     const channelId = await claude.initialize();
 
-    await claude.emit(s.assistant('hello'));
+    await claude.emitSegment(s.assistant('hello'));
 
-    const assistantEvents = claude.events('message:assistant');
+    const assistantEvents = claude.receivedEvents('message:assistant');
     expect(assistantEvents.length).toBeGreaterThan(0);
     expect(assistantEvents[0]).toHaveProperty('channelId', channelId);
   });
@@ -104,9 +104,9 @@ describe('FakeSummoner', () => {
     const claude = summoner.claude();
     await claude.initialize();
 
-    await claude.emit(s.assistant('hi'));
+    await claude.emitSegment(s.assistant('hi'));
 
-    const all = claude.events();
+    const all = claude.receivedEvents();
     const eventNames = all.map((e) => e.event);
     const initIdx = eventNames.indexOf('session:init');
     const assistIdx = eventNames.indexOf('message:assistant');

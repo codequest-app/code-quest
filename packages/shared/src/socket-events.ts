@@ -695,6 +695,11 @@ export interface ServerToClientEvents {
   // ── Session (extends existing session:* pattern) ──
   'session:init': (payload: SessionInitPayload) => void;
   'session:status': (payload: SessionStatusPayload) => void;
+  'session:history': (payload: {
+    channelId: string;
+    events: ClientMessage[];
+    replayId: string;
+  }) => void;
 
   // ── Control ──
   'control:permission': (payload: ControlPermissionPayload) => void;
@@ -904,6 +909,7 @@ export const EVENTS = {
     fork: 'session:fork',
     generate_title: 'session:generate_title',
     get: 'session:get',
+    history: 'session:history',
     init: 'session:init',
     join: 'session:join',
     launch: 'session:launch',

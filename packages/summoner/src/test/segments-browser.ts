@@ -17,6 +17,7 @@ import HOOK_STARTED from '../__fixtures__/claude/real/hook-started.jsonl?raw';
 import INIT from '../__fixtures__/claude/real/init.jsonl?raw';
 import RATE_LIMIT_EVENT from '../__fixtures__/claude/real/rate-limit-event.jsonl?raw';
 import RESULT_ERROR from '../__fixtures__/claude/real/result-error.jsonl?raw';
+import RESULT_IS_ERROR_NO_ERRORS from '../__fixtures__/claude/real/result-is-error-no-errors.jsonl?raw';
 import RESULT_SUCCESS from '../__fixtures__/claude/real/result-success.jsonl?raw';
 import STATUS from '../__fixtures__/claude/real/status.jsonl?raw';
 import STREAM_CONTENT_BLOCK_START from '../__fixtures__/claude/real/stream-content-block-start.jsonl?raw';
@@ -34,6 +35,7 @@ import TASK_STARTED from '../__fixtures__/claude/real/task-started.jsonl?raw';
 import THINKING from '../__fixtures__/claude/real/thinking.jsonl?raw';
 import TOOL_RESULT from '../__fixtures__/claude/real/tool-result.jsonl?raw';
 import TOOL_USE from '../__fixtures__/claude/real/tool-use.jsonl?raw';
+import USER_SKILL_BODY from '../__fixtures__/claude/real/user-skill-body.jsonl?raw';
 import USER_TEXT from '../__fixtures__/claude/real/user-text.jsonl?raw';
 import AUTH_URL from '../__fixtures__/claude/synthetic/auth-url.jsonl?raw';
 import BRIDGE_STATE from '../__fixtures__/claude/synthetic/bridge-state.jsonl?raw';
@@ -71,8 +73,10 @@ const _s = createSegments({
   CONTROL_CANCEL_REQUEST,
   TOOL_RESULT,
   USER_TEXT,
+  USER_SKILL_BODY,
   RESULT_SUCCESS,
   RESULT_ERROR,
+  RESULT_IS_ERROR_NO_ERRORS,
   RESULT_RESUME_NOT_FOUND,
   STATUS,
   TASK_STARTED,

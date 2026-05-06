@@ -167,6 +167,21 @@ export class ChannelManager {
     channelId: string,
     opts: CreateChannelOptions,
   ): Promise<{ channel: Channel; initResult: ControlResponse }> {
+    const { channel, initResultPromise } = this.createEager(channelId, opts);
+    const initResult = await initResultPromise;
+    return { channel, initResult };
+  }
+
+  /**
+   * Spawn the CLI process and return immediately without waiting for the CLI's
+   * initialize control_response. The `channel.readyPromise` resolves when CLI
+   * init completes. Use this when you want to broadcast channel existence
+   * (session:created) and ack the caller before CLI is fully ready.
+   */
+  createEager(
+    channelId: string,
+    opts: CreateChannelOptions,
+  ): { channel: Channel; initResultPromise: Promise<ControlResponse> } {
     const rawCwd = opts.worktree?.path ?? opts.cwd;
     const cwd = resolve(rawCwd);
     const runner = this.runnerFactory.create(opts.launchOptions, { cwd });
@@ -177,10 +192,15 @@ export class ChannelManager {
     opts.onBeforeSpawn?.(channel);
     runner.spawn();
 
-    // Initialize and wait for control_response
-    const initResult = await channel.sendRequest('session:initialize', opts.initOptions ?? {});
+    const initResultPromise = channel.sendRequest('session:initialize', opts.initOptions ?? {});
+    const readyPromise = initResultPromise.then(() => {});
+    // Suppress unhandled-rejection on readyPromise itself; the error is
+    // handled via initResultPromise.catch() in handleResume and will also
+    // surface to any caller that awaits channel.readyPromise.
+    readyPromise.catch(() => {});
+    channel.setReadyPromise(readyPromise);
 
-    return { channel, initResult };
+    return { channel, initResultPromise };
   }
 
   async join(channelId: string): Promise<{ channel: Channel }> {

@@ -27,8 +27,8 @@ async function renderAll() {
     </CommandPaletteProvider>,
   );
   await act(async () => {
-    await ctx.claude.emit(s.assistant('Visible message'));
-    await ctx.claude.emit(s.result());
+    await ctx.claude.emitSegment(s.assistant('Visible message'));
+    await ctx.claude.emitSegment(s.result());
   });
   await userEvent.click(screen.getByText('Open'));
   return ctx;
@@ -67,7 +67,7 @@ describe('CommandPalette — All tab', () => {
       </CommandPaletteProvider>,
     );
     await act(async () => {
-      await ctx.claude.emit(s.result());
+      await ctx.claude.emitSegment(s.result());
     });
     await userEvent.click(screen.getByText('Open'));
     const buttons = screen.getAllByRole('button');
@@ -82,8 +82,8 @@ describe('CommandPalette — All tab', () => {
     const user = userEvent.setup();
     const ctx = await renderAll();
     await act(async () => {
-      await ctx.claude.emit(s.assistant('Other content'));
-      await ctx.claude.emit(s.result());
+      await ctx.claude.emitSegment(s.assistant('Other content'));
+      await ctx.claude.emitSegment(s.result());
     });
     const input = screen.getByPlaceholderText(/search/i);
     await user.type(input, 'Visible');
@@ -99,7 +99,7 @@ it('tool_use message preview shows meaningful input (not just tool name)', async
   const user = userEvent.setup();
   const ctx = await renderAll();
   await act(async () => {
-    await ctx.claude.emit(
+    await ctx.claude.emitSegment(
       s.assistant({ toolUse: { id: 'tu-1', name: 'Bash', input: { command: 'ls -la /src' } } }),
     );
   });

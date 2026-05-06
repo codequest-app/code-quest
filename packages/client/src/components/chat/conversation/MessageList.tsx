@@ -29,6 +29,7 @@ import {
 import { SpinnerVerb } from '../SpinnerVerb.tsx';
 import { ChatMessage } from './ChatMessage.tsx';
 import { CollapsibleTimeline } from './CollapsibleTimeline.tsx';
+import { getGroupKey } from './getGroupKey.ts';
 import { SubagentChildren } from './SubagentChildren.tsx';
 
 const SCROLL_THRESHOLD_PX = 50;
@@ -154,6 +155,7 @@ export const MessageList: React.ForwardRefExoticComponent<
     messages,
     isProcessing,
     statusText,
+    isConnecting,
     rewindToMessage: onRewind,
     forkSession: onFork,
   } = useChannelMessages();
@@ -203,10 +205,11 @@ export const MessageList: React.ForwardRefExoticComponent<
       return;
     }
     if (isAtBottomRef.current) {
-      const behavior = countChanged ? 'smooth' : 'instant';
+      // Use instant during history load to avoid smooth-scroll lag between batches.
+      const behavior = isConnecting || !countChanged ? 'instant' : 'smooth';
       scrollToEnd(scrollRef, programmaticScrollRef, behavior);
     }
-  }, [messages.length, lastContentLen, lastRole]);
+  }, [messages.length, lastContentLen, lastRole, isConnecting]);
 
   const scrollToBottom = () => {
     isAtBottomRef.current = true;
@@ -252,6 +255,11 @@ export const MessageList: React.ForwardRefExoticComponent<
     getScrollElement: () => scrollContainerRef.current,
     estimateSize: () => ESTIMATED_ITEM_HEIGHT_PX,
     overscan: 5,
+    getItemKey: (index) => {
+      const group = displayGroups[index];
+      if (!group) return index;
+      return getGroupKey(group, index);
+    },
   });
 
   // Virtualizer's total size changes as items get measured, but that doesn't
@@ -307,7 +315,11 @@ export const MessageList: React.ForwardRefExoticComponent<
         className="absolute inset-0 overflow-y-auto overflow-x-hidden"
         aria-label="message-list-scroll"
       >
-        {messages.length === 0 ? (
+        {isConnecting ? (
+          <div className="flex flex-1 items-center justify-center h-full">
+            <SpinnerVerb verbs={['Connecting']} />
+          </div>
+        ) : messages.length === 0 ? (
           <div className="flex flex-col items-center justify-center h-full text-center select-none gap-3 relative -top-7">
             <span className="text-4xl text-assistant">✦</span>
             <span className="text-lg font-medium text-text-bright">CC Office</span>
@@ -327,11 +339,7 @@ export const MessageList: React.ForwardRefExoticComponent<
                 if (!group) return null;
                 return (
                   <VirtualGroupItem
-                    key={
-                      group.kind === 'timeline'
-                        ? (group.nodes[0]?.message.id ?? 'timeline')
-                        : group.node.message.id
-                    }
+                    key={getGroupKey(group, item.index)}
                     group={group}
                     item={item}
                     virtualizer={virtualizer}

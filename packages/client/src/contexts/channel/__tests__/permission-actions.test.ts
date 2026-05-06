@@ -17,12 +17,12 @@ async function setup(controls: PendingControl[]) {
   // Prime the server with pending controls so chat:respond is routed to CLI.
   await claude.send('chat:send', { channelId, message: 'go' });
   for (const c of controls) {
-    await claude.emit(
+    await claude.emitSegment(
       s.assistant({
         toolUse: { id: c.toolUseId ?? c.requestId, name: c.toolName ?? 'Bash', input: {} },
       }),
     );
-    await claude.emit(s.controlRequest(c.requestId, c.subtype, c.toolName ?? 'Bash', {}));
+    await claude.emitSegment(s.controlRequest(c.requestId, c.subtype, c.toolName ?? 'Bash', {}));
   }
 
   const setControls = vi.fn();

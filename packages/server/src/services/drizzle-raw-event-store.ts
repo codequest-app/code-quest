@@ -1,5 +1,5 @@
 import type { RawEvent } from '@code-quest/summoner';
-import { and, asc, type Column, desc, eq } from 'drizzle-orm';
+import { and, asc, type Column, desc, eq, sql } from 'drizzle-orm';
 import { v7 as uuidv7 } from 'uuid';
 import { z } from 'zod';
 import type { DrizzleDb } from './drizzle-types.ts';
@@ -40,6 +40,10 @@ interface RawDeltasTable {
  *  DrizzleDb structural type omits those methods. This local shape narrows
  *  just enough to keep the UNION ALL call typechecked without leaking raw
  *  dialect types. */
+interface PageableQuery<T> extends Promise<T[]> {
+  limit(n: number): { offset(n: number): Promise<T[]> } & Promise<T[]>;
+}
+
 interface UnionableSelectBuilder<T> {
   from(table: unknown): {
     where(cond: unknown): {
@@ -176,5 +180,46 @@ export class DrizzleRawEventStore implements RawEventStore {
       .orderBy(asc(this.table.createdAt), asc(this.table.seq));
 
     return z.array(rawEventRowSchema).parse(rows).map(toRawEvent);
+  }
+
+  async hasUserEcho(sessionId: string): Promise<boolean> {
+    const rows = await this.db
+      .select()
+      .from(this.table)
+      .where(
+        and(
+          eq(this.table.sessionId, sessionId),
+          eq(this.table.dir, 'out'),
+          sql`json_extract(${this.table.raw}, '$.type') = 'user'`,
+        ),
+      )
+      .orderBy(asc(this.table.seq))
+      .limit(1);
+    return rows.length > 0;
+  }
+
+  async *streamBySession(sessionId: string, batchSize: number): AsyncGenerator<RawEvent[]> {
+    let cursor: { createdAt: string; seq: number } | undefined;
+    while (true) {
+      const cond = cursor
+        ? and(
+            eq(this.table.sessionId, sessionId),
+            sql`(${this.table.createdAt}, ${this.table.seq}) > (${cursor.createdAt}, ${cursor.seq})`,
+          )
+        : eq(this.table.sessionId, sessionId);
+      const rows = await (
+        this.db
+          .select()
+          .from(this.table)
+          .where(cond)
+          .orderBy(asc(this.table.createdAt), asc(this.table.seq)) as PageableQuery<RawEventRow>
+      ).limit(batchSize);
+      const parsed = z.array(rawEventRowSchema).parse(rows);
+      if (parsed.length === 0) break;
+      const last = parsed.at(-1);
+      if (last) cursor = { createdAt: last.createdAt, seq: last.seq };
+      yield parsed.map(toRawEvent);
+      if (parsed.length < batchSize) break;
+    }
   }
 }

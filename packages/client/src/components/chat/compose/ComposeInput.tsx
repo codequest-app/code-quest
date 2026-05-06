@@ -12,16 +12,9 @@ import { getMentionQuery, MENTION_REGEX } from '@/utils/slash-query';
 import { sortEntriesDirsFirst } from '@/utils/sort-entries';
 import { MentionDropdown } from './MentionDropdown.tsx';
 
-type InputHistory = { history: string[]; index: number; draft: string };
+const DEFAULT_PERMISSION_MODES = ['normal', 'acceptEdits', 'plan', 'bypassPermissions'];
 
-function historyPush(ref: InputHistory, message: string): void {
-  const trimmed = message.trim();
-  if (!trimmed) return;
-  if (ref.history[ref.history.length - 1] === trimmed) return;
-  ref.history.push(trimmed);
-  ref.index = -1;
-  ref.draft = '';
-}
+type InputHistory = { history: string[]; index: number; draft: string };
 
 function historyCycleUp(ref: InputHistory, currentValue: string): string | null {
   if (ref.history.length === 0) return null;
@@ -68,7 +61,7 @@ export function ComposeInput({
 }): React.JSX.Element {
   const hasMicButton = isSpeechSupported();
   const textareaClass = cn(TEXTAREA_BASE_CLASS, hasMicButton ? 'pr-10' : 'pr-3.5');
-  const { isProcessing, searchFiles, messages } = useChannelMessages();
+  const { isProcessing, searchFiles, historyMessages } = useChannelMessages();
   const { providerConfig, permissionMode, setPermissionMode } = useChannelConfig();
   const compose = useChannelCompose();
 
@@ -106,12 +99,8 @@ export function ComposeInput({
   const historyRef = useRef<InputHistory>({ history: [], index: -1, draft: '' });
 
   useEffect(() => {
-    if (historyRef.current.history.length > 0 || messages.length === 0) return;
-    historyRef.current.history = messages
-      .filter((m) => m.role === 'user' && m.type === 'text')
-      .map((m) => m.content.trim())
-      .filter(Boolean);
-  }, [messages]);
+    historyRef.current.history = historyMessages ?? [];
+  }, [historyMessages]);
 
   const [fileResults, setFileResults] = useState<FsSearchResult[]>([]);
   const [selectedIndex, setSelectedIndex] = useState(-1);
@@ -199,9 +188,7 @@ export function ComposeInput({
     if (e.key !== 'Tab' || !e.shiftKey || slashOpen || mentionOpen) return false;
     e.preventDefault();
     const configModes = providerConfig?.permissionModes;
-    const modeIds = configModes?.length
-      ? configModes.map((m) => m.id)
-      : ['normal', 'acceptEdits', 'plan', 'bypassPermissions'];
+    const modeIds = configModes?.length ? configModes.map((m) => m.id) : DEFAULT_PERMISSION_MODES;
     const currentIndex = modeIds.indexOf(permissionMode ?? 'normal');
     setPermissionMode(modeIds[(currentIndex + 1) % modeIds.length] ?? 'normal');
     return true;
@@ -272,6 +259,12 @@ export function ComposeInput({
       if (msg !== null) {
         e.preventDefault();
         updateValue(msg);
+        requestAnimationFrame(() => {
+          if (textareaRef.current) {
+            textareaRef.current.selectionStart = 0;
+            textareaRef.current.selectionEnd = 0;
+          }
+        });
       }
       return true;
     }
@@ -288,9 +281,8 @@ export function ComposeInput({
     e.preventDefault();
     const trimmed = value.trim();
     if (!trimmed) return;
-    historyPush(historyRef.current, trimmed);
-    submit();
     historyRef.current.index = -1;
+    submit();
   }
 
   function handleKeyDown(e: KeyboardEvent<HTMLTextAreaElement>): void {

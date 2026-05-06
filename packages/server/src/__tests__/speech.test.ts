@@ -32,9 +32,9 @@ describe('ChatHandler > speech', () => {
   it('speech_to_text_message from CLI is forwarded as speech:message', async () => {
     const { claude, channelId } = await setup();
 
-    await claude.emit(s.speechToTextMessage(channelId, 'hello world', false));
+    await claude.emitSegment(s.speechToTextMessage(channelId, 'hello world', false));
 
-    const speechEvents = claude.events('speech:message');
+    const speechEvents = claude.receivedEvents('speech:message');
     expect(speechEvents.length).toBe(1);
     expect(speechEvents[0]!.text).toBe('hello world');
     expect(speechEvents[0]!.done).toBe(false);

@@ -1,9 +1,11 @@
 import { basename, dirname, join } from 'node:path';
+import { mimeForPath } from '../filesystem/mime-types.ts';
 import type {
   DirectoryEntry,
   FileResult,
   FilesystemService,
   FsMutationResult,
+  ReadFileAbsoluteResult,
   ReadFileResult,
   WriteFileResult,
 } from '../filesystem/types.ts';
@@ -97,13 +99,15 @@ export class FakeFilesystemService implements FilesystemService {
     return results;
   }
 
-  async readFileAbsolute(absolutePath: string): Promise<ReadFileResult> {
+  async readFileAbsolute(absolutePath: string): Promise<ReadFileAbsoluteResult> {
     if (!this.isWithinRoots(absolutePath)) {
       return { error: 'Path outside allowed roots' };
     }
     const content = this.files.get(absolutePath);
     if (content === undefined) return { error: `File not found: ${absolutePath}` };
-    return { content };
+    const { contentType, encoding } = mimeForPath(absolutePath);
+    const encoded = encoding === 'base64' ? Buffer.from(content).toString('base64') : content;
+    return { content: encoded, contentType, encoding };
   }
 
   async writeFileAbsolute(absolutePath: string, content: string): Promise<WriteFileResult> {

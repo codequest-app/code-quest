@@ -1,5 +1,8 @@
 // All schema exports, domain-grouped inside ./schemas/index.ts
 
+// Content types
+export { CONTENT_TYPE } from './content-types.ts';
+
 // Errors
 export { ERROR_CODES, type ErrorCode } from './errors.ts';
 export * from './schemas/index.ts';

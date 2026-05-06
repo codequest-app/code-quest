@@ -25,6 +25,9 @@ export class FakeSummoner {
   private readonly _sentEvents: Array<{ event: string; payload: any }> = [];
   private _claude?: FakeClaude;
 
+  private readonly _heldEmits = new Map<string, { cb: (...args: unknown[]) => void } | null>();
+  private _origClientEmit!: (event: string, ...args: unknown[]) => FakeSocket;
+
   constructor(server: ServerConnector) {
     const conn = server.connect();
     this._socket = conn.socket;
@@ -42,13 +45,32 @@ export class FakeSummoner {
       return origServerEmit(event, ...args);
     };
 
-    // Auto-record all client → server emits (mirror of `events()` for assertions
-    // about RPC calls the React layer issued).
-    const origClientEmit = this._socket.emit.bind(this._socket);
+    // Auto-record all client → server emits + holdEmit interception.
+    this._origClientEmit = this._socket.emit.bind(this._socket);
     this._socket.emit = (event: string, ...args: unknown[]) => {
       this._sentEvents.push({ event, payload: args[0] });
-      return origClientEmit(event, ...args);
+
+      if (this._heldEmits.has(event) && this._heldEmits.get(event) === null) {
+        return this._interceptHeldEmit(event, args);
+      }
+
+      return this._origClientEmit(event, ...args);
     };
+  }
+
+  private _interceptHeldEmit(event: string, args: unknown[]) {
+    const lastArg = args[args.length - 1];
+    const rest = args.slice(0, -1);
+    const cb = typeof lastArg === 'function' ? (lastArg as (...a: unknown[]) => void) : null;
+    const argsForServer = cb ? rest : args;
+    if (cb) {
+      this._origClientEmit(event, ...argsForServer, (ack: unknown) => {
+        this._heldEmits.set(event, { cb: () => cb(ack) });
+      });
+    } else {
+      this._origClientEmit(event, ...args);
+    }
+    return this._socket;
   }
 
   /** Get the FakeFilesystemService. */
@@ -87,10 +109,10 @@ export class FakeSummoner {
     return this.claude().send<T>(event, payload);
   }
 
-  /** Query recorded server-pushed events. */
-  events(): Array<{ event: string; payload: any }>;
-  events(eventName: string): any[];
-  events(eventName?: string): any {
+  /** Query recorded server → client events. */
+  receivedEvents(): Array<{ event: string; payload: any }>;
+  receivedEvents(eventName: string): any[];
+  receivedEvents(eventName?: string): any {
     if (!eventName) return this._recordedEvents;
     return this._recordedEvents.filter((e) => e.event === eventName).map((e) => e.payload);
   }
@@ -103,6 +125,21 @@ export class FakeSummoner {
   sentEvents(eventName?: string): any {
     if (!eventName) return this._sentEvents;
     return this._sentEvents.filter((e) => e.event === eventName).map((e) => e.payload);
+  }
+
+  /** Hold the next emit of a specific event — the server handler runs but the
+   *  callback is captured. Call `release()` on the returned handle to deliver
+   *  the ACK to the client. Only the first matching emit is held; subsequent
+   *  emits of the same event pass through normally. */
+  holdEmit(eventName: string): { release: () => void } {
+    this._heldEmits.set(eventName, null);
+    return {
+      release: () => {
+        const held = this._heldEmits.get(eventName);
+        this._heldEmits.delete(eventName);
+        held?.cb();
+      },
+    };
   }
 
   /** Subscribe to server events with callback (for timing-sensitive checks). */

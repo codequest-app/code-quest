@@ -29,15 +29,17 @@ expect(screen.getByText(/Bash/)).toBeInTheDocument();
 
 ## Pattern 2: Full pipeline — `renderWithWorkspace`
 
-測試 CLI → server → client 事件流時用。FakeClaude 自動 `act()` 包裝 emit，不需手動。
+測試 CLI → server → client 事件流時用。`emitSegment` 需包在 `act()` 裡。
 
 ```tsx
 const { claude, user } = await renderWithWorkspace();
 const textarea = screen.getByPlaceholderText(/Esc to focus/i);
 await user.type(textarea, 'hello');
 await user.keyboard('{Enter}');
-await claude.emit(s.assistant('Hello!'));
-await claude.emit(s.result());
+await act(async () => {
+  await claude.emitSegment(s.assistant('Hello!'));
+  await claude.emitSegment(s.result());
+});
 expect(screen.getByText(/Hello!/)).toBeInTheDocument();
 ```
 
@@ -70,7 +72,7 @@ expect(claude.socket.emit).toHaveBeenCalledWith('chat:stop_task', ...);
 | 層 | 驗法 | 能抓的 bug |
 |---|---|---|
 | ① UI dialog / banner | `getByText(/...)` | wire 到 menu item / button 沒接對 |
-| ② Server 收到 + 廣播 | `claude.events('projects:removed').length > 0` | handler 沒跑、payload schema 錯、broadcast 漏 |
+| ② Server 收到 + 廣播 | `claude.receivedEvents('projects:removed').length > 0` | handler 沒跑、payload schema 錯、broadcast 漏 |
 | ③ **DB / Store 真的改了** | `container.get(TYPES.ProjectStore).getByPath(...)` 為 null | store 邏輯壞、composite fan-out 漏、transaction 沒 commit |
 | ④ Client state 同步 | `queryByText` 不在 doc / state probe | 訂閱沒接好、setState 沒觸發 |
 
@@ -96,7 +98,7 @@ expect(screen.getByText(/remove project/i)).toBeInTheDocument();   // ①
 await user.click(screen.getByRole('button', { name: /^remove$/i }));
 
 await waitFor(async () => {
-  expect(claude.events('projects:removed').length).toBeGreaterThan(0);  // ②
+  expect(claude.receivedEvents('projects:removed').length).toBeGreaterThan(0);  // ②
   expect(await projectStore.getByPath('/path/proj')).toBeNull();         // ③
   expect(screen.queryByText(/remove project/i)).not.toBeInTheDocument(); // ④
 });
@@ -109,12 +111,12 @@ await waitFor(async () => {
 ```ts
 // prime: 一個 active session 阻擋 remove
 await sessionStore.upsert({ ..., projectRoot: '/path/proj', status: 'active' });
-const beforeEvents = claude.events('projects:removed').length;
+const beforeEvents = claude.receivedEvents('projects:removed').length;
 
 await user.click(removeButton);
 await new Promise((r) => setTimeout(r, 30));
 
-expect(claude.events('projects:removed').length).toBe(beforeEvents);   // 沒新事件
+expect(claude.receivedEvents('projects:removed').length).toBe(beforeEvents);   // 沒新事件
 expect(await projectStore.getByPath('/path/proj')).not.toBeNull();      // DB 還在
 expect(screen.getByText(/active session/i)).toBeInTheDocument();        // UI 顯示原因
 ```
@@ -182,4 +184,4 @@ claude.socket.emit('request_usage_update' as never, {}, () => {});
 
 ## 已知 FakeClaude 限制
 
-- `onControlRequest((req) => ...)` 只能回 success response（fake-claude.ts:189-197）。驅動 `{ ok: false }` 錯誤 ack 目前需直接 override `socket.emit`；錯誤傳播邏輯通常在 server 層已測
+- `setControlRequestHandler((req) => ...)` 只能回 success response（fake-claude.ts `_wireAutoRespond`）。驅動 `{ ok: false }` 錯誤 ack 目前需直接 override `socket.emit`；錯誤傳播邏輯通常在 server 層已測

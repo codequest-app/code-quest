@@ -11,9 +11,9 @@ describe('FakeSummoner', () => {
     expect(channelId).toBeTruthy();
 
     await summoner.send('chat:send', { channelId, message: 'hello' });
-    await summoner.claude().emit(s.assistant('Hello from Claude'));
+    await summoner.claude().emitSegment(s.assistant('Hello from Claude'));
 
-    const events = summoner.events('message:assistant');
+    const events = summoner.receivedEvents('message:assistant');
     expect(events.length).toBeGreaterThan(0);
   });
 

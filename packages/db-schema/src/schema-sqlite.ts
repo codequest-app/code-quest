@@ -39,6 +39,7 @@ export const rawEvents = sqliteTable(
   },
   (table) => [
     index('idx_raw_events_session_created').on(table.sessionId, table.createdAt, table.seq),
+    index('idx_raw_events_session_dir_seq').on(table.sessionId, table.dir, table.seq),
   ],
 );
 

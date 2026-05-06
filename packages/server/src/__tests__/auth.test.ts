@@ -15,9 +15,9 @@ describe('ChatHandler > auth', () => {
   it('emits auth:url when CLI outputs auth_url event', async () => {
     const { claude } = await setup();
 
-    await claude.emit(s.authUrl('https://auth.example.com', 'oauth'));
+    await claude.emitSegment(s.authUrl('https://auth.example.com', 'oauth'));
 
-    const authUrls = claude.events('notification:auth_url');
+    const authUrls = claude.receivedEvents('notification:auth_url');
     expect(authUrls).toHaveLength(1);
     expect(authUrls[0]).not.toHaveProperty('sessionId');
     expect(authUrls[0]!.url).toBe('https://auth.example.com');
@@ -35,7 +35,7 @@ describe('ChatHandler > auth', () => {
   it('auth:login sends claude_authenticate to CLI and returns auth URL', async () => {
     const { claude } = await setup();
 
-    claude.onControlRequest((req) => {
+    claude.setControlRequestHandler((req) => {
       if (req.subtype === 'claude_authenticate') {
         return {
           manualUrl: 'https://auth.example.com/manual',

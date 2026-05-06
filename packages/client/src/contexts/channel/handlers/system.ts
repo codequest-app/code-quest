@@ -1,6 +1,6 @@
 import type { ToolUseMeta } from '@code-quest/shared';
 import type { ChannelState } from '@/types/chat';
-import { addMessage, msg, patchMeta } from '@/utils/message';
+import { addMessage, mapSessionStats, msg, patchMeta } from '@/utils/message';
 import type { Payload } from './guard.ts';
 
 // ── On handlers ──
@@ -122,13 +122,44 @@ function onRateLimit(state: ChannelState, p: Payload<'system:rate_limit'>): Chan
   });
 }
 
+function onResult(state: ChannelState, p: Payload<'message:result'>): ChannelState {
+  const stats = mapSessionStats(p.stats);
+  const finalized = state.messages.map((m) =>
+    m.type === 'thinking' && m.meta?.isStreaming
+      ? patchMeta(m, { isStreaming: false, durationMs: stats.durationMs })
+      : m,
+  );
+  const messages = p.isError
+    ? finalized
+    : [...finalized, msg({ role: 'system', type: 'result', content: '', meta: { stats } })];
+  return {
+    ...state,
+    status: 'idle' as const,
+    stats,
+    isContextCompressed: false,
+    statusText: null,
+    messages,
+  };
+}
+
 function onErrorMessage(state: ChannelState, p: Payload<'error:message'>): ChannelState {
-  return addMessage(state, {
-    role: 'system',
-    type: 'error',
-    content: p.kind ?? p.message,
-    ...(p.kind ? { meta: { detail: p.message } } : {}),
-  });
+  let messages = state.messages;
+  for (let i = messages.length - 1; i >= 0; i--) {
+    const m = messages[i];
+    if (m?.role === 'assistant' && m.type === 'text' && m.content === p.message) {
+      messages = [...messages.slice(0, i), ...messages.slice(i + 1)];
+      break;
+    }
+  }
+  return addMessage(
+    { ...state, messages },
+    {
+      role: 'system',
+      type: 'error',
+      content: p.kind ?? p.message,
+      ...(p.kind ? { meta: { detail: p.message } } : {}),
+    },
+  );
 }
 
 // ── Handler map ──
@@ -143,6 +174,7 @@ export const systemHandlerOn: {
   'system:api_retry': typeof onApiRetry;
   'system:rate_limit': typeof onRateLimit;
   'error:message': typeof onErrorMessage;
+  'message:result': typeof onResult;
 } = {
   'system:compact_boundary': onCompactBoundary,
   'system:hook_started': onHookStarted,
@@ -153,4 +185,5 @@ export const systemHandlerOn: {
   'system:api_retry': onApiRetry,
   'system:rate_limit': onRateLimit,
   'error:message': onErrorMessage,
+  'message:result': onResult,
 } satisfies Record<string, (state: ChannelState, payload: never) => ChannelState>;

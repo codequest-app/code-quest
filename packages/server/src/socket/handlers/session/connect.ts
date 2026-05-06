@@ -30,6 +30,43 @@ import { err, ok } from '../../utils/rpc.ts';
  *  substring because the full message also includes the sessionId. */
 const CLI_RESUME_MISSING_MARKER = 'No conversation found';
 
+function markDeadIfMissing(
+  sessionStore: { updateStatus: (id: string, status: string) => Promise<unknown> },
+  sessionId: string | undefined,
+  message: string,
+): void {
+  if (sessionId && message.includes(CLI_RESUME_MISSING_MARKER)) {
+    sessionStore
+      .updateStatus(sessionId, 'dead')
+      .catch((e) => logger.warn({ err: e }, 'Failed to mark session dead'));
+  }
+}
+
+export function ackAndBroadcastCreated(
+  channel: Channel,
+  emitter: Pick<HandlerContext['emitter'], 'broadcastAll'>,
+  callback: SocketCallback | undefined,
+  result: InitResponseResult,
+  initialPrompt?: string,
+): void {
+  callback?.(ok({ channelId: channel.channelId, ...result }));
+  emitter.broadcastAll(EVENTS.session.created, {
+    channelId: channel.channelId,
+    cwd: channel.cwd,
+    projectRoot: channel.projectRoot ?? channel.cwd,
+  });
+  if (initialPrompt) channel.sendMessage(initialPrompt);
+}
+
+export function parseInitResponse(response: ControlResponse): InitResponseResult {
+  const initResponse = controlInitResponseSchema.parse(response.response ?? {});
+  const { commands, models, account } = initResponse;
+  const slashCommands = Array.isArray(commands)
+    ? [...new Set(commands.map((c) => c.name))]
+    : undefined;
+  return { slashCommands, models, account };
+}
+
 function buildSessionInitPayload(channel: Channel): SessionInitPayload {
   const meta = channel.metaCache;
   return {
@@ -105,11 +142,8 @@ export function create({
   async function applyInitResponseAndBroadcast(
     initResult: ControlResponse,
   ): Promise<InitResponseResult> {
-    const initResponse = controlInitResponseSchema.parse(initResult.response ?? {});
-    const { commands, models, account } = initResponse;
-    const slashCommands = Array.isArray(commands)
-      ? [...new Set(commands.map((c) => c.name))]
-      : undefined;
+    const result = parseInitResponse(initResult);
+    const { models, account } = result;
 
     if (models) {
       channelManager.cachedModels = models;
@@ -125,7 +159,7 @@ export function create({
       });
     }
 
-    return { slashCommands, models, account };
+    return result;
   }
 
   function buildLaunchOpts(parsed: SessionLaunchPayload): {
@@ -172,17 +206,13 @@ export function create({
     });
 
     emitInitState(channel, socket);
-
-    callback?.(ok({ channelId: channel.channelId, slashCommands, models, account }));
-    emitter.broadcastAll(EVENTS.session.created, {
-      channelId: channel.channelId,
-      cwd: channel.cwd,
-      projectRoot: channel.projectRoot ?? channel.cwd,
-    });
-
-    if (parsed.initialPrompt) {
-      channel.sendMessage(parsed.initialPrompt);
-    }
+    ackAndBroadcastCreated(
+      channel,
+      emitter,
+      callback,
+      { slashCommands, models, account },
+      parsed.initialPrompt,
+    );
   }
 
   async function handleLaunch(
@@ -219,10 +249,7 @@ export function create({
     }
   }
 
-  async function replayAndEmitState(
-    channel: Channel,
-    socket?: TypedSocket,
-  ): Promise<{ events: unknown[] }> {
+  async function replayAndEmitState(channel: Channel, socket?: TypedSocket): Promise<void> {
     channelManager.ensureBound(channel);
 
     const replaySessionId = await sessionHistory.resolveSessionId(channel.channelId);
@@ -231,9 +258,6 @@ export function create({
     }
 
     emitInitState(channel, socket);
-
-    const events = await sessionHistory.getSessionHistory(channel.channelId);
-    return { events };
   }
 
   async function handleJoin(
@@ -258,11 +282,21 @@ export function create({
         }
       }
 
-      if (socket) channelManager.addSocketToChannel(channel, socket);
+      // Wait for CLI init to complete before replaying history.
+      // Relevant for resumed channels where createEager was used.
+      await channel.readyPromise;
 
-      const { events } = await replayAndEmitState(channel, socket);
+      await replayAndEmitState(channel, socket);
+      if (socket) {
+        const replayId = crypto.randomUUID();
+        for await (const batch of sessionHistory.streamSessionHistory(channel.channelId)) {
+          socket.emit(EVENTS.session.history, { channelId, events: batch, replayId });
+        }
+        channelManager.addSocketToChannel(channel, socket);
+      }
+
       const state = channel.isProcessing ? 'busy' : 'idle';
-      callback?.(ok({ channelId, state, meta: channel.metaCache ?? {}, events, cwd: channel.cwd }));
+      callback?.(ok({ channelId, state, meta: channel.metaCache, cwd: channel.cwd }));
     } catch (e) {
       callback?.(err(errMsg(e, 'Failed to join session')));
     }
@@ -345,14 +379,14 @@ export function create({
       const cwd = row.cwd;
 
       const newChannelId = crypto.randomUUID();
+      const projectRoot = row.projectRoot ?? (await resolveProjectRoot(gitService, cwd));
       const launchOptions = {
         resumeSessionId: sessionId,
         ...(config.allowDangerouslySkipPermissions
           ? { allowDangerouslySkipPermissions: true }
           : {}),
       };
-      const projectRoot = row.projectRoot ?? (await resolveProjectRoot(gitService, cwd));
-      const { channel, initResult } = await channelManager.create(newChannelId, {
+      const { channel, initResultPromise } = channelManager.createEager(newChannelId, {
         launchOptions,
         cwd,
         onBeforeSpawn: (ch) => {
@@ -366,29 +400,28 @@ export function create({
         },
       });
 
-      // Capture slashCommands/models/account from the CLI's initialize response
-      // into metaCache. Unlike launch, real CLI on --resume does not re-emit a
-      // system/init event, so Channel.applySessionInit never fires — without
-      // this call, metaCache.slashCommands stays empty and the client loses
-      // all CLI-provided slash commands after resume.
-      const { slashCommands } = await applyInitResponseAndBroadcast(initResult);
-      channel.updateMetaCache({
-        ...(slashCommands && { slashCommands }),
-      });
+      // Broadcast and ack immediately — tab appears before CLI finishes init.
+      ackAndBroadcastCreated(channel, emitter, callback, {});
 
-      emitter.broadcastAll(EVENTS.session.created, {
-        channelId: channel.channelId,
-        cwd: channel.cwd,
-        projectRoot: channel.projectRoot ?? channel.cwd,
+      // Build the full init chain: apply response + update metaCache.
+      // Override readyPromise so any concurrent session:join waits for the
+      // full chain — not just the bare initResultPromise.then(() => {}) set
+      // by createEager — ensuring slashCommands are in metaCache before join
+      // reads it.
+      const fullChainPromise = initResultPromise.then(async (initResult) => {
+        const { slashCommands } = await applyInitResponseAndBroadcast(initResult);
+        channel.updateMetaCache({ ...(slashCommands && { slashCommands }) });
       });
-      callback?.(ok({ channelId: channel.channelId }));
+      channel.setReadyPromise(fullChainPromise);
+
+      fullChainPromise.catch((e) => {
+        const message = errMsg(e, 'Failed to apply init response after resume');
+        markDeadIfMissing(sessionStore, sessionId, message);
+        logger.warn({ err: e }, message);
+      });
     } catch (e) {
       const message = errMsg(e, 'Failed to resume session');
-      if (sessionId && message.includes(CLI_RESUME_MISSING_MARKER)) {
-        await sessionStore
-          .updateStatus(sessionId, 'dead')
-          .catch((e2) => logger.warn({ err: e2 }, 'Failed to mark session dead'));
-      }
+      markDeadIfMissing(sessionStore, sessionId, message);
       callback?.(err(message));
     }
   }

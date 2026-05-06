@@ -32,6 +32,9 @@ export default defineConfig({
       },
     },
   },
+  optimizeDeps: {
+    include: ['mermaid'],
+  },
   build: {
     outDir: 'dist',
     sourcemap: true,

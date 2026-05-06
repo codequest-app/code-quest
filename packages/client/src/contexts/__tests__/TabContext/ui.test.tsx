@@ -84,7 +84,7 @@ describe('TabProvider', () => {
       expect(document.title).toBe('⟳ Code Quest');
 
       await act(async () => {
-        await claude.emit(s.result());
+        await claude.emitSegment(s.result());
       });
       expect(document.title).toBe('Code Quest');
     });
@@ -175,7 +175,7 @@ describe('TabProvider', () => {
       const project = await addProject();
       await project.launchSession();
       await act(async () => {
-        await claude.emit(s.resultError({ errors: ['No conversation found'] }));
+        await claude.emitSegment(s.resultError({ errors: ['No conversation found'] }));
       });
       await act(async () => {
         claude.handle.abort();

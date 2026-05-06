@@ -191,7 +191,7 @@ describe('CommandMenu', () => {
       await openMenu();
       await userEvent.click(screen.getByText(/^Effort/));
       await vi.waitFor(() => {
-        const updates = summoner.events('settings:update');
+        const updates = summoner.receivedEvents('settings:update');
         expect(updates.some((u) => u.effort === 'medium')).toBe(true);
       });
     });
@@ -203,7 +203,7 @@ describe('CommandMenu', () => {
       });
       await openMenu();
       await userEvent.click(screen.getByText('Thinking'));
-      const updates = summoner.events('settings:update');
+      const updates = summoner.receivedEvents('settings:update');
       expect(updates.some((u) => u.thinkingLevel === 'default_on')).toBe(true);
     });
 
@@ -237,7 +237,7 @@ describe('CommandMenu', () => {
       });
       await openMenu();
       await userEvent.click(screen.getByText('Toggle fast mode'));
-      const updates = summoner.events('settings:update');
+      const updates = summoner.receivedEvents('settings:update');
       expect(updates.some((u) => u.fastModeState === 'on')).toBe(true);
     });
   });

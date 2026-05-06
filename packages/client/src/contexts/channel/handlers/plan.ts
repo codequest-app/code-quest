@@ -41,5 +41,5 @@ export function createPlanActions({ setChannelState }: PlanActionsDeps): {
     setChannelState((prev) => ({ ...prev, planComments: [] }));
   }
 
-  return { addPlanComment: addPlanComment, clearPlanComments: clearPlanComments };
+  return { addPlanComment, clearPlanComments };
 }

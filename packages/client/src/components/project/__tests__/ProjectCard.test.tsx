@@ -239,12 +239,12 @@ describe('ProjectCard', () => {
       await user.click(await screen.findByRole('menuitem', { name: /remove/i }));
       expect(await screen.findByText(/remove project/i)).toBeInTheDocument();
 
-      const beforeRemoved = claude.events('projects:removed').length;
+      const beforeRemoved = claude.receivedEvents('projects:removed').length;
       await user.click(screen.getByRole('button', { name: /^remove$/i }));
 
       await waitFor(async () => {
         // ② server broadcast
-        expect(claude.events('projects:removed').length).toBeGreaterThan(beforeRemoved);
+        expect(claude.receivedEvents('projects:removed').length).toBeGreaterThan(beforeRemoved);
         // ③ DB row gone
         expect(await projectStore.getByPath('/path/proj')).toBeNull();
         // ④ client state synced
@@ -269,11 +269,7 @@ describe('ProjectCard', () => {
 
       // Inject session:states from server side so client-side ProjectState.sessions
       // shows an active session for /path/busy (UI gate for "blocked" dialog state).
-      claude.pushServerEvent('session:states', {
-        sessions: [
-          { channelId: 'busy-1', state: 'idle', cwd: '/path/busy', projectRoot: '/path/busy' },
-        ],
-      });
+      claude.pushSessionState('busy-1', 'idle', { cwd: '/path/busy', projectRoot: '/path/busy' });
 
       const user = userEvent.setup({ pointerEventsCheck: 0 });
       await user.click(screen.getByRole('button', { name: /more actions/i }));
@@ -285,7 +281,7 @@ describe('ProjectCard', () => {
       expect(screen.getByRole('button', { name: /ok/i })).toBeInTheDocument();
 
       // ② No remove broadcast happened
-      expect(claude.events('projects:removed').length).toBe(0);
+      expect(claude.receivedEvents('projects:removed').length).toBe(0);
       // ③ DB still has it
       expect(await projectStore.getByPath('/path/busy')).not.toBeNull();
     });
@@ -310,12 +306,12 @@ describe('ProjectCard', () => {
         expect(screen.getByRole('status', { name: 'project-count' }).textContent).toBe('1'),
       );
 
-      const beforeUpdated = claude.events('projects:updated').length;
+      const beforeUpdated = claude.receivedEvents('projects:updated').length;
       const user = userEvent.setup({ pointerEventsCheck: 0 });
       await user.click(screen.getByRole('button', { name: /unpin/i }));
 
       await waitFor(async () => {
-        expect(claude.events('projects:updated').length).toBeGreaterThan(beforeUpdated);
+        expect(claude.receivedEvents('projects:updated').length).toBeGreaterThan(beforeUpdated);
         expect((await projectStore.getByPath('/legacy/proj'))?.pinned).toBe(false);
       });
     });
@@ -342,7 +338,7 @@ describe('ProjectCard', () => {
       await user.click(screen.getByRole('button', { name: /^remove$/i }));
 
       await waitFor(async () => {
-        expect(claude.events('projects:removed').length).toBeGreaterThan(0);
+        expect(claude.receivedEvents('projects:removed').length).toBeGreaterThan(0);
         expect(await projectStore.getByPath('/legacy/gone')).toBeNull();
       });
     });
@@ -372,14 +368,14 @@ describe('ProjectCard', () => {
       })) as HTMLInputElement;
       expect(input.value).toBe('foo');
 
-      const beforeUpdated = claude.events('projects:updated').length;
+      const beforeUpdated = claude.receivedEvents('projects:updated').length;
       await user.clear(input);
       await user.type(input, 'My Foo');
       await user.click(screen.getByRole('button', { name: /^rename$/i }));
 
       await waitFor(async () => {
         // ② broadcast
-        expect(claude.events('projects:updated').length).toBeGreaterThan(beforeUpdated);
+        expect(claude.receivedEvents('projects:updated').length).toBeGreaterThan(beforeUpdated);
         // ③ DB has new name
         expect((await projectStore.getByPath('/path/foo'))?.name).toBe('My Foo');
       });

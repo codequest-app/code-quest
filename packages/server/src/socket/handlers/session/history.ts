@@ -6,27 +6,64 @@ import {
   isRecord,
 } from '@code-quest/shared';
 import type { ProviderAdapter, RawEvent } from '@code-quest/summoner';
-import { logger } from '../logger.ts';
-import type { RawEventService } from '../services/raw-event-service.ts';
-import type { SessionPreview } from '../services/raw-event-store.ts';
-import type { SessionStore } from '../services/session-store.ts';
-import type { Channel } from './channel.ts';
-import { typedJsonObjectSchema, userMessageInputSchema } from './schemas.ts';
-import type { TypedSocket } from './types.ts';
+import { logger } from '../../../logger.ts';
+import type { RawEventService } from '../../../services/raw-event-service.ts';
+import type { SessionPreview } from '../../../services/raw-event-store.ts';
+import type { SessionStore } from '../../../services/session-store.ts';
+import type { Channel } from '../../channel.ts';
+import { typedJsonObjectSchema, userMessageInputSchema } from '../../schemas.ts';
+import type { TypedSocket } from '../../types.ts';
 
 type RawEventDirection = RawEvent['direction'];
 
-/** History-relevant socket event names — excludes streaming, control, and transient types. */
-const HISTORY_NAMES = new Set<string>([
-  EVENTS.message.assistant,
-  EVENTS.message.user,
-  EVENTS.message.result,
-  EVENTS.session.init,
+/** Events excluded from history replay — control requests (handled separately) and transient state. */
+const HISTORY_EXCLUDE = new Set<string>([
+  EVENTS.control.permission,
+  EVENTS.control.elicitation,
+  EVENTS.control.diff_review,
+  EVENTS.control.mcp,
+  EVENTS.control.cancel,
+  EVENTS.control.hook_callback,
+  EVENTS.session.status,
 ]);
 
 /** Minimal surface SessionHistory needs from ChannelManager. */
 export interface ChannelLookup {
   get(id: string): Channel | undefined;
+}
+
+type ParsedEvent = { direction: RawEventDirection; obj: Record<string, unknown> };
+
+export function extractPendingControlRequests(
+  messages: ClientMessage[],
+  respondedRequestIds: Set<string>,
+): Array<{ requestId: string; message: ClientMessage }> {
+  const pending: Array<{ requestId: string; message: ClientMessage }> = [];
+  const cancelledIds = new Set(respondedRequestIds);
+
+  for (const message of messages) {
+    const isPending =
+      message.name === EVENTS.control.permission || message.name === EVENTS.control.elicitation;
+    const isCancel = message.name === EVENTS.control.cancel;
+    if (!isPending && !isCancel) continue;
+
+    const parsed = controlRequestEventSchema.safeParse(message.payload);
+    if (!parsed.success) {
+      logger.warn({ err: parsed.error, name: message.name }, 'Malformed control event in replay');
+      continue;
+    }
+    if (isPending) pending.push({ requestId: parsed.data.requestId, message });
+    else cancelledIds.add(parsed.data.requestId);
+  }
+
+  return pending.filter(({ requestId }) => !cancelledIds.has(requestId));
+}
+
+export function filterReplayEvents(
+  parsed: ParsedEvent[],
+  hasStdoutUserEcho: boolean,
+): ParsedEvent[] {
+  return parsed.filter((e) => e.direction === 'out' || !hasStdoutUserEcho);
 }
 
 function parseRawEvents(
@@ -52,16 +89,19 @@ export class SessionHistory {
   private sessionStore: SessionStore;
   private adapter: ProviderAdapter;
   private channels: ChannelLookup;
+  private batchSize: number;
   constructor(
     rawEventService: RawEventService,
     sessionStore: SessionStore,
     adapter: ProviderAdapter,
     channels: ChannelLookup,
+    batchSize = 1000,
   ) {
     this.rawEventService = rawEventService;
     this.sessionStore = sessionStore;
     this.adapter = adapter;
     this.channels = channels;
+    this.batchSize = batchSize;
   }
 
   async resolveSessionId(channelId: string): Promise<string> {
@@ -74,7 +114,21 @@ export class SessionHistory {
   async getSessionHistory(channelId: string): Promise<ClientMessage[]> {
     const sessionId = await this.resolveSessionId(channelId);
     const all = await this.replaySession(sessionId);
-    return all.filter((e) => HISTORY_NAMES.has(e.name));
+    return all.filter((e) => !HISTORY_EXCLUDE.has(e.name));
+  }
+
+  async *streamSessionHistory(channelId: string): AsyncGenerator<ClientMessage[]> {
+    const sessionId = await this.resolveSessionId(channelId);
+    const hasEcho = await this.rawEventService.hasUserEcho(sessionId);
+    let yielded = false;
+    for await (const rawBatch of this.rawEventService.streamBySession(sessionId, this.batchSize)) {
+      const messages = this.replayParsed(parseRawEvents(rawBatch), hasEcho).filter(
+        (e) => !HISTORY_EXCLUDE.has(e.name),
+      );
+      yield messages;
+      yielded = true;
+    }
+    if (!yielded) yield [];
   }
 
   async getPreview(sessionId: string): Promise<SessionPreview> {
@@ -133,15 +187,14 @@ export class SessionHistory {
     return this.replayParsed(parseRawEvents(rawEvents));
   }
 
-  private replayParsed(
-    parsed: Array<{ direction: RawEventDirection; obj: Record<string, unknown> }>,
-  ): ClientMessage[] {
-    const hasStdoutUserEcho = parsed.some((e) => e.direction === 'out' && e.obj.type === 'user');
+  private replayParsed(parsed: ParsedEvent[], hasEcho?: boolean): ClientMessage[] {
+    const hasStdoutUserEcho =
+      hasEcho ?? parsed.some((e) => e.direction === 'out' && e.obj.type === 'user');
     const result: ClientMessage[] = [];
-    for (const event of parsed) {
+    for (const event of filterReplayEvents(parsed, hasStdoutUserEcho)) {
       if (event.direction === 'out') {
         this.replayStdoutEvent(event.obj, result);
-      } else if (event.direction === 'in' && !hasStdoutUserEcho) {
+      } else {
         this.replayStdinEvent(event.obj, result);
       }
     }
@@ -155,26 +208,9 @@ export class SessionHistory {
   ): Promise<void> {
     const { messages, respondedRequestIds } = await this.getPendingReplayMessages(sessionId);
 
-    const pendingRequests: Array<{ requestId: string; message: ClientMessage }> = [];
+    const pendingRequests = extractPendingControlRequests(messages, respondedRequestIds);
 
-    for (const message of messages) {
-      const isPending =
-        message.name === EVENTS.control.permission || message.name === EVENTS.control.elicitation;
-      const isCancel = message.name === EVENTS.control.cancel;
-      if (!isPending && !isCancel) continue;
-
-      const parsed = controlRequestEventSchema.safeParse(message.payload);
-      if (!parsed.success) {
-        logger.warn({ err: parsed.error, name: message.name }, 'Malformed control event in replay');
-        continue;
-      }
-      if (isPending) pendingRequests.push({ requestId: parsed.data.requestId, message });
-      else respondedRequestIds.add(parsed.data.requestId);
-    }
-
-    for (const { requestId, message } of pendingRequests) {
-      if (respondedRequestIds.has(requestId)) continue;
-
+    for (const { message } of pendingRequests) {
       (socket.emit as (event: string, ...args: unknown[]) => void)(message.name, {
         channelId,
         ...message.payload,

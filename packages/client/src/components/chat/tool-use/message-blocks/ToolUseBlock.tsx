@@ -13,6 +13,7 @@ import { CodeBlock } from '@/components/chat/renderers/CodeBlock';
 import { MarkdownContent } from '@/components/chat/renderers/MarkdownContent';
 import type { ToolUseMeta } from '@/types/ui';
 import { cn } from '@/utils/cn';
+import { langFromPath } from '@/utils/lang-from-path';
 import { AGENT_TOOLS, getToolHeaderInfo, isMcpTool } from '@/utils/tool-utils';
 import { AlertBanner } from './AlertBanner.tsx';
 import { ContentRenderer } from './ContentRenderer.tsx';
@@ -32,37 +33,6 @@ function getToolIcon(toolName: string): React.ReactNode {
     return <CpuChipIcon className={TOOL_ICON_CLASS} />;
   if (isMcpTool(toolName)) return <ServerIcon className={TOOL_ICON_CLASS} />;
   return <WrenchIcon className={TOOL_ICON_CLASS} />;
-}
-
-const EXT_TO_LANG: Record<string, string> = {
-  ts: 'typescript',
-  tsx: 'tsx',
-  js: 'javascript',
-  jsx: 'jsx',
-  py: 'python',
-  rb: 'ruby',
-  rs: 'rust',
-  go: 'go',
-  java: 'java',
-  c: 'c',
-  cpp: 'cpp',
-  cs: 'csharp',
-  sh: 'bash',
-  bash: 'bash',
-  json: 'json',
-  yaml: 'yaml',
-  yml: 'yaml',
-  md: 'markdown',
-  css: 'css',
-  html: 'html',
-  toml: 'toml',
-  sql: 'sql',
-  xml: 'xml',
-};
-
-function langFromPath(filePath: string): string | undefined {
-  const ext = filePath.split('.').pop()?.toLowerCase() ?? '';
-  return EXT_TO_LANG[ext];
 }
 
 function totalTokens(usage: TokenUsage): number | null {

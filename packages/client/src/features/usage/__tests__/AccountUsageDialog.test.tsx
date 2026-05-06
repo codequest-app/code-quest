@@ -39,9 +39,11 @@ describe('AccountUsageDialog', () => {
     await project.launchSession();
     await sendUserMessage(user, 'hello');
     await act(async () => {
-      await claude.emit(s.assistant('hi'));
-      await claude.emit(s.rateLimitEvent({ status: 'ok', rateLimitType: 'five_hour', resetsAt }));
-      await claude.emit(s.result());
+      await claude.emitSegment(s.assistant('hi'));
+      await claude.emitSegment(
+        s.rateLimitEvent({ status: 'ok', rateLimitType: 'five_hour', resetsAt }),
+      );
+      await claude.emitSegment(s.result());
     });
 
     // Rate limit message rendered
@@ -60,9 +62,9 @@ describe('AccountUsageDialog', () => {
     await project.launchSession();
     await sendUserMessage(user);
     await act(async () => {
-      await claude.emit(s.assistant('ok'));
-      await claude.emit(s.rateLimitEvent({ status: 'rate_limited' }));
-      await claude.emit(s.result());
+      await claude.emitSegment(s.assistant('ok'));
+      await claude.emitSegment(s.rateLimitEvent({ status: 'rate_limited' }));
+      await claude.emitSegment(s.result());
     });
 
     expect(screen.getByText('ok')).toBeInTheDocument();
@@ -90,9 +92,11 @@ describe('AccountUsageDialog', () => {
     await project.launchSession();
     await sendUserMessage(user, 'hello');
     await act(async () => {
-      await claude.emit(s.assistant('hi'));
-      await claude.emit(s.rateLimitEvent({ status: 'ok', rateLimitType: 'five_hour', resetsAt }));
-      await claude.emit(s.result());
+      await claude.emitSegment(s.assistant('hi'));
+      await claude.emitSegment(
+        s.rateLimitEvent({ status: 'ok', rateLimitType: 'five_hour', resetsAt }),
+      );
+      await claude.emitSegment(s.result());
     });
 
     const dialog = await openUsageDialog(user);
@@ -154,8 +158,8 @@ describe('AccountUsageDialog', () => {
     await project.launchSession();
     await sendUserMessage(user, 'hello');
     await act(async () => {
-      await claude.emit(s.assistant('hi'));
-      await claude.emit(s.result({ costUsd: 1.23, durationMs: 5000 }));
+      await claude.emitSegment(s.assistant('hi'));
+      await claude.emitSegment(s.result({ costUsd: 1.23, durationMs: 5000 }));
     });
 
     const dialog = await openUsageDialog(user);

@@ -1,5 +1,5 @@
 import { Component, type ErrorInfo, memo, type ReactNode } from 'react';
-import type { ForkFn, Message, RewindFn } from '@/types/ui';
+import type { ForkFn, Message, RewindFn, TextMeta } from '@/types/ui';
 import { basename } from '@/utils/basename';
 import { cn } from '@/utils/cn';
 import { TruncatedContent } from '../renderers/TruncatedContent.tsx';
@@ -64,8 +64,6 @@ export const ChatMessage: React.MemoExoticComponent<
   const isUser = message.role === 'user';
 
   if (isUser) {
-    const userSource = message.type === 'text' ? (message.meta?.source ?? 'typed') : 'typed';
-    const preserveWhitespace = userSource === 'typed';
     return (
       <div
         className="group text-sm py-1 relative"
@@ -73,7 +71,7 @@ export const ChatMessage: React.MemoExoticComponent<
         data-type={message.type}
       >
         <div
-          className={`bg-surface rounded-lg px-4 py-3 break-words select-text leading-relaxed ${preserveWhitespace ? 'whitespace-pre-wrap' : ''}`}
+          className={`bg-surface rounded-lg px-4 py-3 break-words select-text leading-relaxed${(message.meta as TextMeta | undefined)?.renderAs === 'plain' ? ' whitespace-pre-wrap' : ''}`}
         >
           <ContentErrorBoundary>
             {message.type === 'text' ? (

@@ -241,12 +241,12 @@ describe('ProjectTree', () => {
 
       // Side-effect check: send event count should increase
       const claude = summoner.claude();
-      const beforeInit = claude.events('worktree:added').length;
+      const beforeInit = claude.receivedEvents('worktree:added').length;
 
       await userEvent.setup({ pointerEventsCheck: 0 }).click(btn);
 
       await waitFor(() => {
-        expect(claude.events('worktree:added').length).toBeGreaterThan(beforeInit);
+        expect(claude.receivedEvents('worktree:added').length).toBeGreaterThan(beforeInit);
       });
     });
   });

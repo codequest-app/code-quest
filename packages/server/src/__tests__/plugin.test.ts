@@ -189,7 +189,7 @@ describe('ChatHandler > plugin', () => {
         mcpServers: [{ name: 'github', status: 'connected' }],
       };
 
-      claude.onControlRequest((req) => {
+      claude.setControlRequestHandler((req) => {
         if (req.subtype === 'reload_plugins') {
           return reloadResponse;
         }

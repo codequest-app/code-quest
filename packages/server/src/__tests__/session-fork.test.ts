@@ -88,7 +88,7 @@ describe('ChatHandler > session', () => {
       });
 
       const forkCreated = claude
-        .events('session:created')
+        .receivedEvents('session:created')
         .filter((e) => e.channelId === 'fork-once');
       expect(forkCreated).toHaveLength(1);
     });
@@ -121,7 +121,7 @@ describe('ChatHandler > session', () => {
       });
 
       const events = forkClaude
-        .events('session:created')
+        .receivedEvents('session:created')
         .filter((e) => e.channelId === 'ch-fork-broadcast');
       expect(events).toHaveLength(1);
       expect(events[0]!.cwd).toBe('/tmp/parent-with-cwd');
@@ -185,8 +185,8 @@ describe('session:teleport', () => {
 
     await claude.send('chat:send', { channelId, message: 'hello' });
 
-    await claude.emit(s.assistant('original'));
-    await claude.emit(s.result());
+    await claude.emitSegment(s.assistant('original'));
+    await claude.emitSegment(s.result());
 
     const result = (await claude.send<TeleportSessionResponse>('session:teleport', {
       remoteChannelId: channelId,

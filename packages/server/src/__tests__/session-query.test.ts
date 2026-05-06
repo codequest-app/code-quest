@@ -37,8 +37,8 @@ describe('ChatHandler > session', () => {
 
       // Send a user message so raw_events has a 'user' entry
       await claude.send('chat:send', { channelId, message: 'Hello world' });
-      await claude.emit(s.assistant('hi'));
-      await claude.emit(s.result());
+      await claude.emitSegment(s.assistant('hi'));
+      await claude.emitSegment(s.result());
 
       const result = await (claude.send<SessionListResponse>(
         'session:list',
@@ -55,7 +55,7 @@ describe('ChatHandler > session', () => {
     it('session:init during processing does not wipe pendingTitlePrompt', async () => {
       const { container, claude, channelId } = await setup();
 
-      claude.onControlRequest((req) => {
+      claude.setControlRequestHandler((req) => {
         if (req.subtype === 'generate_session_title') {
           return { title: 'Generated Title' };
         }
@@ -64,9 +64,9 @@ describe('ChatHandler > session', () => {
 
       await claude.send('chat:send', { channelId, message: 'hello world' });
       // CLI sends session:init mid-processing (e.g. system event with config update)
-      await claude.emit(s.init('cli-sess', { model: 'claude-sonnet-4-6' }));
-      await claude.emit(s.assistant('hi'));
-      await claude.emit(s.result());
+      await claude.emitSegment(s.init('cli-sess', { model: 'claude-sonnet-4-6' }));
+      await claude.emitSegment(s.assistant('hi'));
+      await claude.emitSegment(s.result());
 
       // Title generation is async post-result; poll until it lands.
       await vi.waitFor(async () => {
@@ -217,8 +217,8 @@ describe('ChatHandler > session', () => {
       const { claude, channelId } = await setup();
 
       await claude.send('chat:send', { channelId, message: 'hello' });
-      await claude.emit(s.assistant('hi'));
-      await claude.emit(s.result());
+      await claude.emitSegment(s.assistant('hi'));
+      await claude.emitSegment(s.result());
 
       const result = (await claude.send<GetSessionResponse>('session:get', {
         channelId,
@@ -249,11 +249,13 @@ describe('ChatHandler > session', () => {
 
       await claude.send('chat:send', { channelId, message: 'hi' });
 
-      await claude.emit(s.assistant('Hello!'));
-      claude.emit(
+      await claude.emitSegment(s.assistant('Hello!'));
+      claude.emitSegment(
         s.assistant({ toolUse: { id: 'toolu_1', name: 'bash', input: { command: 'ls' } } }),
       );
-      await claude.emit(s.controlRequest('req-1', 'can_use_tool', 'bash', { command: 'ls' }));
+      await claude.emitSegment(
+        s.controlRequest('req-1', 'can_use_tool', 'bash', { command: 'ls' }),
+      );
 
       await claude.send('chat:respond', {
         channelId,
@@ -261,8 +263,8 @@ describe('ChatHandler > session', () => {
         response: { behavior: 'allow' },
       });
 
-      await claude.emit(s.assistant('done'));
-      await claude.emit(s.result());
+      await claude.emitSegment(s.assistant('done'));
+      await claude.emitSegment(s.result());
 
       const result = (await claude.send<GetSessionResponse>('session:get', {
         channelId,
