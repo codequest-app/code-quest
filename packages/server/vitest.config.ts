@@ -1,6 +1,14 @@
 import { defineConfig } from 'vitest/config';
 
 export default defineConfig({
+  resolve: {
+    conditions: ['@zod/source', 'default'],
+  },
+  ssr: {
+    resolve: {
+      conditions: ['@zod/source', 'default'],
+    },
+  },
   test: {
     globals: true,
     environment: 'node',
