@@ -29,7 +29,7 @@ describe('error:message handler — kind classification', () => {
     const { claude } = await renderWithChannel(<ErrorProbe />);
 
     await act(async () => {
-      await claude.emit(
+      await claude.emitSegment(
         s.resultError({
           terminalReason: 'aborted_streaming',
           errors: [
@@ -53,7 +53,7 @@ describe('error:message handler — kind classification', () => {
     const { claude } = await renderWithChannel(<ErrorProbe />);
 
     await act(async () => {
-      await claude.emit(s.resultError({ errors: ['Max turns exceeded'] }));
+      await claude.emitSegment(s.resultError({ errors: ['Max turns exceeded'] }));
     });
 
     const err = screen.getByRole('status', { name: 'err-0' });
