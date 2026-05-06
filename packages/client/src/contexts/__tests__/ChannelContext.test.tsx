@@ -234,12 +234,44 @@ describe('ChannelContext', () => {
       await renderWithChannel(<StatusHarness />, { summoner, channelId, skipInit: true });
 
       await act(async () => {
-        summoner.claude().pushServerEvent('session:states', {
-          sessions: [{ channelId, state: 'busy', projectRoot: '/repo' }],
-        });
+        summoner.claude().pushSessionState(channelId, 'busy', { projectRoot: '/repo' });
       });
 
       expect(screen.getByRole('status', { name: 'processing' })).toHaveTextContent('true');
+    });
+  });
+
+  describe('resume join (launchOnMount=false)', () => {
+    it('shows SpinnerVerb before join ACK, then renders children', async () => {
+      const summoner = createFakeSummoner();
+      const claude = summoner.claude();
+      const channelId = await claude.initialize();
+      const held = summoner.holdEmit('session:join');
+
+      await renderWithChannel(<span>loaded</span>, {
+        summoner,
+        channelId,
+        skipInit: true,
+      });
+
+      // Before join ACK — SpinnerVerb visible, children hidden
+      expect(screen.getByLabelText('spinner-verb')).toBeInTheDocument();
+      expect(screen.queryByText('loaded')).not.toBeInTheDocument();
+
+      // Release join ACK
+      await act(() => held.release());
+
+      // After join ACK — children visible, SpinnerVerb gone
+      expect(screen.getByText('loaded')).toBeInTheDocument();
+      expect(screen.queryByLabelText('spinner-verb')).not.toBeInTheDocument();
+    });
+
+    it('renders children after join completes (standard renderWithChannel flow)', async () => {
+      // Default renderWithChannel: init → render → join ACK flushed in act
+      await renderWithChannel(<span>loaded</span>);
+
+      expect(screen.getByText('loaded')).toBeInTheDocument();
+      expect(screen.queryByLabelText('spinner-verb')).not.toBeInTheDocument();
     });
   });
 

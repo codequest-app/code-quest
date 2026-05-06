@@ -1,7 +1,7 @@
 import type { ClientMessage } from '@code-quest/shared';
 import { ClaudeAdapter } from '@code-quest/summoner/browser';
-import type { ChannelState } from '@/types/chat';
-import { buildMessagesFromHistory } from '@/utils/message';
+import { historyHandlers } from '@/contexts/channel/handlers/handler-sets';
+import { type ChannelState, initialChannelState } from '@/types/chat';
 
 const adapter = new ClaudeAdapter();
 
@@ -15,5 +15,11 @@ export function buildChannelState(segmentLines: string[]): Partial<ChannelState>
     clientMessages.push(...output.messages);
   }
 
-  return { messages: buildMessagesFromHistory(clientMessages) };
+  const initial = initialChannelState('history');
+  const final = clientMessages.reduce((state, event) => {
+    const handler = historyHandlers[event.name];
+    return handler ? handler(state, event.payload as never) : state;
+  }, initial);
+
+  return { messages: final.messages };
 }

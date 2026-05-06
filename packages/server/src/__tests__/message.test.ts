@@ -24,7 +24,7 @@ describe('ChatHandler > message', () => {
 
     await windowA.send('chat:send', { channelId, message: 'hello from A' });
 
-    const socket2UserEvents = windowB.events('message:user');
+    const socket2UserEvents = windowB.receivedEvents('message:user');
     expect(socket2UserEvents.length).toBeGreaterThan(0);
     expect(socket2UserEvents[0].content[0]).toMatchObject({
       type: 'text',
@@ -44,7 +44,7 @@ describe('ChatHandler > message', () => {
 
     // Sender should NOT receive message:user from emitToOthers
     expect(
-      windowA.events('message:user').filter((e) => {
+      windowA.receivedEvents('message:user').filter((e) => {
         const first = e.content?.[0];
         return first?.type === 'text' && first.text === 'hello from A';
       }).length,
@@ -55,10 +55,10 @@ describe('ChatHandler > message', () => {
     const { claude, channelId } = await setup();
 
     await claude.send('chat:send', { channelId, message: 'hi' });
-    await claude.emit(s.assistant('Hello!'));
-    await claude.emit(s.result());
+    await claude.emitSegment(s.assistant('Hello!'));
+    await claude.emitSegment(s.result());
 
-    const events = claude.events('message:assistant');
+    const events = claude.receivedEvents('message:assistant');
     expect(events.length).toBeGreaterThan(0);
     expect(events[0]!.content[0]).toMatchObject({ type: 'text', text: 'Hello!' });
   });
@@ -68,12 +68,14 @@ describe('ChatHandler > message', () => {
 
     await claude.send('chat:send', { channelId, message: 'read file' });
 
-    claude.emit(
+    claude.emitSegment(
       s.assistant({ toolUse: { id: 'toolu_1', name: 'Read', input: { file_path: '/tmp/x' } } }),
     );
-    await claude.emit(s.controlRequest('req-1', 'can_use_tool', 'Read', { file_path: '/tmp/x' }));
+    await claude.emitSegment(
+      s.controlRequest('req-1', 'can_use_tool', 'Read', { file_path: '/tmp/x' }),
+    );
 
-    expect(claude.events('control:permission').length).toBeGreaterThan(0);
+    expect(claude.receivedEvents('control:permission').length).toBeGreaterThan(0);
 
     await claude.send('chat:respond', {
       channelId,
@@ -81,29 +83,29 @@ describe('ChatHandler > message', () => {
       response: { behavior: 'allow', updatedInput: {} },
     });
 
-    await claude.emit(s.toolResult('toolu_1', 'file content'));
-    await claude.emit(s.assistant('Done'));
-    await claude.emit(s.result());
+    await claude.emitSegment(s.toolResult('toolu_1', 'file content'));
+    await claude.emitSegment(s.assistant('Done'));
+    await claude.emitSegment(s.result());
 
-    expect(claude.events('message:user').length).toBeGreaterThan(0);
+    expect(claude.receivedEvents('message:user').length).toBeGreaterThan(0);
     const texts = claude
-      .events('message:assistant')
+      .receivedEvents('message:assistant')
       .map((e) => {
         const first = e.content?.[0];
         return first?.type === 'text' ? first.text : undefined;
       })
       .filter(Boolean);
     expect(texts).toContain('Done');
-    expect(claude.events('message:result').length).toBeGreaterThan(0);
+    expect(claude.receivedEvents('message:result').length).toBeGreaterThan(0);
   });
 
   it('emits stream:text for streamlined_text', async () => {
     const { claude, channelId } = await setup();
 
     await claude.send('chat:send', { channelId, message: 'go' });
-    await claude.emit(s.streamlinedText('fast mode text'));
+    await claude.emitSegment(s.streamlinedText('fast mode text'));
 
-    const textEvents = claude.events('stream:text');
+    const textEvents = claude.receivedEvents('stream:text');
     expect(textEvents.length).toBeGreaterThan(0);
     expect(textEvents[0]!.text).toBe('fast mode text');
   });
@@ -113,8 +115,8 @@ describe('ChatHandler > message', () => {
 
     await claude.send('chat:send', { channelId, message: 'hello' });
 
-    await claude.emit(s.assistant('ok'));
-    await claude.emit(s.result());
+    await claude.emitSegment(s.assistant('ok'));
+    await claude.emitSegment(s.result());
 
     const rawEventService = container.get<RawEventStore>(TYPES.RawEventService);
     const stored = await rawEventService.getBySession('cli-sess');
@@ -173,8 +175,8 @@ describe('ChatHandler > message', () => {
     // Turn 1: send message
     await claude.send('chat:send', { channelId, message: 'go' });
 
-    await claude.emit(s.assistant('turn1'));
-    await claude.emit(s.result());
+    await claude.emitSegment(s.assistant('turn1'));
+    await claude.emitSegment(s.result());
 
     // Turn 2: cancel should be graceful (not abort) since session returned to idle
     await claude.send('chat:send', { channelId, message: 'go again' });
@@ -198,10 +200,10 @@ describe('ChatHandler > message', () => {
 
     await claude.send('chat:send', { channelId, message: 'go' });
 
-    claude.emit(
+    claude.emitSegment(
       s.assistant({ toolUse: { id: 'toolu_cancel', name: 'Bash', input: { command: 'ls' } } }),
     );
-    await claude.emit(
+    await claude.emitSegment(
       s.controlRequest('req-cancel-test', 'can_use_tool', 'Bash', { command: 'ls' }),
     );
 
@@ -220,10 +222,12 @@ describe('ChatHandler > message', () => {
     const { claude, channelId } = await setup();
 
     await claude.send('chat:send', { channelId, message: 'go' });
-    await claude.emit(
+    await claude.emitSegment(
       s.assistant({ toolUse: { id: 'toolu_c', name: 'Bash', input: { command: 'ls' } } }),
     );
-    await claude.emit(s.controlRequest('req-cancel-cs', 'can_use_tool', 'Bash', { command: 'ls' }));
+    await claude.emitSegment(
+      s.controlRequest('req-cancel-cs', 'can_use_tool', 'Bash', { command: 'ls' }),
+    );
 
     await claude.send('chat:cancel_request', { targetRequestId: 'req-cancel-cs' });
 

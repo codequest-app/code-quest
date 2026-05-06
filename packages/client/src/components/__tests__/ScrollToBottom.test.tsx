@@ -85,7 +85,7 @@ describe('Auto-scroll behavior', () => {
 
     // Emit a pending_action (permission request)
     await act(async () => {
-      await claude.emit(s.controlRequestBash('req-1', { command: 'ls' }));
+      await claude.emitSegment(s.controlRequestBash('req-1', { command: 'ls' }));
     });
 
     // Should NOT have scrolled — user was reading above
@@ -95,7 +95,7 @@ describe('Auto-scroll behavior', () => {
   it('uses instant scroll for streaming deltas (content grew, no new message)', async () => {
     const { claude } = await renderWithChannel(<MessageList />);
     await act(async () => {
-      await claude.emit(s.textDelta('Hello '));
+      await claude.emitSegment(s.textDelta('Hello '));
     });
 
     await act(async () => {
@@ -107,7 +107,7 @@ describe('Auto-scroll behavior', () => {
 
     // Content grows but no new message → instant scroll
     await act(async () => {
-      await claude.emit(s.textDelta('world'));
+      await claude.emitSegment(s.textDelta('world'));
     });
 
     expect(scrollIntoView).toHaveBeenCalledWith({ behavior: 'instant' });
@@ -143,7 +143,7 @@ describe('Auto-scroll behavior', () => {
     const { claude } = await renderWithChannel(<MessageList />);
     // Start streaming — textDelta creates/grows a message
     await act(async () => {
-      await claude.emit(s.textDelta('Hello '));
+      await claude.emitSegment(s.textDelta('Hello '));
     });
 
     // User is at bottom (default)
@@ -152,7 +152,7 @@ describe('Auto-scroll behavior', () => {
 
     // More streaming content arrives — content grows but messages.length unchanged
     await act(async () => {
-      await claude.emit(s.textDelta('world'));
+      await claude.emitSegment(s.textDelta('world'));
     });
 
     expect(scrollIntoView).toHaveBeenCalled();

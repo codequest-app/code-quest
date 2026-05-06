@@ -71,7 +71,7 @@ describe('ChannelManager', () => {
       const summoner2 = createFakeSummoner(server);
       await summoner2.send<SessionJoinResponse>('session:join', { channelId });
 
-      const initEvents = summoner2.events('session:init');
+      const initEvents = summoner2.receivedEvents('session:init');
       expect(initEvents.length).toBeGreaterThan(0);
       expect(initEvents[0].model).toBe('claude-opus-4-6');
     });
@@ -96,7 +96,7 @@ describe('ChannelManager', () => {
       await summoner2.send<SessionJoinResponse>('session:join', { channelId });
       await new Promise<void>((r) => queueMicrotask(r));
 
-      const initEvents = summoner2.events('session:init');
+      const initEvents = summoner2.receivedEvents('session:init');
       expect(initEvents.length).toBeGreaterThan(0);
       expect(initEvents[0].model).toBe('claude-opus-4-6');
     });
@@ -117,7 +117,7 @@ describe('ChannelManager', () => {
       claude.handle.abort();
       await new Promise<void>((r) => queueMicrotask(r));
 
-      expect(claude.events('session:closed').length).toBeGreaterThan(0);
+      expect(claude.receivedEvents('session:closed').length).toBeGreaterThan(0);
     });
   });
 
@@ -127,7 +127,7 @@ describe('ChannelManager', () => {
 
       await claude.initialize({ launch: { channelId: 'ch-1' } });
 
-      const statesEvents = claude.events('session:states');
+      const statesEvents = claude.receivedEvents('session:states');
       expect(statesEvents.length).toBeGreaterThan(0);
       expect(statesEvents[0]!.sessions).toBeDefined();
     });
@@ -138,10 +138,12 @@ describe('ChannelManager', () => {
       const { claude, channelId } = await setup();
 
       await claude.send('chat:send', { channelId, message: 'go' });
-      await claude.emit(s.assistant({ toolUse: { id: 'toolu_1', name: 'Read', input: {} } }));
-      await claude.emit(s.controlRequest('req-1', 'can_use_tool', 'Read', {}));
+      await claude.emitSegment(
+        s.assistant({ toolUse: { id: 'toolu_1', name: 'Read', input: {} } }),
+      );
+      await claude.emitSegment(s.controlRequest('req-1', 'can_use_tool', 'Read', {}));
 
-      const permEvents = claude.events('control:permission');
+      const permEvents = claude.receivedEvents('control:permission');
       expect(permEvents.length).toBeGreaterThan(0);
       expect(permEvents[0]!.requestId).toBe('req-1');
     });
@@ -164,7 +166,7 @@ describe('ChannelManager', () => {
 
       await claude.initialize({ launch: { channelId: 'ch-1' } });
 
-      const statesEvents = claude.events('session:states');
+      const statesEvents = claude.receivedEvents('session:states');
       expect(statesEvents.length).toBeGreaterThan(0);
       const sessions = statesEvents[0]!.sessions;
       expect(Array.isArray(sessions)).toBe(true);
@@ -175,7 +177,7 @@ describe('ChannelManager', () => {
 
       await claude.initialize({ launch: { channelId: 'ch-1', cwd: '/test/project' } });
 
-      const statesEvents = claude.events('session:states');
+      const statesEvents = claude.receivedEvents('session:states');
       expect(statesEvents.length).toBeGreaterThan(0);
       expect(statesEvents[0]!.sessions[0]!.cwd).toBe('/test/project');
     });
@@ -268,8 +270,8 @@ describe('ChannelManager', () => {
       const { container, claude, channelId } = await setup();
 
       await claude.send('chat:send', { channelId, message: 'persist-test' });
-      await claude.emit(s.assistant('reply'));
-      await claude.emit(s.result());
+      await claude.emitSegment(s.assistant('reply'));
+      await claude.emitSegment(s.result());
 
       const rawEventService = container.get<RawEventStore>(TYPES.RawEventService);
       const events = await rawEventService.getBySession('test-session-001');

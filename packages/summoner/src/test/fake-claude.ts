@@ -1,6 +1,6 @@
 /* biome-ignore-all lint/suspicious/noExplicitAny: test harness uses type assertions */
 
-import type { ServerToClientEvents } from '@code-quest/shared';
+import type { ServerToClientEvents, SessionBroadcastState } from '@code-quest/shared';
 import type {
   FakeProcessHandle,
   FakeProcessProvider,
@@ -44,8 +44,8 @@ export class FakeClaude {
     | ((request: Record<string, unknown>) => Record<string, unknown> | null)
     | null = null;
 
-  /** Register a custom handler for control_request subtypes. Return response payload or null for default. */
-  onControlRequest(
+  /** Replace the default control_request auto-responder. Return response payload or null for default. */
+  setControlRequestHandler(
     handler: (request: Record<string, unknown>) => Record<string, unknown> | null,
   ): void {
     this._controlRequestHandler = handler;
@@ -121,7 +121,7 @@ export class FakeClaude {
 
     // Emit additional startup segments
     for (const seg of extraSegments) {
-      await this.emit(seg);
+      await this.emitSegment(seg);
     }
 
     return channelId;
@@ -207,7 +207,7 @@ export class FakeClaude {
     };
   }
 
-  async emit(segment: string): Promise<{ requestId: string | null }> {
+  async emitSegment(segment: string): Promise<{ requestId: string | null }> {
     this.provider.latest.emit(segment);
     await new Promise<void>((r) => queueMicrotask(r));
     await new Promise<void>((r) => queueMicrotask(r));
@@ -240,11 +240,11 @@ export class FakeClaude {
       : this.provider.latest.received();
   }
 
-  /** Query recorded server-pushed events. All events are auto-recorded. */
-  events(): Array<{ event: string; payload: unknown }>;
-  events<E extends keyof ServerToClientEvents>(eventName: E): Array<PayloadOf<E>>;
-  events(eventName: string): unknown[];
-  events(eventName?: string): unknown {
+  /** Query recorded server → client events. All events are auto-recorded. */
+  receivedEvents(): Array<{ event: string; payload: unknown }>;
+  receivedEvents<E extends keyof ServerToClientEvents>(eventName: E): Array<PayloadOf<E>>;
+  receivedEvents(eventName: string): unknown[];
+  receivedEvents(eventName?: string): unknown {
     if (!eventName) return this._recordedEvents;
     return this._recordedEvents.filter((e) => e.event === eventName).map((e) => e.payload);
   }
@@ -263,6 +263,11 @@ export class FakeClaude {
     return this.provider.latest;
   }
 
+  /** The request_id of the most recent session:initialize control_request sent by the server. */
+  get lastInitRequestId(): string | null {
+    return this._lastInitRequestId;
+  }
+
   /** Subscribe to server-pushed socket events (for callbacks that need timing/filtering). */
   on(event: string, fn: (...args: any[]) => void): void {
     this._socket.on(event, fn);
@@ -271,6 +276,26 @@ export class FakeClaude {
   /** Simulate server pushing a socket event to client. */
   pushServerEvent(event: string, payload: Record<string, unknown>): void {
     this._socket.serverSocket.emit(event, payload);
+  }
+
+  /** Simulate server broadcasting session:states for one channel. */
+  pushSessionState(
+    channelId: string,
+    state: SessionBroadcastState,
+    opts: { projectRoot?: string; cwd?: string } = {},
+  ): void {
+    const { projectRoot = '/test/cwd', cwd } = opts;
+    this.pushServerEvent('session:states', {
+      sessions: [{ channelId, state, projectRoot, ...(cwd ? { cwd } : {}) }],
+    });
+  }
+
+  /** Simulate server broadcasting session:closed for one channel. */
+  pushSessionClosed(channelId: string, error?: string): void {
+    this.pushServerEvent('session:closed', {
+      channelId,
+      ...(error ? { error } : {}),
+    });
   }
 
   connect(): void {

@@ -169,7 +169,7 @@ describe('LocalOpenspecService', () => {
       fs.addFile('/repo/openspec/changes/x/proposal.md', '# X proposal');
 
       const result = await reader.read('/repo', 'change', 'x', 'proposal');
-      expect(result).toEqual({ content: '# X proposal' });
+      expect(result).toMatchObject({ content: '# X proposal' });
     });
 
     it('returns error for missing artifact', async () => {

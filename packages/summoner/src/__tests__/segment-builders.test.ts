@@ -53,6 +53,16 @@ const TEMPLATES = {
     duration_api_ms: 0,
     total_cost_usd: 0,
   }),
+  RESULT_IS_ERROR_NO_ERRORS: JSON.stringify({
+    type: 'result',
+    subtype: 'error_during_execution',
+    is_error: true,
+    result: '',
+    uuid: '',
+    duration_ms: 0,
+    duration_api_ms: 0,
+    total_cost_usd: 0,
+  }),
   RESULT_RESUME_NOT_FOUND: JSON.stringify({
     type: 'result',
     subtype: 'error_during_execution',

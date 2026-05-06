@@ -46,8 +46,8 @@ async function renderPaletteWithMessages() {
     </CommandPaletteProvider>,
   );
   await act(async () => {
-    await ctx.claude.emit(s.assistant('Hello from assistant'));
-    await ctx.claude.emit(s.result());
+    await ctx.claude.emitSegment(s.assistant('Hello from assistant'));
+    await ctx.claude.emitSegment(s.result());
   });
   await userEvent.click(screen.getByText('Open'));
   return ctx;
@@ -96,8 +96,8 @@ describe('CommandPalette — layout', () => {
   it('All tab shows messages', async () => {
     const ctx = await renderPaletteWithMessages();
     await act(async () => {
-      await ctx.claude.emit(s.assistant('Extra'));
-      await ctx.claude.emit(s.result());
+      await ctx.claude.emitSegment(s.assistant('Extra'));
+      await ctx.claude.emitSegment(s.result());
     });
     const buttons = screen.getAllByRole('button');
     const msgBtn = buttons.find((b) => (b.textContent ?? '').includes('Hello from assistant'));
@@ -176,8 +176,8 @@ describe('CommandPalette — Messages tab search', () => {
     const user = userEvent.setup();
     const ctx = await renderPaletteWithMessages();
     await act(async () => {
-      await ctx.claude.emit(s.assistant('Another message'));
-      await ctx.claude.emit(s.result());
+      await ctx.claude.emitSegment(s.assistant('Another message'));
+      await ctx.claude.emitSegment(s.result());
     });
     await user.click(screen.getByRole('tab', { name: /messages/i }));
     const input = screen.getByPlaceholderText(/search/i);
@@ -314,8 +314,8 @@ describe('CommandPalette — keyboard navigation', () => {
     const user = userEvent.setup();
     const ctx = await renderPaletteWithMessages();
     await act(async () => {
-      await ctx.claude.emit(s.assistant('Second message'));
-      await ctx.claude.emit(s.result());
+      await ctx.claude.emitSegment(s.assistant('Second message'));
+      await ctx.claude.emitSegment(s.result());
     });
     await user.click(screen.getByRole('tab', { name: /messages/i }));
     await user.keyboard('{ArrowDown}');
@@ -350,8 +350,8 @@ describe('CommandPalette — keyboard navigation', () => {
     const ctx = await renderPaletteWithMessages();
     // Add more messages to have some items
     await act(async () => {
-      await ctx.claude.emit(s.assistant('Msg two'));
-      await ctx.claude.emit(s.result());
+      await ctx.claude.emitSegment(s.assistant('Msg two'));
+      await ctx.claude.emitSegment(s.result());
     });
     // re-open palette (it closed on jump)
     await user.click(screen.getByText('Open'));

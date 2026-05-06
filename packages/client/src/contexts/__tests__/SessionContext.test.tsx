@@ -27,7 +27,7 @@ describe('SessionProvider (global config only)', () => {
     const project = await addProject();
     await project.launchSession();
     await act(async () => {
-      await claude.emit(s.experimentGates({ review_upsell: true }));
+      await claude.emitSegment(s.experimentGates({ review_upsell: true }));
     });
 
     expect(screen.getByPlaceholderText(/Esc to focus/i)).toBeInTheDocument();

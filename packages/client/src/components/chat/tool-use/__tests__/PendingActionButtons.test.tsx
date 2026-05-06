@@ -26,7 +26,7 @@ async function setup(...controlSegments: string[]) {
   const { claude, ...rest } = await renderWithChannel(<BannerWithState />);
   await act(async () => {
     for (const seg of controlSegments) {
-      await claude.emit(seg);
+      await claude.emitSegment(seg);
     }
   });
   return { claude, ...rest };

@@ -75,7 +75,7 @@ describe('projects socket handler', () => {
       expect(project).toMatchObject({ path: '/tmp/foo', name: 'foo', pinned: false });
 
       // ② Server broadcast — find the one for our path (session init may have emitted first)
-      const allEvents = claude.events();
+      const allEvents = claude.receivedEvents();
       // Debug: list all event names to understand what was captured
       const addedAny = allEvents.filter(
         (e) => e.event === 'projects:added' && (e.payload as Project)?.path === '/tmp/foo',
@@ -108,7 +108,7 @@ describe('projects socket handler', () => {
       const { claude, summoner, projectStore } = await setup();
       // Path /does is within roots scope but doesn't exist as a directory in fs
       summoner.filesystem().setRoots(['/does']);
-      const beforeEvents = claude.events('projects:added').length;
+      const beforeEvents = claude.receivedEvents('projects:added').length;
 
       const res = await claude.send<ProjectsAddResponse>('projects:add', {
         path: '/does/not/exist',
@@ -116,7 +116,7 @@ describe('projects socket handler', () => {
       expect(res).toEqual(
         expect.objectContaining({ error: 'path_not_found', path: '/does/not/exist' }),
       );
-      expect(claude.events('projects:added').length).toBe(beforeEvents);
+      expect(claude.receivedEvents('projects:added').length).toBe(beforeEvents);
       expect(await projectStore.getByPath('/does/not/exist')).toBeNull();
     });
 
@@ -125,7 +125,7 @@ describe('projects socket handler', () => {
       // Setup root scope = ['/tmp']; the candidate path is OUTSIDE.
       summoner.filesystem().setRoots(['/tmp']);
       summoner.filesystem().addDirectory('/forbidden', []);
-      const beforeEvents = claude.events('projects:added').length;
+      const beforeEvents = claude.receivedEvents('projects:added').length;
 
       const res = await claude.send<ProjectsAddResponse>('projects:add', {
         path: '/forbidden',
@@ -134,7 +134,7 @@ describe('projects socket handler', () => {
       expect(res).toEqual(
         expect.objectContaining({ error: 'path_outside_roots', path: '/forbidden' }),
       );
-      expect(claude.events('projects:added').length).toBe(beforeEvents);
+      expect(claude.receivedEvents('projects:added').length).toBe(beforeEvents);
       expect(await projectStore.getByPath('/forbidden')).toBeNull();
     });
 
@@ -155,7 +155,7 @@ describe('projects socket handler', () => {
       const { claude, summoner, projectStore } = await setup();
       summoner.filesystem().setRoots(['/tmp']);
       summoner.filesystem().addFile('/tmp/some-file.txt', 'hello');
-      const beforeEvents = claude.events('projects:added').length;
+      const beforeEvents = claude.receivedEvents('projects:added').length;
 
       const res = await claude.send<ProjectsAddResponse>('projects:add', {
         path: '/tmp/some-file.txt',
@@ -163,7 +163,7 @@ describe('projects socket handler', () => {
       expect(res).toEqual(
         expect.objectContaining({ error: 'path_not_directory', path: '/tmp/some-file.txt' }),
       );
-      expect(claude.events('projects:added').length).toBe(beforeEvents);
+      expect(claude.receivedEvents('projects:added').length).toBe(beforeEvents);
       expect(await projectStore.getByPath('/tmp/some-file.txt')).toBeNull();
     });
 
@@ -193,7 +193,7 @@ describe('projects socket handler', () => {
       const added = (await claude.send<ProjectsAddResponse>('projects:add', {
         path: '/tmp/foo',
       })) as Project;
-      const beforeUpdated = claude.events('projects:updated').length;
+      const beforeUpdated = claude.receivedEvents('projects:updated').length;
 
       const res = (await claude.send<ProjectsUpdateResponse>('projects:update', {
         id: added.id,
@@ -201,7 +201,7 @@ describe('projects socket handler', () => {
       })) as Project;
 
       expect(res.name).toBe('My Foo'); // ①
-      expect(claude.events('projects:updated').length).toBeGreaterThan(beforeUpdated); // ②
+      expect(claude.receivedEvents('projects:updated').length).toBeGreaterThan(beforeUpdated); // ②
       expect((await projectStore.getById(added.id))?.name).toBe('My Foo'); // ③
     });
 
@@ -237,7 +237,7 @@ describe('projects socket handler', () => {
     it('unknown id: ① error, ② no emit, ③ DB unchanged', async () => {
       const { claude, projectStore } = await setup();
       const beforeCount = (await projectStore.list()).length;
-      const beforeEvents = claude.events('projects:updated').length;
+      const beforeEvents = claude.receivedEvents('projects:updated').length;
 
       const res = await claude.send<ProjectsUpdateResponse>('projects:update', {
         id: '00000000-0000-4000-8000-000000000000',
@@ -245,7 +245,7 @@ describe('projects socket handler', () => {
       });
 
       expect(res).toEqual({ error: 'project_not_found' });
-      expect(claude.events('projects:updated').length).toBe(beforeEvents);
+      expect(claude.receivedEvents('projects:updated').length).toBe(beforeEvents);
       expect((await projectStore.list()).length).toBe(beforeCount);
     });
   });
@@ -259,12 +259,12 @@ describe('projects socket handler', () => {
       const added = (await claude.send<ProjectsAddResponse>('projects:add', {
         path: '/tmp/foo',
       })) as Project;
-      const beforeRemoved = claude.events('projects:removed').length;
+      const beforeRemoved = claude.receivedEvents('projects:removed').length;
 
       const res = await claude.send<ProjectsRemoveResponse>('projects:remove', { id: added.id });
 
       expect(res).toEqual({ ok: true }); // ①
-      expect(claude.events('projects:removed').length).toBeGreaterThan(beforeRemoved); // ②
+      expect(claude.receivedEvents('projects:removed').length).toBeGreaterThan(beforeRemoved); // ②
       expect(await projectStore.getById(added.id)).toBeNull(); // ③
     });
 
@@ -275,7 +275,7 @@ describe('projects socket handler', () => {
       if ('error' in list) throw new Error(list.error);
       const sessionProject = list.projects.find((p) => p.path === SESSION_CWD);
       expect(sessionProject).toBeTruthy();
-      const beforeEvents = claude.events('projects:removed').length;
+      const beforeEvents = claude.receivedEvents('projects:removed').length;
       const beforeRow = await projectStore.getById(sessionProject!.id);
       expect(beforeRow).not.toBeNull();
 
@@ -284,7 +284,7 @@ describe('projects socket handler', () => {
       });
 
       expect(res).toEqual({ error: 'project_has_active_sessions', activeSessionCount: 1 }); // ①
-      expect(claude.events('projects:removed').length).toBe(beforeEvents); // ②
+      expect(claude.receivedEvents('projects:removed').length).toBe(beforeEvents); // ②
       expect(await projectStore.getById(sessionProject!.id)).not.toBeNull(); // ③ still there
     });
 
@@ -327,14 +327,14 @@ describe('projects socket handler', () => {
 
     it('unknown id: ① error, ② no emit', async () => {
       const { claude } = await setup();
-      const beforeEvents = claude.events('projects:removed').length;
+      const beforeEvents = claude.receivedEvents('projects:removed').length;
 
       const res = await claude.send<ProjectsRemoveResponse>('projects:remove', {
         id: '00000000-0000-4000-8000-000000000000',
       });
 
       expect(res).toEqual({ error: 'project_not_found' });
-      expect(claude.events('projects:removed').length).toBe(beforeEvents);
+      expect(claude.receivedEvents('projects:removed').length).toBe(beforeEvents);
     });
   });
 
@@ -387,7 +387,7 @@ describe('projects socket handler', () => {
       expect(list.projects.some((p) => p.path === SESSION_CWD)).toBe(true);
 
       // ② projects:added was broadcast
-      expect(claude.events('projects:added').length).toBeGreaterThan(0);
+      expect(claude.receivedEvents('projects:added').length).toBeGreaterThan(0);
 
       // ③ DB row exists
       expect(await projectStore.getByPath(SESSION_CWD)).not.toBeNull();

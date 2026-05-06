@@ -18,11 +18,11 @@ describe('renderWithWorkspace', () => {
     const project = await addProject();
     await project.launchSession();
     expect(claude).toBeDefined();
-    expect(claude.emit).toBeDefined();
+    expect(claude.emitSegment).toBeDefined();
     expect(user).toBeDefined();
   });
 
-  it('claude.emit flushes React without explicit act()', async () => {
+  it('claude.emitSegment flushes React without explicit act()', async () => {
     const { claude, user, addProject } = await renderWithWorkspace();
     const project = await addProject();
     await project.launchSession();
@@ -42,7 +42,7 @@ describe('renderWithWorkspace', () => {
     const project = await addProject();
     const channelId = await project.launchSession();
 
-    claude.onControlRequest((req) => {
+    claude.setControlRequestHandler((req) => {
       if (req.subtype === 'generate_session_title') {
         return { title: 'Fix the login bug' };
       }

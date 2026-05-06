@@ -23,7 +23,7 @@ describe('ReviewUpsellBanner', () => {
     const project = await addProject();
     await project.launchSession();
     await act(async () => {
-      await claude.emit(s.experimentGates({ review_upsell: true }));
+      await claude.emitSegment(s.experimentGates({ review_upsell: true }));
     });
     expect(screen.getByText('Try the new code review feature')).toBeInTheDocument();
   });
@@ -34,7 +34,7 @@ describe('ReviewUpsellBanner', () => {
     const project = await addProject();
     await project.launchSession();
     await act(async () => {
-      await claude.emit(s.experimentGates({ review_upsell: true }));
+      await claude.emitSegment(s.experimentGates({ review_upsell: true }));
     });
     expect(screen.queryByText('Try the new code review feature')).not.toBeInTheDocument();
   });
@@ -45,7 +45,7 @@ describe('ReviewUpsellBanner', () => {
     const project = await addProject();
     await project.launchSession();
     await act(async () => {
-      await claude.emit(s.experimentGates({ review_upsell: true }));
+      await claude.emitSegment(s.experimentGates({ review_upsell: true }));
     });
     expect(screen.getByText('Try the new code review feature')).toBeInTheDocument();
 

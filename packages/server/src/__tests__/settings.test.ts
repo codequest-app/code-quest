@@ -55,7 +55,9 @@ describe('ChatHandler > settings', () => {
 
       await claude.send('settings:set_permission_mode', { channelId, mode: 'plan' });
 
-      const match = claude.events('settings:update').find((e) => e.permissionMode === 'plan');
+      const match = claude
+        .receivedEvents('settings:update')
+        .find((e) => e.permissionMode === 'plan');
       expect(match).toBeDefined();
     });
 
@@ -85,11 +87,11 @@ describe('ChatHandler > settings', () => {
       const claudeB = summonerB.claude();
       await claudeB.initialize(s.init('sess-b'));
 
-      const beforeB = claudeB.events('settings:update').length;
+      const beforeB = claudeB.receivedEvents('settings:update').length;
 
       await claudeA.send('settings:set_model', { channelId: channelA, model: 'claude-opus-4-6' });
 
-      const afterB = claudeB.events('settings:update').slice(beforeB);
+      const afterB = claudeB.receivedEvents('settings:update').slice(beforeB);
       expect(afterB.filter((e) => e.model != null)).toHaveLength(0);
     });
 
@@ -104,11 +106,11 @@ describe('ChatHandler > settings', () => {
       const claudeB = summonerB.claude();
       await claudeB.initialize(s.init('sess-b'));
 
-      const beforeB = claudeB.events('settings:update').length;
+      const beforeB = claudeB.receivedEvents('settings:update').length;
 
       await claudeA.send('settings:set_permission_mode', { channelId: channelA, mode: 'plan' });
 
-      const afterB = claudeB.events('settings:update').slice(beforeB);
+      const afterB = claudeB.receivedEvents('settings:update').slice(beforeB);
       expect(afterB.filter((e) => e.permissionMode != null)).toHaveLength(0);
     });
 
@@ -162,7 +164,7 @@ describe('ChatHandler > settings', () => {
 
       await claude.send('settings:set_model', { channelId, model: 'claude-opus-4-6' });
 
-      const allSessions = claude.events('session:states').flatMap((e) => e.sessions ?? []);
+      const allSessions = claude.receivedEvents('session:states').flatMap((e) => e.sessions ?? []);
       for (const s of allSessions) {
         expect(s).not.toHaveProperty('model');
         expect(s).not.toHaveProperty('permissionMode');
@@ -174,7 +176,9 @@ describe('ChatHandler > settings', () => {
 
       await claude.send('settings:set_model', { channelId, model: 'claude-opus-4-6' });
 
-      const match = claude.events('settings:update').find((e) => e.model === 'claude-opus-4-6');
+      const match = claude
+        .receivedEvents('settings:update')
+        .find((e) => e.model === 'claude-opus-4-6');
       expect(match).toBeDefined();
     });
   });
@@ -227,7 +231,7 @@ describe('ChatHandler > settings', () => {
 
       await claude.send('settings:set_model', { channelId, model: 'claude-haiku-4-5' });
 
-      const events = claude.events('app:models');
+      const events = claude.receivedEvents('app:models');
       const last = events.at(-1);
       expect(last?.models).toEqual([
         { value: 'claude-opus-4-6', displayName: 'Opus', supportsAutoMode: true },
@@ -245,7 +249,7 @@ describe('ChatHandler > settings', () => {
 
       await claude.send('settings:set_model', { channelId, model: 'claude-haiku-4-5' });
 
-      const events = claude.events('app:models');
+      const events = claude.receivedEvents('app:models');
       const last = events.at(-1);
       expect(last?.models).toEqual([
         { value: 'claude-opus-4-6', displayName: 'Opus', supportsAutoMode: false },
@@ -307,7 +311,9 @@ describe('ChatHandler > settings', () => {
 
       await claude.send('settings:set_thinking_level', { channelId, thinkingLevel: 'default_on' });
 
-      const match = claude.events('settings:update').find((e) => e.thinkingLevel === 'default_on');
+      const match = claude
+        .receivedEvents('settings:update')
+        .find((e) => e.thinkingLevel === 'default_on');
       expect(match).toBeDefined();
     });
 
@@ -349,7 +355,9 @@ describe('ChatHandler > settings', () => {
         thinkingDisplay: 'omitted',
       });
 
-      const match = claude.events('settings:update').find((e) => e.thinkingDisplay === 'omitted');
+      const match = claude
+        .receivedEvents('settings:update')
+        .find((e) => e.thinkingDisplay === 'omitted');
       expect(match).toBeDefined();
     });
   });
@@ -426,7 +434,7 @@ describe('ChatHandler > settings', () => {
     });
 
     const effortUpdate = claude
-      .events('settings:update')
+      .receivedEvents('settings:update')
       .find((e) => e.channelId === channelId && e.effort === 'low');
     expect(effortUpdate).toBeTruthy();
   });
@@ -453,7 +461,7 @@ describe('ChatHandler > settings', () => {
 
     await claude.send('settings:apply', { channelId, settings: { effortLevel: 'high' } });
 
-    const events = claude.events('app:models');
+    const events = claude.receivedEvents('app:models');
     const last = events.at(-1);
     expect(last?.models).toEqual([
       { value: 'claude-opus-4-6', displayName: 'Opus', supportsAutoMode: true },
@@ -541,7 +549,7 @@ describe('ChatHandler > settings', () => {
     it('sends side_question control_request and returns answer via callback', async () => {
       const { claude, channelId } = await setup();
 
-      claude.onControlRequest((req) => {
+      claude.setControlRequestHandler((req) => {
         if (req.subtype === 'side_question') {
           return { response: 'The answer is 42', synthetic: false };
         }
@@ -559,7 +567,7 @@ describe('ChatHandler > settings', () => {
     it('returns error when Claude returns null response', async () => {
       const { claude, channelId } = await setup();
 
-      claude.onControlRequest((req) => {
+      claude.setControlRequestHandler((req) => {
         if (req.subtype === 'side_question') {
           return { response: null, synthetic: false };
         }
@@ -592,7 +600,7 @@ describe('ChatHandler > settings', () => {
 
       await claude.send('settings:set_proactive', { channelId, enabled: true });
 
-      const match = claude.events('settings:update').find((e) => e.fastModeState != null);
+      const match = claude.receivedEvents('settings:update').find((e) => e.fastModeState != null);
       expect(match).toBeDefined();
     });
   });
@@ -602,17 +610,17 @@ describe('ChatHandler > settings', () => {
       const { claude, channelId } = await setup();
 
       await claude.send('chat:send', { channelId, message: 'hello' });
-      await claude.emit(s.assistant('hi'));
-      await claude.emit(
+      await claude.emitSegment(s.assistant('hi'));
+      await claude.emitSegment(
         s.rateLimitEvent({
           status: 'blocked',
           rateLimitType: 'five_hour',
           resetsAt: 1772319600,
         }),
       );
-      await claude.emit(s.result());
+      await claude.emitSegment(s.result());
 
-      const usageUpdates = claude.events('request').filter((p) => {
+      const usageUpdates = claude.receivedEvents('request').filter((p) => {
         if (typeof p !== 'object' || p === null || !('request' in p)) return false;
         const req = p.request;
         return (
@@ -626,15 +634,15 @@ describe('ChatHandler > settings', () => {
       const { claude, channelId } = await setup();
 
       await claude.send('chat:send', { channelId, message: 'hello' });
-      await claude.emit(s.assistant('hi'));
-      await claude.emit(s.rateLimitEvent({ status: 'allowed', rateLimitType: 'five_hour' }));
-      await claude.emit(s.result());
+      await claude.emitSegment(s.assistant('hi'));
+      await claude.emitSegment(s.rateLimitEvent({ status: 'allowed', rateLimitType: 'five_hour' }));
+      await claude.emitSegment(s.result());
 
-      const countBefore = claude.events('settings:usage').length;
+      const countBefore = claude.receivedEvents('settings:usage').length;
 
       await claude.send('settings:refresh_usage', { channelId });
 
-      const newUpdates = claude.events('settings:usage').slice(countBefore);
+      const newUpdates = claude.receivedEvents('settings:usage').slice(countBefore);
       expect(newUpdates.length).toBe(1);
       expect(newUpdates[0]).not.toHaveProperty('sessionId');
       expect(newUpdates[0]!.usage).toMatchObject({
@@ -645,7 +653,7 @@ describe('ChatHandler > settings', () => {
     it('request_usage_update includes context usage from CLI', async () => {
       const { claude, channelId } = await setup();
 
-      claude.onControlRequest((req) => {
+      claude.setControlRequestHandler((req) => {
         if (req.subtype === 'get_context_usage') {
           return {
             categories: [
@@ -667,7 +675,7 @@ describe('ChatHandler > settings', () => {
 
       await claude.send('settings:refresh_usage', { channelId });
 
-      const usageUpdates = claude.events('settings:usage');
+      const usageUpdates = claude.receivedEvents('settings:usage');
       expect(usageUpdates.length).toBe(1);
       // contextUsage in settings:usage payload is z.record(string, unknown);
       // the strict ContextUsageData shape isn't carried through. Cast once.
@@ -718,7 +726,9 @@ describe('ChatHandler > settings', () => {
     it('set_model updates sessionConfig and responds', async () => {
       const { container, claude, channelId } = await setup();
 
-      await claude.emit(s.controlRequest('sm-1', 'set_model', undefined, { model: 'haiku' }));
+      await claude.emitSegment(
+        s.controlRequest('sm-1', 'set_model', undefined, { model: 'haiku' }),
+      );
 
       const { ChannelManager } = await import('../socket/channel-manager.ts');
       const channelManager = container.get(TYPES.ChannelManager) as InstanceType<
@@ -734,7 +744,7 @@ describe('ChatHandler > settings', () => {
     it('set_permission_mode updates sessionConfig and responds', async () => {
       const { container, claude, channelId } = await setup();
 
-      await claude.emit(
+      await claude.emitSegment(
         s.controlRequest('sp-1', 'set_permission_mode', undefined, { mode: 'plan' }),
       );
 
@@ -752,22 +762,24 @@ describe('ChatHandler > settings', () => {
     it('set_model emits scoped settings:update to the channel', async () => {
       const { claude, channelId } = await setup();
 
-      const before = claude.events('settings:update').length;
-      await claude.emit(s.controlRequest('sm-2', 'set_model', undefined, { model: 'haiku' }));
+      const before = claude.receivedEvents('settings:update').length;
+      await claude.emitSegment(
+        s.controlRequest('sm-2', 'set_model', undefined, { model: 'haiku' }),
+      );
 
-      const updates = claude.events('settings:update').slice(before);
+      const updates = claude.receivedEvents('settings:update').slice(before);
       expect(updates.find((e) => e.model === 'haiku' && e.channelId === channelId)).toBeDefined();
     });
 
     it('set_permission_mode emits scoped settings:update to the channel', async () => {
       const { claude, channelId } = await setup();
 
-      const before = claude.events('settings:update').length;
-      await claude.emit(
+      const before = claude.receivedEvents('settings:update').length;
+      await claude.emitSegment(
         s.controlRequest('sp-2', 'set_permission_mode', undefined, { mode: 'plan' }),
       );
 
-      const updates = claude.events('settings:update').slice(before);
+      const updates = claude.receivedEvents('settings:update').slice(before);
       expect(
         updates.find((e) => e.permissionMode === 'plan' && e.channelId === channelId),
       ).toBeDefined();
@@ -777,7 +789,7 @@ describe('ChatHandler > settings', () => {
       const { claude, settingsStore } = await setup();
       await settingsStore.set('claude', 'model', 'opus');
 
-      await claude.emit(s.controlRequest('gs-1', 'get_settings'));
+      await claude.emitSegment(s.controlRequest('gs-1', 'get_settings'));
 
       expect(
         claude.received('control_response').some((r) => r.response?.request_id === 'gs-1'),

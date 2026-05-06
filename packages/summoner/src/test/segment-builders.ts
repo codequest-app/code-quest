@@ -16,8 +16,10 @@ export interface SegmentTemplates {
   CONTROL_CANCEL_REQUEST: string;
   TOOL_RESULT: string;
   USER_TEXT?: string;
+  USER_SKILL_BODY?: string;
   RESULT_SUCCESS: string;
   RESULT_ERROR: string;
+  RESULT_IS_ERROR_NO_ERRORS: string;
   RESULT_RESUME_NOT_FOUND: string;
   STATUS: string;
   TASK_STARTED: string;
@@ -126,7 +128,7 @@ function buildSegments(T: SegmentTemplates, ref: { seq: number }) {
       return JSON.stringify(line);
     },
 
-    user(text: string, opts?: { uuid?: string }): string {
+    user(text: string, opts?: { uuid?: string; parentToolUseId?: string }): string {
       const line = JSON.parse(T.USER_TEXT ?? '{}') as Record<string, unknown>;
       const content = (line.message as Record<string, unknown>).content as Record<
         string,
@@ -134,6 +136,18 @@ function buildSegments(T: SegmentTemplates, ref: { seq: number }) {
       >[];
       if (content[0]) content[0].text = text;
       line.uuid = opts?.uuid ?? `fake-user-${next()}`;
+      if (opts?.parentToolUseId) line.parent_tool_use_id = opts.parentToolUseId;
+      return JSON.stringify(line);
+    },
+
+    skill(text: string): string {
+      const line = JSON.parse(T.USER_SKILL_BODY ?? '{}') as Record<string, unknown>;
+      const content = (line.message as Record<string, unknown>).content as Record<
+        string,
+        unknown
+      >[];
+      if (content[0]) content[0].text = text;
+      line.uuid = `fake-skill-${next()}`;
       return JSON.stringify(line);
     },
 
@@ -580,6 +594,13 @@ function buildSegments(T: SegmentTemplates, ref: { seq: number }) {
       }
       if (opts?.costUsd != null) line.total_cost_usd = opts.costUsd;
       line.uuid = `fake-result-${next()}`;
+      return JSON.stringify(line);
+    },
+
+    resultWithError(message: string): string {
+      const line = JSON.parse(T.RESULT_IS_ERROR_NO_ERRORS) as Record<string, unknown>;
+      line.result = message;
+      line.uuid = `fake-result-is-err-${next()}`;
       return JSON.stringify(line);
     },
 

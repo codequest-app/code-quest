@@ -156,7 +156,7 @@ describe('ChannelConfigContext', () => {
     await emitAssistantTurn(claude);
 
     await act(async () => {
-      await claude.emit(s.status({ permissionMode: 'plan' }));
+      await claude.emitSegment(s.status({ permissionMode: 'plan' }));
     });
 
     expect(screen.getByText('Plan mode')).toBeInTheDocument();

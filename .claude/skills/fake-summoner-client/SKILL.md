@@ -37,8 +37,8 @@ const { claude, channelId, user } = await renderWithChannel(<ChatPanel />);
 
 await user.type(screen.getByPlaceholderText(/Esc to focus/i), 'hello{Enter}');
 await act(async () => {
-  await claude.emit(s.assistant('Hi back'));
-  await claude.emit(s.result());
+  await claude.emitSegment(s.assistant('Hi back'));
+  await claude.emitSegment(s.result());
 });
 
 expect(screen.getByText('Hi back')).toBeInTheDocument();
@@ -56,6 +56,8 @@ await renderWithChannel(<MyComponent />, {
   initialState: {                     // ChannelProvider 的 initial state 注入
     pendingControls: [{ requestId: 'r1', subtype: 'can_use_tool', toolName: 'Bash' }],
   },
+  launchOnMount: false,               // true = React 驅動 session:launch
+  cwd: '/test/cwd',
 });
 ```
 
@@ -84,13 +86,13 @@ expect(closeBtns).toHaveLength(2);
 
 **使用者操作**（`user.click`/`user.type`）— testing-library 的 userEvent 已自動 act。
 
-**模擬 server push**（`claude.emit`）— 必須手動 act：
+**模擬 server push**（`claude.emitSegment`）— 必須手動 act：
 
 ```tsx
 await user.click(screen.getByRole('button', { name: 'Submit' }));  // ✓ 已包 act
 
 await act(async () => {
-  await claude.emit(s.assistant('response'));  // ⚠️ 必須手動 act
+  await claude.emitSegment(s.assistant('response'));  // ⚠️ 必須手動 act
 });
 ```
 
@@ -105,10 +107,10 @@ const { claude } = await renderWithChannel(<ChatPanel />);
 await userEvent.type(screen.getByPlaceholderText(/Esc to focus/i), 'go{Enter}');
 
 await act(async () => {
-  await claude.emit(
+  await claude.emitSegment(
     s.assistant({ toolUse: { id: 'toolu_1', name: 'Bash', input: { command: 'ls' } } }),
   );
-  await claude.emit(s.controlRequestBash('r1', { command: 'ls' }));
+  await claude.emitSegment(s.controlRequestBash('r1', { command: 'ls' }));
 });
 
 expect(screen.getByText('Yes')).toBeInTheDocument();
@@ -122,7 +124,7 @@ Segment helpers：`s.controlRequestBash()`、`s.controlRequestOpenInEditor()`、
 
 ## State injection — 什麼時候用
 
-**優先 full pipeline**（`claude.emit`）— 最接近真實流程。
+**優先 full pipeline**（`claude.emitSegment`）— 最接近真實流程。
 
 **`initialState` 適合以下情境**：
 - 測**純渲染**，不關心事件流程（例如「給定 pending control，banner 應顯示」）
@@ -136,6 +138,23 @@ await renderWithChannel(<ChatPanel />, {
   },
 });
 expect(screen.getByText(/Bash/)).toBeInTheDocument();
+```
+
+## holdEmit — 測試 loading/connecting 中間狀態
+
+```tsx
+const { summoner, claude } = await renderWithChannel(<ChatPanel />);
+
+// 攔截 session:join 的 ACK — UI 會卡在 connecting 狀態
+const held = summoner.holdEmit('session:join');
+
+// 觸發 join...
+// 此時 UI 應顯示 loading indicator
+expect(screen.getByText('Connecting...')).toBeInTheDocument();
+
+// 釋放 ACK
+held.release();
+await waitFor(() => expect(screen.queryByText('Connecting...')).not.toBeInTheDocument());
 ```
 
 ## 跨 Context 測試（WorktreeContext / SessionContext）
@@ -185,32 +204,36 @@ await user.click(screen.getByRole('tab', { name: /a/i }));
 expect(screen.queryByDisplayValue('B message')).not.toBeInTheDocument();
 ```
 
-## 純 action / handler unit test（不經 React）
-
-測試只接 socket 參數的 function（如 `createControlActions`）：用完整 pipeline — prime server 端 state，透過 `claude.received(...)` 觀察真的送達 CLI。
+## 模擬 server 主動推送
 
 ```ts
-const summoner = createFakeSummoner();
-const claude = summoner.claude();
-const channelId = await claude.initialize();
+// ✅ 用 claude.pushServerEvent — 高層 API
+act(() => {
+  claude.pushServerEvent('projects:added', {
+    id: '...', path: '/x', name: 'x', pinned: false, color: null,
+    lastOpenedAt: '...', createdAt: '...',
+  });
+});
+await waitFor(() => expect(state.projects).toHaveLength(1));
 
-// prime server：造出 pending control request
-await claude.send('chat:send', { channelId, message: 'go' });
-await claude.emit(s.assistant({ toolUse: { id: 't1', name: 'Bash' } }));
-await claude.emit(s.controlRequest('req-1', 'can_use_tool', 'Bash', {}));
-
-// action 用真的 socket
-const actions = createControlActions({ socket: summoner.socket, channelId, ... });
-actions.respondToControl({ behavior: 'allow', updatedInput: {} }, 'req-1');
-
-await new Promise<void>((r) => queueMicrotask(r));
-await new Promise<void>((r) => setTimeout(r, 10));  // flush server→CLI delivery
-
-const responses = claude.received('control_response');
-expect(responses.map((r) => r.response.request_id)).toContain('req-1');
+// 快捷 API
+claude.pushSessionState(channelId, 'processing');
+claude.pushSessionClosed(channelId, 'error message');
 ```
 
-**負面斷言**（「不應該送」）用 `claude.received(...).length` before/after 比較。
+適用情境：`projects:added/updated/removed`、`notification:show`、`session:states`、其他 server-broadcast 類事件。
+
+如果是測「自己 client 觸發的 server 廣播」，優先用真 pipeline（`actions.addProject(cwd)` → server handler → 自動 broadcast）；`pushServerEvent` 留給「另一個 tab / system event」場景。
+
+## 查詢 sent events（client → server）
+
+```ts
+// 驗證 React 層送了哪些 RPC
+expect(summoner.sentEvents('session:launch')).toHaveLength(1);
+expect(summoner.sentEvents('app:init')).toHaveLength(1);
+```
+
+`sentEvents()` 記錄所有 `socket.emit` 呼叫，適合驗證 React action 確實觸發了預期的 server RPC。
 
 ## 多層驗證 — 優先策略
 
@@ -219,7 +242,7 @@ expect(responses.map((r) => r.response.request_id)).toContain('req-1');
 | 層 | API | 抓的 bug |
 |---|---|---|
 | ① UI | `screen.getByText` / `queryByText` | wire 沒接 |
-| ② Server 廣播 | `summoner.claude().events('event:name')` | handler 沒跑 / payload schema 錯 |
+| ② Server 廣播 | `claude.receivedEvents('event:name')` | handler 沒跑 / payload schema 錯 |
 | ③ Store / DB | `container.get(TYPES.ProjectStore).getByPath(...)` | store / fan-out / transaction |
 | ④ Client state | state probe / queryByText 反射 | 訂閱沒接、setState 漏 |
 
@@ -235,42 +258,17 @@ expect(responses.map((r) => r.response.request_id)).toContain('req-1');
 | 非 socket 事件流 | ② |
 | 不寫 DB 的 action（純 UI state） | ③ |
 
-### 跟「callback spy」反 pattern 的關係
-
-`vi.fn()` callback 對純 UI primitive 還是 OK（`onClose`/`onSelect`），但 **socket-涉入的 action 不要只驗 callback 被呼叫** — 用上面四層替代。
-
-## 模擬 server 主動推送 — `claude.pushServerEvent`
-
-當測「server 自己 broadcast」（例如另一個 tab 的 action 觸發 broadcast）：
-
-```ts
-// ✅ 用 claude.pushServerEvent — 高層 API，封裝 serverSocket 細節
-act(() => {
-  summoner.claude().pushServerEvent('projects:added', {
-    id: '...', path: '/x', name: 'x', pinned: false, color: null,
-    lastOpenedAt: '...', createdAt: '...',
-  });
-});
-await waitFor(() => expect(state.projects).toHaveLength(1));
-
-// ❌ 不要直接戳 serverSocket — 破抽象、容易跟 FakeSocket 內部 coupling
-summoner.socket.serverSocket.emit('projects:added', payload);
-```
-
-適用情境：`projects:added/updated/removed`、`notification:show`、`session:states`、其他 server-broadcast 類事件。
-
-如果是測「自己 client 觸發的 server 廣播」，優先用真 pipeline（`actions.addProject(cwd)` → server handler → 自動 broadcast）；`pushServerEvent` 留給「另一個 tab / system event」場景。
-
 ## 慣例
 
 | 情境 | 採用 |
 |---|---|
-| 取得 fake socket + handlers | `createFakeSummoner()` + `renderWithChannel` + segment emit |
-| Fake socket 物件 | FakeSummoner 提供的 dual-emitter socket |
-| 驗證 action 發 socket event | 完整 pipeline + `claude.received(...)` |
-| 包 `claude.emit()` flush state | `await act(async () => claude.emit(...))` |
+| 取得 fake socket + handlers | `createFakeSummoner()` + `renderWithChannel` + segment emitSegment |
+| Fake socket 物件 | FakeSummoner 提供的 dual-emitter FakeSocket |
+| 驗證 action 發 socket event | `summoner.sentEvents('event')` 或完整 pipeline + `claude.received(...)` |
+| 包 `claude.emitSegment()` flush state | `await act(async () => claude.emitSegment(...))` |
 | `skipInit: true` 模式 | 搭配 `cwd` prop 由外部 launch |
 | `renderHook` 重複 render | wrapper 用 `useRef` lazy init summoner |
+| 攔截 ACK 測中間狀態 | `summoner.holdEmit(event)` → `held.release()` |
 
 ## 相關 skill
 

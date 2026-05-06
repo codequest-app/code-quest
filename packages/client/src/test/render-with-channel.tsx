@@ -10,6 +10,7 @@ import { ProjectProvider } from '../contexts/ProjectContext.tsx';
 import { SessionProvider } from '../contexts/SessionContext.tsx';
 import { SocketProvider } from '../contexts/SocketContext.tsx';
 import { TabProvider } from '../contexts/TabContext.tsx';
+import type { ChannelState } from '../types/chat.ts';
 import { createFakeSummoner, type FakeSummoner } from './fake-summoner.ts';
 
 interface RenderWithChannelOptions {
@@ -27,6 +28,9 @@ interface RenderWithChannelOptions {
    *  spawn. Tests that want React to drive `session:launch` must set this
    *  explicitly (typically alongside `cwd` and `skipInit: true`). */
   launchOnMount?: boolean;
+  /** Pre-populate ChannelMessagesProvider state — useful for testing
+   *  resume scenarios where messages exist before isConnecting resolves. */
+  initialState?: Partial<ChannelState>;
 }
 
 interface RenderWithChannelResult extends RenderResult {
@@ -64,6 +68,7 @@ export async function renderWithChannel(
                         cwd={options.cwd}
                         launchOnMount={options.launchOnMount ?? false}
                         onNewChannel={options.onNewChannel}
+                        initialState={options.initialState}
                       >
                         {children}
                       </ChannelProvider>
@@ -84,6 +89,15 @@ export async function renderWithChannel(
     const extraSegs = options.extraSegments ?? [];
     await act(async () => {
       await claude.initialize({ launch: { channelId, cwd: launchCwd } }, initSeg, ...extraSegs);
+    });
+  }
+
+  // Flush join ACK — ChannelMessagesProvider fires session:join on mount,
+  // the server handler is async (await readyPromise, etc.). Multiple
+  // microtask ticks are needed for the ACK to arrive.
+  if (!(options.launchOnMount ?? false)) {
+    await act(async () => {
+      for (let i = 0; i < 3; i++) await new Promise<void>((r) => queueMicrotask(r));
     });
   }
 

@@ -90,7 +90,7 @@ describe('ChatHandler > plan', () => {
 
     await claude.send('chat:send', { channelId, message: 'plan something' });
 
-    await claude.emit(s.controlRequestExitPlanMode('req-plan-1'));
+    await claude.emitSegment(s.controlRequestExitPlanMode('req-plan-1'));
 
     // Add plan comments
     await claude.send<PlanEmptyResp>('plan:comment', {

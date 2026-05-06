@@ -27,12 +27,12 @@ describe('ChatHandler > session', () => {
       const { claude, channelId } = await setup();
 
       await claude.send('chat:send', { channelId, message: 'done' });
-      await claude.emit(s.assistant('bye'));
-      await claude.emit(s.result());
+      await claude.emitSegment(s.assistant('bye'));
+      await claude.emitSegment(s.result());
       await claude.send('session:close', { channelId });
       await new Promise<void>((r) => queueMicrotask(r));
 
-      const closedEvents = claude.events('session:closed');
+      const closedEvents = claude.receivedEvents('session:closed');
       expect(closedEvents.length).toBeGreaterThan(0);
       expect(closedEvents[0]!.channelId).toBe(channelId);
     });
@@ -51,10 +51,10 @@ describe('ChatHandler > session', () => {
       const { claude, channelId } = await setup();
 
       await claude.send('chat:send', { channelId, message: 'read file' });
-      await claude.emit(
+      await claude.emitSegment(
         s.assistant({ toolUse: { id: 'toolu_1', name: 'Read', input: { file_path: '/tmp/x' } } }),
       );
-      await claude.emit(
+      await claude.emitSegment(
         s.controlRequest('req-perm', 'can_use_tool', 'Read', { file_path: '/tmp/x' }),
       );
 
@@ -63,7 +63,7 @@ describe('ChatHandler > session', () => {
         response: { behavior: 'allow', updatedInput: {} },
       });
 
-      const cancelEvents = claude.events('chat:cancel_request');
+      const cancelEvents = claude.receivedEvents('chat:cancel_request');
       expect(cancelEvents.length).toBeGreaterThan(0);
       expect(cancelEvents[0]!.targetRequestId).toBe('req-perm');
     });
@@ -94,7 +94,7 @@ describe('session:update_state', () => {
 
     expect(result.ok).toBe(true);
     const matched = claude
-      .events('session:states')
+      .receivedEvents('session:states')
       .flatMap((e) => e.sessions ?? [])
       .find((sc: any) => sc.channelId === channelId && sc.title === 'New Title');
     expect(matched).toBeDefined();
@@ -111,7 +111,7 @@ describe('session:update_state', () => {
 
     expect(result.ok).toBe(true);
     const matched = claude
-      .events('session:states')
+      .receivedEvents('session:states')
       .flatMap((e) => e.sessions ?? [])
       .find(
         (sc: any) => sc.channelId === channelId && sc.state === 'busy' && sc.title === 'Busy Tab',
@@ -134,10 +134,10 @@ describe('session_states_update enrichment', () => {
     const { claude, channelId } = await setup();
 
     await claude.send('chat:send', { channelId, message: 'hello' });
-    await claude.emit(s.assistant('hi'));
-    await claude.emit(s.result());
+    await claude.emitSegment(s.assistant('hi'));
+    await claude.emitSegment(s.result());
 
-    const sessions = claude.events('session:states').flatMap((e) => e.sessions ?? []);
+    const sessions = claude.receivedEvents('session:states').flatMap((e) => e.sessions ?? []);
     const busyEntry = sessions.find((sc: any) => sc.channelId === channelId && sc.state === 'busy');
     expect(busyEntry).toBeDefined();
     expect(busyEntry!.channelId).toBe(channelId);
@@ -148,7 +148,7 @@ describe('session_states_update enrichment', () => {
 
     await claude.initialize(s.init('cli-sess'));
 
-    const sessions = claude.events('session:states').flatMap((e) => e.sessions ?? []);
+    const sessions = claude.receivedEvents('session:states').flatMap((e) => e.sessions ?? []);
     expect(sessions.length).toBeGreaterThan(0);
     for (const sc of sessions) {
       expect(sc.channelId).toBeDefined();
@@ -160,11 +160,11 @@ describe('session_states_update enrichment', () => {
     const { claude, channelId } = await setup();
 
     await claude.send('chat:send', { channelId, message: 'hello' });
-    await claude.emit(s.result());
+    await claude.emitSegment(s.result());
     await claude.send('session:close', { channelId });
     await new Promise<void>((r) => queueMicrotask(r));
 
-    const sessions = claude.events('session:states').flatMap((e) => e.sessions ?? []);
+    const sessions = claude.receivedEvents('session:states').flatMap((e) => e.sessions ?? []);
     const exitedState = sessions.find(
       (sc: any) => sc.channelId === channelId && sc.state === 'exited',
     );
