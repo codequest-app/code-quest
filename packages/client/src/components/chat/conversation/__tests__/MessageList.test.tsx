@@ -1,5 +1,5 @@
 import { segments as s } from '@code-quest/summoner/test';
-import { act, screen } from '@testing-library/react';
+import { act, screen, waitFor } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { createRef } from 'react';
 import { describe, expect, it } from 'vitest';
@@ -28,13 +28,18 @@ async function setup(props?: { searchQuery?: string }) {
   // Pre-create session on server so session:join succeeds during render
   await claude.initialize({ launch: { channelId } }, s.init('cli-session'));
 
-  return renderWithChannel(
+  const result = await renderWithChannel(
     <>
       <SendButton message="Hello" />
       <MessageList {...props} />
     </>,
     { summoner, channelId, skipInit: true },
   );
+  // Flush join ACK microtask so isConnecting becomes false before assertions
+  await act(async () => {
+    await new Promise<void>((r) => queueMicrotask(r));
+  });
+  return result;
 }
 
 /** Populate basic messages: user "Hello" + assistant "Hi there" + error "Oops" */
@@ -44,8 +49,8 @@ async function setupWithMessages(props?: { searchQuery?: string }) {
   await userEvent.click(screen.getByText('TriggerSend'));
   // Assistant message
   await act(async () => {
-    await ctx.claude.emit(s.assistant('Hi there'));
-    await ctx.claude.emit(s.resultError());
+    await ctx.claude.emitSegment(s.assistant('Hi there'));
+    await ctx.claude.emitSegment(s.resultError());
   });
   return ctx;
 }
@@ -116,7 +121,9 @@ describe('MessageList', () => {
 
   it('renders empty state with welcome text when no messages', async () => {
     await setup();
-    expect(screen.getByText(/how can i help/i)).toBeInTheDocument();
+    await waitFor(() => {
+      expect(screen.getByText(/how can i help/i)).toBeInTheDocument();
+    });
   });
 
   it('renders user and assistant messages without avatar badges', async () => {
@@ -130,12 +137,12 @@ describe('MessageList', () => {
   it('renders consecutive same-role messages without role labels', async () => {
     const { claude } = await setup();
     await act(async () => {
-      await claude.emit(s.assistant('First'));
-      await claude.emit(
+      await claude.emitSegment(s.assistant('First'));
+      await claude.emitSegment(
         s.assistant({ toolUse: { id: 'toolu_1', name: 'bash', input: { command: 'ls' } } }),
       );
-      await claude.emit(s.assistant('Second'));
-      await claude.emit(s.result());
+      await claude.emitSegment(s.assistant('Second'));
+      await claude.emitSegment(s.result());
     });
     expect(screen.queryByText('Assistant')).not.toBeInTheDocument();
     expect(screen.getByText('First')).toBeInTheDocument();
@@ -153,11 +160,11 @@ describe('MessageList', () => {
     const user = userEvent.setup();
     const { claude } = await setup();
     await act(async () => {
-      await claude.emit(s.assistant('Starting'));
-      await claude.emit(s.agent('toolu_1', 'Explore project'));
-      await claude.emit(s.assistant('Sub output', { parentToolUseId: 'toolu_1' }));
-      await claude.emit(s.assistant('Done'));
-      await claude.emit(s.result());
+      await claude.emitSegment(s.assistant('Starting'));
+      await claude.emitSegment(s.agent('toolu_1', 'Explore project'));
+      await claude.emitSegment(s.assistant('Sub output', { parentToolUseId: 'toolu_1' }));
+      await claude.emitSegment(s.assistant('Done'));
+      await claude.emitSegment(s.result());
     });
     expect(screen.getByText('Starting')).toBeInTheDocument();
     expect(screen.getByText('Done')).toBeInTheDocument();
@@ -170,19 +177,19 @@ describe('MessageList', () => {
   it('groups consecutive tool_use from separate turns into one chip', async () => {
     const { claude } = await setup();
     await act(async () => {
-      await claude.emit(
+      await claude.emitSegment(
         s.assistant({ toolUse: { id: 'tu1', name: 'Bash', input: { command: 'ls' } } }),
       );
-      await claude.emit(s.toolResult('tu1', 'file1.ts'));
-      await claude.emit(
+      await claude.emitSegment(s.toolResult('tu1', 'file1.ts'));
+      await claude.emitSegment(
         s.assistant({ toolUse: { id: 'tu2', name: 'Bash', input: { command: 'pwd' } } }),
       );
-      await claude.emit(s.toolResult('tu2', '/src'));
-      await claude.emit(
+      await claude.emitSegment(s.toolResult('tu2', '/src'));
+      await claude.emitSegment(
         s.assistant({ toolUse: { id: 'tu3', name: 'Bash', input: { command: 'cat' } } }),
       );
-      await claude.emit(s.toolResult('tu3', 'content'));
-      await claude.emit(s.result());
+      await claude.emitSegment(s.toolResult('tu3', 'content'));
+      await claude.emitSegment(s.result());
     });
     // should show ONE chip "Bash ×3", not three separate chips
     expect(screen.getByText('Bash')).toBeInTheDocument();
@@ -205,10 +212,10 @@ describe('MessageList', () => {
     const user = userEvent.setup();
     const { claude } = await setup();
     await act(async () => {
-      await claude.emit(s.agent('toolu_1', 'Analyse files'));
-      await claude.emit(s.assistant('Child 1', { parentToolUseId: 'toolu_1' }));
-      await claude.emit(s.assistant('Child 2', { parentToolUseId: 'toolu_1' }));
-      await claude.emit(s.result());
+      await claude.emitSegment(s.agent('toolu_1', 'Analyse files'));
+      await claude.emitSegment(s.assistant('Child 1', { parentToolUseId: 'toolu_1' }));
+      await claude.emitSegment(s.assistant('Child 2', { parentToolUseId: 'toolu_1' }));
+      await claude.emitSegment(s.result());
     });
     await user.click(screen.getByText('Analyse files'));
     expect(screen.getByText(/2 subagent messages/)).toBeInTheDocument();
@@ -218,8 +225,8 @@ describe('MessageList', () => {
     const user = userEvent.setup();
     const { claude } = await setup();
     await act(async () => {
-      await claude.emit(s.agent('toolu_1', 'Analyse files'));
-      await claude.emit(s.assistant('Sub output', { parentToolUseId: 'toolu_1' }));
+      await claude.emitSegment(s.agent('toolu_1', 'Analyse files'));
+      await claude.emitSegment(s.assistant('Sub output', { parentToolUseId: 'toolu_1' }));
     });
     await user.click(screen.getByText('Analyse files'));
     expect(screen.getByTitle('Stop subagent')).toBeInTheDocument();
@@ -229,8 +236,8 @@ describe('MessageList', () => {
     const user = userEvent.setup();
     const { claude } = await setup();
     await act(async () => {
-      await claude.emit(s.agent('toolu_1', 'Analyse files'));
-      await claude.emit(s.assistant('Child', { parentToolUseId: 'toolu_1' }));
+      await claude.emitSegment(s.agent('toolu_1', 'Analyse files'));
+      await claude.emitSegment(s.assistant('Child', { parentToolUseId: 'toolu_1' }));
     });
     await user.click(screen.getByText('Analyse files'));
     await user.click(screen.getByTitle('Stop subagent'));
@@ -259,12 +266,12 @@ describe('MessageList', () => {
       uuid: 'fake-read-result-1',
     });
     await act(async () => {
-      await claude.emit(
+      await claude.emitSegment(
         s.assistant({
           toolUse: { id: 'toolu_read_1', name: 'Read', input: { file_path: '/Foo.tsx' } },
         }),
       );
-      await claude.emit(arrayToolResult);
+      await claude.emitSegment(arrayToolResult);
     });
     // Single tool_use renders directly; click expands the CollapsibleBlock
     await user.click(screen.getByText('Read'));
@@ -278,10 +285,10 @@ describe('MessageList', () => {
     const user = userEvent.setup();
     const { claude } = await setup();
     await act(async () => {
-      await claude.emit(
+      await claude.emitSegment(
         s.assistant({ toolUse: { id: 'toolu_todo_1', name: 'TodoWrite', input: { todos: [] } } }),
       );
-      await claude.emit(
+      await claude.emitSegment(
         s.toolResult(
           'toolu_todo_1',
           'Todos have been modified successfully. Ensure that you continue to use the todo list to track your progress.',
@@ -307,10 +314,10 @@ describe('MessageList', () => {
     const user = userEvent.setup();
     const { claude } = await setup();
     await act(async () => {
-      await claude.emit(
+      await claude.emitSegment(
         s.assistant({ toolUse: { id: 'toolu_grep_1', name: 'Grep', input: { pattern: 'foo' } } }),
       );
-      await claude.emit(s.toolResult('toolu_grep_1', 'match found'));
+      await claude.emitSegment(s.toolResult('toolu_grep_1', 'match found'));
     });
     // Single tool_use renders directly; click expands the CollapsibleBlock
     await user.click(screen.getByText('Grep'));
@@ -321,12 +328,12 @@ describe('MessageList', () => {
     const user = userEvent.setup();
     const { claude } = await setup();
     await act(async () => {
-      await claude.emit(
+      await claude.emitSegment(
         s.assistant({
           toolUse: { id: 'toolu_edit_1', name: 'Edit', input: { file_path: '/file.txt' } },
         }),
       );
-      await claude.emit(
+      await claude.emitSegment(
         s.toolResult('toolu_edit_1', '--- a/file.txt\n+++ b/file.txt\n@@ -1 +1 @@\n-old\n+new'),
       );
     });
@@ -342,8 +349,8 @@ describe('MessageList — task lifecycle', () => {
   it('shows Running badge when task_started fires', async () => {
     const { claude } = await setup();
     await act(async () => {
-      await claude.emit(s.agent('toolu_1', 'Explore project'));
-      await claude.emit(s.taskStarted('toolu_1', 'Explore project'));
+      await claude.emitSegment(s.agent('toolu_1', 'Explore project'));
+      await claude.emitSegment(s.taskStarted('toolu_1', 'Explore project'));
     });
     expect(screen.getByText(/Running/)).toBeInTheDocument();
   });
@@ -351,8 +358,8 @@ describe('MessageList — task lifecycle', () => {
   it('does not crash when task_started has no toolUseId match', async () => {
     const { claude } = await setup();
     await act(async () => {
-      await claude.emit(s.agent('toolu_1', 'Explore project'));
-      await claude.emit(s.taskStarted('unknown-id', 'Some task'));
+      await claude.emitSegment(s.agent('toolu_1', 'Explore project'));
+      await claude.emitSegment(s.taskStarted('unknown-id', 'Some task'));
     });
     // Should not show Running badge (no matching tool_use)
     expect(screen.queryByText(/Running/)).not.toBeInTheDocument();
@@ -361,9 +368,11 @@ describe('MessageList — task lifecycle', () => {
   it('shows Running badge with last tool name on task_progress', async () => {
     const { claude } = await setup();
     await act(async () => {
-      await claude.emit(s.agent('toolu_1', 'Explore project'));
-      await claude.emit(s.taskStarted('toolu_1', 'Explore project'));
-      await claude.emit(s.taskProgress('task-1', { toolUseId: 'toolu_1', lastToolName: 'Read' }));
+      await claude.emitSegment(s.agent('toolu_1', 'Explore project'));
+      await claude.emitSegment(s.taskStarted('toolu_1', 'Explore project'));
+      await claude.emitSegment(
+        s.taskProgress('task-1', { toolUseId: 'toolu_1', lastToolName: 'Read' }),
+      );
     });
     expect(screen.getByText(/Running · Read/)).toBeInTheDocument();
   });
@@ -371,9 +380,9 @@ describe('MessageList — task lifecycle', () => {
   it('shows Done badge with summary on task_notification completed', async () => {
     const { claude } = await setup();
     await act(async () => {
-      await claude.emit(s.agent('toolu_1', 'Explore project'));
-      await claude.emit(s.taskStarted('toolu_1', 'Explore project'));
-      await claude.emit(
+      await claude.emitSegment(s.agent('toolu_1', 'Explore project'));
+      await claude.emitSegment(s.taskStarted('toolu_1', 'Explore project'));
+      await claude.emitSegment(
         s.taskNotification('task-1', {
           toolUseId: 'toolu_1',
           status: 'completed',
@@ -387,9 +396,9 @@ describe('MessageList — task lifecycle', () => {
   it('shows Done badge without summary when no summary provided', async () => {
     const { claude } = await setup();
     await act(async () => {
-      await claude.emit(s.agent('toolu_1', 'Explore project'));
-      await claude.emit(s.taskStarted('toolu_1', 'Explore project'));
-      await claude.emit(
+      await claude.emitSegment(s.agent('toolu_1', 'Explore project'));
+      await claude.emitSegment(s.taskStarted('toolu_1', 'Explore project'));
+      await claude.emitSegment(
         s.taskNotification('task-1', { toolUseId: 'toolu_1', status: 'completed' }),
       );
     });
@@ -399,9 +408,11 @@ describe('MessageList — task lifecycle', () => {
   it('shows failed status on task_notification failed', async () => {
     const { claude } = await setup();
     await act(async () => {
-      await claude.emit(s.agent('toolu_1', 'Explore project'));
-      await claude.emit(s.taskStarted('toolu_1', 'Explore project'));
-      await claude.emit(s.taskNotification('task-1', { toolUseId: 'toolu_1', status: 'failed' }));
+      await claude.emitSegment(s.agent('toolu_1', 'Explore project'));
+      await claude.emitSegment(s.taskStarted('toolu_1', 'Explore project'));
+      await claude.emitSegment(
+        s.taskNotification('task-1', { toolUseId: 'toolu_1', status: 'failed' }),
+      );
     });
     expect(screen.getByText(/Failed/)).toBeInTheDocument();
   });
@@ -409,9 +420,11 @@ describe('MessageList — task lifecycle', () => {
   it('ignores task_notification when status is absent (no badge change)', async () => {
     const { claude } = await setup();
     await act(async () => {
-      await claude.emit(s.agent('toolu_1', 'Explore project'));
-      await claude.emit(s.taskStarted('toolu_1', 'Explore project'));
-      await claude.emit(s.taskNotification('task-1', { toolUseId: 'toolu_1', status: null }));
+      await claude.emitSegment(s.agent('toolu_1', 'Explore project'));
+      await claude.emitSegment(s.taskStarted('toolu_1', 'Explore project'));
+      await claude.emitSegment(
+        s.taskNotification('task-1', { toolUseId: 'toolu_1', status: null }),
+      );
     });
     // status undefined → should not flip to Done; Running badge should remain
     expect(screen.getByText(/Running/)).toBeInTheDocument();
@@ -422,9 +435,9 @@ describe('MessageList — task lifecycle', () => {
     const user = userEvent.setup();
     const { claude } = await setup();
     await act(async () => {
-      await claude.emit(s.agent('toolu_1', 'Explore project'));
-      await claude.emit(s.assistant('Child output', { parentToolUseId: 'toolu_1' }));
-      await claude.emit(s.result());
+      await claude.emitSegment(s.agent('toolu_1', 'Explore project'));
+      await claude.emitSegment(s.assistant('Child output', { parentToolUseId: 'toolu_1' }));
+      await claude.emitSegment(s.result());
     });
     await user.click(screen.getByText('Explore project'));
     expect(screen.getByText('claude-opus-4-6')).toBeInTheDocument();
@@ -433,9 +446,9 @@ describe('MessageList — task lifecycle', () => {
   it('shows token count in Done badge when usage provided', async () => {
     const { claude } = await setup();
     await act(async () => {
-      await claude.emit(s.agent('toolu_1', 'Explore project'));
-      await claude.emit(s.taskStarted('toolu_1', 'Explore project'));
-      await claude.emit(
+      await claude.emitSegment(s.agent('toolu_1', 'Explore project'));
+      await claude.emitSegment(s.taskStarted('toolu_1', 'Explore project'));
+      await claude.emitSegment(
         s.taskNotification('task-1', {
           toolUseId: 'toolu_1',
           status: 'completed',
@@ -449,8 +462,8 @@ describe('MessageList — task lifecycle', () => {
   it('shows subagent_type badge in task header', async () => {
     const { claude } = await setup();
     await act(async () => {
-      await claude.emit(s.agent('toolu_1', 'Explore project', { subagentType: 'Explore' }));
-      await claude.emit(s.result());
+      await claude.emitSegment(s.agent('toolu_1', 'Explore project', { subagentType: 'Explore' }));
+      await claude.emitSegment(s.result());
     });
     expect(screen.getByText('[Explore]')).toBeInTheDocument();
   });
@@ -461,7 +474,7 @@ describe('MessageList streaming', () => {
     const { claude } = await setup();
     await userEvent.click(screen.getByText('TriggerSend'));
     await act(async () => {
-      await claude.emit(s.status({ status: 'Compacting' }));
+      await claude.emitSegment(s.status({ status: 'Compacting' }));
     });
     const verb = screen.getByLabelText('spinner-verb');
     expect(verb.textContent).toContain('Compacting');
@@ -484,8 +497,8 @@ describe('MessageList streaming', () => {
     const { claude } = await setup();
     await userEvent.click(screen.getByText('TriggerSend'));
     await act(async () => {
-      await claude.emit(s.textDelta('Hello'));
-      await claude.emit(s.textDelta(' world'));
+      await claude.emitSegment(s.textDelta('Hello'));
+      await claude.emitSegment(s.textDelta(' world'));
     });
 
     expect(await screen.findByText(/Hello world/)).toBeInTheDocument();
@@ -495,8 +508,8 @@ describe('MessageList streaming', () => {
     const { claude } = await setup();
     await userEvent.click(screen.getByText('TriggerSend'));
     await act(async () => {
-      await claude.emit(s.thinkingDelta('Let me'));
-      await claude.emit(s.thinkingDelta(' think about this'));
+      await claude.emitSegment(s.thinkingDelta('Let me'));
+      await claude.emitSegment(s.thinkingDelta(' think about this'));
     });
 
     // ThinkingBlock collapses by default — expand to verify content
@@ -509,10 +522,10 @@ describe('MessageList streaming', () => {
     const { claude } = await setup();
     await userEvent.click(screen.getByText('TriggerSend'));
     await act(async () => {
-      await claude.emit(s.textDelta('First message'));
-      await claude.emit(s.messageStop());
-      await claude.emit(s.textDelta('Second message'));
-      await claude.emit(s.messageStop());
+      await claude.emitSegment(s.textDelta('First message'));
+      await claude.emitSegment(s.messageStop());
+      await claude.emitSegment(s.textDelta('Second message'));
+      await claude.emitSegment(s.messageStop());
     });
     await emitAssistantTurn(claude, 'Second message');
 
@@ -524,8 +537,8 @@ describe('MessageList streaming', () => {
     const { claude } = await setup();
     await userEvent.click(screen.getByText('TriggerSend'));
     await act(async () => {
-      await claude.emit(s.thinkingDelta('Let me'));
-      await claude.emit(s.thinkingDelta(' think'));
+      await claude.emitSegment(s.thinkingDelta('Let me'));
+      await claude.emitSegment(s.thinkingDelta(' think'));
     });
 
     expect(await screen.findByText('Thinking...')).toBeInTheDocument();
@@ -535,10 +548,10 @@ describe('MessageList streaming', () => {
     const { claude } = await setup();
     await userEvent.click(screen.getByText('TriggerSend'));
     await act(async () => {
-      await claude.emit(s.thinkingDelta('Let me think'));
-      await claude.emit(s.thinking('Let me think'));
-      await claude.emit(s.assistant('answer'));
-      await claude.emit(s.result({ durationMs: 3000 }));
+      await claude.emitSegment(s.thinkingDelta('Let me think'));
+      await claude.emitSegment(s.thinking('Let me think'));
+      await claude.emitSegment(s.assistant('answer'));
+      await claude.emitSegment(s.result({ durationMs: 3000 }));
     });
 
     expect(await screen.findByText('Thought for 3s')).toBeInTheDocument();
@@ -548,9 +561,9 @@ describe('MessageList streaming', () => {
     const { claude } = await setup();
     await userEvent.click(screen.getByText('TriggerSend'));
     await act(async () => {
-      await claude.emit(s.thinkingDelta('Let me'));
-      await claude.emit(s.thinkingDelta(' think...'));
-      await claude.emit(s.thinking('Let me think...'));
+      await claude.emitSegment(s.thinkingDelta('Let me'));
+      await claude.emitSegment(s.thinkingDelta(' think...'));
+      await claude.emitSegment(s.thinking('Let me think...'));
     });
     await emitAssistantTurn(claude, 'ok');
 
@@ -565,11 +578,11 @@ describe('MessageList streaming', () => {
     const { claude } = await setup();
     await userEvent.click(screen.getByText('TriggerSend'));
     await act(async () => {
-      await claude.emit(s.textDelta('hello'));
-      await claude.emit(s.textDelta(' world'));
-      await claude.emit(s.assistant('hello world'));
-      await claude.emit(s.messageStop());
-      await claude.emit(s.result());
+      await claude.emitSegment(s.textDelta('hello'));
+      await claude.emitSegment(s.textDelta(' world'));
+      await claude.emitSegment(s.assistant('hello world'));
+      await claude.emitSegment(s.messageStop());
+      await claude.emitSegment(s.result());
     });
 
     const matches = screen.queryAllByText(/hello world/);
@@ -590,8 +603,8 @@ describe('MessageList scrollToMessage highlight', () => {
       skipInit: true,
     });
     await act(async () => {
-      await claude.emit(s.assistant('Target message'));
-      await claude.emit(s.result());
+      await claude.emitSegment(s.assistant('Target message'));
+      await claude.emitSegment(s.result());
     });
     return { ...ctx, ref };
   }
@@ -650,8 +663,8 @@ describe('MessageList visibility filtering', () => {
   it('hides messages in hidden groups (hooks off by default)', async () => {
     const { claude } = await renderWithChannel(<MessageList />);
     await act(async () => {
-      await claude.emit(s.hookStarted('hook-1', 'my-hook', 'pre_tool_use'));
-      await claude.emit(s.result());
+      await claude.emitSegment(s.hookStarted('hook-1', 'my-hook', 'pre_tool_use'));
+      await claude.emitSegment(s.result());
     });
     // hook_started is in Hooks group which is off by default
     expect(screen.queryByText(/hook-1/i)).not.toBeInTheDocument();
@@ -660,8 +673,8 @@ describe('MessageList visibility filtering', () => {
   it('shows messages in visible groups (conversation on by default)', async () => {
     const { claude } = await renderWithChannel(<MessageList />);
     await act(async () => {
-      await claude.emit(s.assistant('Hello from assistant'));
-      await claude.emit(s.result());
+      await claude.emitSegment(s.assistant('Hello from assistant'));
+      await claude.emitSegment(s.result());
     });
     expect(screen.getByText(/Hello from assistant/)).toBeInTheDocument();
   });
@@ -675,8 +688,8 @@ describe('MessageList visibility filtering', () => {
       </>,
     );
     await act(async () => {
-      await claude.emit(s.assistant('Visible text'));
-      await claude.emit(s.result());
+      await claude.emitSegment(s.assistant('Visible text'));
+      await claude.emitSegment(s.result());
     });
     expect(screen.getByText(/Visible text/)).toBeInTheDocument();
 
@@ -693,8 +706,8 @@ describe('MessageList visibility filtering', () => {
       </>,
     );
     await act(async () => {
-      await claude.emit(s.hookStarted('hook-id-2', 'my-hook', 'pre_tool_use'));
-      await claude.emit(s.result());
+      await claude.emitSegment(s.hookStarted('hook-id-2', 'my-hook', 'pre_tool_use'));
+      await claude.emitSegment(s.result());
     });
     // hooks off by default — hook message count should be 0 in rendered list
     const listBefore = screen.getByLabelText('message-list');
@@ -749,5 +762,82 @@ describe('MessageList — layout', () => {
     await setupWithMessages();
     const wrapper = document.querySelector('[aria-label="message-content-wrapper"]');
     expect(wrapper?.className).toContain('pb-32');
+  });
+});
+
+describe('MessageList — message rendering', () => {
+  it('user skill-body text renders as markdown', async () => {
+    const { claude, container } = await setup();
+    await act(async () => {
+      await claude.emitSegment(s.skill('# Heading\n\n**bold** text'));
+    });
+    expect(container.querySelector('h1')?.textContent).toBe('Heading');
+    expect(container.querySelector('strong')?.textContent).toBe('bold');
+  });
+
+  it('result with is_error + no errors array shows error banner, not result divider', async () => {
+    const { claude } = await setup();
+    await act(async () => {
+      await claude.emitSegment(
+        s.resultWithError("You've hit your limit · resets 11pm (Asia/Taipei)"),
+      );
+    });
+    const el = screen.getByText("You've hit your limit · resets 11pm (Asia/Taipei)");
+    expect(el).toBeInTheDocument();
+    expect(el.closest('[data-type="error"]')).toBeInTheDocument();
+    expect(document.querySelector('[data-type="result"]:not([data-role])')).not.toBeInTheDocument();
+  });
+
+  it('when assistant already streamed the error text, result.result does not add a duplicate error banner', async () => {
+    const { claude } = await setup();
+    await act(async () => {
+      await claude.emitSegment(s.assistant("You've hit your limit · resets 11pm (Asia/Taipei)"));
+      await claude.emitSegment(
+        s.resultWithError("You've hit your limit · resets 11pm (Asia/Taipei)"),
+      );
+    });
+    const all = screen.getAllByText("You've hit your limit · resets 11pm (Asia/Taipei)");
+    expect(all).toHaveLength(1);
+  });
+});
+
+describe('SpinnerVerb layout', () => {
+  it('SpinnerVerb is inside the message-content-wrapper section', async () => {
+    const user = userEvent.setup({ pointerEventsCheck: 0 });
+    const { container } = await renderWithChannel(
+      <>
+        <SendButton message="go" />
+        <MessageList />
+      </>,
+      { initSegment: s.init('sess') },
+    );
+
+    await act(async () => {});
+
+    // Trigger processing state so SpinnerVerb renders
+    await user.click(screen.getByText('TriggerSend'));
+
+    const spinner = container.querySelector('[aria-label="spinner-verb"]');
+    expect(spinner).toBeInTheDocument();
+
+    const wrapper = container.querySelector('[aria-label="message-content-wrapper"]');
+    expect(wrapper).toBeInTheDocument();
+    expect(wrapper!.contains(spinner)).toBe(true);
+  });
+});
+
+describe('MessageList — resume connecting', () => {
+  it('shows SpinnerVerb and hides messages while ChannelProvider is connecting (resume scenario)', async () => {
+    const summoner = createFakeSummoner();
+    const claude = summoner.claude();
+    const channelId = await claude.initialize();
+    summoner.holdEmit('session:join');
+
+    await renderWithChannel(<MessageList />, { summoner, channelId, skipInit: true });
+
+    expect(screen.getByLabelText('spinner-verb')).toBeInTheDocument();
+    expect(
+      screen.queryByRole('region', { name: 'message-content-wrapper' }),
+    ).not.toBeInTheDocument();
   });
 });

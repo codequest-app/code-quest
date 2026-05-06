@@ -1,5 +1,5 @@
 import { segments as s } from '@code-quest/summoner/test';
-import { fireEvent, screen, waitFor } from '@testing-library/react';
+import { act, fireEvent, screen, waitFor } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { createRef } from 'react';
 import { afterEach, describe, expect, it, vi } from 'vitest';
@@ -54,7 +54,7 @@ describe('ComposeInput', () => {
     const textarea = screen.getByPlaceholderText(COMPOSE_PLACEHOLDER);
     await userEvent.type(textarea, 'go');
     await userEvent.keyboard('{Enter}');
-    await claude.emit(s.assistant('thinking...'));
+    await claude.emitSegment(s.assistant('thinking...'));
 
     expect(screen.getByPlaceholderText('Queue another message…')).toBeInTheDocument();
   });
@@ -194,6 +194,82 @@ describe('ComposeInput', () => {
 
       await userEvent.keyboard('{ArrowDown}');
       expect(textarea).toHaveValue('');
+    });
+
+    it('does not include skill-injected messages (isSynthetic) in ArrowUp history', async () => {
+      const { claude } = await renderWithChannel(<ComposeInput containerRef={containerRef} />);
+      const textarea = screen.getByPlaceholderText(COMPOSE_PLACEHOLDER) as HTMLTextAreaElement;
+
+      await act(async () => {
+        await claude.emitSegment(
+          s.skill('Base directory for this skill: /some/path\n\n# Skill Content'),
+        );
+      });
+
+      await userEvent.click(textarea);
+      await userEvent.keyboard('{ArrowUp}');
+      expect(textarea).toHaveValue('');
+    });
+
+    it('does not include loop-wakeup messages (parent_tool_use_id) in ArrowUp history', async () => {
+      const { claude } = await renderWithChannel(<ComposeInput containerRef={containerRef} />);
+      const textarea = screen.getByPlaceholderText(COMPOSE_PLACEHOLDER) as HTMLTextAreaElement;
+
+      await act(async () => {
+        await claude.emitSegment(s.user('wake up prompt', { parentToolUseId: 'toolu_loop123' }));
+      });
+
+      await userEvent.click(textarea);
+      await userEvent.keyboard('{ArrowUp}');
+      expect(textarea).toHaveValue('');
+    });
+
+    it('only includes messages with history=true in ArrowUp history', async () => {
+      const user = userEvent.setup();
+      const { claude } = await renderWithChannel(<ComposeInput containerRef={containerRef} />);
+      const textarea = screen.getByPlaceholderText(COMPOSE_PLACEHOLDER) as HTMLTextAreaElement;
+
+      await userEvent.type(textarea, 'user typed this');
+      await user.keyboard('{Enter}');
+
+      await act(async () => {
+        await claude.emitSegment(s.user('loop injected', { parentToolUseId: 'toolu_loop456' }));
+      });
+
+      await userEvent.click(textarea);
+      await userEvent.keyboard('{ArrowUp}');
+      expect(textarea).toHaveValue('user typed this');
+    });
+
+    it('history arrives in later batch is still reachable via ArrowUp', async () => {
+      const { claude } = await renderWithChannel(<ComposeInput containerRef={containerRef} />);
+      const textarea = screen.getByPlaceholderText(COMPOSE_PLACEHOLDER) as HTMLTextAreaElement;
+
+      // First batch: a plain user message (history:true) but not the target
+      await act(async () => {
+        await claude.emitSegment(s.user('first batch message'));
+      });
+
+      // Second batch: target message arrives later
+      await act(async () => {
+        await claude.emitSegment(s.user('再5輪'));
+      });
+
+      await userEvent.click(textarea);
+      await userEvent.keyboard('{ArrowUp}');
+      expect(textarea).toHaveValue('再5輪');
+    });
+
+    it('ArrowUp moves cursor to start of input', async () => {
+      await renderWithChannel(<ComposeInput containerRef={containerRef} />);
+      const textarea = screen.getByPlaceholderText(COMPOSE_PLACEHOLDER) as HTMLTextAreaElement;
+
+      await userEvent.type(textarea, 'hello{Enter}');
+      await userEvent.keyboard('{ArrowUp}');
+
+      expect(textarea).toHaveValue('hello');
+      expect(textarea.selectionStart).toBe(0);
+      expect(textarea.selectionEnd).toBe(0);
     });
   });
 

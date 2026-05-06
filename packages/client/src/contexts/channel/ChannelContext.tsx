@@ -2,7 +2,7 @@ import { EVENTS, sessionLaunchResponseSchema } from '@code-quest/shared';
 import { type ReactNode, useEffect, useRef, useState } from 'react';
 import { SpinnerVerb } from '@/components/chat/SpinnerVerb';
 import { EmptyState } from '@/components/workspace/EmptyState';
-import type { ChannelChangeUpdate } from '@/types/chat';
+import type { ChannelChangeUpdate, ChannelState as ChannelStateType } from '@/types/chat';
 import { useAppInitState } from '../AppInitContext.tsx';
 import { useSocket } from '../SocketContext.tsx';
 import { ChannelComposeProvider } from './ChannelComposeContext.tsx';
@@ -27,6 +27,7 @@ export function ChannelProvider({
   onNewChannel,
   cwd,
   launchOnMount = false,
+  initialState,
 }: {
   channelId: string;
   children: ReactNode;
@@ -38,15 +39,13 @@ export function ChannelProvider({
    *  on the server (resume / fork — `cwd` is just identity, not a launch
    *  trigger). Replaces the legacy "cwd-as-sentinel" behaviour. */
   launchOnMount?: boolean;
+  initialState?: Partial<ChannelStateType>;
 }): React.JSX.Element {
-  const resetStreamingRefsRef = useRef(() => {});
   const messageQueueRef = useRef<string[]>([]);
   const { socket } = useSocket();
   const { initOptions } = useAppInitState();
 
-  const [state, setState] = useState<ChannelState>(
-    launchOnMount ? { status: 'connecting' } : { status: 'connected' },
-  );
+  const [state, setState] = useState<ChannelState>({ status: 'connecting' });
   const launchedRef = useRef(false);
 
   function launch() {
@@ -63,28 +62,29 @@ export function ChannelProvider({
         setState({ status: 'error', message: parsed.data.error });
         return;
       }
-      setState({ status: 'connected' });
+      // Don't set connected yet — ChannelMessagesProvider's join will call onJoinComplete.
     });
   }
 
-  // biome-ignore lint/correctness/useExhaustiveDependencies: launch is stable; one-shot guarded by launchedRef. cwd is read at launch time, not as a re-trigger.
+  function handleJoinComplete() {
+    setState((prev) => (prev.status === 'error' ? prev : { status: 'connected' }));
+  }
+
+  // biome-ignore lint/correctness/useExhaustiveDependencies: launch is stable; one-shot guarded by launchedRef.
   useEffect(() => {
-    if (!launchOnMount || launchedRef.current) return;
-    launch();
+    if (launchOnMount && !launchedRef.current) launch();
   }, [launchOnMount]);
 
-  // ── Connecting ──
+  // ── Content based on state ──
+  let content: ReactNode;
   if (state.status === 'connecting') {
-    return (
+    content = (
       <div className="flex flex-1 items-center justify-center">
         <SpinnerVerb verbs={['Connecting']} />
       </div>
     );
-  }
-
-  // ── Error ──
-  if (state.status === 'error') {
-    return (
+  } else if (state.status === 'error') {
+    content = (
       <EmptyState
         icon="⚠"
         message={state.message}
@@ -95,25 +95,28 @@ export function ChannelProvider({
         }}
       />
     );
+  } else {
+    content = children;
   }
 
-  // ── Connected — full provider tree ──
+  // ── Always render full provider tree ──
   return (
     <ChannelMetaProvider channelId={channelId} cwd={cwd}>
       <ChannelSocketRouterProvider>
         <ChannelMessagesProvider
           onChange={onChange}
+          onJoinComplete={handleJoinComplete}
           dequeueMessage={() => messageQueueRef.current.shift()}
           messageQueueRef={messageQueueRef}
-          resetStreamingRefsRef={resetStreamingRefsRef}
+          initialState={initialState}
         >
-          <ChannelControlProvider resetStreamingRefs={() => resetStreamingRefsRef.current()}>
+          <ChannelControlProvider>
             <ChannelConfigProvider
               initialConfig={buildInitialConfig(initOptions)}
               onNewChannel={onNewChannel}
             >
               <MessageVisibilityProvider>
-                <ChannelComposeProvider>{children}</ChannelComposeProvider>
+                <ChannelComposeProvider>{content}</ChannelComposeProvider>
               </MessageVisibilityProvider>
             </ChannelConfigProvider>
           </ChannelControlProvider>

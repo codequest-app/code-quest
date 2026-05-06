@@ -10,11 +10,12 @@ import { EVENTS, isRecord } from '@code-quest/shared';
 import type { TypedSocket } from '@/socket/client';
 import { rpc } from '@/socket/rpc';
 import type { ChannelState } from '@/types/chat';
+import { msg } from '@/utils/message';
 import type { Payload } from './guard.ts';
 
 // ── On handlers ──
 
-function onSessionStatus(state: ChannelState, p: Payload<'session:status'>): ChannelState {
+export function onSessionStatus(state: ChannelState, p: Payload<'session:status'>): ChannelState {
   return { ...state, statusText: p.status || null };
 }
 
@@ -22,24 +23,39 @@ function onDisconnect(state: ChannelState): ChannelState {
   return { ...state, status: 'disconnected' };
 }
 
+export function onSessionClosed(state: ChannelState, p: Payload<'session:closed'>): ChannelState {
+  return {
+    ...state,
+    messages: [
+      ...state.messages,
+      ...(p.error ? [msg({ role: 'system', type: 'error', content: p.error })] : []),
+      msg({ role: 'system', type: 'error', content: 'CLI session has ended.' }),
+    ],
+    status: 'disconnected',
+  };
+}
+
 // ── Handler map ──
 
 export const sessionHandlerOn: {
   'session:status': typeof onSessionStatus;
+  'session:closed': typeof onSessionClosed;
   disconnect: typeof onDisconnect;
 } = {
   'session:status': onSessionStatus,
+  'session:closed': onSessionClosed,
   disconnect: onDisconnect,
 } satisfies Record<string, (state: ChannelState, payload: never) => ChannelState>;
 
 // ── Actions (emit) ──
 
-interface SessionActionsDeps {
+export function createSessionActions({
+  socket,
+  channelId,
+}: {
   socket: TypedSocket;
   channelId: string;
-}
-
-export function createSessionActions({ socket, channelId }: SessionActionsDeps): {
+}): {
   fetchRawEvents: () => Promise<RawEventsResponse>;
   subscribeRawEvents: (cb: (evt: unknown) => void) => () => void;
   forkSession: (messageId: string) => Promise<ForkConversationResponse>;
@@ -82,11 +98,11 @@ export function createSessionActions({ socket, channelId }: SessionActionsDeps):
   }
 
   return {
-    fetchRawEvents: fetchRawEvents,
-    subscribeRawEvents: subscribeRawEvents,
-    forkSession: forkSession,
-    rewindToMessage: rewindToMessage,
-    askSideQuestion: askSideQuestion,
-    reloadPlugins: reloadPlugins,
+    fetchRawEvents,
+    subscribeRawEvents,
+    forkSession,
+    rewindToMessage,
+    askSideQuestion,
+    reloadPlugins,
   };
 }

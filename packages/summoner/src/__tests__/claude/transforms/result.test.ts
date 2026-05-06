@@ -40,15 +40,30 @@ describe('transform — result events', () => {
     });
   });
 
-  it('result with is_error but no errors array → emits only message:result', () => {
+  it('result with is_error but no errors array and no result string → emits only message:result', () => {
     const base = JSON.parse(s.result());
     base.is_error = true;
     base.subtype = 'error_max_turns';
+    base.result = '';
     delete base.errors;
     const result = toClientMessage(JSON.stringify(base));
     expect(result).toMatchObject({
       name: 'message:result',
       payload: { isError: true, subtype: 'error_max_turns' },
+    });
+  });
+
+  it('result with is_error + errors: null + result string → emits [message:result, error:message]', () => {
+    const raw = s.resultWithError("You've hit your limit · resets 11pm (Asia/Taipei)");
+    const result = transformResult(raw);
+    expect(result.messages).toHaveLength(2);
+    expect(result.messages[0]).toMatchObject({
+      name: 'message:result',
+      payload: { isError: true },
+    });
+    expect(result.messages[1]).toMatchObject({
+      name: 'error:message',
+      payload: { message: "You've hit your limit · resets 11pm (Asia/Taipei)" },
     });
   });
 

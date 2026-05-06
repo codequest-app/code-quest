@@ -7,7 +7,6 @@ import type {
   RpcResult,
   ToolResultMeta,
   ToolUseMeta,
-  UserSource,
 } from '@code-quest/shared';
 
 export type { ResultMeta, ToolResultMeta, ToolUseMeta } from '@code-quest/shared';
@@ -26,9 +25,10 @@ export type ForkFn = (messageId: string) => Promise<ForkConversationResponse>;
 
 // ── Client-only message meta types ──
 
-interface TextMeta {
+export interface TextMeta {
   citations?: Array<{ url?: string; title?: string; citedText?: string }>;
-  source?: UserSource;
+  history?: boolean;
+  renderAs?: 'markdown' | 'plain';
 }
 
 interface ThinkingMeta {
