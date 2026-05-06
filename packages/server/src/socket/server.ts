@@ -43,6 +43,7 @@ import type { TransportHandle } from './transport.ts';
 
 @injectable()
 export class SocketServer {
+  private autoMode: boolean;
   private rawEventService: RawEventService;
   private sessionStore: SessionStore;
   private projectStore: ProjectStore;
@@ -61,6 +62,7 @@ export class SocketServer {
   private gitDirtyBroadcaster: DirtyBroadcaster<void>;
   private openspecDirtyBroadcaster: DirtyBroadcaster<void>;
   constructor(
+    @inject(TYPES.AutoMode) autoMode: boolean,
     @inject(TYPES.RawEventService) rawEventService: RawEventService,
     @inject(TYPES.SessionStore) sessionStore: SessionStore,
     @inject(TYPES.ProjectStore) projectStore: ProjectStore,
@@ -82,6 +84,7 @@ export class SocketServer {
     @inject(TYPES.OpenspecDirtyBroadcaster)
     openspecDirtyBroadcaster: DirtyBroadcaster<void>,
   ) {
+    this.autoMode = autoMode;
     this.rawEventService = rawEventService;
     this.sessionStore = sessionStore;
     this.projectStore = projectStore;
@@ -139,6 +142,7 @@ export class SocketServer {
     const planHandler = plan.create({ emitter: em });
 
     const ctx: HandlerContext = {
+      autoMode: this.autoMode,
       emitter: em,
       channelManager: cm,
       sessionStore: this.sessionStore,

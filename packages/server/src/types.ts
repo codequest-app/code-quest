@@ -46,6 +46,7 @@ export const TYPES: {
   readonly WatchService: symbol;
   readonly FsDirtyBroadcaster: symbol;
   readonly GitDirtyBroadcaster: symbol;
+  readonly AutoMode: symbol;
   readonly OpenspecDirtyBroadcaster: symbol;
 } = {
   RunnerFactory: Symbol.for('RunnerFactory'),
@@ -69,10 +70,12 @@ export const TYPES: {
   WatchService: Symbol.for('WatchService'),
   FsDirtyBroadcaster: Symbol.for('FsDirtyBroadcaster'),
   GitDirtyBroadcaster: Symbol.for('GitDirtyBroadcaster'),
+  AutoMode: Symbol.for('AutoMode'),
   OpenspecDirtyBroadcaster: Symbol.for('OpenspecDirtyBroadcaster'),
 } as const;
 
 export interface HandlerContext {
+  autoMode: boolean;
   emitter: ChannelEmitter;
   channelManager: ChannelManager;
   sessionStore: SessionStore;

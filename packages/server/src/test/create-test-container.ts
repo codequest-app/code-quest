@@ -32,6 +32,8 @@ interface TestContainerOverrides {
   pluginCli?: PluginCliService;
   diffFileService?: DiffFileService;
   historyBatchSize?: number;
+  autoMode?: boolean;
+  rawEvents?: { writeDeltas?: boolean; readDeltas?: boolean };
 }
 
 export function createTestContainer(overrides: TestContainerOverrides = {}): Container {
@@ -43,6 +45,8 @@ export function createTestContainer(overrides: TestContainerOverrides = {}): Con
     watchService: new FakeWatchService(),
     storeConfig: { sqliteDatabase },
     historyBatchSize: overrides.historyBatchSize,
+    autoMode: overrides.autoMode ?? true,
+    rawEvents: { writeDeltas: false, readDeltas: false, ...overrides.rawEvents },
   });
 
   // Use in-memory settings in tests to avoid file system state leaking between runs
