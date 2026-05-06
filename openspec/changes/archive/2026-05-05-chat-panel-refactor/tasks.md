@@ -36,10 +36,6 @@
 
 ## 7. Overlay 清理 — 將 overlay 元件移出 slot (Red → Green)
 
-- [ ] 7.1 加入測試：`SideQuestionDialog` 不在 `ChatPanel.Body` 的 DOM 子樹內
-- [ ] 7.2 加入測試：`SessionHistoryPopover` 不在 `ChatPanel.Header` 的 DOM 子樹內（`Popover.Root` 提升至 `ChatSession` 層級）
-- [ ] 7.3 將 `SideQuestionDialog` 從 `ChatPanel.Body` 移至 `ChatSession` 頂層
-- [ ] 7.4 將 `Popover.Root` 提升至 `ChatSession` 頂層，`SessionHistoryPopover` 移出 Header slot
 - [x] 7.1 加入測試：`SideQuestionDialog` 不在 `ChatPanel.Body` 的 DOM 子樹內
 - [x] 7.2 加入測試：`SessionHistoryPopover` 不在 `ChatPanel.Header` 的 DOM 子樹內（`Popover.Root` 提升至 `ChatSession` 層級）
 - [x] 7.3 將 `SideQuestionDialog` 從 `ChatPanel.Body` 移至 `ChatSession` 頂層

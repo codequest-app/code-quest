@@ -1,8 +1,5 @@
-# processing-state-sync Specification
+## MODIFIED Requirements
 
-## Purpose
-TBD - created by archiving change cross-window-processing-sync. Update Purpose after archive.
-## Requirements
 ### Requirement: session:states busy/idle 同步 channelState.status
 ChannelMessagesContext SHALL 監聽 `session:states` 事件，當 state 為 `busy` 時更新 status 為 `'busy'`，`idle` 時更新為 `'idle'`。但當本地 status 為 `'processing'`、`'cancelling'`，或 `'disconnected'` 時，SHALL 忽略廣播，不覆蓋本地 status。
 
@@ -21,4 +18,3 @@ ChannelMessagesContext SHALL 監聽 `session:states` 事件，當 state 為 `bus
 #### Scenario: 不覆蓋 disconnected 狀態
 - **WHEN** session:closed 已觸發（status = 'disconnected'），之後收到 session:states broadcast
 - **THEN** status 保持 `'disconnected'`（不被覆蓋為 `'busy'` 或 `'idle'`）
-

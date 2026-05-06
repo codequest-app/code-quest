@@ -27,5 +27,5 @@
 
 ## 5. 收尾
 
-- [ ] 5.1 確認所有現有測試通過，更新受影響的測試
-- [ ] 5.2 確認 RightPane 在 `ChatPanel.Side` 的視覺與行為正確（TabBar 完整寬度）
+- [x] 5.1 確認所有現有測試通過，更新受影響的測試（1939 passed）
+- [x] 5.2 確認 RightPane 在 `ChatPanel.Side` 的視覺與行為正確（TabBar 完整寬度）

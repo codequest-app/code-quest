@@ -2,10 +2,7 @@
 import type { ClientMessage } from '@code-quest/shared';
 import { EVENTS } from '@code-quest/shared';
 import { describe, expect, it } from 'vitest';
-import {
-  extractPendingControlRequests,
-  filterReplayEvents,
-} from '../socket/handlers/session/history.ts';
+import { extractPendingControlRequests, filterReplayEvents } from '../history.ts';
 
 type ParsedEvent = { direction: 'in' | 'out'; obj: Record<string, unknown> };
 
