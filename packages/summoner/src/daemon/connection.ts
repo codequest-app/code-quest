@@ -6,7 +6,7 @@ const DEFAULT_INITIAL_DELAY_MS = 1_000;
 const DEFAULT_MAX_DELAY_MS = 30_000;
 const DEFAULT_RESET_AFTER_MS = 60_000;
 
-export interface DaemonConnectionOptions {
+interface DaemonConnectionOptions {
   server: string;
   token: string;
   reconnect?: {
