@@ -1,7 +1,7 @@
 import { z } from 'zod';
 
 /** Claude CLI launch parameters — all fields map to CLI flags. */
-export const launchOptionsSchema: z.ZodObject<{
+const launchOptionsSchema: z.ZodObject<{
   resumeSessionId: z.ZodOptional<z.ZodString>;
   continueSession: z.ZodOptional<z.ZodBoolean>;
   forkSession: z.ZodOptional<z.ZodBoolean>;

@@ -6,12 +6,12 @@ interface BufferedEvent {
   args: unknown[];
 }
 
-export interface ResumableSocketOptions {
+interface ResumableSocketOptions {
   /** Max retained outbound events. Default 500. */
   bufferSize?: number;
 }
 
-export type ResumeResult = { kind: 'ok'; replayed: number } | { kind: 'gap' };
+type ResumeResult = { kind: 'ok'; replayed: number } | { kind: 'gap' };
 
 /**
  * ResumableSocket wraps any TypedSocket and provides:

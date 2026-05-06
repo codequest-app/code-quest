@@ -51,7 +51,7 @@ function parseFsRoots(raw?: string): string[] {
   return roots.length > 0 ? roots : [os.homedir()];
 }
 
-export interface AppConfig {
+interface AppConfig {
   readonly port: number;
   readonly database: {
     readonly url: string | undefined;

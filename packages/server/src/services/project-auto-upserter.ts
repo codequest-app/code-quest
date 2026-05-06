@@ -3,7 +3,7 @@ import { logger } from '../logger.ts';
 import type { ProjectStore } from './project-store.ts';
 
 /** Broadcaster shape — matches ChannelEmitter.broadcastAll. Loose to avoid coupling. */
-export interface ProjectBroadcaster {
+interface ProjectBroadcaster {
   broadcastAll(event: string, payload: Project): void;
 }
 

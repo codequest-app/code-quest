@@ -686,7 +686,7 @@ const authStatusSchema: Loose<{
 
 // ── Raw event (synthesized by runner for unknown/parse-error lines) ──
 
-export const rawEventSchema: Loose<{
+const rawEventSchema: Loose<{
   type: z.ZodLiteral<'raw_event'>;
   rawType: Str;
   data: z.ZodRecord<Str, Unk>;

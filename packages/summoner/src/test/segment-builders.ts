@@ -2,7 +2,7 @@
 // Pure logic — no Node.js or file-system dependencies.
 // Accepts pre-loaded template strings; returns builders + resetSeq.
 
-export interface SegmentTemplates {
+interface SegmentTemplates {
   INIT: string;
   ASSISTANT_TEXT: string;
   ASSISTANT_TOOL: string;

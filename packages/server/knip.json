@@ -1,0 +1,5 @@
+{
+  "entry": ["src/bin/*.ts", "src/**/__tests__/**/*.ts", "src/test/**/*.ts"],
+  "project": ["src/**/*.ts"],
+  "ignoreBinaries": ["biome"]
+}

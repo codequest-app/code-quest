@@ -24,6 +24,7 @@
   },
   "devDependencies": {
     "@types/node": "^20.11.5",
+    "knip": "^6.11.0",
     "memfs": "^4.57.2",
     "typescript": "6.0.3",
     "vitest": "^3.2.4"

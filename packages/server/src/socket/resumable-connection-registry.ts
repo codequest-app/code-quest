@@ -12,7 +12,7 @@ const ResumePayloadSchema = z.object({ lastSeq: z.number().optional() }).optiona
  * `?sessionKey=…`; future transports (SSE, WebTransport) plug in by
  * implementing the same interface.
  */
-export interface SessionKeyResolver {
+interface SessionKeyResolver {
   sessionKeyFor(socket: TypedSocket): string | undefined;
 }
 
@@ -21,9 +21,9 @@ export interface SessionKeyResolver {
  * The client SHOULD treat this as a signal to drop local state and re-fetch
  * from scratch, since the server can no longer fill the gap.
  */
-export const STATE_REFRESH_REQUIRED_EVENT = 'state:refresh_required';
+const STATE_REFRESH_REQUIRED_EVENT = 'state:refresh_required';
 
-export interface RegistryOptions {
+interface RegistryOptions {
   resolver: SessionKeyResolver;
   bufferSize?: number;
 }

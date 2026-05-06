@@ -5,7 +5,7 @@ import type { Authenticator } from './authenticator.ts';
 import type { Transport, TransportHandle } from './transport.ts';
 import type { TypedSocket } from './types.ts';
 
-export interface SocketIoTransportOptions {
+interface SocketIoTransportOptions {
   authenticator: Authenticator;
   /** Forwarded to socket.io server constructor. */
   cors?: { origin: string | string[] | boolean };

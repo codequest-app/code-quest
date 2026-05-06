@@ -42,7 +42,7 @@ function markDeadIfMissing(
   }
 }
 
-export function ackAndBroadcastCreated(
+function ackAndBroadcastCreated(
   channel: Channel,
   emitter: Pick<HandlerContext['emitter'], 'broadcastAll'>,
   callback: SocketCallback | undefined,
@@ -58,7 +58,7 @@ export function ackAndBroadcastCreated(
   if (initialPrompt) channel.sendMessage(initialPrompt);
 }
 
-export function parseInitResponse(response: ControlResponse): InitResponseResult {
+function parseInitResponse(response: ControlResponse): InitResponseResult {
   const initResponse = controlInitResponseSchema.parse(response.response ?? {});
   const { commands, models, account } = initResponse;
   const slashCommands = Array.isArray(commands)

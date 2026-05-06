@@ -28,7 +28,7 @@ const HISTORY_EXCLUDE = new Set<string>([
 ]);
 
 /** Minimal surface SessionHistory needs from ChannelManager. */
-export interface ChannelLookup {
+interface ChannelLookup {
   get(id: string): Channel | undefined;
 }
 

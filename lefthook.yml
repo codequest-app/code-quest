@@ -35,5 +35,13 @@ pre-push:
       run: pnpm --filter @code-quest/summoner exec vitest run
     test-client:
       run: pnpm --filter client exec vitest run
-    knip:
+    knip-client:
       run: pnpm --filter client exec knip --no-progress
+    knip-server:
+      run: pnpm --filter server exec knip --no-progress
+    knip-summoner:
+      run: pnpm --filter @code-quest/summoner exec knip --no-progress
+    knip-shared:
+      run: pnpm --filter @code-quest/shared exec knip --no-progress
+    knip-db-schema:
+      run: pnpm --filter @code-quest/db-schema exec knip --no-progress

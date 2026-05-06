@@ -14,7 +14,7 @@ interface ProjectsTable {
   createdAt: Column;
 }
 
-export const projectRecordSchema: z.ZodObject<{
+const projectRecordSchema: z.ZodObject<{
   id: z.ZodString;
   path: z.ZodString;
   name: z.ZodString;

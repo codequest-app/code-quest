@@ -63,26 +63,26 @@ export interface AdapterOutput {
 
 // --- ParseResult: generic parse output ---
 
-export interface ParseOk<E = unknown> {
+interface ParseOk<E = unknown> {
   status: 'ok';
   raw: string;
   message: E;
 }
 
-export interface ParseSkip {
+interface ParseSkip {
   status: 'skip';
   raw: string;
   reason: string;
 }
 
-export interface ParseUnknown {
+interface ParseUnknown {
   status: 'unknown';
   raw: string;
   type: string;
   data: unknown;
 }
 
-export interface ParseError {
+interface ParseError {
   status: 'error';
   raw: string;
   error: unknown;

@@ -16,7 +16,7 @@ export interface PluginCliService {
   run(args: string[]): Promise<PluginCliRunResult>;
 }
 
-export interface LocalPluginCliOptions {
+interface LocalPluginCliOptions {
   /** Override the binary name. Default `'claude'`. Tests pass `'echo'`. */
   binary?: string;
   /** First positional arg, prepended to every `run(args)`. Default `'plugin'`

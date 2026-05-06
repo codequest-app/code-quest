@@ -122,7 +122,7 @@ export const openspecDirtyEventSchema: z.ZodObject<{ cwd: z.ZodString }, z.core.
 export type OpenspecDirtyEvent = z.infer<typeof openspecDirtyEventSchema>;
 
 /** Slug accepted by `openspec change new` — lowercase letters, digits, hyphens. */
-export const openspecChangeSlugSchema: z.ZodString = z.string().regex(/^[a-z0-9-]+$/, {
+const openspecChangeSlugSchema: z.ZodString = z.string().regex(/^[a-z0-9-]+$/, {
   message: 'Name must match /^[a-z0-9-]+$/',
 });
 

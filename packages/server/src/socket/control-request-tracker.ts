@@ -12,7 +12,7 @@ interface PendingRequest {
 }
 
 /** Sends a control request to the CLI runner. Returns the generated requestId. */
-export type ControlRequestSender = (
+type ControlRequestSender = (
   subtype: string,
   params: Record<string, unknown> | undefined,
   requestId: string,

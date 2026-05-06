@@ -7,7 +7,7 @@ import type { AuthContext, Authenticator } from './authenticator.ts';
 import type { Transport, TransportHandle } from './transport.ts';
 import type { SocketCallback, TypedSocket } from './types.ts';
 
-export interface WsTransportOptions {
+interface WsTransportOptions {
   authenticator: Authenticator;
   /** Path the WebSocket upgrade is served on. Default `/ws`. */
   path?: string;

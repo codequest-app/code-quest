@@ -25,7 +25,7 @@ export interface CreateWorktreeOptions {
   path?: string;
 }
 
-export interface GitServiceCapabilities {
+interface GitServiceCapabilities {
   /** True if this backend can create/list/delete git worktrees. */
   readonly worktree: boolean;
 }
