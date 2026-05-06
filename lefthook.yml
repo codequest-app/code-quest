@@ -31,6 +31,8 @@ pre-push:
   commands:
     test-server:
       run: pnpm --filter server exec vitest run
+    test-summoner:
+      run: pnpm --filter @code-quest/summoner exec vitest run
     test-client:
       run: pnpm --filter client exec vitest run
     knip:

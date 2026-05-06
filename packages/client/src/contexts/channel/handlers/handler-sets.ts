@@ -25,4 +25,4 @@ function buildHandlers(exclude: Set<string>): HandlerMap {
 const sessionKeys = new Set(Object.keys(sessionHandlerOn));
 
 export const liveHandlers: HandlerMap = buildHandlers(sessionKeys);
-export const historyHandlers: HandlerMap = liveHandlers;
+export { liveHandlers as historyHandlers };
