@@ -48,6 +48,7 @@ const BY_EXTENSION: Record<string, string> = {
   gif: 'image',
   webp: 'image',
   ico: 'image',
+  pdf: 'pdf',
   yml: 'yaml',
   yaml: 'yaml',
   toml: 'settings',

@@ -1,7 +1,7 @@
 import type { FsMutationResult } from '@code-quest/shared';
 import { z } from 'zod';
 
-export const directoryEntrySchema: z.ZodObject<{
+const directoryEntrySchema: z.ZodObject<{
   name: z.ZodString;
   path: z.ZodString;
 }> = z.object({
@@ -10,7 +10,7 @@ export const directoryEntrySchema: z.ZodObject<{
 });
 export type DirectoryEntry = z.infer<typeof directoryEntrySchema>;
 
-export const fileResultSchema: z.ZodObject<{
+const fileResultSchema: z.ZodObject<{
   path: z.ZodString;
   name: z.ZodString;
   type: z.ZodEnum<{ file: 'file'; directory: 'directory' }>;
@@ -23,8 +23,11 @@ export type FileResult = z.infer<typeof fileResultSchema>;
 
 export type FileKind = 'file' | 'directory';
 
-/** Legacy tagless variant — consumers narrow by `'error' in result`. */
 export type ReadFileResult = { content: string } | { error: string };
+
+export type ReadFileAbsoluteResult =
+  | { content: string; contentType: string; encoding: 'utf-8' | 'base64' }
+  | { error: string };
 
 export type WriteFileResult = { ok: true } | { error: string };
 
@@ -38,8 +41,8 @@ export interface FilesystemService {
     path?: string,
     opts?: { showHidden?: boolean },
   ): Promise<{ directories: DirectoryEntry[]; files: DirectoryEntry[] }>;
-  /** Read a file by absolute path; rejects paths outside allowed roots. */
-  readFileAbsolute(absolutePath: string): Promise<ReadFileResult>;
+  /** Read a file by absolute path; auto-detects encoding (utf-8 or base64) by extension. */
+  readFileAbsolute(absolutePath: string): Promise<ReadFileAbsoluteResult>;
   /** Write to a file by absolute path; rejects paths outside allowed roots.
    *  Overwrites existing content. The parent directory must already exist. */
   writeFileAbsolute(absolutePath: string, content: string): Promise<WriteFileResult>;

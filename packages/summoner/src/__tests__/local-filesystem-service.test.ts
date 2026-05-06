@@ -165,6 +165,46 @@ describe('LocalFilesystemService', () => {
     });
   });
 
+  describe('readFileAbsolute', () => {
+    it('returns utf-8 content with contentType and encoding for a text file', async () => {
+      vol.writeFileSync(join(ROOT, 'app.ts'), 'export {}');
+      expect(await service.readFileAbsolute(join(ROOT, 'app.ts'))).toEqual({
+        content: 'export {}',
+        contentType: 'text/plain',
+        encoding: 'utf-8',
+      });
+    });
+
+    it('returns base64 content with contentType application/pdf for a .pdf file', async () => {
+      const pdfBytes = Buffer.from('%PDF-fake');
+      vol.writeFileSync(join(ROOT, 'report.pdf'), pdfBytes);
+      const result = await service.readFileAbsolute(join(ROOT, 'report.pdf'));
+      expect(result).toEqual({
+        content: pdfBytes.toString('base64'),
+        contentType: 'application/pdf',
+        encoding: 'base64',
+      });
+    });
+
+    it('returns base64 content for a .png file', async () => {
+      const bytes = Buffer.from([0x89, 0x50, 0x4e, 0x47]);
+      vol.writeFileSync(join(ROOT, 'image.png'), bytes);
+      const result = await service.readFileAbsolute(join(ROOT, 'image.png'));
+      expect(result).toMatchObject({ contentType: 'image/png', encoding: 'base64' });
+    });
+
+    it('returns error for path outside allowed roots', async () => {
+      expect(await service.readFileAbsolute('/etc/passwd')).toEqual({
+        error: 'Path outside allowed roots',
+      });
+    });
+
+    it('returns error for non-existent file', async () => {
+      const result = await service.readFileAbsolute(join(ROOT, 'missing.ts'));
+      expect(result).toMatchObject({ error: expect.stringContaining('missing.ts') });
+    });
+  });
+
   describe('readFile', () => {
     it('reads existing file', async () => {
       expect(await service.readFile(ROOT, 'package.json')).toEqual({ content: '{}' });
@@ -269,7 +309,7 @@ describe('LocalFilesystemService', () => {
       vol.writeFileSync(a, 'rename me');
       expect(await svc.rename(a, b)).toEqual({ ok: true });
       expect(await svc.exists(a)).toBe(false);
-      expect(await svc.readFileAbsolute(b)).toEqual({ content: 'rename me' });
+      expect(await svc.readFileAbsolute(b)).toMatchObject({ content: 'rename me' });
     });
 
     it('rename rejects when destination exists', async () => {
@@ -285,7 +325,7 @@ describe('LocalFilesystemService', () => {
       const b = join(MROOT, 'orig-copy.txt');
       vol.writeFileSync(a, 'hello');
       expect(await svc.copy(a, b)).toEqual({ ok: true });
-      expect(await svc.readFileAbsolute(b)).toEqual({ content: 'hello' });
+      expect(await svc.readFileAbsolute(b)).toMatchObject({ content: 'hello' });
       expect(await svc.exists(a)).toBe(true);
     });
 
@@ -295,7 +335,9 @@ describe('LocalFilesystemService', () => {
       vol.writeFileSync(join(src, 'inner.txt'), 'inside');
       const dst = join(MROOT, 'tree-dst');
       expect(await svc.copy(src, dst)).toEqual({ ok: true });
-      expect(await svc.readFileAbsolute(join(dst, 'inner.txt'))).toEqual({ content: 'inside' });
+      expect(await svc.readFileAbsolute(join(dst, 'inner.txt'))).toMatchObject({
+        content: 'inside',
+      });
     });
 
     it('move across directories', async () => {
@@ -308,7 +350,7 @@ describe('LocalFilesystemService', () => {
       vol.writeFileSync(from, 'moved');
       expect(await svc.move(from, to)).toEqual({ ok: true });
       expect(await svc.exists(from)).toBe(false);
-      expect(await svc.readFileAbsolute(to)).toEqual({ content: 'moved' });
+      expect(await svc.readFileAbsolute(to)).toMatchObject({ content: 'moved' });
     });
 
     it('all mutations reject paths outside allowed roots', async () => {

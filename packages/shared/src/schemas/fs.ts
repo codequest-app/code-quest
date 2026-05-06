@@ -62,12 +62,14 @@ export const fsReadPayloadSchema: z.ZodObject<{ path: z.ZodString }, z.core.$str
 });
 export type FsReadPayload = z.infer<typeof fsReadPayloadSchema>;
 
-export const fsReadResponseSchema: z.ZodUnion<
-  readonly [
-    z.ZodObject<{ content: z.ZodString }, z.core.$strip>,
-    z.ZodObject<{ error: z.ZodString }, z.core.$strip>,
-  ]
-> = z.union([z.object({ content: z.string() }), z.object({ error: z.string() })]);
+export const fsReadResponseSchema = z.union([
+  z.object({
+    content: z.string(),
+    contentType: z.string(),
+    encoding: z.enum(['utf-8', 'base64']),
+  }),
+  z.object({ error: z.string() }),
+]);
 export type FsReadResponse = z.infer<typeof fsReadResponseSchema>;
 
 // ── Search (was channel-scoped file:list — now cwd-scoped) ──

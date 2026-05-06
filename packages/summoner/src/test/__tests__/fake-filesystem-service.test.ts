@@ -142,7 +142,7 @@ describe('FakeFilesystemService', () => {
       it('creates an empty file at a new path', async () => {
         const fs = setup();
         expect(await fs.create('/repo/new.ts', 'file')).toEqual({ ok: true });
-        expect(await fs.readFileAbsolute('/repo/new.ts')).toEqual({ content: '' });
+        expect(await fs.readFileAbsolute('/repo/new.ts')).toMatchObject({ content: '' });
       });
 
       it('creates a directory at a new path', async () => {
@@ -186,7 +186,7 @@ describe('FakeFilesystemService', () => {
         const fs = setup();
         expect(await fs.rename('/repo/foo.ts', '/repo/bar.ts')).toEqual({ ok: true });
         expect(await fs.exists('/repo/foo.ts')).toBe(false);
-        expect(await fs.readFileAbsolute('/repo/bar.ts')).toEqual({
+        expect(await fs.readFileAbsolute('/repo/bar.ts')).toMatchObject({
           content: 'export const foo = 1;\n',
         });
       });
@@ -209,7 +209,7 @@ describe('FakeFilesystemService', () => {
       it('copies a file', async () => {
         const fs = setup();
         expect(await fs.copy('/repo/foo.ts', '/repo/foo-copy.ts')).toEqual({ ok: true });
-        expect(await fs.readFileAbsolute('/repo/foo-copy.ts')).toEqual({
+        expect(await fs.readFileAbsolute('/repo/foo-copy.ts')).toMatchObject({
           content: 'export const foo = 1;\n',
         });
         // Original still there
@@ -219,7 +219,9 @@ describe('FakeFilesystemService', () => {
       it('copies a directory recursively', async () => {
         const fs = setup();
         expect(await fs.copy('/repo/src', '/repo/src-copy')).toEqual({ ok: true });
-        expect(await fs.readFileAbsolute('/repo/src-copy/inner.ts')).toEqual({ content: 'inner' });
+        expect(await fs.readFileAbsolute('/repo/src-copy/inner.ts')).toMatchObject({
+          content: 'inner',
+        });
       });
 
       it('rejects when destination exists', async () => {
@@ -233,7 +235,7 @@ describe('FakeFilesystemService', () => {
         const fs = setup();
         expect(await fs.move('/repo/foo.ts', '/repo/src/foo.ts')).toEqual({ ok: true });
         expect(await fs.exists('/repo/foo.ts')).toBe(false);
-        expect(await fs.readFileAbsolute('/repo/src/foo.ts')).toEqual({
+        expect(await fs.readFileAbsolute('/repo/src/foo.ts')).toMatchObject({
           content: 'export const foo = 1;\n',
         });
       });

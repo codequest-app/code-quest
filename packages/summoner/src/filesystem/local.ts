@@ -4,12 +4,14 @@ import { errMsg, getOrSet } from '@code-quest/shared';
 import Fuse from 'fuse.js';
 import { glob } from 'glob';
 import type { Unsubscribe, WatchService } from '../fs-watch/types.ts';
+import { mimeForPath } from './mime-types.ts';
 import type {
   DirectoryEntry,
   FileKind,
   FileResult,
   FilesystemService,
   FsMutationResult,
+  ReadFileAbsoluteResult,
   ReadFileResult,
   WriteFileResult,
 } from './types.ts';
@@ -147,12 +149,17 @@ export class LocalFilesystemService implements FilesystemService {
 
   // ── readFileAbsolute ──
 
-  async readFileAbsolute(absolutePath: string): Promise<ReadFileResult> {
+  async readFileAbsolute(absolutePath: string): Promise<ReadFileAbsoluteResult> {
     const validated = this.validatePath(absolutePath, this.fsRoots);
     if (!validated) return { error: 'Path outside allowed roots' };
+    const { contentType, encoding } = mimeForPath(absolutePath);
     try {
+      if (encoding === 'base64') {
+        const buffer = await readFile(validated);
+        return { content: buffer.toString('base64'), contentType, encoding };
+      }
       const content = await readFile(validated, 'utf-8');
-      return { content };
+      return { content, contentType, encoding };
     } catch (err) {
       console.debug('[LocalFilesystemService] readFileAbsolute failed:', errMsg(err));
       return { error: `File not found: ${absolutePath}` };

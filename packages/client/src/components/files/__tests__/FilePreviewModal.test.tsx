@@ -2,6 +2,11 @@ import { render, screen, waitFor } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import type { ReactNode } from 'react';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
+
+vi.mock('../PdfViewer.tsx', () => ({
+  PdfViewer: ({ data }: { data: string }) => <div data-testid="pdf-viewer">pdf:{data}</div>,
+}));
+
 import { createFakeSummoner } from '@/test/fake-summoner';
 import { FsProvidersWrapper } from '@/test/wrap-fs-providers';
 import { FilePreviewModal } from '../FilePreviewModal.tsx';
@@ -83,6 +88,38 @@ describe('FilePreviewModal', () => {
       wrapper: Wrapper,
     });
     expect(await screen.findByText(/file not found/i)).toBeInTheDocument();
+  });
+
+  describe('PDF preview', () => {
+    it('renders PdfViewer for .pdf files', async () => {
+      const { summoner, Wrapper } = setup();
+      summoner.filesystem().addFile('/repo/doc.pdf', '%PDF-fake');
+      render(<FilePreviewModal path="/repo/doc.pdf" onClose={vi.fn()} onMention={vi.fn()} />, {
+        wrapper: Wrapper,
+      });
+      expect(await screen.findByTestId('pdf-viewer')).toBeInTheDocument();
+    });
+
+    it('Mention works when viewing a PDF', async () => {
+      const user = userEvent.setup();
+      const { summoner, Wrapper } = setup();
+      summoner.filesystem().addFile('/repo/doc.pdf', '%PDF-fake');
+      const onMention = vi.fn();
+      render(<FilePreviewModal path="/repo/doc.pdf" onClose={vi.fn()} onMention={onMention} />, {
+        wrapper: Wrapper,
+      });
+      await screen.findByTestId('pdf-viewer');
+      await user.click(screen.getByRole('button', { name: /mention/i }));
+      expect(onMention).toHaveBeenCalledWith('/repo/doc.pdf');
+    });
+
+    it('shows error message when fs:read-binary returns error', async () => {
+      const { Wrapper } = setup();
+      render(<FilePreviewModal path="/repo/missing.pdf" onClose={vi.fn()} onMention={vi.fn()} />, {
+        wrapper: Wrapper,
+      });
+      expect(await screen.findByText(/file not found/i)).toBeInTheDocument();
+    });
   });
 
   describe('markdown preview toggle', () => {
