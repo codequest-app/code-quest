@@ -40,7 +40,6 @@ export class Channel {
   readonly channelId: string;
   readonly runner: ProcessRunner;
   readonly provider: string;
-  readonly controlTimeout: number;
 
   // ── State ──
   private _sessionConfig: SessionConfig = {};
@@ -59,6 +58,17 @@ export class Channel {
   pendingTitlePrompt: string | undefined;
   title: string | undefined;
   parentId: string | undefined;
+
+  // ── Initialization ──
+  private _readyPromise: Promise<void> = Promise.resolve();
+
+  get readyPromise(): Promise<void> {
+    return this._readyPromise;
+  }
+
+  setReadyPromise(p: Promise<void>): void {
+    this._readyPromise = p;
+  }
 
   // ── Processing ──
   private _isProcessing = false;
@@ -89,7 +99,6 @@ export class Channel {
     this.runner = runner;
     this.provider = provider;
     this.cwd = cwd;
-    this.controlTimeout = controlTimeout;
     this.controlRequests = new ControlRequestTracker(controlTimeout);
   }
 

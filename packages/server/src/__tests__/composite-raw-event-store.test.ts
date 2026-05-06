@@ -7,6 +7,26 @@ import { CompositeRawEventStore } from '../services/composite-raw-event-store.ts
 import { DrizzleRawEventStore } from '../services/drizzle-raw-event-store.ts';
 import type { RawEventStore } from '../services/raw-event-store.ts';
 
+function stubStore(overrides: Partial<RawEventStore> = {}): RawEventStore {
+  return {
+    async append() {
+      return 'id';
+    },
+    async getBySession() {
+      return [];
+    },
+    async getPreview() {
+      return {};
+    },
+    async cloneEvents() {},
+    async hasUserEcho() {
+      return false;
+    },
+    async *streamBySession() {},
+    ...overrides,
+  };
+}
+
 describe('CompositeRawEventStore', () => {
   let storeA: DrizzleRawEventStore;
   let storeB: DrizzleRawEventStore;
@@ -60,30 +80,16 @@ describe('CompositeRawEventStore', () => {
   });
 
   it('throws when all stores fail on append', async () => {
-    const failStore1: RawEventStore = {
+    const failStore1 = stubStore({
       async append() {
         throw new Error('fail1');
       },
-      async getBySession() {
-        return [];
-      },
-      async getPreview() {
-        return {};
-      },
-      async cloneEvents() {},
-    };
-    const failStore2: RawEventStore = {
+    });
+    const failStore2 = stubStore({
       async append() {
         throw new Error('fail2');
       },
-      async getBySession() {
-        return [];
-      },
-      async getPreview() {
-        return {};
-      },
-      async cloneEvents() {},
-    };
+    });
     const composite = new CompositeRawEventStore([failStore1, failStore2]);
 
     const event: RawEvent = {
@@ -98,18 +104,11 @@ describe('CompositeRawEventStore', () => {
   });
 
   it('continues writing to other stores even if one fails', async () => {
-    const failStore: RawEventStore = {
+    const failStore = stubStore({
       async append() {
         throw new Error('fail');
       },
-      async getBySession() {
-        return [];
-      },
-      async getPreview() {
-        return {};
-      },
-      async cloneEvents() {},
-    };
+    });
     const composite = new CompositeRawEventStore([failStore, storeB]);
 
     const event: RawEvent = {
@@ -127,19 +126,13 @@ describe('CompositeRawEventStore', () => {
 
   it('generates id once and passes it to all inner stores', async () => {
     const idsSeenBy: string[] = [];
-    const makeSpy = (): RawEventStore => ({
-      async append(_e, id) {
-        idsSeenBy.push(id ?? '(none)');
-        return id ?? 'local';
-      },
-      async getBySession() {
-        return [];
-      },
-      async getPreview() {
-        return {};
-      },
-      async cloneEvents() {},
-    });
+    const makeSpy = (): RawEventStore =>
+      stubStore({
+        async append(_e, id) {
+          idsSeenBy.push(id ?? '(none)');
+          return id ?? 'local';
+        },
+      });
     const a = makeSpy();
     const b = makeSpy();
     const composite = new CompositeRawEventStore([a, b]);
@@ -163,23 +156,21 @@ describe('CompositeRawEventStore', () => {
   it('cloneEvents generates ids once and passes the same ids to every inner store', async () => {
     const idsSeenByA: string[][] = [];
     const idsSeenByB: string[][] = [];
-    const makeSpy = (captured: string[][]): RawEventStore => ({
-      async append(_event, id) {
-        return id ?? 'gen';
-      },
-      async getBySession() {
-        return [
-          { timestamp: 0, sessionId: 'parent', direction: 'in', raw: 'r-0', seq: 0 },
-          { timestamp: 1, sessionId: 'parent', direction: 'out', raw: 'r-1', seq: 1 },
-        ];
-      },
-      async getPreview() {
-        return {};
-      },
-      async cloneEvents(_from, _to, ids) {
-        captured.push(ids ?? []);
-      },
-    });
+    const makeSpy = (captured: string[][]): RawEventStore =>
+      stubStore({
+        async append(_event, id) {
+          return id ?? 'gen';
+        },
+        async getBySession() {
+          return [
+            { timestamp: 0, sessionId: 'parent', direction: 'in', raw: 'r-0', seq: 0 },
+            { timestamp: 1, sessionId: 'parent', direction: 'out', raw: 'r-1', seq: 1 },
+          ];
+        },
+        async cloneEvents(_from, _to, ids) {
+          captured.push(ids ?? []);
+        },
+      });
     const spyA = makeSpy(idsSeenByA);
     const spyB = makeSpy(idsSeenByB);
     const composite = new CompositeRawEventStore([spyA, spyB]);
@@ -194,18 +185,11 @@ describe('CompositeRawEventStore', () => {
   });
 
   it('honors explicitly provided id', async () => {
-    const spy: RawEventStore = {
+    const spy = stubStore({
       async append(_e, id) {
         return id ?? 'unset';
       },
-      async getBySession() {
-        return [];
-      },
-      async getPreview() {
-        return {};
-      },
-      async cloneEvents() {},
-    };
+    });
     const composite = new CompositeRawEventStore([spy]);
     const event: RawEvent = {
       timestamp: Date.now(),

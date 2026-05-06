@@ -10,6 +10,8 @@ function mockEventStore(overrides: Partial<RawEventStore> = {}): RawEventStore {
     getBySession: vi.fn(async () => []),
     getPreview: vi.fn(async () => ({})),
     cloneEvents: vi.fn(async () => {}),
+    hasUserEcho: vi.fn(async () => false),
+    streamBySession: vi.fn(async function* () {}),
     ...overrides,
   };
 }

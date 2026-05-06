@@ -31,6 +31,7 @@ interface TestContainerOverrides {
   openspecService?: OpenspecService;
   pluginCli?: PluginCliService;
   diffFileService?: DiffFileService;
+  historyBatchSize?: number;
 }
 
 export function createTestContainer(overrides: TestContainerOverrides = {}): Container {
@@ -41,6 +42,7 @@ export function createTestContainer(overrides: TestContainerOverrides = {}): Con
     ...overrides,
     watchService: new FakeWatchService(),
     storeConfig: { sqliteDatabase },
+    historyBatchSize: overrides.historyBatchSize,
   });
 
   // Use in-memory settings in tests to avoid file system state leaking between runs

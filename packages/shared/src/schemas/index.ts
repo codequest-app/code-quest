@@ -236,9 +236,6 @@ export type {
   ChatRewindCodePayload,
   ChatSendPayload,
   ChatStopTaskPayload,
-  HistoryAssistant,
-  HistoryResult,
-  HistoryUser,
   SideQuestionResult,
 } from './message.ts';
 export {
@@ -249,9 +246,6 @@ export {
   chatRewindCodePayloadSchema,
   chatSendPayloadSchema,
   chatStopTaskPayloadSchema,
-  historyAssistantSchema,
-  historyResultSchema,
-  historyUserSchema,
   sideQuestionResultSchema,
 } from './message.ts';
 export type {
@@ -288,13 +282,11 @@ export type {
   MessageAssistantPayload,
   MessageResultPayload,
   MessageUserPayload,
-  UserSource,
 } from './message-payloads.ts';
 export {
   messageAssistantPayloadSchema,
   messageResultPayloadSchema,
   messageUserPayloadSchema,
-  userSourceSchema,
 } from './message-payloads.ts';
 export type {
   ChatStats,
@@ -366,7 +358,6 @@ export {
   openspecArtifactKindSchema,
   openspecChangeNewPayloadSchema,
   openspecChangeNewResultSchema,
-  openspecChangeSlugSchema,
   openspecChangeSummarySchema,
   openspecDirtyEventSchema,
   openspecKindSchema,

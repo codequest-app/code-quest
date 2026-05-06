@@ -10,6 +10,11 @@ export function parseBool(raw: string | undefined, defaultValue: boolean): boole
   return raw === 'true' || raw === '1';
 }
 
+function parseNumber(raw: string | undefined, defaultValue: number): number {
+  const n = parseInt(raw ?? '', 10);
+  return Number.isNaN(n) ? defaultValue : n;
+}
+
 /** Invalid / unset → 'summarized' (CLI-default-compat + UI expects content). */
 function parseThinkingDisplay(raw: string | undefined): ThinkingDisplay {
   return raw === 'omitted' ? 'omitted' : 'summarized';
@@ -62,11 +67,12 @@ export interface AppConfig {
   readonly fsRoots: string[];
   readonly autoMode: boolean;
   readonly transport: { readonly ws: boolean; readonly socketio: boolean };
+  readonly historyBatchSize: number;
 }
 
 export function loadConfig(env: Env = process.env): AppConfig {
   return {
-    port: Number(env.APP_PORT ?? 3000),
+    port: parseNumber(env.APP_PORT, 3000),
     database: {
       url: env.DATABASE_URL || undefined,
       sqliteUrl: env.DATABASE_SQLITE_URL || undefined,
@@ -81,6 +87,7 @@ export function loadConfig(env: Env = process.env): AppConfig {
     fsRoots: parseFsRoots(env.EXPLORER_ROOTS),
     autoMode: parseBool(env.CLI_AUTO_MODE, true),
     transport: parseTransport(env.TRANSPORT),
+    historyBatchSize: parseNumber(env.SESSION_HISTORY_BATCH_SIZE, 5000),
   } as const;
 }
 

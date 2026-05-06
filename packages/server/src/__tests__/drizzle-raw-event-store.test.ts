@@ -176,6 +176,104 @@ describe('DrizzleRawEventStore', () => {
     });
   });
 
+  describe('hasUserEcho', () => {
+    it('returns false when no out events with type:user', async () => {
+      await store.append({
+        timestamp: Date.now(),
+        sessionId: 's',
+        direction: 'in',
+        raw: JSON.stringify({ type: 'user', message: { content: [] } }),
+        seq: 0,
+      });
+      expect(await store.hasUserEcho('s')).toBe(false);
+    });
+
+    it('returns true when an out event has type:user', async () => {
+      await store.append({
+        timestamp: Date.now(),
+        sessionId: 's',
+        direction: 'out',
+        raw: JSON.stringify({ type: 'user', message: { content: [] } }),
+        seq: 0,
+      });
+      expect(await store.hasUserEcho('s')).toBe(true);
+    });
+
+    it('returns false for unknown session', async () => {
+      expect(await store.hasUserEcho('nonexistent')).toBe(false);
+    });
+  });
+
+  describe('streamBySession', () => {
+    it('yields all events in a single batch when count <= batchSize', async () => {
+      const now = Date.now();
+      for (let i = 0; i < 3; i++) {
+        await store.append({
+          timestamp: now + i,
+          sessionId: 's',
+          direction: 'out',
+          raw: `r${i}`,
+          seq: i,
+        });
+      }
+      const batches: RawEvent[][] = [];
+      for await (const batch of store.streamBySession('s', 10)) batches.push(batch);
+      expect(batches).toHaveLength(1);
+      expect(batches[0]!.map((e) => e.raw)).toEqual(['r0', 'r1', 'r2']);
+    });
+
+    it('yields multiple batches when count > batchSize', async () => {
+      const now = Date.now();
+      for (let i = 0; i < 5; i++) {
+        await store.append({
+          timestamp: now + i,
+          sessionId: 's',
+          direction: 'out',
+          raw: `r${i}`,
+          seq: i,
+        });
+      }
+      const batches: RawEvent[][] = [];
+      for await (const batch of store.streamBySession('s', 2)) batches.push(batch);
+      expect(batches).toHaveLength(3);
+      expect(batches.flat().map((e) => e.raw)).toEqual(['r0', 'r1', 'r2', 'r3', 'r4']);
+    });
+
+    it('yields nothing for unknown session', async () => {
+      const batches: RawEvent[][] = [];
+      for await (const batch of store.streamBySession('nonexistent', 10)) batches.push(batch);
+      expect(batches).toHaveLength(0);
+    });
+
+    it('does not include delta table events', async () => {
+      const db2 = createDatabase(':memory:');
+      migrate(db2, { migrationsFolder: sqliteMigrationsFolder });
+      const { rawDeltas } = await import('@code-quest/db-schema/sqlite');
+      const unionStore = new DrizzleRawEventStore(db2, rawEvents, rawDeltas);
+      const deltaStore = new DrizzleRawDeltaStore(db2, rawDeltas);
+      const now = Date.now();
+      await unionStore.append({
+        sessionId: 's',
+        direction: 'in',
+        raw: 'event',
+        seq: 0,
+        timestamp: now,
+      });
+      await deltaStore.append({
+        parentId: '',
+        sessionId: 's',
+        direction: 'out',
+        raw: 'delta',
+        seq: 1,
+        timestamp: now + 10,
+      });
+
+      const batches: RawEvent[][] = [];
+      for await (const batch of unionStore.streamBySession('s', 10)) batches.push(batch);
+      expect(batches.flat().map((e) => e.raw)).toEqual(['event']);
+    });
+  });
+
   describe('getBySession with delta table — UNION ALL', () => {
     it('merges events + deltas ordered by createdAt/seq', async () => {
       const db = createDatabase(':memory:');
