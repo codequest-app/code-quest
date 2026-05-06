@@ -19,8 +19,10 @@ export interface ReceivedMessageMap {
 export class FakeProcessHandle implements ProcessHandle {
   private readonly controller = new AbortController();
   private readonly lineQueue: string[] = [];
+  private readonly stderrQueue: string[] = [];
   private readonly receivedLines: string[] = [];
   private resolver: ((value: IteratorResult<string>) => void) | null = null;
+  private stderrResolver: ((value: IteratorResult<string>) => void) | null = null;
 
   /** Optional hook — called when pipeline writes to stdin. Use to auto-respond. */
   onSend?: (raw: string, handle: FakeProcessHandle) => void;
@@ -54,11 +56,26 @@ export class FakeProcessHandle implements ProcessHandle {
     return parsed.filter((l) => l.type === type);
   }
 
-  abort(): void {
-    this.controller.abort();
+  emitStderr(line: string): void {
+    if (this.stderrResolver) {
+      const r = this.stderrResolver;
+      this.stderrResolver = null;
+      r({ value: line, done: false });
+    } else {
+      this.stderrQueue.push(line);
+    }
+  }
+
+  abort(exitCode?: number): void {
+    this.controller.abort(exitCode);
     if (this.resolver) {
       const r = this.resolver;
       this.resolver = null;
+      r({ value: undefined, done: true });
+    }
+    if (this.stderrResolver) {
+      const r = this.stderrResolver;
+      this.stderrResolver = null;
       r({ value: undefined, done: true });
     }
   }
@@ -66,7 +83,6 @@ export class FakeProcessHandle implements ProcessHandle {
   lines: AsyncIterable<string> = {
     [Symbol.asyncIterator]: () => ({
       next: (): Promise<IteratorResult<string>> => {
-        // Drain queue first, even if aborted
         if (this.lineQueue.length > 0) {
           return Promise.resolve({ value: this.lineQueue.shift()!, done: false });
         }
@@ -75,6 +91,22 @@ export class FakeProcessHandle implements ProcessHandle {
         }
         return new Promise<IteratorResult<string>>((resolve) => {
           this.resolver = resolve;
+        });
+      },
+    }),
+  };
+
+  stderr: AsyncIterable<string> = {
+    [Symbol.asyncIterator]: () => ({
+      next: (): Promise<IteratorResult<string>> => {
+        if (this.stderrQueue.length > 0) {
+          return Promise.resolve({ value: this.stderrQueue.shift()!, done: false });
+        }
+        if (this.signal.aborted) {
+          return Promise.resolve({ value: undefined, done: true });
+        }
+        return new Promise<IteratorResult<string>>((resolve) => {
+          this.stderrResolver = resolve;
         });
       },
     }),

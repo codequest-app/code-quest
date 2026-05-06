@@ -32,6 +32,7 @@ interface TestContainerOverrides {
   pluginCli?: PluginCliService;
   diffFileService?: DiffFileService;
   historyBatchSize?: number;
+  rawEvents?: { writeDeltas: boolean; readDeltas: boolean };
 }
 
 export function createTestContainer(overrides: TestContainerOverrides = {}): Container {

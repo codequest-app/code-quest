@@ -28,8 +28,7 @@ import { err, ok } from '../utils/rpc.ts';
 export function create({
   emitter,
   gitService,
-  filesystemService,
-}: Pick<HandlerContext, 'emitter' | 'gitService' | 'filesystemService'>): void {
+}: Pick<HandlerContext, 'emitter' | 'gitService'>): void {
   const resolveProjectRoot = (cwd: string): Promise<string | null> =>
     gitService.getProjectRoot(cwd).catch((err) => {
       logger.debug({ err, cwd }, 'getProjectRoot failed, falling back to null');
@@ -38,12 +37,6 @@ export function create({
 
   function broadcastDirty(cwd: string): void {
     emitter.broadcastAll(EVENTS.git.dirty, { cwd });
-  }
-
-  function ensureWithinRoots(cwd: string, callback?: SocketCallback): boolean {
-    if (filesystemService.isWithinRoots(cwd)) return true;
-    callback?.({ error: 'Path outside allowed roots' });
-    return false;
   }
 
   async function handleInit(
@@ -138,7 +131,7 @@ export function create({
   ): Promise<void> {
     try {
       const { cwd } = gitStatusByCwdPayloadSchema.parse(payload);
-      if (!ensureWithinRoots(cwd, callback)) return;
+
       callback?.(await gitService.status(cwd));
     } catch (e) {
       if (e instanceof NotARepoError) {
@@ -182,7 +175,7 @@ export function create({
   ): Promise<void> {
     try {
       const { cwd, filePath, status } = gitDiffByCwdPayloadSchema.parse(payload);
-      if (!ensureWithinRoots(cwd, callback)) return;
+
       callback?.(await gitService.diff(cwd, filePath, status));
     } catch (e) {
       callback?.({ error: errMsg(e, 'Diff failed') });
@@ -197,7 +190,7 @@ export function create({
   ): Promise<void> {
     try {
       const { cwd, limit } = gitLogPayloadSchema.parse(payload);
-      if (!ensureWithinRoots(cwd, callback)) return;
+
       callback?.(await gitService.log(cwd, limit));
     } catch (e) {
       logger.warn({ err: e }, 'Failed to get git log');
@@ -213,7 +206,7 @@ export function create({
   ): Promise<void> {
     try {
       const { cwd, paths } = gitAddPayloadSchema.parse(payload);
-      if (!ensureWithinRoots(cwd, callback)) return;
+
       const result = await gitService.add(cwd, paths);
       if ('ok' in result) broadcastDirty(cwd);
       callback?.(result);
@@ -230,7 +223,7 @@ export function create({
   ): Promise<void> {
     try {
       const { cwd, message } = gitCommitPayloadSchema.parse(payload);
-      if (!ensureWithinRoots(cwd, callback)) return;
+
       const result = await gitService.commit(cwd, message);
       if ('ok' in result) broadcastDirty(cwd);
       callback?.(result);
@@ -247,7 +240,7 @@ export function create({
   ): Promise<void> {
     try {
       const { cwd } = gitPushPayloadSchema.parse(payload);
-      if (!ensureWithinRoots(cwd, callback)) return;
+
       callback?.(await gitService.push(cwd));
     } catch (e) {
       callback?.({ error: errMsg(e, 'Push failed') });
@@ -262,7 +255,7 @@ export function create({
   ): Promise<void> {
     try {
       const { cwd } = gitFetchPayloadSchema.parse(payload);
-      if (!ensureWithinRoots(cwd, callback)) return;
+
       callback?.(await gitService.fetch(cwd));
     } catch (e) {
       callback?.({ error: errMsg(e, 'Fetch failed') });
@@ -277,7 +270,7 @@ export function create({
   ): Promise<void> {
     try {
       const { cwd } = gitPullPayloadSchema.parse(payload);
-      if (!ensureWithinRoots(cwd, callback)) return;
+
       callback?.(await gitService.pull(cwd));
     } catch (e) {
       callback?.({ error: errMsg(e, 'Pull failed') });
@@ -292,7 +285,7 @@ export function create({
   ): Promise<void> {
     try {
       const { cwd, file } = gitDiscardFilePayloadSchema.parse(payload);
-      if (!ensureWithinRoots(cwd, callback)) return;
+
       callback?.(await gitService.discardFile(cwd, file));
     } catch (e) {
       callback?.({ error: errMsg(e, 'Discard failed') });
@@ -366,7 +359,7 @@ export function create({
   ): Promise<void> {
     const parsed = worktreeArchivePayloadSchema.safeParse(payload);
     if (!parsed.success) {
-      callback?.({ error: parsed.error.message });
+      callback?.(err(parsed.error.message));
       return;
     }
     try {
@@ -381,7 +374,7 @@ export function create({
       }
       callback?.(result);
     } catch (e) {
-      callback?.({ error: errMsg(e, 'Failed to remove worktree') });
+      callback?.(err(errMsg(e, 'Failed to remove worktree')));
     }
   }
 

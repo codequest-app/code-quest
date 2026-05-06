@@ -5,7 +5,16 @@ export { CONTENT_TYPE } from './content-types.ts';
 
 // Errors
 export { ERROR_CODES, type ErrorCode } from './errors.ts';
+// Remote daemon ↔ server protocol (JSON-RPC 2.0 over WebSocket)
+export * from './remote/heartbeat.ts';
+export { REMOTE_METHODS } from './remote/methods.ts';
+export * from './remote/protocol.ts';
+export * from './remote/protocol-schemas.ts';
 export * from './schemas/index.ts';
+// Service interfaces
+export * from './services/filesystem.ts';
+export * from './services/git.ts';
+export * from './services/process.ts';
 export type {
   ClientMessage,
   ClientToServerEvents,
@@ -14,14 +23,13 @@ export type {
 } from './socket-events.ts';
 export { EVENTS } from './socket-events.ts';
 export { TopicEmitter } from './topic-emitter.ts';
-
 // Transport (envelope protocol for ws-based transport)
 export { type Envelope, EnvelopeSchema } from './transport/envelope.ts';
-
 // Utils
 export { errMsg } from './utils/err-msg.ts';
 export { getOrSet } from './utils/get-or-set.ts';
 export { isRecord } from './utils/is-record.ts';
+export { parseFsRoots } from './utils/parse-fs-roots.ts';
 
 // Validators
 export { validateWorktreeName } from './validators/worktree-name.ts';

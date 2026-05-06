@@ -7,24 +7,30 @@
   "exports": {
     ".": "./src/index.ts",
     "./browser": "./src/browser.ts",
+    "./daemon": "./src/daemon/agent.ts",
     "./test": "./src/test/index.ts",
     "./test-browser": "./src/test/index-browser.ts"
   },
   "scripts": {
+    "dev": "tsx --env-file=.env src/daemon.ts",
     "test": "vitest run",
     "lint": "biome check src"
   },
   "dependencies": {
     "@code-quest/shared": "workspace:*",
+    "@types/ws": "^8.18.1",
     "chokidar": "^5.0.0",
+    "dotenv": "^17.3.1",
     "fuse.js": "^7.1.0",
     "glob": "^13.0.6",
     "simple-git": "^3.33.0",
+    "ws": "^8.20.0",
     "zod": "^4.3.6"
   },
   "devDependencies": {
     "@types/node": "^20.11.5",
     "knip": "^6.11.0",
+    "tsx": "^4.7.0",
     "memfs": "^4.57.2",
     "typescript": "6.0.3",
     "vitest": "^3.2.4"

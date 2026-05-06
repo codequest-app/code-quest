@@ -1,6 +1,6 @@
 import { cp, mkdir, readdir, readFile, rename, rm, stat, writeFile } from 'node:fs/promises';
-import { basename, isAbsolute, join, normalize, relative, resolve } from 'node:path';
-import { errMsg, getOrSet } from '@code-quest/shared';
+import { basename, join, normalize, relative, resolve } from 'node:path';
+import { errMsg, getOrSet, PathOutsideRootsError, type RootGuard } from '@code-quest/shared';
 import Fuse from 'fuse.js';
 import { glob } from 'glob';
 import type { Unsubscribe, WatchService } from '../fs-watch/types.ts';
@@ -25,6 +25,7 @@ interface ListCacheEntry {
 }
 
 const MAX_RESULTS = 20;
+const MAX_GLOB_DEPTH = 10;
 
 const GLOB_IGNORE = [
   '**/node_modules/**',
@@ -50,11 +51,18 @@ export class LocalFilesystemService implements FilesystemService {
    *  its own watcher, leaking duplicates. */
   private listCacheInflight = new Map<string, Promise<ListCacheEntry>>();
   private readonly fsRoots: readonly string[];
+  private readonly rootGuard: RootGuard;
   private readonly watch?: WatchService;
   private readonly fsImpl?: typeof import('node:fs');
 
-  constructor(fsRoots: readonly string[], watch?: WatchService, fsImpl?: typeof import('node:fs')) {
+  constructor(
+    fsRoots: readonly string[],
+    rootGuard: RootGuard,
+    watch?: WatchService,
+    fsImpl?: typeof import('node:fs'),
+  ) {
     this.fsRoots = fsRoots;
+    this.rootGuard = rootGuard;
     this.watch = watch;
     this.fsImpl = fsImpl;
   }
@@ -81,8 +89,7 @@ export class LocalFilesystemService implements FilesystemService {
     path: string,
     showHidden: boolean,
   ): Promise<{ directories: DirectoryEntry[]; files: DirectoryEntry[] }> {
-    const validated = this.validatePath(path, this.fsRoots);
-    if (!validated) return { directories: [], files: [] };
+    const validated = this.guardPath(path);
 
     try {
       const entries = await readdir(validated, { withFileTypes: true });
@@ -150,8 +157,7 @@ export class LocalFilesystemService implements FilesystemService {
   // ── readFileAbsolute ──
 
   async readFileAbsolute(absolutePath: string): Promise<ReadFileAbsoluteResult> {
-    const validated = this.validatePath(absolutePath, this.fsRoots);
-    if (!validated) return { error: 'Path outside allowed roots' };
+    const validated = this.guardPath(absolutePath);
     const { contentType, encoding } = mimeForPath(absolutePath);
     try {
       if (encoding === 'base64') {
@@ -169,8 +175,7 @@ export class LocalFilesystemService implements FilesystemService {
   // ── writeFileAbsolute ──
 
   async writeFileAbsolute(absolutePath: string, content: string): Promise<WriteFileResult> {
-    const validated = this.validatePath(absolutePath, this.fsRoots);
-    if (!validated) return { error: 'Path outside allowed roots' };
+    const validated = this.guardPath(absolutePath);
     try {
       await writeFile(validated, content, 'utf-8');
       return { ok: true };
@@ -182,8 +187,7 @@ export class LocalFilesystemService implements FilesystemService {
   // ── Mutations ──
 
   async create(absolutePath: string, kind: FileKind): Promise<FsMutationResult> {
-    const validated = this.validatePath(absolutePath, this.fsRoots);
-    if (!validated) return { error: 'Path outside allowed roots' };
+    const validated = this.guardPath(absolutePath);
     try {
       if (kind === 'directory') {
         // mkdir without `recursive: true` throws EEXIST naturally — no stat pre-check needed.
@@ -200,8 +204,7 @@ export class LocalFilesystemService implements FilesystemService {
   }
 
   async delete(absolutePath: string): Promise<FsMutationResult> {
-    const validated = this.validatePath(absolutePath, this.fsRoots);
-    if (!validated) return { error: 'Path outside allowed roots' };
+    const validated = this.guardPath(absolutePath);
     try {
       await rm(validated, { recursive: true, force: true });
       return { ok: true };
@@ -211,9 +214,8 @@ export class LocalFilesystemService implements FilesystemService {
   }
 
   async rename(from: string, to: string): Promise<FsMutationResult> {
-    const fromV = this.validatePath(from, this.fsRoots);
-    const toV = this.validatePath(to, this.fsRoots);
-    if (!fromV || !toV) return { error: 'Path outside allowed roots' };
+    const fromV = this.guardPath(from);
+    const toV = this.guardPath(to);
     // POSIX rename(2) silently overwrites; this stat pre-check is the
     // no-overwrite policy. A `link` + `unlink` pattern would close the
     // race for files but doesn't generalize (directories EPERM, EXDEV).
@@ -228,9 +230,8 @@ export class LocalFilesystemService implements FilesystemService {
   }
 
   async copy(from: string, to: string): Promise<FsMutationResult> {
-    const fromV = this.validatePath(from, this.fsRoots);
-    const toV = this.validatePath(to, this.fsRoots);
-    if (!fromV || !toV) return { error: 'Path outside allowed roots' };
+    const fromV = this.guardPath(from);
+    const toV = this.guardPath(to);
     try {
       await cp(fromV, toV, { recursive: true, errorOnExist: true, force: false });
       return { ok: true };
@@ -268,18 +269,9 @@ export class LocalFilesystemService implements FilesystemService {
 
   // ── Private helpers ──
 
-  private validatePath(path: string, roots: readonly string[]): string | null {
-    const resolved = resolve(path);
-    for (const root of roots) {
-      const resolvedRoot = resolve(root);
-      // path.relative handles OS separators correctly; ".." prefix or an
-      // absolute result both signal the path escapes the root. Same idiom
-      // used by `readFile()` below.
-      if (resolved === resolvedRoot) return resolved;
-      const rel = relative(resolvedRoot, resolved);
-      if (rel && !rel.startsWith('..') && !isAbsolute(rel)) return resolved;
-    }
-    return null;
+  private guardPath(path: string): string {
+    if (!this.rootGuard.isWithinRoots(path)) throw new PathOutsideRootsError(path);
+    return resolve(path);
   }
 
   private async getAllFiles(cwd: string): Promise<string[]> {
@@ -288,7 +280,7 @@ export class LocalFilesystemService implements FilesystemService {
       dot: true,
       ignore: GLOB_IGNORE,
       nodir: true,
-      maxDepth: 10,
+      maxDepth: MAX_GLOB_DEPTH,
       ...(this.fsImpl ? { fs: this.fsImpl } : {}),
     });
   }
@@ -401,7 +393,8 @@ export class LocalFilesystemService implements FilesystemService {
 
   async exists(path: string): Promise<boolean> {
     try {
-      await stat(path);
+      const validated = this.guardPath(path);
+      await stat(validated);
       return true;
     } catch {
       return false;
@@ -410,7 +403,8 @@ export class LocalFilesystemService implements FilesystemService {
 
   async isDirectory(path: string): Promise<boolean> {
     try {
-      const s = await stat(path);
+      const validated = this.guardPath(path);
+      const s = await stat(validated);
       return s.isDirectory();
     } catch {
       return false;
@@ -419,16 +413,13 @@ export class LocalFilesystemService implements FilesystemService {
 
   async statKind(path: string): Promise<FileKind | null> {
     try {
-      const s = await stat(path);
+      const validated = this.guardPath(path);
+      const s = await stat(validated);
       if (s.isDirectory()) return 'directory';
       if (s.isFile()) return 'file';
       return null;
     } catch {
       return null;
     }
-  }
-
-  isWithinRoots(path: string): boolean {
-    return this.validatePath(path, this.fsRoots) !== null;
   }
 }

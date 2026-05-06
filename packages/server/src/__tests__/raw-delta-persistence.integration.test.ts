@@ -1,29 +1,19 @@
 import { rawDeltas, rawEvents } from '@code-quest/db-schema/sqlite';
 import { segments as s } from '@code-quest/summoner/test';
-import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
+import { describe, expect, it, vi } from 'vitest';
 import type { DrizzleDatabase } from '../db/sqlite-client.ts';
 import type { RawEventService } from '../services/raw-event-service.ts';
 import { createFakeServer, createFakeSummoner, createTestContainer } from '../test/index.ts';
 import { TYPES } from '../types.ts';
 
-const configMock = vi.hoisted(() => ({
-  autoMode: true,
-  database: { url: undefined, sqliteUrl: 'file::memory:' },
-  rawEvents: { writeDeltas: false, readDeltas: false },
-  fsRoots: [],
+vi.mock('../config.ts', () => ({
+  config: {
+    autoMode: true,
+    database: { url: undefined, sqliteUrl: 'file::memory:' },
+    rawEvents: { writeDeltas: false, readDeltas: false },
+    fsRoots: [],
+  },
 }));
-
-vi.mock('../config.ts', () => ({ config: configMock }));
-
-beforeEach(() => {
-  configMock.rawEvents.writeDeltas = false;
-  configMock.rawEvents.readDeltas = false;
-});
-
-afterEach(() => {
-  configMock.rawEvents.writeDeltas = false;
-  configMock.rawEvents.readDeltas = false;
-});
 
 function deltaLine(text: string): string {
   return JSON.stringify({
@@ -36,8 +26,11 @@ function deltaLine(text: string): string {
   });
 }
 
-async function runTurn(sessionId: string) {
-  const container = createTestContainer();
+async function runTurn(
+  sessionId: string,
+  rawEventFlags = { writeDeltas: false, readDeltas: false },
+) {
+  const container = createTestContainer({ rawEvents: rawEventFlags });
   const server = createFakeServer(container);
   const summoner = createFakeSummoner(server);
   const claude = summoner.claude();
@@ -74,8 +67,7 @@ describe('raw delta persistence — four flag quadrants', () => {
   });
 
   it('WRITE=true, READ=false — quiet persist: deltas stored but not surfaced by getBySession', async () => {
-    configMock.rawEvents.writeDeltas = true;
-    const container = await runTurn('sess-q2');
+    const container = await runTurn('sess-q2', { writeDeltas: true, readDeltas: false });
 
     const db = container.get<DrizzleDatabase>(TYPES.Database);
     const deltaRows = await db.select().from(rawDeltas);
@@ -87,9 +79,7 @@ describe('raw delta persistence — four flag quadrants', () => {
   });
 
   it('WRITE=true, READ=true — full debug: deltas persisted and surfaced via UNION', async () => {
-    configMock.rawEvents.writeDeltas = true;
-    configMock.rawEvents.readDeltas = true;
-    const container = await runTurn('sess-q3');
+    const container = await runTurn('sess-q3', { writeDeltas: true, readDeltas: true });
 
     const db = container.get<DrizzleDatabase>(TYPES.Database);
     const deltaRows = await db.select().from(rawDeltas);
@@ -102,8 +92,7 @@ describe('raw delta persistence — four flag quadrants', () => {
   });
 
   it('WRITE=false, READ=true — no-op UNION: empty delta table, events still returned', async () => {
-    configMock.rawEvents.readDeltas = true;
-    const container = await runTurn('sess-q4');
+    const container = await runTurn('sess-q4', { writeDeltas: false, readDeltas: true });
 
     const db = container.get<DrizzleDatabase>(TYPES.Database);
     const deltaRows = await db.select().from(rawDeltas);

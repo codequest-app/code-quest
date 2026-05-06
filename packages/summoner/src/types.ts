@@ -1,4 +1,3 @@
-import type { SpawnOptions } from 'node:child_process';
 import type {
   ClientMessage,
   InitializeOptions,
@@ -7,6 +6,8 @@ import type {
 } from '@code-quest/shared';
 import { z } from 'zod';
 
+// Re-export from shared — canonical definitions live in @code-quest/shared
+export type { ProcessHandle, ProcessProvider, ProcessRunResult } from '@code-quest/shared';
 export type { ClientMessage, InitializeOptions, ResolvedControlResponse };
 
 // --- Raw entry for recording ---
@@ -26,33 +27,6 @@ export const rawEventSchema: z.ZodObject<{
 });
 
 export type RawEvent = z.infer<typeof rawEventSchema>;
-
-// --- ProcessHandle / ProcessProvider ---
-
-export interface ProcessHandle {
-  /** Raw lines from process output (one string per line, no newline) */
-  lines: AsyncIterable<string>;
-  /** Write a raw string to stdin (newline appended by implementation) */
-  send(raw: string): void;
-  /** AbortSignal for cancellation propagation */
-  signal: AbortSignal;
-  /** Terminate the process */
-  abort(): void;
-}
-
-/** Result of a one-shot command (`runOnce`). Streams are captured in full. */
-export interface ProcessRunResult {
-  exitCode: number;
-  stdout: string;
-  stderr: string;
-}
-
-export interface ProcessProvider {
-  /** Spawn an interactive process (line-streamed stdout, writeable stdin). */
-  spawn(command: string, args: string[], options?: SpawnOptions): ProcessHandle;
-  /** Spawn a one-shot command, wait for it to exit, capture stdout/stderr. */
-  runOnce(command: string, args: string[], options?: SpawnOptions): Promise<ProcessRunResult>;
-}
 
 // --- AdapterOutput: result of transforming a protocol message ---
 

@@ -131,14 +131,5 @@ describe('ChatHandler > git', () => {
       });
       expect(result).toEqual({ error: 'pathspec did not match any files' });
     });
-
-    it('rejects cwd outside allowed roots', async () => {
-      const { claude } = await setup();
-      const result = await claude.send<{ ok: true } | { error: string }>('git:discardFile', {
-        cwd: '/elsewhere',
-        file: 'a.ts',
-      });
-      expect(result).toEqual({ error: 'Path outside allowed roots' });
-    });
   });
 });
