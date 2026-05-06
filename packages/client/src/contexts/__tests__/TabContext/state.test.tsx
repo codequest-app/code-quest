@@ -261,7 +261,7 @@ describe('TabProvider', () => {
       ).toEqual({
         title: undefined,
         tabStatus: 'connecting',
-        launchOnMount: false,
+        mode: 'resume',
       });
     });
 
@@ -473,7 +473,7 @@ describe('TabProvider', () => {
       expect(JSON.parse(screen.getByRole('status', { name: 'tab' }).textContent!)).toEqual({
         title: 'Hello',
         tabStatus: 'disconnected',
-        launchOnMount: false,
+        mode: 'resume',
       });
     });
 

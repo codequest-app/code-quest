@@ -52,7 +52,7 @@ describe('ChannelMetaContext', () => {
       channelId: 'ch-smoke',
       cwd: '/test/cwd',
       skipInit: true,
-      launchOnMount: false,
+      mode: 'resume',
     });
     expect(screen.getByRole('status', { name: 'channel-id' })).toHaveTextContent(channelId);
     expect(screen.getByRole('status', { name: 'cwd' })).toHaveTextContent('/test/cwd');

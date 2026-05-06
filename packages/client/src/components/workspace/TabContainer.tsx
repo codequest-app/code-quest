@@ -29,7 +29,7 @@ export function findWorktreeByCwd(
   return null;
 }
 
-interface TabContentProps extends Pick<TabMeta, 'cwd' | 'title' | 'launchOnMount'> {
+interface TabContentProps extends Pick<TabMeta, 'cwd' | 'title' | 'mode'> {
   channelId: string;
   rightOpen: boolean;
   onToggleRight: () => void;
@@ -39,7 +39,7 @@ const TabContent = memo(function TabContent({
   channelId,
   cwd,
   title,
-  launchOnMount,
+  mode,
   rightOpen,
   onToggleRight,
 }: TabContentProps) {
@@ -48,7 +48,7 @@ const TabContent = memo(function TabContent({
     <ChannelProvider
       channelId={channelId}
       cwd={cwd}
-      launchOnMount={launchOnMount}
+      mode={mode}
       onChange={(update) => {
         if (update.title) setTabTitle(channelId, update.title);
         if (update.status) setTabStatus(channelId, update.status);
@@ -155,7 +155,7 @@ export const TabContainer: React.FC<{ projectCwd: string }> = memo(function TabC
               channelId={id}
               cwd={meta.cwd}
               title={meta.title}
-              launchOnMount={meta.launchOnMount}
+              mode={meta.mode}
               rightOpen={rightOpen}
               onToggleRight={toggleRight}
             />

@@ -155,7 +155,6 @@ export const MessageList: React.ForwardRefExoticComponent<
     messages,
     isProcessing,
     statusText,
-    isConnecting,
     rewindToMessage: onRewind,
     forkSession: onFork,
   } = useChannelMessages();
@@ -206,10 +205,10 @@ export const MessageList: React.ForwardRefExoticComponent<
     }
     if (isAtBottomRef.current) {
       // Use instant during history load to avoid smooth-scroll lag between batches.
-      const behavior = isConnecting || !countChanged ? 'instant' : 'smooth';
+      const behavior = !countChanged ? 'instant' : 'smooth';
       scrollToEnd(scrollRef, programmaticScrollRef, behavior);
     }
-  }, [messages.length, lastContentLen, lastRole, isConnecting]);
+  }, [messages.length, lastContentLen, lastRole]);
 
   const scrollToBottom = () => {
     isAtBottomRef.current = true;
@@ -315,11 +314,7 @@ export const MessageList: React.ForwardRefExoticComponent<
         className="absolute inset-0 overflow-y-auto overflow-x-hidden"
         aria-label="message-list-scroll"
       >
-        {isConnecting ? (
-          <div className="flex flex-1 items-center justify-center h-full">
-            <SpinnerVerb verbs={['Connecting']} />
-          </div>
-        ) : messages.length === 0 ? (
+        {messages.length === 0 ? (
           <div className="flex flex-col items-center justify-center h-full text-center select-none gap-3 relative -top-7">
             <span className="text-4xl text-assistant">✦</span>
             <span className="text-lg font-medium text-text-bright">CC Office</span>

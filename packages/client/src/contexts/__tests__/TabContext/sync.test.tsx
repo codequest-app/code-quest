@@ -218,13 +218,13 @@ describe('TabProvider', () => {
     });
   });
 
-  describe('launchOnMount flag (separates "spawn new" from "channel exists on server")', () => {
+  describe('session mode (separates "spawn new" from "channel exists on server")', () => {
     it('tabs synced from server sessions do NOT request a new spawn', () => {
       function Test() {
         const { tabs } = useTabState();
         return (
           <span role="status" aria-label="flag">
-            {String(tabs.a?.launchOnMount ?? 'missing')}
+            {String(tabs.a?.mode ?? 'missing')}
           </span>
         );
       }
@@ -232,7 +232,7 @@ describe('TabProvider', () => {
       setSessions([
         { channelId: 'a', state: 'idle', cwd: '/projects/app', projectRoot: '/projects/app' },
       ]);
-      expect(screen.getByRole('status', { name: 'flag' })).toHaveTextContent('false');
+      expect(screen.getByRole('status', { name: 'flag' })).toHaveTextContent('resume');
     });
 
     it('new tabs created via createNewTab spawn on mount', async () => {
@@ -251,14 +251,14 @@ describe('TabProvider', () => {
               create
             </button>
             <span role="status" aria-label="flag">
-              {createdId ? String(tabs[createdId]?.launchOnMount ?? 'missing') : '-'}
+              {createdId ? String(tabs[createdId]?.mode ?? 'missing') : '-'}
             </span>
           </>
         );
       }
       const { user } = renderWithSessions(<Test />);
       await user.click(screen.getByRole('button', { name: 'create' }));
-      expect(screen.getByRole('status', { name: 'flag' })).toHaveTextContent('true');
+      expect(screen.getByRole('status', { name: 'flag' })).toHaveTextContent('new');
     });
   });
 });
