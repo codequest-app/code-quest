@@ -14,7 +14,6 @@ import {
   settingsUpdatedPayloadSchema,
 } from '@code-quest/shared';
 import type { z } from 'zod';
-import { config } from '../../config.ts';
 import { logger } from '../../logger.ts';
 import type { HandlerContext } from '../../types.ts';
 import type { Channel } from '../channel.ts';
@@ -25,15 +24,19 @@ import { errMsg, pickDefined } from '../utils/helpers.ts';
 import { err, ok } from '../utils/rpc.ts';
 
 export function create({
+  autoMode,
   channelManager,
   settingsStore,
   usageTracker,
   emitter,
-}: Pick<HandlerContext, 'channelManager' | 'settingsStore' | 'usageTracker' | 'emitter'>): void {
+}: Pick<
+  HandlerContext,
+  'autoMode' | 'channelManager' | 'settingsStore' | 'usageTracker' | 'emitter'
+>): void {
   function broadcastModels(): void {
     const raw = channelManager.cachedModels;
     if (!raw) return;
-    const models = config.autoMode
+    const models = autoMode
       ? raw
       : raw.flatMap((m) => {
           const parsed = modelInfoSchema.safeParse(m);

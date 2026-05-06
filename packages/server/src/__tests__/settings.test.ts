@@ -6,20 +6,8 @@ type SettingsApplyResp = Ack;
 type SettingsStateResp = RpcResult<{ state: Record<string, unknown> }>;
 type SettingsStateOk = Extract<SettingsStateResp, { ok: true }>;
 
-import { afterEach, vi } from 'vitest';
 import { createFakeServer, createFakeSummoner, createTestContainer } from '../test/index.ts';
 import { TYPES } from '../types.ts';
-
-const configMock = vi.hoisted(() => ({
-  autoMode: true,
-  database: { url: undefined, sqliteUrl: 'file::memory:' },
-  rawEvents: { writeDeltas: false, readDeltas: false },
-  fsRoots: [],
-}));
-vi.mock('../config.ts', () => ({ config: configMock }));
-afterEach(() => {
-  configMock.autoMode = true;
-});
 
 async function setup(sessionId = 'cli-sess') {
   const container = createTestContainer();
@@ -239,9 +227,10 @@ describe('ChatHandler > settings', () => {
     });
 
     it('re-broadcasts app:models with supportsAutoMode false when config.autoMode is false', async () => {
-      configMock.autoMode = false;
       const models = [{ value: 'claude-opus-4-6', displayName: 'Opus', supportsAutoMode: true }];
-      const claude = createFakeSummoner().claude();
+      const container = createTestContainer({ autoMode: false });
+      const server = createFakeServer(container);
+      const claude = createFakeSummoner(server).claude();
       const channelId = await claude.initialize(
         s.init('cli-sess'),
         s.controlResponse('init', { models }),

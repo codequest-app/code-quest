@@ -60,6 +60,8 @@ export interface ContainerOptions {
   /** Override WatchService — tests pass FakeWatchService to avoid real chokidar. */
   watchService?: WatchService;
   historyBatchSize?: number;
+  autoMode?: boolean;
+  rawEvents?: { writeDeltas?: boolean; readDeltas?: boolean };
 }
 
 export function createContainer(options: ContainerOptions): Container {
@@ -91,9 +93,13 @@ export function createContainer(options: ContainerOptions): Container {
   const db = options.storeConfig?.sqliteDatabase ?? createDatabase(':memory:');
   container.bind<DrizzleDatabase>(TYPES.Database).toConstantValue(db);
 
+  const readDeltas = options.rawEvents?.readDeltas ?? config.rawEvents.readDeltas;
+  const writeDeltas = options.rawEvents?.writeDeltas ?? config.rawEvents.writeDeltas;
+  const autoMode = options.autoMode ?? config.autoMode;
+
   const { eventStores, deltaStores, sessionStores, settingsStores } = buildStores(
     options.storeConfig,
-    { readDeltas: config.rawEvents.readDeltas },
+    { readDeltas },
   );
 
   const lowEventStore = pickOrComposite(eventStores, (s) => new CompositeRawEventStore(s));
@@ -112,7 +118,7 @@ export function createContainer(options: ContainerOptions): Container {
   const settingsStore = pickOrComposite(settingsStores, (s) => new CompositeSettingsStore(s));
   container.bind<SettingsStore>(TYPES.SettingsStore).toConstantValue(settingsStore);
 
-  const rawRecorder = new RawRecorder(rawEventService, config.rawEvents.writeDeltas);
+  const rawRecorder = new RawRecorder(rawEventService, writeDeltas);
   const emitter = new ChannelEmitter();
   // Circular wiring between ChannelManager and SessionHistory via lazy lookup —
   // neither is invoked during construction, so the forward-reference is safe.
@@ -164,6 +170,7 @@ export function createContainer(options: ContainerOptions): Container {
     .bind<ProjectAutoUpserter>(TYPES.ProjectAutoUpserter)
     .toConstantValue(projectAutoUpserter);
 
+  container.bind<boolean>(TYPES.AutoMode).toConstantValue(autoMode);
   container.bind<UsageTracker>(TYPES.UsageTracker).to(UsageTracker).inSingletonScope();
   container.bind<SocketServer>(TYPES.SocketServer).to(SocketServer).inSingletonScope();
   container
