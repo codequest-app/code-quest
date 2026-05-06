@@ -1,4 +1,5 @@
 import { basename, dirname, join } from 'node:path';
+import { PathOutsideRootsError, type RootGuard } from '@code-quest/shared';
 import { mimeForPath } from '../filesystem/mime-types.ts';
 import type {
   DirectoryEntry,
@@ -10,15 +11,44 @@ import type {
   WriteFileResult,
 } from '../filesystem/types.ts';
 
-export class FakeFilesystemService implements FilesystemService {
+export class FakeRootGuard implements RootGuard {
   private roots: string[] = [];
+
+  setRoots(roots: string[]): void {
+    this.roots = roots;
+  }
+
+  getRoots(): string[] {
+    return this.roots;
+  }
+
+  reset(): void {
+    this.roots = [];
+  }
+
+  isWithinRoots(path: string): boolean {
+    for (const root of this.roots) {
+      if (path === root) return true;
+      if (root === '/') return true;
+      if (path.startsWith(`${root}/`)) return true;
+    }
+    return false;
+  }
+}
+
+export class FakeFilesystemService implements FilesystemService {
+  readonly rootGuard: FakeRootGuard;
   private dirs = new Map<string, string[]>();
   private files = new Map<string, string>();
+
+  constructor(rootGuard: FakeRootGuard = new FakeRootGuard()) {
+    this.rootGuard = rootGuard;
+  }
 
   // ── Setup API ──
 
   setRoots(roots: string[]): void {
-    this.roots = roots;
+    this.rootGuard.setRoots(roots);
   }
 
   addDirectory(parent: string, children: string[]): void {
@@ -30,7 +60,7 @@ export class FakeFilesystemService implements FilesystemService {
   }
 
   reset(): void {
-    this.roots = [];
+    this.rootGuard.reset();
     this.dirs.clear();
     this.files.clear();
   }
@@ -39,8 +69,10 @@ export class FakeFilesystemService implements FilesystemService {
 
   async browseDirectories(path?: string): Promise<DirectoryEntry[]> {
     if (!path) {
-      return this.roots.map((r) => ({ name: basename(r), path: r }));
+      return this.rootGuard.getRoots().map((r) => ({ name: basename(r), path: r }));
     }
+
+    if (!this.rootGuard.isWithinRoots(path)) throw new PathOutsideRootsError(path);
 
     const children = this.dirs.get(path);
     if (!children) return [];
@@ -100,9 +132,7 @@ export class FakeFilesystemService implements FilesystemService {
   }
 
   async readFileAbsolute(absolutePath: string): Promise<ReadFileAbsoluteResult> {
-    if (!this.isWithinRoots(absolutePath)) {
-      return { error: 'Path outside allowed roots' };
-    }
+    if (!this.rootGuard.isWithinRoots(absolutePath)) throw new PathOutsideRootsError(absolutePath);
     const content = this.files.get(absolutePath);
     if (content === undefined) return { error: `File not found: ${absolutePath}` };
     const { contentType, encoding } = mimeForPath(absolutePath);
@@ -111,9 +141,7 @@ export class FakeFilesystemService implements FilesystemService {
   }
 
   async writeFileAbsolute(absolutePath: string, content: string): Promise<WriteFileResult> {
-    if (!this.isWithinRoots(absolutePath)) {
-      return { error: 'Path outside allowed roots' };
-    }
+    if (!this.rootGuard.isWithinRoots(absolutePath)) throw new PathOutsideRootsError(absolutePath);
     this.files.set(absolutePath, content);
     return { ok: true };
   }
@@ -133,7 +161,7 @@ export class FakeFilesystemService implements FilesystemService {
   async exists(path: string): Promise<boolean> {
     if (this.files.has(path)) return true;
     if (this.dirs.has(path)) return true;
-    if (this.roots.includes(path)) return true;
+    if (this.rootGuard.getRoots().includes(path)) return true;
     // also true if path is a child registered under any parent dirs
     for (const [parent, children] of this.dirs) {
       for (const child of children) {
@@ -148,9 +176,10 @@ export class FakeFilesystemService implements FilesystemService {
   }
 
   async statKind(path: string): Promise<'file' | 'directory' | null> {
+    if (!this.rootGuard.isWithinRoots(path)) throw new PathOutsideRootsError(path);
     if (this.files.has(path)) return 'file';
     if (this.dirs.has(path)) return 'directory';
-    if (this.roots.includes(path)) return 'directory';
+    if (this.rootGuard.getRoots().includes(path)) return 'directory';
     for (const [parent, children] of this.dirs) {
       for (const child of children) {
         if (join(parent, child) === path) return 'directory';
@@ -162,9 +191,7 @@ export class FakeFilesystemService implements FilesystemService {
   // ── Mutations ──
 
   async create(absolutePath: string, kind: 'file' | 'directory'): Promise<FsMutationResult> {
-    if (!this.isWithinRoots(absolutePath)) {
-      return { error: 'Path outside allowed roots' };
-    }
+    if (!this.rootGuard.isWithinRoots(absolutePath)) throw new PathOutsideRootsError(absolutePath);
     if (await this.exists(absolutePath)) return { error: 'exists' };
     if (kind === 'directory') {
       this.dirs.set(absolutePath, []);
@@ -176,9 +203,7 @@ export class FakeFilesystemService implements FilesystemService {
   }
 
   async delete(absolutePath: string): Promise<FsMutationResult> {
-    if (!this.isWithinRoots(absolutePath)) {
-      return { error: 'Path outside allowed roots' };
-    }
+    if (!this.rootGuard.isWithinRoots(absolutePath)) throw new PathOutsideRootsError(absolutePath);
     this.files.delete(absolutePath);
     this.dirs.delete(absolutePath);
     // Remove descendants
@@ -191,9 +216,8 @@ export class FakeFilesystemService implements FilesystemService {
   }
 
   async rename(from: string, to: string): Promise<FsMutationResult> {
-    if (!this.isWithinRoots(from) || !this.isWithinRoots(to)) {
-      return { error: 'Path outside allowed roots' };
-    }
+    if (!this.rootGuard.isWithinRoots(from) || !this.rootGuard.isWithinRoots(to))
+      throw new PathOutsideRootsError(from);
     if (await this.exists(to)) return { error: 'exists' };
     if (this.files.has(from)) {
       this.files.set(to, this.files.get(from) ?? '');
@@ -225,9 +249,8 @@ export class FakeFilesystemService implements FilesystemService {
   }
 
   async copy(from: string, to: string): Promise<FsMutationResult> {
-    if (!this.isWithinRoots(from) || !this.isWithinRoots(to)) {
-      return { error: 'Path outside allowed roots' };
-    }
+    if (!this.rootGuard.isWithinRoots(from) || !this.rootGuard.isWithinRoots(to))
+      throw new PathOutsideRootsError(from);
     if (await this.exists(to)) return { error: 'exists' };
     if (this.files.has(from)) {
       this.files.set(to, this.files.get(from) ?? '');
@@ -279,12 +302,5 @@ export class FakeFilesystemService implements FilesystemService {
         siblings.filter((n) => n !== name),
       );
     }
-  }
-
-  isWithinRoots(path: string): boolean {
-    for (const root of this.roots) {
-      if (path === root || path.startsWith(`${root}/`)) return true;
-    }
-    return false;
   }
 }

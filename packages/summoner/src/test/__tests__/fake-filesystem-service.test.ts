@@ -1,3 +1,4 @@
+import { PathOutsideRootsError } from '@code-quest/shared';
 import { describe, expect, it } from 'vitest';
 import { FakeFilesystemService } from '../fake-filesystem-service.ts';
 
@@ -22,10 +23,10 @@ describe('FakeFilesystemService', () => {
       ]);
     });
 
-    it('returns empty for unknown path', async () => {
+    it('throws PathOutsideRootsError for path outside roots', async () => {
       const fs = new FakeFilesystemService();
       fs.setRoots(['/projects']);
-      expect(await fs.browseDirectories('/unknown')).toEqual([]);
+      await expect(fs.browseDirectories('/unknown')).rejects.toThrow(PathOutsideRootsError);
     });
 
     it('returns empty when no roots set', async () => {
@@ -65,11 +66,10 @@ describe('FakeFilesystemService', () => {
       expect(result.files).toEqual([]);
     });
 
-    it('returns empty arrays for unknown path', async () => {
+    it('throws PathOutsideRootsError for path outside roots', async () => {
       const fs = new FakeFilesystemService();
       fs.setRoots(['/repo']);
-      const result = await fs.browseEntries('/unknown');
-      expect(result).toEqual({ directories: [], files: [] });
+      await expect(fs.browseEntries('/unknown')).rejects.toThrow(PathOutsideRootsError);
     });
   });
 
@@ -120,10 +120,7 @@ describe('FakeFilesystemService', () => {
       fs.addFile('/projects/app/index.ts', '');
       fs.reset();
       expect(await fs.browseDirectories()).toEqual([]);
-      expect(await fs.browseDirectories('/projects')).toEqual([]);
-      expect(await fs.readFile('/projects/app', 'index.ts')).toEqual({
-        error: 'File not found: index.ts',
-      });
+      await expect(fs.browseDirectories('/projects')).rejects.toThrow(PathOutsideRootsError);
     });
   });
 
@@ -156,9 +153,9 @@ describe('FakeFilesystemService', () => {
         expect(await fs.create('/repo/foo.ts', 'file')).toEqual({ error: 'exists' });
       });
 
-      it('rejects path outside allowed roots', async () => {
+      it('throws PathOutsideRootsError for path outside allowed roots', async () => {
         const fs = setup();
-        expect(await fs.create('/etc/passwd', 'file')).toMatchObject({ error: expect.any(String) });
+        await expect(fs.create('/etc/passwd', 'file')).rejects.toThrow(PathOutsideRootsError);
       });
     });
 
@@ -175,9 +172,9 @@ describe('FakeFilesystemService', () => {
         expect(await fs.exists('/repo/src/inner.ts')).toBe(false);
       });
 
-      it('rejects path outside allowed roots', async () => {
+      it('throws PathOutsideRootsError for path outside allowed roots', async () => {
         const fs = setup();
-        expect(await fs.delete('/etc/passwd')).toMatchObject({ error: expect.any(String) });
+        await expect(fs.delete('/etc/passwd')).rejects.toThrow(PathOutsideRootsError);
       });
     });
 
@@ -197,11 +194,11 @@ describe('FakeFilesystemService', () => {
         expect(await fs.rename('/repo/foo.ts', '/repo/bar.ts')).toEqual({ error: 'exists' });
       });
 
-      it('rejects path outside allowed roots', async () => {
+      it('throws PathOutsideRootsError for path outside allowed roots', async () => {
         const fs = setup();
-        expect(await fs.rename('/repo/foo.ts', '/etc/foo.ts')).toMatchObject({
-          error: expect.any(String),
-        });
+        await expect(fs.rename('/repo/foo.ts', '/etc/foo.ts')).rejects.toThrow(
+          PathOutsideRootsError,
+        );
       });
     });
 
@@ -246,11 +243,9 @@ describe('FakeFilesystemService', () => {
         expect(await fs.move('/repo/foo.ts', '/repo/src/foo.ts')).toEqual({ error: 'exists' });
       });
 
-      it('rejects path outside allowed roots', async () => {
+      it('throws PathOutsideRootsError for path outside allowed roots', async () => {
         const fs = setup();
-        expect(await fs.move('/repo/foo.ts', '/etc/foo.ts')).toMatchObject({
-          error: expect.any(String),
-        });
+        await expect(fs.move('/repo/foo.ts', '/etc/foo.ts')).rejects.toThrow(PathOutsideRootsError);
       });
     });
   });

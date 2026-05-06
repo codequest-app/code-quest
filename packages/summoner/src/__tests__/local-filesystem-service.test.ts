@@ -1,7 +1,9 @@
 import { join } from 'node:path';
+import { PathOutsideRootsError } from '@code-quest/shared';
 import { vol } from 'memfs';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { LocalFilesystemService } from '../filesystem/local.ts';
+import { LocalRootGuard } from '../filesystem/local-root-guard.ts';
 import type { DirectoryEntry } from '../filesystem/types.ts';
 import { FakeWatchService } from '../test/fake-watch-service.ts';
 
@@ -25,7 +27,7 @@ beforeEach(async () => {
     [join(ROOT, 'package.json')]: '{}',
   });
   memfs = (await import('memfs')).fs as unknown as typeof import('node:fs');
-  service = new LocalFilesystemService([ROOT], undefined, memfs);
+  service = new LocalFilesystemService([ROOT], new LocalRootGuard([ROOT]), undefined, memfs);
 });
 
 afterEach(() => vol.reset());
@@ -60,12 +62,14 @@ describe('LocalFilesystemService', () => {
       expect(names).not.toContain('link-to-alpha');
     });
 
-    it('returns empty for path outside roots', async () => {
-      expect(await service.browseDirectories('/etc')).toEqual([]);
+    it('throws PathOutsideRootsError for path outside roots', async () => {
+      await expect(service.browseDirectories('/etc')).rejects.toThrow(PathOutsideRootsError);
     });
 
-    it('returns empty for path traversal', async () => {
-      expect(await service.browseDirectories(`${ROOT}/../../etc`)).toEqual([]);
+    it('throws PathOutsideRootsError for path traversal', async () => {
+      await expect(service.browseDirectories(`${ROOT}/../../etc`)).rejects.toThrow(
+        PathOutsideRootsError,
+      );
     });
 
     it('returns empty for non-existent path', async () => {
@@ -124,7 +128,7 @@ describe('LocalFilesystemService', () => {
     describe('cache invalidation via WatchService', () => {
       it('second call without watcher event reuses cached file list', async () => {
         const watch = new FakeWatchService();
-        const cached = new LocalFilesystemService([ROOT], watch, memfs);
+        const cached = new LocalFilesystemService([ROOT], new LocalRootGuard([ROOT]), watch, memfs);
         const a = await cached.listFiles(ROOT, '');
         vol.writeFileSync(join(ROOT, 'after-cache.ts'), '');
         const b = await cached.listFiles(ROOT, '');
@@ -134,7 +138,7 @@ describe('LocalFilesystemService', () => {
 
       it('watcher event invalidates cache so next call rebuilds', async () => {
         const watch = new FakeWatchService();
-        const cached = new LocalFilesystemService([ROOT], watch, memfs);
+        const cached = new LocalFilesystemService([ROOT], new LocalRootGuard([ROOT]), watch, memfs);
         await cached.listFiles(ROOT, '');
         vol.writeFileSync(join(ROOT, 'after-invalidate.ts'), '');
         watch.simulate(ROOT, { type: 'add', path: 'after-invalidate.ts' });
@@ -150,13 +154,18 @@ describe('LocalFilesystemService', () => {
           subscribeCount++;
           return realSubscribe(cwd, cb);
         };
-        const cached = new LocalFilesystemService([ROOT], watch, memfs);
+        const cached = new LocalFilesystemService([ROOT], new LocalRootGuard([ROOT]), watch, memfs);
         await Promise.all([cached.listFiles(ROOT, ''), cached.listFiles(ROOT, '')]);
         expect(subscribeCount).toBe(1);
       });
 
       it('without WatchService injection, every call walks fresh (back-compat)', async () => {
-        const noWatch = new LocalFilesystemService([ROOT], undefined, memfs);
+        const noWatch = new LocalFilesystemService(
+          [ROOT],
+          new LocalRootGuard([ROOT]),
+          undefined,
+          memfs,
+        );
         await noWatch.listFiles(ROOT, '');
         vol.writeFileSync(join(ROOT, 'no-watch.ts'), '');
         const b = await noWatch.listFiles(ROOT, '');
@@ -193,10 +202,8 @@ describe('LocalFilesystemService', () => {
       expect(result).toMatchObject({ contentType: 'image/png', encoding: 'base64' });
     });
 
-    it('returns error for path outside allowed roots', async () => {
-      expect(await service.readFileAbsolute('/etc/passwd')).toEqual({
-        error: 'Path outside allowed roots',
-      });
+    it('throws PathOutsideRootsError for path outside allowed roots', async () => {
+      await expect(service.readFileAbsolute('/etc/passwd')).rejects.toThrow(PathOutsideRootsError);
     });
 
     it('returns error for non-existent file', async () => {
@@ -278,7 +285,7 @@ describe('LocalFilesystemService', () => {
 
     beforeEach(() => {
       vol.mkdirSync(MROOT, { recursive: true });
-      svc = new LocalFilesystemService([MROOT], undefined, memfs);
+      svc = new LocalFilesystemService([MROOT], new LocalRootGuard([MROOT]), undefined, memfs);
     });
 
     it('create file then delete it', async () => {
@@ -353,39 +360,12 @@ describe('LocalFilesystemService', () => {
       expect(await svc.readFileAbsolute(to)).toMatchObject({ content: 'moved' });
     });
 
-    it('all mutations reject paths outside allowed roots', async () => {
-      expect(await svc.create('/etc/passwd-clone', 'file')).toMatchObject({
-        error: expect.any(String),
-      });
-      expect(await svc.delete('/etc/passwd')).toMatchObject({ error: expect.any(String) });
-      expect(await svc.rename('/etc/a', '/etc/b')).toMatchObject({ error: expect.any(String) });
-      expect(await svc.copy('/etc/a', '/etc/b')).toMatchObject({ error: expect.any(String) });
-      expect(await svc.move('/etc/a', '/etc/b')).toMatchObject({ error: expect.any(String) });
-    });
-  });
-
-  describe('isWithinRoots', () => {
-    it('returns true for the root itself (boundary inclusive)', () => {
-      expect(service.isWithinRoots(ROOT)).toBe(true);
-    });
-
-    it('returns true for paths inside a root', () => {
-      expect(service.isWithinRoots(join(ROOT, 'alpha'))).toBe(true);
-      expect(service.isWithinRoots(join(ROOT, 'src'))).toBe(true);
-    });
-
-    it('returns false for paths outside any root', () => {
-      expect(service.isWithinRoots('/etc/passwd')).toBe(false);
-      expect(service.isWithinRoots('/totally/unrelated')).toBe(false);
-    });
-
-    it('returns false for a parent of a root (cannot escape upward)', () => {
-      expect(service.isWithinRoots('/')).toBe(false);
-    });
-
-    it('returns false for prefix-similar but not actually inside (foo vs foo-bar)', () => {
-      const sibling = `${ROOT}-sibling`;
-      expect(service.isWithinRoots(sibling)).toBe(false);
+    it('all mutations throw PathOutsideRootsError for paths outside allowed roots', async () => {
+      await expect(svc.create('/etc/passwd-clone', 'file')).rejects.toThrow(PathOutsideRootsError);
+      await expect(svc.delete('/etc/passwd')).rejects.toThrow(PathOutsideRootsError);
+      await expect(svc.rename('/etc/a', '/etc/b')).rejects.toThrow(PathOutsideRootsError);
+      await expect(svc.copy('/etc/a', '/etc/b')).rejects.toThrow(PathOutsideRootsError);
+      await expect(svc.move('/etc/a', '/etc/b')).rejects.toThrow(PathOutsideRootsError);
     });
   });
 });

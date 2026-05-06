@@ -734,6 +734,9 @@ export interface ServerToClientEvents {
   'action:open_url': (payload: ActionOpenUrlPayload) => void;
   'action:open_file': (payload: ActionOpenFilePayload) => void;
 
+  // ── Remote daemon ──
+  'remote:status': (payload: { connected: boolean }) => void;
+
   // ── Error ──
   'error:message': (payload: ErrorMessagePayload) => void;
 

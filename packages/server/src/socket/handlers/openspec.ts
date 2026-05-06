@@ -12,9 +12,8 @@ import type { SocketCallback, TypedSocket } from '../types.ts';
 
 export function create({
   emitter,
-  filesystemService: fs,
   openspecService,
-}: Pick<HandlerContext, 'emitter' | 'filesystemService' | 'openspecService'>): void {
+}: Pick<HandlerContext, 'emitter' | 'openspecService'>): void {
   async function handleList(
     _ch: unknown,
     payload: unknown,
@@ -23,10 +22,7 @@ export function create({
   ): Promise<void> {
     try {
       const { cwd } = openspecListPayloadSchema.parse(payload);
-      if (!fs.isWithinRoots(cwd)) {
-        callback?.({ error: 'Path outside allowed roots' });
-        return;
-      }
+
       callback?.(await openspecService.list(cwd));
     } catch (err) {
       logger.warn({ err }, 'openspec:list failed');
@@ -42,10 +38,7 @@ export function create({
   ): Promise<void> {
     try {
       const { cwd, kind, name, artifact } = openspecReadPayloadSchema.parse(payload);
-      if (!fs.isWithinRoots(cwd)) {
-        callback?.({ error: 'Path outside allowed roots' });
-        return;
-      }
+
       callback?.(await openspecService.read(cwd, kind, name, artifact));
     } catch (err) {
       logger.warn({ err }, 'openspec:read failed');
@@ -61,10 +54,7 @@ export function create({
   ): Promise<void> {
     try {
       const { cwd, name } = openspecChangeNewPayloadSchema.parse(payload);
-      if (!fs.isWithinRoots(cwd)) {
-        callback?.({ error: 'Path outside allowed roots' });
-        return;
-      }
+
       callback?.(await openspecService.changeNew(cwd, name));
     } catch (err) {
       logger.warn({ err }, 'openspec:changeNew failed');
@@ -80,10 +70,7 @@ export function create({
   ): Promise<void> {
     try {
       const { cwd, name, skipSpecs } = openspecArchivePayloadSchema.parse(payload);
-      if (!fs.isWithinRoots(cwd)) {
-        callback?.({ error: 'Path outside allowed roots' });
-        return;
-      }
+
       callback?.(await openspecService.archive(cwd, name, { skipSpecs }));
     } catch (err) {
       logger.warn({ err }, 'openspec:archive failed');
@@ -99,10 +86,7 @@ export function create({
   ): Promise<void> {
     try {
       const { cwd, name, lineIndex } = openspecToggleTaskPayloadSchema.parse(payload);
-      if (!fs.isWithinRoots(cwd)) {
-        callback?.({ error: 'Path outside allowed roots' });
-        return;
-      }
+
       callback?.(await openspecService.toggleTask(cwd, name, lineIndex));
     } catch (err) {
       logger.warn({ err }, 'openspec:toggleTask failed');

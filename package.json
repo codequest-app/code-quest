@@ -4,8 +4,10 @@
   "private": true,
   "description": "RPG-style Claude Code experience",
   "scripts": {
-    "dev": "pnpm --filter server dev & pnpm --filter client dev",
-    "dev:mock": "MOCK_CLI=true pnpm --filter server dev & pnpm --filter client dev",
+    "dev": "concurrently -n server,client -c blue,green \"pnpm --filter server dev\" \"pnpm --filter client dev\"",
+    "dev:mock": "concurrently -n server,client -c blue,green \"MOCK_CLI=true pnpm --filter server dev\" \"pnpm --filter client dev\"",
+    "dev:remote": "concurrently -n server,client,daemon -c blue,green,yellow \"REMOTE_MODE=remote REMOTE_TOKEN=test-token-123 pnpm --filter server dev\" \"pnpm --filter client dev\" \"sleep 3 && pnpm dev:daemon\"",
+    "dev:daemon": "pnpm --filter summoner dev -- --server ws://127.0.0.1:3000/summoner --token test-token-123",
     "dev:server": "pnpm --filter server dev",
     "dev:server:mock": "MOCK_CLI=true pnpm --filter server dev",
     "dev:client": "pnpm --filter client dev",
@@ -36,6 +38,7 @@
   "devDependencies": {
     "@biomejs/biome": "^2.4.12",
     "@playwright/test": "^1.59.1",
+    "concurrently": "^9.2.1",
     "lefthook": "^2.1.6",
     "playwright": "^1.59.1",
     "typescript": "6.0.3"

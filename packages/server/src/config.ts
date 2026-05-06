@@ -1,6 +1,5 @@
-import os from 'node:os';
 import 'dotenv/config';
-import type { ThinkingDisplay } from '@code-quest/shared';
+import { parseFsRoots, type ThinkingDisplay } from '@code-quest/shared';
 
 type Env = Record<string, string | undefined>;
 
@@ -42,15 +41,6 @@ function parseTransport(raw: string | undefined): { ws: boolean; socketio: boole
   }
 }
 
-function parseFsRoots(raw?: string): string[] {
-  if (!raw) return [os.homedir()];
-  const roots = raw
-    .split(',')
-    .map((s) => s.trim())
-    .filter(Boolean);
-  return roots.length > 0 ? roots : [os.homedir()];
-}
-
 interface AppConfig {
   readonly port: number;
   readonly database: {
@@ -68,6 +58,8 @@ interface AppConfig {
   readonly autoMode: boolean;
   readonly transport: { readonly ws: boolean; readonly socketio: boolean };
   readonly historyBatchSize: number;
+  readonly remoteMode: 'local' | 'remote';
+  readonly remoteToken: string | undefined;
 }
 
 export function loadConfig(env: Env = process.env): AppConfig {
@@ -88,6 +80,8 @@ export function loadConfig(env: Env = process.env): AppConfig {
     autoMode: parseBool(env.CLI_AUTO_MODE, true),
     transport: parseTransport(env.TRANSPORT),
     historyBatchSize: parseNumber(env.SESSION_HISTORY_BATCH_SIZE, 5000),
+    remoteMode: env.REMOTE_MODE === 'remote' ? 'remote' : 'local',
+    remoteToken: env.REMOTE_TOKEN || undefined,
   } as const;
 }
 

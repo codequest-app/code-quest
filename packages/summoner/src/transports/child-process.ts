@@ -23,14 +23,16 @@ export class ChildProcessProvider implements ProcessProvider {
       if (!controller.signal.aborted) controller.abort();
     });
 
-    // When process exits naturally, abort the controller so readline ends
-    proc.on('close', () => {
-      if (!controller.signal.aborted) controller.abort();
+    proc.on('close', (code) => {
+      if (!controller.signal.aborted) controller.abort(code);
     });
 
     const stdout = proc.stdout;
     if (!stdout) throw new Error('stdout not available — spawn must use stdio: pipe');
     const lines = this.createLineIterable(stdout, controller.signal);
+    const stderr = proc.stderr
+      ? this.createLineIterable(proc.stderr, controller.signal)
+      : undefined;
 
     const send = (raw: string): void => {
       proc.stdin?.write(`${raw}\n`);
@@ -41,14 +43,14 @@ export class ChildProcessProvider implements ProcessProvider {
       proc.kill('SIGTERM');
     };
 
-    return { lines, send, signal: controller.signal, abort };
+    return { lines, stderr, send, signal: controller.signal, abort };
   }
 
   private async *createLineIterable(
-    stdout: NodeJS.ReadableStream,
+    stream: NodeJS.ReadableStream,
     signal: AbortSignal,
   ): AsyncIterable<string> {
-    const rl = createInterface({ input: stdout });
+    const rl = createInterface({ input: stream });
     for await (const line of rl) {
       if (signal.aborted) break;
       yield line;
@@ -68,7 +70,7 @@ export class ChildProcessProvider implements ProcessProvider {
       });
       proc.on('error', reject);
       proc.on('close', (code) => {
-        resolve({ exitCode: code ?? 0, stdout, stderr });
+        resolve({ exitCode: code, stdout, stderr });
       });
     });
   }

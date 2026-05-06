@@ -1,0 +1,44 @@
+import type { FsMutationResult } from '../schemas/fs.ts';
+
+export type DirectoryEntry = { name: string; path: string };
+export type FileResult = { path: string; name: string; type: 'file' | 'directory' };
+export type FileKind = 'file' | 'directory';
+export type ReadFileResult = { content: string } | { error: string };
+export type ReadFileAbsoluteResult =
+  | { content: string; contentType: string; encoding: 'utf-8' | 'base64' }
+  | { error: string };
+export type WriteFileResult = { ok: true } | { error: string };
+export type { FsMutationResult };
+
+export interface RootGuard {
+  isWithinRoots(path: string): boolean;
+}
+
+export class PathOutsideRootsError extends Error {
+  readonly path: string;
+  constructor(path: string) {
+    super('Path outside allowed roots');
+    this.name = 'PathOutsideRootsError';
+    this.path = path;
+  }
+}
+
+export interface FilesystemService {
+  browseDirectories(path?: string): Promise<DirectoryEntry[]>;
+  browseEntries(
+    path?: string,
+    opts?: { showHidden?: boolean },
+  ): Promise<{ directories: DirectoryEntry[]; files: DirectoryEntry[] }>;
+  readFileAbsolute(absolutePath: string): Promise<ReadFileAbsoluteResult>;
+  writeFileAbsolute(absolutePath: string, content: string): Promise<WriteFileResult>;
+  create(absolutePath: string, kind: FileKind): Promise<FsMutationResult>;
+  delete(absolutePath: string): Promise<FsMutationResult>;
+  rename(from: string, to: string): Promise<FsMutationResult>;
+  copy(from: string, to: string): Promise<FsMutationResult>;
+  move(from: string, to: string): Promise<FsMutationResult>;
+  listFiles(cwd: string, pattern: string): Promise<FileResult[]>;
+  readFile(cwd: string, filePath: string): Promise<ReadFileResult>;
+  exists(path: string): Promise<boolean>;
+  isDirectory(path: string): Promise<boolean>;
+  statKind(path: string): Promise<FileKind | null>;
+}

@@ -11,7 +11,9 @@ import { createContainer, type StoreConfig } from '../container.ts';
 import { createMysqlDatabase } from '../db/mysql-client.ts';
 import { createDatabase } from '../db/sqlite-client.ts';
 import { logger } from '../logger.ts';
+import { createUpgradeHandler } from '../remote/upgrade-handler.ts';
 import { NullAuthenticator } from '../socket/authenticator.ts';
+import type { ChannelEmitter } from '../socket/channel-emitter.ts';
 import type { SocketServer } from '../socket/server.ts';
 import { SocketIoTransport } from '../socket/socket-io-transport.ts';
 import type { TransportHandle } from '../socket/transport.ts';
@@ -44,10 +46,11 @@ if (config.rawEvents.readDeltas && !config.rawEvents.writeDeltas) {
   );
 }
 
-const container = createContainer({
-  processProvider: new ChildProcessProvider(),
-  storeConfig,
-});
+function requireRemoteToken(): string {
+  const token = config.remoteToken;
+  if (!token) throw new Error('REMOTE_TOKEN must be set when REMOTE_MODE=remote');
+  return token;
+}
 
 const app = express();
 app.use(helmet());
@@ -66,12 +69,51 @@ if (config.transport.ws) {
   handles.push(new WsTransport({ authenticator, path: '/ws' }).attach(httpServer));
 }
 
-const socketServer = container.get<SocketServer>(TYPES.SocketServer);
-for (const handle of handles) socketServer.register(handle);
-logger.info(
-  { ws: config.transport.ws, socketio: config.transport.socketio },
-  'Transports attached',
-);
+function registerTransports(socketSrv: SocketServer): void {
+  for (const handle of handles) socketSrv.register(handle);
+  logger.info(
+    { ws: config.transport.ws, socketio: config.transport.socketio },
+    'Transports attached',
+  );
+}
+
+let container: ReturnType<typeof createContainer> | null = null;
+
+if (config.remoteMode === 'local') {
+  container = createContainer({
+    processProvider: new ChildProcessProvider(),
+    storeConfig,
+    fsRoots: config.fsRoots,
+    rawEvents: config.rawEvents,
+  });
+  registerTransports(container.get<SocketServer>(TYPES.SocketServer));
+}
+
+if (config.remoteMode === 'remote') {
+  createUpgradeHandler({
+    token: requireRemoteToken(),
+    onConnect: (conn) => {
+      if (!container) {
+        container = createContainer({
+          remoteConnection: conn,
+          storeConfig,
+          rawEvents: config.rawEvents,
+        });
+        registerTransports(container.get<SocketServer>(TYPES.SocketServer));
+        logger.info('container initialized with remote daemon');
+      }
+
+      container
+        .get<ChannelEmitter>(TYPES.ChannelEventRouter)
+        .broadcastAll('remote:status', { connected: true });
+    },
+    onDisconnect: () => {
+      container
+        ?.get<ChannelEmitter>(TYPES.ChannelEventRouter)
+        .broadcastAll('remote:status', { connected: false });
+    },
+  }).attach(httpServer);
+}
 
 const HEALTH_PATH = '/health';
 

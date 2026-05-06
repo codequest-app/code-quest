@@ -42,15 +42,11 @@ export function create({
   ): Promise<void> {
     try {
       const { path, showHidden } = fsBrowsePayloadSchema.parse(payload);
-      if (path !== undefined && !fs.isWithinRoots(path)) {
-        callback?.({ error: 'Path outside allowed roots' });
-        return;
-      }
       const { directories, files } = await fs.browseEntries(path, { showHidden });
       callback?.({ directories, files });
     } catch (err) {
       logger.warn({ err }, 'fs:browse failed');
-      callback?.({ directories: [], files: [] });
+      callback?.({ error: err instanceof Error ? err.message : String(err) });
     }
   }
 
@@ -77,10 +73,6 @@ export function create({
   ): Promise<void> {
     try {
       const { cwd, pattern } = fsSearchPayloadSchema.parse(payload);
-      if (!fs.isWithinRoots(cwd)) {
-        callback?.(ok({ files: [] }));
-        return;
-      }
       const files = await fs.listFiles(cwd, pattern);
       callback?.(ok({ files }));
     } catch (err) {
@@ -101,11 +93,6 @@ export function create({
     }
     try {
       const { cwd } = fsWatchPayloadSchema.parse(payload);
-      if (!fs.isWithinRoots(cwd)) {
-        logger.warn({ cwd }, 'fs:watch outside allowed roots; ignored');
-        callback?.({});
-        return;
-      }
       let perCwd = subsBySocket.get(socket.id);
       if (!perCwd) {
         perCwd = new Map();
