@@ -1,6 +1,6 @@
 # Client — React Frontend
 
-## 職責
+## Purpose
 接收 server socket events，渲染 chat UI，處理使用者互動。
 
 ## 架構
@@ -191,6 +191,8 @@ rpc<E>(socket, event, ...args): Promise<Response>
 
 **Hooks tests（2 files）：**
 - useInputHistory, useSpeechToText
+
+## Requirements
 
 ### Requirement: Action-only compose consumers are isolated from typing
 
