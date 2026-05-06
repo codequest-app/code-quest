@@ -188,7 +188,7 @@ describe('ChannelContext', () => {
         summoner,
         cwd: '/bad/path',
         skipInit: true,
-        launchOnMount: true,
+        mode: 'new',
       });
 
       expect(
@@ -241,7 +241,7 @@ describe('ChannelContext', () => {
     });
   });
 
-  describe('resume join (launchOnMount=false)', () => {
+  describe('resume join (mode=resume)', () => {
     it('shows SpinnerVerb before join ACK, then renders children', async () => {
       const summoner = createFakeSummoner();
       const claude = summoner.claude();
@@ -275,14 +275,14 @@ describe('ChannelContext', () => {
     });
   });
 
-  describe('launchOnMount gating', () => {
+  describe('session mode gating', () => {
     it('resume / fork tab does NOT spawn the CLI', async () => {
       const summoner = createFakeSummoner();
 
       await renderWithChannel(<span>loaded</span>, {
         summoner,
         cwd: '/repo',
-        launchOnMount: false,
+        mode: 'resume',
         skipInit: true,
       });
 
@@ -296,11 +296,34 @@ describe('ChannelContext', () => {
       await renderWithChannel(<span>loaded</span>, {
         summoner,
         cwd: '/repo',
-        launchOnMount: true,
+        mode: 'new',
         skipInit: true,
       });
 
       await waitFor(() => expect(summoner.sentEvents('session:launch')).toHaveLength(1));
+    });
+
+    it('session:join is NOT sent before session:launch callback completes', async () => {
+      const summoner = createFakeSummoner();
+      summoner.claude().prepareInit();
+      const held = summoner.holdEmit('session:launch');
+
+      await renderWithChannel(<span>loaded</span>, {
+        summoner,
+        cwd: '/repo',
+        mode: 'new',
+        skipInit: true,
+      });
+
+      await waitFor(() => expect(summoner.sentEvents('session:launch')).toHaveLength(1));
+      expect(summoner.sentEvents('session:join')).toHaveLength(0);
+
+      await act(async () => {
+        held.release();
+        await new Promise<void>((r) => queueMicrotask(r));
+      });
+
+      await waitFor(() => expect(summoner.sentEvents('session:join')).toHaveLength(1));
     });
 
     it('switching projects on a launched tab does not re-spawn the CLI', async () => {
@@ -316,7 +339,7 @@ describe('ChannelContext', () => {
                   <ProjectProvider>
                     <NavigationProvider>
                       <TabProvider cwd={cwd}>
-                        <ChannelProvider channelId="ch-1" cwd={cwd} launchOnMount>
+                        <ChannelProvider channelId="ch-1" cwd={cwd} mode="new">
                           <span>loaded</span>
                         </ChannelProvider>
                       </TabProvider>

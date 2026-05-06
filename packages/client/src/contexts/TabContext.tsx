@@ -1,6 +1,7 @@
 import type { SessionStateSummary } from '@code-quest/shared';
 import { createContext, type ReactNode, useContext, useEffect, useRef, useState } from 'react';
 import type { SessionStatus } from '../types/ui.ts';
+import type { SessionMode } from './channel/ChannelContext.tsx';
 // Intentional dependency — NavigationContext mediates sidebar/editor
 // intents (activate channel, open worktree). Soft-bound via direct useContext
 // so TabProvider can be mounted standalone in tests without a NavigationProvider.
@@ -11,12 +12,7 @@ export interface TabMeta {
   title?: string;
   tabStatus: SessionStatus;
   cwd?: string;
-  /** True when this tab represents a session that the client must spawn
-   *  (via session:launch). False when the channel already exists on the
-   *  server (resume / fork — sessions sync path). Decoupled from `cwd`
-   *  so that resume tabs can carry cwd without triggering a duplicate
-   *  spawn in `ChannelProvider`. */
-  launchOnMount: boolean;
+  mode: SessionMode;
 }
 
 // ── State context (changes frequently) ──
@@ -59,7 +55,7 @@ export function useTabActions(): TabActionsValue {
 
 // ── Provider ──
 
-const DEFAULT_META: TabMeta = { title: undefined, tabStatus: 'connecting', launchOnMount: false };
+const DEFAULT_META: TabMeta = { title: undefined, tabStatus: 'connecting', mode: 'resume' };
 
 export function TabProvider({
   children,
@@ -130,7 +126,7 @@ export function TabProvider({
         ...prev,
         tabs: {
           ...prev.tabs,
-          [channelId]: { ...DEFAULT_META, cwd: tabCwd, launchOnMount: true },
+          [channelId]: { ...DEFAULT_META, cwd: tabCwd, mode: 'new' },
         },
         activeTabId: channelId,
       }));
@@ -172,9 +168,6 @@ export function TabProvider({
     );
     const removed = [...prevSessionIds.current].filter((id) => !currentIds.has(id));
 
-    // Server-sourced tabs (resume / fork) inherit DEFAULT_META.launchOnMount=false
-    // — the channel already exists on the server; spawning again would duplicate.
-    // Only `createNewTab` opts into launchOnMount=true.
     if (added.length === 1 && removed.length === 1 && added[0]) {
       actions.replaceActiveTab(added[0].channelId, added[0].cwd);
     } else {

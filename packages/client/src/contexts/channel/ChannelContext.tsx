@@ -15,8 +15,11 @@ import { MessageVisibilityProvider } from './MessageVisibilityContext.tsx';
 
 // ── ChannelProvider (orchestrator) ──
 
+export type SessionMode = 'new' | 'resume';
+
 type ChannelState =
   | { status: 'connecting' }
+  | { status: 'ready' }
   | { status: 'connected' }
   | { status: 'error'; message: string };
 
@@ -26,7 +29,7 @@ export function ChannelProvider({
   onChange,
   onNewChannel,
   cwd,
-  launchOnMount = false,
+  mode = 'resume',
   initialState,
 }: {
   channelId: string;
@@ -34,23 +37,21 @@ export function ChannelProvider({
   onChange?: (update: ChannelChangeUpdate) => void;
   onNewChannel?: (cwd: string) => void;
   cwd?: string;
-  /** True when this provider must spawn the session via `session:launch`
-   *  on mount (createNewTab path). False when the channel already exists
-   *  on the server (resume / fork — `cwd` is just identity, not a launch
-   *  trigger). Replaces the legacy "cwd-as-sentinel" behaviour. */
-  launchOnMount?: boolean;
+  mode?: SessionMode;
   initialState?: Partial<ChannelStateType>;
 }): React.JSX.Element {
   const messageQueueRef = useRef<string[]>([]);
   const { socket } = useSocket();
   const { initOptions } = useAppInitState();
 
-  const [state, setState] = useState<ChannelState>({ status: 'connecting' });
-  const launchedRef = useRef(false);
+  const [state, setState] = useState<ChannelState>(
+    mode === 'new' ? { status: 'connecting' } : { status: 'ready' },
+  );
+  const spawnedRef = useRef(false);
 
   function launch() {
     if (!cwd) return;
-    launchedRef.current = true;
+    spawnedRef.current = true;
     setState({ status: 'connecting' });
     socket.emit(EVENTS.session.launch, { channelId, cwd }, (raw: unknown) => {
       const parsed = sessionLaunchResponseSchema.safeParse(raw);
@@ -62,22 +63,22 @@ export function ChannelProvider({
         setState({ status: 'error', message: parsed.data.error });
         return;
       }
-      // Don't set connected yet — ChannelMessagesProvider's join will call onJoinComplete.
+      setState({ status: 'ready' });
     });
   }
 
-  function handleJoinComplete() {
+  function handleJoinSettled() {
     setState((prev) => (prev.status === 'error' ? prev : { status: 'connected' }));
   }
 
-  // biome-ignore lint/correctness/useExhaustiveDependencies: launch is stable; one-shot guarded by launchedRef.
+  // biome-ignore lint/correctness/useExhaustiveDependencies: launch is stable; one-shot guarded by spawnedRef.
   useEffect(() => {
-    if (launchOnMount && !launchedRef.current) launch();
-  }, [launchOnMount]);
+    if (mode === 'new' && !spawnedRef.current) launch();
+  }, [mode]);
 
   // ── Content based on state ──
   let content: ReactNode;
-  if (state.status === 'connecting') {
+  if (state.status === 'connecting' || state.status === 'ready') {
     content = (
       <div className="flex flex-1 items-center justify-center">
         <SpinnerVerb verbs={['Connecting']} />
@@ -90,7 +91,7 @@ export function ChannelProvider({
         message={state.message}
         actionLabel="Retry"
         onAction={() => {
-          launchedRef.current = false;
+          spawnedRef.current = false;
           launch();
         }}
       />
@@ -104,8 +105,9 @@ export function ChannelProvider({
     <ChannelMetaProvider channelId={channelId} cwd={cwd}>
       <ChannelSocketRouterProvider>
         <ChannelMessagesProvider
+          readyToJoin={state.status === 'ready'}
           onChange={onChange}
-          onJoinComplete={handleJoinComplete}
+          onJoinSettled={handleJoinSettled}
           dequeueMessage={() => messageQueueRef.current.shift()}
           messageQueueRef={messageQueueRef}
           initialState={initialState}

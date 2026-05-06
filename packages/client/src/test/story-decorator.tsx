@@ -181,6 +181,7 @@ function StoryProviders({
     <ChannelMetaProvider channelId={STORY_CHANNEL_ID}>
       <ChannelSocketRouterProvider>
         <ChannelMessagesProvider
+          readyToJoin
           initialState={messages}
           dequeueMessage={() => messageQueueRef.current.shift()}
           messageQueueRef={messageQueueRef}

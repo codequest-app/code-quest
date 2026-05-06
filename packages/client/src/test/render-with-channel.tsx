@@ -3,7 +3,7 @@ import { act, type RenderResult, render } from '@testing-library/react';
 import type { ReactElement } from 'react';
 import { AppInitProvider } from '../contexts/AppInitContext.tsx';
 import { CommandPaletteProvider } from '../contexts/CommandPaletteContext.tsx';
-import { ChannelProvider } from '../contexts/channel/ChannelContext.tsx';
+import { ChannelProvider, type SessionMode } from '../contexts/channel/ChannelContext.tsx';
 import { NavigationProvider } from '../contexts/NavigationContext.tsx';
 import { PluginProvider } from '../contexts/PluginContext.tsx';
 import { ProjectProvider } from '../contexts/ProjectContext.tsx';
@@ -23,13 +23,9 @@ interface RenderWithChannelOptions {
   onNewChannel?: (cwd: string) => void;
   /** Skip claude.initialize — useful for testing launch failure. */
   skipInit?: boolean;
-  /** Forces the underlying ChannelProvider's `launchOnMount` prop.
-   *  Default: false — children render immediately without a React-driven
-   *  spawn. Tests that want React to drive `session:launch` must set this
-   *  explicitly (typically alongside `cwd` and `skipInit: true`). */
-  launchOnMount?: boolean;
+  mode?: SessionMode;
   /** Pre-populate ChannelMessagesProvider state — useful for testing
-   *  resume scenarios where messages exist before isConnecting resolves. */
+   *  resume scenarios where messages already exist on mount. */
   initialState?: Partial<ChannelState>;
 }
 
@@ -50,6 +46,7 @@ export async function renderWithChannel(
   const channelId = options.channelId ?? crypto.randomUUID();
   // Used only for the launch-payload default. ChannelProvider keeps
   // options.cwd (undefined skips the React-side session:launch).
+  const mode = options.mode ?? 'resume';
   const launchCwd = options.cwd ?? DEFAULT_TEST_CWD;
 
   // 1. Render first — mount providers, register socket listeners (like production)
@@ -66,7 +63,7 @@ export async function renderWithChannel(
                       <ChannelProvider
                         channelId={channelId}
                         cwd={options.cwd}
-                        launchOnMount={options.launchOnMount ?? false}
+                        mode={mode}
                         onNewChannel={options.onNewChannel}
                         initialState={options.initialState}
                       >
@@ -95,7 +92,7 @@ export async function renderWithChannel(
   // Flush join ACK — ChannelMessagesProvider fires session:join on mount,
   // the server handler is async (await readyPromise, etc.). Multiple
   // microtask ticks are needed for the ACK to arrive.
-  if (!(options.launchOnMount ?? false)) {
+  if (mode === 'resume') {
     await act(async () => {
       for (let i = 0; i < 3; i++) await new Promise<void>((r) => queueMicrotask(r));
     });

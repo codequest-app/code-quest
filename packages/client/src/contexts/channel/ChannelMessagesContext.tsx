@@ -101,7 +101,6 @@ export interface ChannelMessagesValue {
   statusText: ChannelState['statusText'];
   isProcessing: boolean;
   isCancelling: boolean;
-  isConnecting: boolean;
   setChannelState: SetChannelState;
   sendMessage: (message: string) => void;
   abort: () => void;
@@ -136,7 +135,6 @@ type MessagesStateValue = Pick<
   | 'statusText'
   | 'isProcessing'
   | 'isCancelling'
-  | 'isConnecting'
 >;
 type MessagesActionsValue = Omit<ChannelMessagesValue, keyof MessagesStateValue>;
 
@@ -274,16 +272,18 @@ function useTitleFromFirstMessage(
 }
 
 export function ChannelMessagesProvider({
+  readyToJoin,
   initialState,
   onChange,
-  onJoinComplete,
+  onJoinSettled,
   dequeueMessage,
   messageQueueRef,
   children,
 }: {
+  readyToJoin: boolean;
   initialState?: Partial<ChannelState>;
   onChange?: (update: ChannelChangeUpdate) => void;
-  onJoinComplete?: () => void;
+  onJoinSettled?: () => void;
   dequeueMessage: () => string | undefined;
   messageQueueRef: RefObject<string[]>;
   children: ReactNode;
@@ -312,12 +312,10 @@ export function ChannelMessagesProvider({
 
   const joinedRef = useRef(false);
   const historyReplayIdRef = useRef<string | null>(null);
-  const [isConnecting, setIsConnecting] = useState(true);
 
   function recordJoinError(errorContent: string) {
     joinedRef.current = true;
-    setIsConnecting(false);
-    onJoinComplete?.();
+    onJoinSettled?.();
     setChannelState((prev) => ({
       ...prev,
       messages: [...prev.messages, msg({ role: 'system', type: 'error', content: errorContent })],
@@ -330,8 +328,7 @@ export function ChannelMessagesProvider({
       status: snapshot.state === 'busy' ? ('busy' as const) : ('idle' as const),
     }));
     joinedRef.current = true;
-    setIsConnecting(false);
-    onJoinComplete?.();
+    onJoinSettled?.();
   }
 
   function joinSession() {
@@ -369,14 +366,18 @@ export function ChannelMessagesProvider({
   const router = useChannelSocketRouter();
   const { subscribeSessionStates } = useSession();
 
-  // ── Join session + cross-window status sync ──
-  // biome-ignore lint/correctness/useExhaustiveDependencies: joinSession/onSessionStates use channelId+socket which are in deps
+  // ── Join session (gated on readyToJoin) ──
+  // biome-ignore lint/correctness/useExhaustiveDependencies: joinSession uses channelId+socket which are in deps
   useEffect(() => {
-    if (!channelId) return;
+    if (!readyToJoin) return;
     joinedRef.current = false;
     historyReplayIdRef.current = null;
-    setIsConnecting(true);
     joinSession();
+  }, [channelId, readyToJoin, socket]);
+
+  // ── Cross-window status sync ──
+  // biome-ignore lint/correctness/useExhaustiveDependencies: onSessionStates uses channelId which is in deps
+  useEffect(() => {
     return subscribeSessionStates(onSessionStates);
   }, [channelId, socket, subscribeSessionStates]);
 
@@ -510,7 +511,6 @@ export function ChannelMessagesProvider({
               channelState.status === 'busy' ||
               channelState.status === 'cancelling',
             isCancelling: channelState.status === 'cancelling',
-            isConnecting,
           }}
         >
           {children}
