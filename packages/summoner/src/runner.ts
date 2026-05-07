@@ -77,18 +77,20 @@ export class ProcessRunner<E = unknown, L = unknown> extends EventEmitter {
     if (!handle) return;
     this.handle = handle;
 
-    (async () => {
-      try {
-        for await (const line of handle.lines) {
-          this.emit('stdout', line);
-          this._processLine(line);
-        }
-      } catch (error) {
-        logger.debug({ err: error }, 'Async iteration ended with error');
+    this._consumeLines(handle);
+  }
+
+  private async _consumeLines(handle: ProcessHandle): Promise<void> {
+    try {
+      for await (const line of handle.lines) {
+        this.emit('stdout', line);
+        this._processLine(line);
       }
-      this.handle = null;
-      this.emit('exit', null);
-    })();
+    } catch (error) {
+      logger.debug({ err: error }, 'Async iteration ended with error');
+    }
+    this.handle = null;
+    this.emit('exit', null);
   }
 
   private _processLine(line: string): void {
@@ -150,10 +152,6 @@ export class ProcessRunner<E = unknown, L = unknown> extends EventEmitter {
   }
 
   kill(): void {
-    this.abort();
-  }
-
-  abort(): void {
     this.handle?.abort();
   }
 }

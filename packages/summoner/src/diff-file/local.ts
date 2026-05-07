@@ -1,4 +1,5 @@
 import { readFile } from 'node:fs/promises';
+import { logger } from '../logger.ts';
 import type { DiffFileService } from './types.ts';
 
 export class LocalDiffFileService implements DiffFileService {
@@ -7,7 +8,7 @@ export class LocalDiffFileService implements DiffFileService {
     try {
       return await readFile(path, 'utf-8');
     } catch (err) {
-      console.debug('Failed to read diff file', path, err);
+      logger.debug({ err, path }, 'Failed to read diff file');
       return '';
     }
   }

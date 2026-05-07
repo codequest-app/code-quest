@@ -192,20 +192,12 @@ describe('ProcessRunner', () => {
     });
   });
 
-  describe('kill and abort', () => {
+  describe('kill', () => {
     it('kill aborts the process handle', () => {
       const { runner, provider } = createRunner();
       runner.spawn();
 
       runner.kill();
-      expect(provider.latest.signal.aborted).toBe(true);
-    });
-
-    it('abort aborts the process handle', () => {
-      const { runner, provider } = createRunner();
-      runner.spawn();
-
-      runner.abort();
       expect(provider.latest.signal.aborted).toBe(true);
     });
   });

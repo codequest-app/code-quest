@@ -1,9 +1,6 @@
 import { mkdir } from 'node:fs/promises';
 import { join, resolve } from 'node:path';
-import {
-  validateWorktreeName as validateWorktreeNameShared,
-  type WorktreeInfo,
-} from '@code-quest/shared';
+import { validateBranchName, validateWorktreeName, type WorktreeInfo } from '@code-quest/shared';
 import { logger } from '../logger.ts';
 import type { GitCommands } from './commands.ts';
 import { NotARepoError } from './errors.ts';
@@ -13,10 +10,8 @@ import type { CreateWorktreeOptions } from './types.ts';
 const WORKTREE_PATH_RE = /[/\\]\.claude[/\\]worktrees[/\\]([^/\\]+)$/;
 const WORKTREE_BRANCH_PREFIX = 'worktree-';
 
-/** Throwing wrapper around the shared validator — used at git boundaries
- *  where an invalid name must abort the operation. */
-export function validateWorktreeName(name: string): void {
-  const err = validateWorktreeNameShared(name);
+export function assertWorktreeName(name: string): void {
+  const err = validateWorktreeName(name);
   if (err) throw new Error(`Invalid worktree name: ${err}`);
 }
 
@@ -100,7 +95,7 @@ export class GitWorktreeOps {
   async createWorktree(repoRoot: string, opts: CreateWorktreeOptions = {}): Promise<WorktreeInfo> {
     const { baseBranch, path } = opts;
     const { worktreeName, branch, createBranch } = this.resolveWorktreeParams(opts);
-    validateWorktreeName(worktreeName);
+    assertWorktreeName(worktreeName);
 
     const worktreePath = path ?? join(repoRoot, '.claude', 'worktrees', worktreeName);
 
@@ -135,7 +130,7 @@ export class GitWorktreeOps {
   }
 
   async deleteWorktree(repoRoot: string, name: string): Promise<void> {
-    validateWorktreeName(name);
+    assertWorktreeName(name);
     const worktreePath = join(repoRoot, '.claude', 'worktrees', name);
     const branchName = `${WORKTREE_BRANCH_PREFIX}${name}`;
     const git = createGit(repoRoot);
@@ -146,9 +141,8 @@ export class GitWorktreeOps {
   }
 
   async renameWorktree(worktreeCwd: string, newBranchName: string): Promise<{ branch: string }> {
-    if (!/^[\w./-]+$/.test(newBranchName)) {
-      throw new Error(`Invalid branch name: ${newBranchName}`);
-    }
+    const branchErr = validateBranchName(newBranchName);
+    if (branchErr) throw new Error(`Invalid branch name: ${branchErr}`);
     const result = await rawGit(createGit(worktreeCwd), ['branch', '-m', newBranchName]);
     if (result.exitCode !== 0) {
       throw new Error(result.stdout || `git branch -m failed (exit ${result.exitCode})`);
@@ -161,7 +155,7 @@ export class GitWorktreeOps {
     name: string,
     opts?: { force?: boolean },
   ): Promise<{ ok: true } | { error: string }> {
-    validateWorktreeName(name);
+    assertWorktreeName(name);
     const worktreePath = join(repoRoot, '.claude', 'worktrees', name);
     const args = ['worktree', 'remove', worktreePath];
     if (opts?.force) args.push('--force');

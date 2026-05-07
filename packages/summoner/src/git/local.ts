@@ -9,7 +9,7 @@ import type { CreateWorktreeOptions, GitService } from './types.ts';
 import { GitWorktreeOps } from './worktree.ts';
 
 // Re-exports preserved for the package public API (summoner/src/index.ts).
-export { detectWorktree, validateWorktreeName } from './worktree.ts';
+export { detectWorktree } from './worktree.ts';
 
 /** Local git backend. Composed of `GitCommands` (plain git CLI) and
  *  `GitWorktreeOps` (worktree CRUD + path conventions). The facade

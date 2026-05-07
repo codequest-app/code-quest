@@ -19,6 +19,13 @@ description: >
 - import 放在檔案最頂部，不要 inline import（函式中間寫 import）
 - Node.js built-in import（`node:path`, `node:fs`）放最上方
 
+## isolatedDeclarations
+
+summoner package 開啟了 `isolatedDeclarations: true`，影響：
+- **exported 變數必須有顯式型別標注** — 不可依賴推導，這不是冗餘
+- schema 檔（`schemas.ts`、`launch-options.ts`）的縮寫型別別名（`Opt`、`Str`、`Num`、`Bool`、`Unk`、`Loose`）是為了簡化這些必要標注，屬合理設計，**不應移除**
+- 審查時看到 schema export 帶顯式型別，不要標為「冗餘型別標注」
+
 ## Zod
 
 - `.passthrough()` / `.loose()` → 改 `z.looseObject()`（Zod v4 deprecated）
@@ -41,6 +48,8 @@ description: >
 - `REQUEST_MAPPINGS` 是否涵蓋所有 `ch.sendRequest` 呼叫的 event name
 - adapter transform 每個 case 是否都有 named function（不用 inline arrow）
 - `isRecord()` 等 util 是否集中在 `utils.ts`，不重複定義
+- `ProcessRunner` 終止方法只有 `kill()`（底層呼叫 handle 的 `abort()`）— 不要再加 `abort()` wrapper
+- `console.debug` / `console.log` → 改用 `logger`（pino），注意 pino API 第一個參數是 object：`logger.debug({ err }, 'message')`
 
 ## server handler
 

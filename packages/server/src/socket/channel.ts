@@ -201,7 +201,7 @@ export class Channel {
   }
 
   abort(): void {
-    this.runner.abort();
+    this.runner.kill();
   }
 
   write(data: string): void {

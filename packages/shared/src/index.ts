@@ -30,4 +30,5 @@ export { isRecord } from './utils/is-record.ts';
 export { parseFsRoots } from './utils/parse-fs-roots.ts';
 
 // Validators
+export { validateBranchName } from './validators/branch-name.ts';
 export { validateWorktreeName } from './validators/worktree-name.ts';

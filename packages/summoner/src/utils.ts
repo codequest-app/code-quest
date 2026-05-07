@@ -13,5 +13,7 @@ export function asString<T extends string | undefined>(v: unknown, fallback: T):
 
 /** Extract the `code` property from a NodeJS-style error (e.g. ENOENT, ENOSPC). */
 export function errorCode(err: unknown): string | undefined {
-  return typeof err === 'object' && err !== null ? (err as { code?: string }).code : undefined;
+  if (typeof err !== 'object' || err === null || !('code' in err)) return undefined;
+  const { code } = err as { code: unknown };
+  return typeof code === 'string' ? code : undefined;
 }

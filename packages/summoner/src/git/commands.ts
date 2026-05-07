@@ -1,14 +1,13 @@
 import { readFile } from 'node:fs/promises';
 import { isAbsolute, resolve, sep } from 'node:path';
 import type { GitDiffResult, GitLogResult, GitStatusResult } from '@code-quest/shared';
-import { errMsg } from '@code-quest/shared/node';
 import type { SimpleGit } from 'simple-git';
+import { logger } from '../logger.ts';
 import { AlreadyRepoError, NotARepoError } from './errors.ts';
+import { createGit, rawGit } from './git-runner.ts';
 
 const GIT_STATUS_UNTRACKED = '??';
 const GIT_STATUS_STAGED_NEW = 'A';
-
-import { createGit, rawGit } from './git-runner.ts';
 
 const NOTHING_TO_COMMIT = 'nothing-to-commit';
 const RE_NO_UPSTREAM = /no upstream|set-upstream/;
@@ -138,7 +137,7 @@ export class GitCommands {
     try {
       return (await createGit(cwd).revparse(['--show-toplevel'])).trim();
     } catch (err) {
-      console.debug('[GitService] getRepoRoot failed:', errMsg(err));
+      logger.debug({ err }, '[GitService] getRepoRoot failed');
       return null;
     }
   }
@@ -152,7 +151,7 @@ export class GitCommands {
       if (dotGitIdx === -1) return absolute;
       return absolute.slice(0, dotGitIdx);
     } catch (err) {
-      console.debug('[GitService] getProjectRoot failed:', errMsg(err));
+      logger.debug({ err }, '[GitService] getProjectRoot failed');
       return null;
     }
   }
@@ -196,14 +195,14 @@ export class GitCommands {
       await git.checkout(branch);
       return;
     } catch (err) {
-      console.debug('[GitService] checkout strategy 1 failed:', errMsg(err));
+      logger.debug({ err }, '[GitService] checkout strategy 1 failed');
     }
     try {
       await git.fetch('origin');
       await git.checkout(branch);
       return;
     } catch (err) {
-      console.debug('[GitService] checkout strategy 2 failed:', errMsg(err));
+      logger.debug({ err }, '[GitService] checkout strategy 2 failed');
     }
     await git.checkout(['-t', `origin/${branch}`]);
   }

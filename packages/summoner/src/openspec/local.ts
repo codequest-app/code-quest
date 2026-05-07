@@ -22,6 +22,11 @@ const ARTIFACT_FILENAME: Record<OpenspecArtifactKind, string> = {
   spec: 'spec.md',
 };
 
+const OPENSPEC_KIND_DIR: Record<OpenspecKind, string> = {
+  change: 'changes',
+  spec: 'specs',
+};
+
 const TASK_LINE_RE = /^(\s*-\s+\[)( |x|X)(\] .*)$/;
 
 /** Wire shape of `openspec list --json` (changes payload). */
@@ -96,7 +101,7 @@ export class LocalOpenspecService implements OpenspecService {
     artifact: OpenspecArtifactKind,
   ): Promise<OpenspecReadResult> {
     if (!isSafeName(name)) return { error: 'Invalid name' };
-    const dir = kind === 'change' ? 'changes' : 'specs';
+    const dir = OPENSPEC_KIND_DIR[kind];
     const file = ARTIFACT_FILENAME[artifact];
     const path = `${cwd}/openspec/${dir}/${name}/${file}`;
     return this.fs.readFileAbsolute(path);

@@ -11,7 +11,7 @@ export type { FilesystemService } from './filesystem/types.ts';
 export { LocalWatchService } from './fs-watch/local.ts';
 export type { Unsubscribe, WatchCallback, WatchEvent, WatchService } from './fs-watch/types.ts';
 export { AlreadyRepoError, NotARepoError } from './git/errors.ts';
-export { detectWorktree, LocalGitService, validateWorktreeName } from './git/local.ts';
+export { detectWorktree, LocalGitService } from './git/local.ts';
 export type { CreateWorktreeOptions, GitService } from './git/types.ts';
 export { LocalOpenspecService } from './openspec/local.ts';
 export type { OpenspecService } from './openspec/types.ts';

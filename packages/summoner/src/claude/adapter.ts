@@ -26,6 +26,13 @@ const serverNamePayload = (p: Record<string, unknown>) => {
   return { server_name: serverName, ...rest };
 };
 
+const oauthCallbackPayload = (p: Record<string, unknown>) => {
+  const { serverName, callbackUrl, ...rest } = p;
+  return { server_name: serverName, callback_url: callbackUrl, ...rest };
+};
+
+const wrapInData = (r: Record<string, unknown>) => ({ data: r });
+
 const REQUEST_MAPPINGS: Record<string, RequestMapping> = {
   // settings
   'settings:set_model': { subtype: 'set_model' },
@@ -57,7 +64,7 @@ const REQUEST_MAPPINGS: Record<string, RequestMapping> = {
   // mcp channel
   'mcp:channel_enable': { subtype: 'channel_enable', mapPayload: serverNamePayload },
   // plugin
-  'plugin:reload': { subtype: 'reload_plugins', mapResponse: (r) => ({ data: r }) },
+  'plugin:reload': { subtype: 'reload_plugins', mapResponse: wrapInData },
   // ultrareview
   'ultrareview:launch': { subtype: 'ultrareview_launch' },
   // claude-specific auth
@@ -66,10 +73,7 @@ const REQUEST_MAPPINGS: Record<string, RequestMapping> = {
   'auth:oauth_wait': { subtype: 'claude_oauth_wait_for_completion' },
   'mcp:oauth_callback': {
     subtype: 'mcp_oauth_callback_url',
-    mapPayload: (p) => {
-      const { serverName, callbackUrl, ...rest } = p;
-      return { server_name: serverName, callback_url: callbackUrl, ...rest };
-    },
+    mapPayload: oauthCallbackPayload,
   },
 };
 
