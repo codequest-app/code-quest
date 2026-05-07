@@ -36,14 +36,7 @@ interface TabContentProps extends Pick<TabMeta, 'cwd' | 'title' | 'mode'> {
   onToggleRight: () => void;
 }
 
-const TabContent = memo(function TabContent({
-  channelId,
-  cwd,
-  title,
-  mode,
-  rightOpen,
-  onToggleRight,
-}: TabContentProps) {
+function TabContent({ channelId, cwd, title, mode, rightOpen, onToggleRight }: TabContentProps) {
   const { setTabTitle, setTabStatus, createNewTab } = useTabActions();
   return (
     <ChannelProvider
@@ -67,7 +60,7 @@ const TabContent = memo(function TabContent({
       />
     </ChannelProvider>
   );
-});
+}
 
 export const TabContainer: React.FC<{ projectCwd: string }> = memo(function TabContainer({
   projectCwd,

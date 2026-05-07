@@ -3,7 +3,7 @@ import { useState } from 'react';
 import { useChannelConfig } from '@/contexts/channel';
 import { cn } from '@/utils/cn';
 import { Button } from '../ui/Button.tsx';
-import { ActionButton, TrashIcon } from '../ui/Icons.tsx';
+import { BorderedIconButton, TrashIcon } from '../ui/Icons.tsx';
 import { InlineAction } from '../ui/InlineAction.tsx';
 import { ToggleSwitch } from '../ui/ToggleSwitch.tsx';
 
@@ -104,13 +104,13 @@ export function InstalledPluginList({
                     isOn={plugin.enabled ?? false}
                     onClick={() => onToggle(plugin.id, plugin.enabled ?? false)}
                   />
-                  <ActionButton
+                  <BorderedIconButton
                     onClick={() => onUninstall(plugin.id)}
                     label="Uninstall plugin"
                     danger
                   >
                     <TrashIcon className="w-3.5 h-3.5" />
-                  </ActionButton>
+                  </BorderedIconButton>
                 </div>
               </li>
             ))}

@@ -1,6 +1,6 @@
 import type { MarketplaceInfo } from '@code-quest/shared';
 import { Button } from '../ui/Button.tsx';
-import { ActionButton, RefreshIcon, TrashIcon } from '../ui/Icons.tsx';
+import { BorderedIconButton, RefreshIcon, TrashIcon } from '../ui/Icons.tsx';
 
 interface MarketplaceSectionProps {
   marketplaces: MarketplaceInfo[];
@@ -76,12 +76,16 @@ export function MarketplaceSection({
                   </p>
                 </div>
                 <div className="flex items-center gap-1.5 ml-3 shrink-0">
-                  <ActionButton onClick={onRefresh} label="Refresh marketplace">
+                  <BorderedIconButton onClick={onRefresh} label="Refresh marketplace">
                     <RefreshIcon className="w-3.5 h-3.5" />
-                  </ActionButton>
-                  <ActionButton onClick={() => onRemove(mp.name)} label="Remove marketplace" danger>
+                  </BorderedIconButton>
+                  <BorderedIconButton
+                    onClick={() => onRemove(mp.name)}
+                    label="Remove marketplace"
+                    danger
+                  >
                     <TrashIcon className="w-3.5 h-3.5" />
-                  </ActionButton>
+                  </BorderedIconButton>
                 </div>
               </li>
             );

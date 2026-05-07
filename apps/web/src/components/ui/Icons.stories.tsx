@@ -1,7 +1,7 @@
 import type { Meta, StoryObj } from '@storybook/react-vite';
 import { fn } from 'storybook/test';
 import {
-  ActionButton,
+  BorderedIconButton,
   CheckMark,
   ChevronDown,
   ChevronRight,
@@ -51,17 +51,17 @@ const Gallery = (): React.JSX.Element => (
     </section>
 
     <section>
-      <h3 className="text-xs text-text-muted mb-3">ActionButton</h3>
+      <h3 className="text-xs text-text-muted mb-3">BorderedIconButton</h3>
       <div className="flex gap-2 items-center">
-        <ActionButton label="Delete" onClick={fn()} danger>
+        <BorderedIconButton label="Delete" onClick={fn()} danger>
           <TrashIcon className="w-4 h-4" />
-        </ActionButton>
-        <ActionButton label="Refresh" onClick={fn()}>
+        </BorderedIconButton>
+        <BorderedIconButton label="Refresh" onClick={fn()}>
           <RefreshIcon className="w-4 h-4" />
-        </ActionButton>
-        <ActionButton label="Close" onClick={fn()} disabled>
+        </BorderedIconButton>
+        <BorderedIconButton label="Close" onClick={fn()} disabled>
           <XIcon className="w-4 h-4" />
-        </ActionButton>
+        </BorderedIconButton>
       </div>
     </section>
   </div>

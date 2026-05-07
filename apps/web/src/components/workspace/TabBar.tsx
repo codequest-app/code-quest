@@ -102,8 +102,7 @@ export function TabBar({
                     <span
                       role="note"
                       aria-label="tab-scope-tag"
-                      className="font-mono text-text-subtle"
-                      style={{ fontSize: '10px' }}
+                      className="font-mono text-2xs text-text-subtle"
                     >
                       {tab.projectName}/{tab.worktree.branch ?? tab.worktree.name}
                     </span>

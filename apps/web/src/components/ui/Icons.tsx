@@ -35,7 +35,7 @@ export function SlashCommandIcon({ className }: { className?: string }): React.J
   );
 }
 
-export function ActionButton({
+export function BorderedIconButton({
   onClick,
   label,
   danger,
