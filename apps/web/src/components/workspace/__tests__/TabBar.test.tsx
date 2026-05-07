@@ -43,7 +43,7 @@ describe('TabBar worktree grouping', () => {
               sessionId: 'wt',
               title: 't',
               status: 'idle',
-              projectName: 'cc-office',
+              projectName: 'code-quest',
               worktree: { name: 'feat-x', path: '/p', branch: 'feat-x' },
             },
           ]}
@@ -53,7 +53,7 @@ describe('TabBar worktree grouping', () => {
         />,
       ),
     );
-    expect(screen.getByLabelText('tab-scope-tag')).toHaveTextContent('cc-office/feat-x');
+    expect(screen.getByLabelText('tab-scope-tag')).toHaveTextContent('code-quest/feat-x');
   });
 
   it('no scope-tag when tab has no worktree (non-git)', () => {

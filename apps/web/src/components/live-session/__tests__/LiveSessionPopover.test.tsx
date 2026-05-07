@@ -8,8 +8,8 @@ function makeSession(overrides: Partial<SessionStateSummary> = {}): SessionState
   return {
     channelId: 'c1',
     state: 'busy',
-    projectRoot: '/repo/cc-office',
-    cwd: '/repo/cc-office',
+    projectRoot: '/repo/code-quest',
+    cwd: '/repo/code-quest',
     title: 'Refactor TabContext',
     ...overrides,
   };
@@ -34,7 +34,7 @@ function renderPopover(overrides: Partial<LiveSessionPopoverProps> = {}) {
 describe('LiveSessionPopover', () => {
   it('renders project label, state, title', () => {
     renderPopover();
-    expect(screen.getByText(/cc-office/)).toBeInTheDocument();
+    expect(screen.getByText(/code-quest/)).toBeInTheDocument();
     expect(screen.getByText(/busy/i)).toBeInTheDocument();
     expect(screen.getByText('Refactor TabContext')).toBeInTheDocument();
   });

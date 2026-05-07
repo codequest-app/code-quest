@@ -39,26 +39,28 @@ function ProbeProjectCount() {
 
 describe('ProjectCard', () => {
   it('renders project name', () => {
-    render(<ProjectCard name="cc-office" active={false} onSelect={() => {}} />);
-    expect(screen.getByText(/cc-office/)).toBeInTheDocument();
+    render(<ProjectCard name="code-quest" active={false} onSelect={() => {}} />);
+    expect(screen.getByText(/code-quest/)).toBeInTheDocument();
   });
 
   it('renders worktree-count meta badge when worktreeCount > 0', () => {
-    render(<ProjectCard name="cc-office" active={false} onSelect={() => {}} worktreeCount={3} />);
+    render(<ProjectCard name="code-quest" active={false} onSelect={() => {}} worktreeCount={3} />);
     expect(screen.getByText(/3\s*wt/i)).toBeInTheDocument();
   });
 
   it('hides worktree-count meta when count is undefined or 0', () => {
     const { rerender } = render(
-      <ProjectCard name="cc-office" active={false} onSelect={() => {}} />,
+      <ProjectCard name="code-quest" active={false} onSelect={() => {}} />,
     );
     expect(screen.queryByText(/wt$/i)).toBeNull();
-    rerender(<ProjectCard name="cc-office" active={false} onSelect={() => {}} worktreeCount={0} />);
+    rerender(
+      <ProjectCard name="code-quest" active={false} onSelect={() => {}} worktreeCount={0} />,
+    );
     expect(screen.queryByText(/wt$/i)).toBeNull();
   });
 
   it('active state uses bg tint (no hard accent border) — F.html contract', () => {
-    const { container } = render(<ProjectCard name="cc-office" active onSelect={() => {}} />);
+    const { container } = render(<ProjectCard name="code-quest" active onSelect={() => {}} />);
     const card = container.firstElementChild;
     expect(card?.className).toContain('bg-accent/10');
     expect(card?.className).not.toContain('border-accent');
@@ -66,7 +68,7 @@ describe('ProjectCard', () => {
 
   it('inactive state has neither bg tint nor accent border', () => {
     const { container } = render(
-      <ProjectCard name="cc-office" active={false} onSelect={() => {}} />,
+      <ProjectCard name="code-quest" active={false} onSelect={() => {}} />,
     );
     const card = container.firstElementChild;
     expect(card?.className).not.toContain('border-accent');
@@ -76,8 +78,8 @@ describe('ProjectCard', () => {
   it('calls onSelect when clicked', async () => {
     const user = userEvent.setup();
     const onSelect = vi.fn();
-    render(<ProjectCard name="cc-office" active={false} onSelect={onSelect} />);
-    await user.click(screen.getByText(/cc-office/));
+    render(<ProjectCard name="code-quest" active={false} onSelect={onSelect} />);
+    await user.click(screen.getByText(/code-quest/));
     expect(onSelect).toHaveBeenCalled();
   });
 

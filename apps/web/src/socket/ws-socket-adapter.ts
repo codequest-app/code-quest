@@ -3,7 +3,7 @@ import type { WsClient } from './ws-client.ts';
 type Listener = (...args: unknown[]) => void;
 
 /**
- * Translates the socket.io-client `Socket` API surface that cc-office actually
+ * Translates the socket.io-client `Socket` API surface that code-quest actually
  * uses (`connect/disconnect/on/off/emit/connected/id` plus the special events
  * `connect` / `connect_error`) onto a `WsClient` instance. This lets existing
  * hook code (SessionContext, ChannelMessages, etc.) run unchanged when

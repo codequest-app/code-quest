@@ -33,7 +33,7 @@ function Brand() {
   return (
     <span className="hidden md:inline-flex items-center gap-1.5 px-2 mr-1 text-sm font-semibold text-text">
       <span className="text-accent text-base leading-none">✦</span>
-      <span className="font-mono text-xs tracking-wide">cc-office</span>
+      <span className="font-mono text-xs tracking-wide">code-quest</span>
     </span>
   );
 }

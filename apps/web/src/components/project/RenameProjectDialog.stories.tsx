@@ -14,8 +14,8 @@ const meta: Meta<typeof RenameProjectDialog> = {
 export default meta;
 type Story = StoryObj<typeof meta>;
 
-export const Open: Story = { args: { open: true, currentName: 'cc-office' } };
+export const Open: Story = { args: { open: true, currentName: 'code-quest' } };
 export const LongName: Story = {
   args: { open: true, currentName: 'very-long-project-name-that-might-overflow-the-dialog' },
 };
-export const Closed: Story = { args: { open: false, currentName: 'cc-office' } };
+export const Closed: Story = { args: { open: false, currentName: 'code-quest' } };

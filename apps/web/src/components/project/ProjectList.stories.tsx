@@ -6,8 +6,8 @@ import { ProjectList } from './ProjectList.tsx';
 
 const projects: Project[] = [
   {
-    name: 'cc-office',
-    cwd: '/Users/demo/cc-office',
+    name: 'code-quest',
+    cwd: '/Users/demo/code-quest',
     pinned: true,
     lastOpenedAt: '2025-01-03T10:00:00Z',
   },
@@ -36,7 +36,7 @@ export default meta;
 type Story = StoryObj<typeof meta>;
 
 export const Default: Story = {
-  args: { projects, activeProjectCwd: '/Users/demo/cc-office' },
+  args: { projects, activeProjectCwd: '/Users/demo/code-quest' },
 };
 export const NoActive: Story = { args: { projects, activeProjectCwd: null } };
 export const Empty: Story = { args: { projects: [], activeProjectCwd: null } };

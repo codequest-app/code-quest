@@ -24,7 +24,7 @@ export interface Authenticator {
 /**
  * NullAuthenticator — always accepts with userId='anon'.
  *
- * Default for cc-office's current single-user mode. Replace with a real
+ * Default for code-quest's current single-user mode. Replace with a real
  * authenticator when multi-user support lands.
  */
 export class NullAuthenticator implements Authenticator {

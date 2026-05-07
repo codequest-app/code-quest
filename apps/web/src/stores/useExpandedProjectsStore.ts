@@ -35,7 +35,7 @@ export const useExpandedProjectsStore: UseBoundStore<
         }),
     }),
     {
-      name: 'cc-office.expandedProjects',
+      name: 'code-quest.expandedProjects',
       storage: localStoragePersist(),
       // Only persist the array, not the method references.
       partialize: (state) => ({ expanded: state.expanded }),

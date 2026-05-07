@@ -6,16 +6,16 @@ import { RenameProjectDialog } from '../RenameProjectDialog.tsx';
 describe('RenameProjectDialog', () => {
   it('pre-fills input with current name', () => {
     render(
-      <RenameProjectDialog open currentName="cc-office" onRename={() => {}} onClose={() => {}} />,
+      <RenameProjectDialog open currentName="code-quest" onRename={() => {}} onClose={() => {}} />,
     );
     const input = screen.getByRole('textbox', { name: /new name/i }) as HTMLInputElement;
-    expect(input.value).toBe('cc-office');
+    expect(input.value).toBe('code-quest');
   });
 
   it('Rename button disabled when input empty', async () => {
     const user = userEvent.setup({ pointerEventsCheck: 0 });
     render(
-      <RenameProjectDialog open currentName="cc-office" onRename={() => {}} onClose={() => {}} />,
+      <RenameProjectDialog open currentName="code-quest" onRename={() => {}} onClose={() => {}} />,
     );
     const input = screen.getByRole('textbox', { name: /new name/i });
     await user.clear(input);
@@ -24,7 +24,7 @@ describe('RenameProjectDialog', () => {
 
   it('Rename button disabled when input unchanged', () => {
     render(
-      <RenameProjectDialog open currentName="cc-office" onRename={() => {}} onClose={() => {}} />,
+      <RenameProjectDialog open currentName="code-quest" onRename={() => {}} onClose={() => {}} />,
     );
     expect(screen.getByRole('button', { name: /^rename$/i })).toBeDisabled();
   });
@@ -34,7 +34,7 @@ describe('RenameProjectDialog', () => {
     const onRename = vi.fn();
     const onClose = vi.fn();
     render(
-      <RenameProjectDialog open currentName="cc-office" onRename={onRename} onClose={onClose} />,
+      <RenameProjectDialog open currentName="code-quest" onRename={onRename} onClose={onClose} />,
     );
     const input = screen.getByRole('textbox', { name: /new name/i });
     await user.clear(input);
@@ -49,7 +49,7 @@ describe('RenameProjectDialog', () => {
     const onRename = vi.fn();
     const onClose = vi.fn();
     render(
-      <RenameProjectDialog open currentName="cc-office" onRename={onRename} onClose={onClose} />,
+      <RenameProjectDialog open currentName="code-quest" onRename={onRename} onClose={onClose} />,
     );
     await user.click(screen.getByRole('button', { name: /cancel/i }));
     expect(onClose).toHaveBeenCalled();
@@ -60,7 +60,7 @@ describe('RenameProjectDialog', () => {
     const user = userEvent.setup({ pointerEventsCheck: 0 });
     const onRename = vi.fn();
     render(
-      <RenameProjectDialog open currentName="cc-office" onRename={onRename} onClose={() => {}} />,
+      <RenameProjectDialog open currentName="code-quest" onRename={onRename} onClose={() => {}} />,
     );
     const input = screen.getByRole('textbox', { name: /new name/i });
     await user.clear(input);

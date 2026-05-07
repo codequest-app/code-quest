@@ -126,7 +126,7 @@ describe('ProjectTree', () => {
     );
     const user = userEvent.setup();
     await user.click(screen.getByRole('button', { name: /expand p/i }));
-    expect(readPersistedRaw('cc-office.expandedProjects')).toContain('/p');
+    expect(readPersistedRaw('code-quest.expandedProjects')).toContain('/p');
 
     unmount();
     // Re-mount — should rehydrate from persisted storage and start expanded

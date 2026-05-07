@@ -22,9 +22,9 @@ describe('DrizzleProjectStore', () => {
 
   describe('upsert', () => {
     it('inserts new project on first call with defaults', async () => {
-      const p = await store.upsert('/Users/x/cc-office');
-      expect(p.path).toBe('/Users/x/cc-office');
-      expect(p.name).toBe('cc-office');
+      const p = await store.upsert('/Users/x/code-quest');
+      expect(p.path).toBe('/Users/x/code-quest');
+      expect(p.name).toBe('code-quest');
       expect(p.pinned).toBe(false);
       expect(p.color).toBeNull();
       expect(p.id).toMatch(/^[0-9a-f-]+$/i);

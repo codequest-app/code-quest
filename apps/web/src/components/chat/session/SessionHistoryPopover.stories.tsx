@@ -24,5 +24,5 @@ export default meta;
 type Story = StoryObj<typeof meta>;
 
 export const AllSessions: Story = {};
-export const FilteredByCwd: Story = { args: { cwd: '/Users/demo/cc-office' } };
+export const FilteredByCwd: Story = { args: { cwd: '/Users/demo/code-quest' } };
 export const WithCustomProject: Story = { args: { cwd: '/Users/demo/other-project' } };

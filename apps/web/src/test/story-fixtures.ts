@@ -6,7 +6,7 @@ import { buildChannelState } from './build-channel-state.ts';
 import { STORY_CHANNEL_ID } from './story-decorator.tsx';
 
 const STORY_WORKTREE_CHANNEL_ID = 'story-worktree';
-const STORY_PROJECT_ROOT = '/Users/demo/cc-office';
+const STORY_PROJECT_ROOT = '/Users/demo/code-quest';
 
 export function makeLongConversation(): Partial<ChannelState> {
   return buildChannelState([

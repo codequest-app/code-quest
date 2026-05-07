@@ -9,7 +9,7 @@ describe('RemoveProjectConfirmDialog', () => {
       render(
         <RemoveProjectConfirmDialog
           open
-          projectName="cc-office"
+          projectName="code-quest"
           activeSessionCount={0}
           onConfirm={() => {}}
           onClose={() => {}}
@@ -27,7 +27,7 @@ describe('RemoveProjectConfirmDialog', () => {
       render(
         <RemoveProjectConfirmDialog
           open
-          projectName="cc-office"
+          projectName="code-quest"
           activeSessionCount={0}
           onConfirm={onConfirm}
           onClose={onClose}
@@ -45,7 +45,7 @@ describe('RemoveProjectConfirmDialog', () => {
       render(
         <RemoveProjectConfirmDialog
           open
-          projectName="cc-office"
+          projectName="code-quest"
           activeSessionCount={0}
           onConfirm={onConfirm}
           onClose={onClose}
@@ -62,7 +62,7 @@ describe('RemoveProjectConfirmDialog', () => {
       render(
         <RemoveProjectConfirmDialog
           open
-          projectName="cc-office"
+          projectName="code-quest"
           activeSessionCount={2}
           onConfirm={() => {}}
           onClose={() => {}}
@@ -80,7 +80,7 @@ describe('RemoveProjectConfirmDialog', () => {
       render(
         <RemoveProjectConfirmDialog
           open
-          projectName="cc-office"
+          projectName="code-quest"
           activeSessionCount={3}
           onConfirm={onConfirm}
           onClose={onClose}

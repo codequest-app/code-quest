@@ -14,10 +14,10 @@ export default meta;
 type Story = StoryObj<typeof meta>;
 
 export const Inactive: Story = {
-  args: { name: 'cc-office', cwd: '/Users/demo/cc-office', active: false },
+  args: { name: 'code-quest', cwd: '/Users/demo/code-quest', active: false },
 };
 export const Active: Story = {
-  args: { name: 'cc-office', cwd: '/Users/demo/cc-office', active: true },
+  args: { name: 'code-quest', cwd: '/Users/demo/code-quest', active: true },
 };
 export const NoCwd: Story = {
   args: { name: 'ephemeral', active: false },

@@ -45,7 +45,7 @@ function AllowedContent({
       </p>
       <p className="text-xs text-text-muted">
         The folder on disk is <span className="font-semibold">not</span> deleted — only the project
-        entry in cc-office.
+        entry in code-quest.
       </p>
       <div className="flex justify-end gap-2">
         <Button variant="secondary" onClick={onClose} type="button">

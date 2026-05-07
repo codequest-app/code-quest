@@ -27,7 +27,7 @@ describe('useExpandedProjectsStore', () => {
 
   it('persists via zustand persist (read back through the injected storage)', () => {
     useExpandedProjectsStore.getState().toggle('/a');
-    const raw = readPersistedRaw('cc-office.expandedProjects');
+    const raw = readPersistedRaw('code-quest.expandedProjects');
     expect(raw).toBeTruthy();
     // zustand persist wraps state under { state, version }
     expect(JSON.parse(raw!).state.expanded).toContain('/a');

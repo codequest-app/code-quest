@@ -8,7 +8,7 @@ export type TypedSocket = Socket<ServerToClientEvents, ClientToServerEvents>;
 
 /**
  * Returns a socket whose API matches socket.io-client's `Socket` (the surface
- * cc-office hooks rely on: connect/disconnect/on/off/emit/connected/id and
+ * code-quest hooks rely on: connect/disconnect/on/off/emit/connected/id and
  * the special 'connect' / 'connect_error' events).
  *
  * `config.transport` selects the implementation:
@@ -20,7 +20,7 @@ export function createSocket(url?: string): TypedSocket {
   if (config.transport === 'ws') {
     const wsUrl = toWsUrl(target);
     const client = new WsClient(wsUrl);
-    // Cast: WsSocketAdapter implements the socket.io Socket subset cc-office
+    // Cast: WsSocketAdapter implements the socket.io Socket subset code-quest
     // actually consumes (id/connected/connect/disconnect/on/off/emit + the
     // 'connect'/'connect_error' lifecycle events). It deliberately does NOT
     // implement the rest of Socket (timeout/volatile/compress/broadcast/...).

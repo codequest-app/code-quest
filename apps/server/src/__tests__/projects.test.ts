@@ -51,14 +51,14 @@ describe('projects socket handler', () => {
     it('returns added projects', async () => {
       const { claude, summoner } = await setup();
       summoner.filesystem().setRoots(['/tmp']);
-      summoner.filesystem().addDirectory('/tmp', ['cc-office']);
+      summoner.filesystem().addDirectory('/tmp', ['code-quest']);
 
-      await claude.send<ProjectsAddResponse>('projects:add', { path: '/tmp/cc-office' });
+      await claude.send<ProjectsAddResponse>('projects:add', { path: '/tmp/code-quest' });
       const list = await claude.send<ProjectsListResponse>('projects:list', {});
       if ('error' in list) throw new Error(list.error);
       const userProjects = withoutSessionProject(list.projects);
       expect(userProjects).toHaveLength(1);
-      expect(userProjects[0]!.path).toBe('/tmp/cc-office');
+      expect(userProjects[0]!.path).toBe('/tmp/code-quest');
     });
   });
 

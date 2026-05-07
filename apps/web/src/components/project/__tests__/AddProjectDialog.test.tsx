@@ -12,7 +12,7 @@ import { AddProjectDialog } from '../AddProjectDialog.tsx';
 function setup() {
   const summoner = createFakeSummoner();
   summoner.filesystem().setRoots(['/projects']);
-  summoner.filesystem().addDirectory('/projects', ['cc-office', 'DQ']);
+  summoner.filesystem().addDirectory('/projects', ['code-quest', 'DQ']);
 
   function Wrapper({ children }: { children: ReactNode }) {
     return (
@@ -88,19 +88,19 @@ describe('AddProjectDialog', () => {
         open
         onSelect={onSelect}
         onClose={() => {}}
-        addedProjectCwds={new Set(['/projects/cc-office'])}
+        addedProjectCwds={new Set(['/projects/code-quest'])}
       />,
       { wrapper: Wrapper },
     );
 
     // Expand the parent so the disabled child is visible.
     await user.click(await screen.findByRole('treeitem', { name: 'projects' }));
-    const disabled = await screen.findByRole('treeitem', { name: 'cc-office' });
+    const disabled = await screen.findByRole('treeitem', { name: 'code-quest' });
     expect(disabled).toHaveAttribute('aria-disabled', 'true');
 
     // Click the disabled row: highlight must NOT change to its path.
     await user.click(disabled);
-    expect(screen.queryByText('/projects/cc-office')).toBeNull();
+    expect(screen.queryByText('/projects/code-quest')).toBeNull();
     expect(onSelect).not.toHaveBeenCalled();
   });
 

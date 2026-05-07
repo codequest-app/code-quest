@@ -15,14 +15,14 @@ export default meta;
 type Story = StoryObj<typeof meta>;
 
 export const NoActiveSessions: Story = {
-  args: { open: true, projectName: 'cc-office', activeSessionCount: 0 },
+  args: { open: true, projectName: 'code-quest', activeSessionCount: 0 },
 };
 export const OneActiveSession: Story = {
-  args: { open: true, projectName: 'cc-office', activeSessionCount: 1 },
+  args: { open: true, projectName: 'code-quest', activeSessionCount: 1 },
 };
 export const MultipleActiveSessions: Story = {
-  args: { open: true, projectName: 'cc-office', activeSessionCount: 3 },
+  args: { open: true, projectName: 'code-quest', activeSessionCount: 3 },
 };
 export const Closed: Story = {
-  args: { open: false, projectName: 'cc-office', activeSessionCount: 0 },
+  args: { open: false, projectName: 'code-quest', activeSessionCount: 0 },
 };

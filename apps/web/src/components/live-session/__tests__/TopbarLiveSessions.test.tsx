@@ -8,8 +8,8 @@ function s(overrides: Partial<SessionStateSummary> = {}): SessionStateSummary {
   return {
     channelId: 'c1',
     state: 'busy',
-    projectRoot: '/repo/cc-office',
-    cwd: '/repo/cc-office',
+    projectRoot: '/repo/code-quest',
+    cwd: '/repo/code-quest',
     ...overrides,
   };
 }
@@ -43,14 +43,14 @@ describe('TopbarLiveSessions', () => {
     const user = userEvent.setup();
     const onActivate = vi.fn();
     render(<TopbarLiveSessions sessions={[s({ channelId: 'abc' })]} onActivate={onActivate} />);
-    await user.click(screen.getByRole('button', { name: /^cc-office \(/ }));
+    await user.click(screen.getByRole('button', { name: /^code-quest \(/ }));
     expect(onActivate).toHaveBeenCalledWith('abc');
   });
 
   it('clicking ⋯ button opens LiveSessionPopover', async () => {
     const user = userEvent.setup();
     render(<TopbarLiveSessions sessions={[s({ channelId: 'abc' })]} onActivate={vi.fn()} />);
-    await user.click(screen.getByRole('button', { name: /more.*cc-office/i }));
+    await user.click(screen.getByRole('button', { name: /more.*code-quest/i }));
     expect(screen.getByRole('dialog')).toBeInTheDocument();
   });
 
@@ -58,7 +58,7 @@ describe('TopbarLiveSessions', () => {
     const user = userEvent.setup();
     const onActivate = vi.fn();
     render(<TopbarLiveSessions sessions={[s({ channelId: 'abc' })]} onActivate={onActivate} />);
-    await user.click(screen.getByRole('button', { name: /more.*cc-office/i }));
+    await user.click(screen.getByRole('button', { name: /more.*code-quest/i }));
     await user.click(screen.getByRole('button', { name: /^open$/i }));
     expect(onActivate).toHaveBeenCalledWith('abc');
   });

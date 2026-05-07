@@ -55,27 +55,27 @@ describe('ProjectContext (server-backed)', () => {
   });
 
   it('addProject adds a project and sets it as active', async () => {
-    const summoner = setupSummoner({ dirs: [['/path/to', ['cc-office']]] });
+    const summoner = setupSummoner({ dirs: [['/path/to', ['code-quest']]] });
     const { result } = renderHook(
       () => ({ state: useProjectState(), actions: useProjectActions() }),
       { wrapper: makeWrapper(summoner) },
     );
 
     await act(async () => {
-      await result.current.actions.addProject('/path/to/cc-office');
+      await result.current.actions.addProject('/path/to/code-quest');
     });
 
     await waitFor(() =>
       expect(result.current.state.projects).toEqual([
-        expect.objectContaining({ cwd: '/path/to/cc-office', name: 'cc-office' }),
+        expect.objectContaining({ cwd: '/path/to/code-quest', name: 'code-quest' }),
       ]),
     );
-    expect(result.current.state.activeProjectCwd).toBe('/path/to/cc-office');
+    expect(result.current.state.activeProjectCwd).toBe('/path/to/code-quest');
   });
 
   it('addProject does not duplicate existing project', async () => {
     const summoner = setupSummoner({
-      dirs: [['/path/to', ['cc-office', 'DQ']]],
+      dirs: [['/path/to', ['code-quest', 'DQ']]],
     });
     const { result } = renderHook(
       () => ({ state: useProjectState(), actions: useProjectActions() }),
@@ -83,9 +83,9 @@ describe('ProjectContext (server-backed)', () => {
     );
 
     await act(async () => {
-      await result.current.actions.addProject('/path/to/cc-office');
+      await result.current.actions.addProject('/path/to/code-quest');
       await result.current.actions.addProject('/path/to/DQ');
-      await result.current.actions.addProject('/path/to/cc-office');
+      await result.current.actions.addProject('/path/to/code-quest');
     });
 
     await waitFor(() => expect(result.current.state.projects).toHaveLength(2));
@@ -165,7 +165,7 @@ describe('ProjectContext (server-backed)', () => {
 
   it('setActiveProject switches active project', async () => {
     const summoner = setupSummoner({
-      dirs: [['/path/to', ['cc-office', 'DQ']]],
+      dirs: [['/path/to', ['code-quest', 'DQ']]],
     });
     const { result } = renderHook(
       () => ({ state: useProjectState(), actions: useProjectActions() }),
@@ -173,7 +173,7 @@ describe('ProjectContext (server-backed)', () => {
     );
 
     await act(async () => {
-      await result.current.actions.addProject('/path/to/cc-office');
+      await result.current.actions.addProject('/path/to/code-quest');
       await result.current.actions.addProject('/path/to/DQ');
     });
 

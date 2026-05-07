@@ -65,7 +65,7 @@ describe('WsSocketAdapter', () => {
   });
 
   it('emit with callback receives the raw response payload (socket.io-transparent)', async () => {
-    // Real cc-office consumers do `socket.emit(event, payload, (res) => { res.projects... })`
+    // Real code-quest consumers do `socket.emit(event, payload, (res) => { res.projects... })`
     // — the ack value is a raw payload, NOT a { ok, data } wrapper. Adapter
     // must pass envelope.data through verbatim.
     const { adapter, ws } = setupConnected();

@@ -54,8 +54,11 @@ describe('RightPane', () => {
 
   it('exposes cwd via data-cwd on the body for child consumers', () => {
     const { Wrapper } = setup();
-    render(<RightPane cwd="/repo/cc-office" onMention={vi.fn()} />, { wrapper: Wrapper });
-    expect(screen.getByLabelText('right-pane-body')).toHaveAttribute('data-cwd', '/repo/cc-office');
+    render(<RightPane cwd="/repo/code-quest" onMention={vi.fn()} />, { wrapper: Wrapper });
+    expect(screen.getByLabelText('right-pane-body')).toHaveAttribute(
+      'data-cwd',
+      '/repo/code-quest',
+    );
   });
 
   describe('tab strip visual', () => {

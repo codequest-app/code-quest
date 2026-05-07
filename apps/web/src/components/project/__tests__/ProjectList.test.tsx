@@ -12,7 +12,7 @@ function makeWrapper() {
 }
 
 const projects: Project[] = [
-  { cwd: '/cc-office', name: 'cc-office', pinned: false, lastOpenedAt: '2025-01-01T00:00:00Z' },
+  { cwd: '/code-quest', name: 'code-quest', pinned: false, lastOpenedAt: '2025-01-01T00:00:00Z' },
   { cwd: '/DQ', name: 'DQ', pinned: false, lastOpenedAt: '2025-01-01T00:00:00Z' },
 ];
 
@@ -21,12 +21,12 @@ describe('ProjectList', () => {
     render(
       <ProjectList
         projects={projects}
-        activeProjectCwd="/cc-office"
+        activeProjectCwd="/code-quest"
         onSelect={() => {}}
         onAdd={() => {}}
       />,
     );
-    expect(screen.getByText(/cc-office/)).toBeInTheDocument();
+    expect(screen.getByText(/code-quest/)).toBeInTheDocument();
     expect(screen.getByText(/DQ/)).toBeInTheDocument();
   });
 
@@ -55,7 +55,7 @@ describe('ProjectList', () => {
     render(
       <ProjectList
         projects={projects}
-        activeProjectCwd="/cc-office"
+        activeProjectCwd="/code-quest"
         onSelect={onSelect}
         onAdd={() => {}}
       />,

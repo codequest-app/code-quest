@@ -17,8 +17,8 @@ describe('branchToSlug', () => {
 
 describe('autoDerivePath', () => {
   it('uses <projectCwd>/.claude/worktrees/<slug> (claude-code convention)', () => {
-    expect(autoDerivePath('/Users/me/repos/cc-office', 'feature/x')).toBe(
-      '/Users/me/repos/cc-office/.claude/worktrees/x',
+    expect(autoDerivePath('/Users/me/repos/code-quest', 'feature/x')).toBe(
+      '/Users/me/repos/code-quest/.claude/worktrees/x',
     );
   });
 

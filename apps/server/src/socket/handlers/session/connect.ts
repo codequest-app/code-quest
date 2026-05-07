@@ -170,7 +170,7 @@ export function create({
     launchOptions: Record<string, unknown>;
     initOptions: Record<string, unknown>;
   } {
-    // When thinking is on, pass `--thinking adaptive` at spawn. cc-office's
+    // When thinking is on, pass `--thinking adaptive` at spawn. code-quest's
     // per-launch settings only send a runtime `set_max_thinking_tokens`
     // control request; without this CLI flag, Opus 4.7 silently defaults
     // thinking output to `omitted` (API-default flip vs 4.6) and our
