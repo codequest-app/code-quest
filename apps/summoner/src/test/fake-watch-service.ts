@@ -25,6 +25,14 @@ export class FakeWatchService implements WatchService {
     };
   }
 
+  subscriberCount(cwd: string): number {
+    return this.subs.get(cwd)?.size ?? 0;
+  }
+
+  isWatching(cwd: string): boolean {
+    return this.subs.has(cwd);
+  }
+
   /** Test helper: synchronously invoke all subscribers for `cwd`. */
   simulate(cwd: string, event: WatchEvent): void {
     const set = this.subs.get(cwd);

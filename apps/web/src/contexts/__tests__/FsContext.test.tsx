@@ -1,5 +1,4 @@
 import { createFakeServer, createTestContainer, TYPES } from '@code-quest/server/test';
-import { EVENTS } from '@code-quest/shared';
 import type { FakeWatchService } from '@code-quest/summoner/test';
 import { act, renderHook, waitFor } from '@testing-library/react';
 import type { ReactNode } from 'react';
@@ -24,53 +23,50 @@ function makeEnv() {
   return { Wrapper, summoner, watch };
 }
 
-function emitsOf(spy: ReturnType<typeof vi.spyOn>, event: string): unknown[][] {
-  return spy.mock.calls.filter((c) => c[0] === event);
-}
-
 describe('FsContext pub/sub', () => {
   afterEach(() => {
     vi.restoreAllMocks();
   });
 
-  it('two subscribers for the same cwd produce exactly one fs:watch emit', () => {
-    const { Wrapper, summoner } = makeEnv();
-    const emitSpy = vi.spyOn(summoner.socket, 'emit');
+  it('two subscribers for the same cwd produce exactly one server-side watch', () => {
+    const { Wrapper, watch } = makeEnv();
 
     const { result } = renderHook(() => useFsActions(), { wrapper: Wrapper });
-    const off1 = result.current.subscribeFsDirty('/repo', vi.fn());
-    const off2 = result.current.subscribeFsDirty('/repo', vi.fn());
+    expect(watch.isWatching('/repo')).toBe(false);
 
-    expect(emitsOf(emitSpy, EVENTS.fs.watch).length).toBe(1);
+    const off1 = result.current.subscribeFsDirty('/repo', vi.fn());
+    expect(watch.isWatching('/repo')).toBe(true);
+    const countAfterFirst = watch.subscriberCount('/repo');
+
+    const off2 = result.current.subscribeFsDirty('/repo', vi.fn());
+    expect(watch.subscriberCount('/repo')).toBe(countAfterFirst);
 
     off1();
     off2();
   });
 
-  it('both subscribers releasing produces exactly one fs:unwatch emit', () => {
-    const { Wrapper, summoner } = makeEnv();
-    const emitSpy = vi.spyOn(summoner.socket, 'emit');
+  it('both subscribers releasing removes the server-side watch', () => {
+    const { Wrapper, watch } = makeEnv();
 
     const { result } = renderHook(() => useFsActions(), { wrapper: Wrapper });
     const off1 = result.current.subscribeFsDirty('/repo', vi.fn());
     const off2 = result.current.subscribeFsDirty('/repo', vi.fn());
 
     off1();
-    expect(emitsOf(emitSpy, EVENTS.fs.unwatch).length).toBe(0);
+    expect(watch.isWatching('/repo')).toBe(true);
     off2();
-    expect(emitsOf(emitSpy, EVENTS.fs.unwatch).length).toBe(1);
+    expect(watch.isWatching('/repo')).toBe(false);
   });
 
   it('unsubscribe is idempotent (second call no-op)', () => {
-    const { Wrapper, summoner } = makeEnv();
-    const emitSpy = vi.spyOn(summoner.socket, 'emit');
+    const { Wrapper, watch } = makeEnv();
 
     const { result } = renderHook(() => useFsActions(), { wrapper: Wrapper });
     const off = result.current.subscribeFsDirty('/repo', vi.fn());
     off();
-    off(); // must not double-emit fs:unwatch
+    off();
 
-    expect(emitsOf(emitSpy, EVENTS.fs.unwatch).length).toBe(1);
+    expect(watch.isWatching('/repo')).toBe(false);
   });
 
   it('files:dirty for a watched cwd fires the callback with paths', async () => {
