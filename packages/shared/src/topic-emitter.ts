@@ -20,6 +20,11 @@ interface Entry<Payload> {
 
 export class TopicEmitter<Topic, Payload> {
   private readonly subs = new Map<Topic, Map<string, Entry<Payload>>>();
+  private readonly logger: { error(...args: unknown[]): void };
+
+  constructor(logger?: { error(...args: unknown[]): void }) {
+    this.logger = logger ?? console;
+  }
 
   subscribe(topic: Topic, subscriberId: string, cb: (p: Payload) => void): () => void {
     let perTopic = this.subs.get(topic);
@@ -60,7 +65,7 @@ export class TopicEmitter<Topic, Payload> {
       try {
         entry.cb(payload);
       } catch (err) {
-        console.error('[TopicEmitter] subscriber threw:', err);
+        this.logger.error('[TopicEmitter] subscriber threw:', err);
       }
     }
   }

@@ -34,7 +34,6 @@ interface Route {
 interface SocketMeta {
   nextSeq: number;
   listeners: Map<string, Set<(...args: unknown[]) => void>>;
-  lastSeen: number;
 }
 
 export class WsTransport {
@@ -154,7 +153,6 @@ export class WsTransport {
     const meta: SocketMeta = {
       nextSeq: 0,
       listeners: new Map(),
-      lastSeen: Date.now(),
     };
     this.meta.set(rpcSocket, meta);
 
@@ -200,14 +198,9 @@ export class WsTransport {
   }
 
   private setupSocketListeners(rpcSocket: RpcSocket, meta: SocketMeta): void {
-    const touch = () => {
-      meta.lastSeen = Date.now();
-    };
     rpcSocket.onMessage((raw) => {
-      touch();
       this.handleMessage(rpcSocket, raw, meta);
     });
-    rpcSocket.onPong(touch);
     rpcSocket.onClose(() => {
       this.fireLocalEvent(meta, 'disconnect');
       this.meta.delete(rpcSocket);
