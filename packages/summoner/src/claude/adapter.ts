@@ -27,8 +27,8 @@ const serverNamePayload = (p: Record<string, unknown>) => {
 };
 
 const oauthCallbackPayload = (p: Record<string, unknown>) => {
-  const { serverName, callbackUrl, ...rest } = p;
-  return { server_name: serverName, callback_url: callbackUrl, ...rest };
+  const { callbackUrl, ...rest } = p;
+  return { ...serverNamePayload(rest), callback_url: callbackUrl };
 };
 
 const wrapInData = (r: Record<string, unknown>) => ({ data: r });

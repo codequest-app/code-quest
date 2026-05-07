@@ -33,24 +33,21 @@ export function transformResult(raw: ResultMessage): ClientMessage | ClientMessa
   const isAborted = raw.terminal_reason === 'aborted_streaming';
 
   if (raw.is_error && Array.isArray(raw.errors) && raw.errors.length > 0) {
-    const toErrorMessage = (message: string): ClientMessage => ({
-      name: 'error:message',
-      payload: { message, kind: classifyErrorKind(message, isAborted) },
-    });
-    return [resultMessage, ...raw.errors.map(toErrorMessage)];
+    return [resultMessage, ...raw.errors.map((msg) => toErrorMessage(msg, isAborted))];
   }
 
   if (raw.is_error && raw.result) {
-    return [
-      resultMessage,
-      {
-        name: 'error:message',
-        payload: { message: raw.result, kind: classifyErrorKind(raw.result, isAborted) },
-      },
-    ];
+    return [resultMessage, toErrorMessage(raw.result, isAborted)];
   }
 
   return resultMessage;
+}
+
+function toErrorMessage(message: string, isAborted: boolean): ClientMessage {
+  return {
+    name: 'error:message',
+    payload: { message, kind: classifyErrorKind(message, isAborted) },
+  };
 }
 
 function classifyErrorKind(message: string, isAborted: boolean): string | undefined {

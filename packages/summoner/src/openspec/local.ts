@@ -139,7 +139,7 @@ export class LocalOpenspecService implements OpenspecService {
     lineIndex: number,
   ): Promise<OpenspecToggleTaskResult> {
     if (!isSlug(name)) return { error: 'invalid-name' };
-    const path = `${cwd}/openspec/changes/${name}/tasks.md`;
+    const path = `${cwd}/openspec/${OPENSPEC_KIND_DIR['change']}/${name}/tasks.md`;
     const read = await this.fs.readFileAbsolute(path);
     if ('error' in read) return { error: read.error };
     const lines = read.content.split('\n');

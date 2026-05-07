@@ -161,9 +161,6 @@ export class GitWorktreeOps {
     if (opts?.force) args.push('--force');
     const result = await rawGit(createGit(repoRoot), args);
     if (result.exitCode !== 0) {
-      // `result.stdout` carries the combined error message (rawGit folds
-      // simple-git's stderr into it via `errMsg(err)`), so the dirty-signal
-      // regex sees both stdout and stderr text.
       const errorText = result.stdout.toLowerCase();
       if (/(modified|untracked|locked|not empty|contains modifications)/.test(errorText)) {
         return { error: 'dirty' };
