@@ -1,6 +1,6 @@
 #!/usr/bin/env node
 // Lint for hardcoded color literals inside inline style attributes of .tsx
-// files under packages/client/src. Flags #abc / #abcdef / rgb(...) / rgba(...)
+// files under apps/web/src. Flags #abc / #abcdef / rgb(...) / rgba(...)
 // appearing inside style={{ ... }} or style="..." blocks, multi-line aware.
 //
 // Exit 0 if no hits, 1 if any found.
@@ -9,7 +9,7 @@ import { globSync, readFileSync } from 'node:fs';
 import { resolve } from 'node:path';
 
 const ROOT = resolve(new URL('..', import.meta.url).pathname);
-const PATTERN = `${ROOT}/packages/client/src/**/*.tsx`;
+const PATTERN = `${ROOT}/apps/web/src/**/*.tsx`;
 
 // Match hex literals and rgb/rgba calls that start with a digit (literal RGB).
 // rgba(var(--color-accent-rgb), 0.2) is accepted because it starts with `v`.

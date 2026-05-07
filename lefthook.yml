@@ -11,23 +11,23 @@ pre-commit:
       glob: "packages/shared/**/*.ts"
       run: pnpm --filter @code-quest/shared exec tsc --noEmit
     typecheck-server:
-      glob: "packages/server/**/*.ts"
+      glob: "apps/server/**/*.ts"
       run: pnpm --filter @code-quest/server exec tsc --noEmit
-    typecheck-client:
-      glob: "packages/client/**/*.{ts,tsx}"
-      run: pnpm --filter @code-quest/client exec tsc --noEmit
+    typecheck-web:
+      glob: "apps/web/**/*.{ts,tsx}"
+      run: pnpm --filter @code-quest/web exec tsc --noEmit
     typecheck-summoner:
-      glob: "packages/summoner/**/*.ts"
+      glob: "apps/summoner/**/*.ts"
       run: pnpm --filter @code-quest/summoner exec tsc --noEmit
-    deprecated-client:
-      glob: "packages/client/**/*.{ts,tsx}"
-      run: node scripts/check-deprecated.mjs packages/client/tsconfig.json {staged_files}
+    deprecated-web:
+      glob: "apps/web/**/*.{ts,tsx}"
+      run: node scripts/check-deprecated.mjs apps/web/tsconfig.json {staged_files}
     deprecated-server:
-      glob: "packages/server/**/*.ts"
-      run: node scripts/check-deprecated.mjs packages/server/tsconfig.json {staged_files}
+      glob: "apps/server/**/*.ts"
+      run: node scripts/check-deprecated.mjs apps/server/tsconfig.json {staged_files}
     deprecated-summoner:
-      glob: "packages/summoner/**/*.ts"
-      run: node scripts/check-deprecated.mjs packages/summoner/tsconfig.json {staged_files}
+      glob: "apps/summoner/**/*.ts"
+      run: node scripts/check-deprecated.mjs apps/summoner/tsconfig.json {staged_files}
 
 pre-push:
   parallel: true
@@ -38,10 +38,10 @@ pre-push:
       run: pnpm --filter @code-quest/server exec vitest run
     test-summoner:
       run: pnpm --filter @code-quest/summoner exec vitest run
-    test-client:
-      run: pnpm --filter @code-quest/client exec vitest run
-    knip-client:
-      run: pnpm --filter @code-quest/client exec knip --no-progress
+    test-web:
+      run: pnpm --filter @code-quest/web exec vitest run
+    knip-web:
+      run: pnpm --filter @code-quest/web exec knip --no-progress
     knip-server:
       run: pnpm --filter @code-quest/server exec knip --no-progress
     knip-summoner:
