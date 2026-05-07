@@ -12,9 +12,8 @@ import {
   type RpcChannelSocket,
   resumable,
   type TransportHandle,
-  WsTransport,
-  wsAdapter,
 } from '@code-quest/shared';
+import { WsTransport, wsAdapter } from '@code-quest/shared/node';
 import { ChildProcessProvider } from '@code-quest/summoner';
 import cors from 'cors';
 import express, { type NextFunction, type Request, type Response } from 'express';

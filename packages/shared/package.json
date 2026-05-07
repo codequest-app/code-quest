@@ -5,7 +5,8 @@
   "type": "module",
   "description": "Code Quest shared types, schemas, and socket event interfaces",
   "exports": {
-    ".": "./src/index.ts"
+    ".": "./src/index.ts",
+    "./node": "./src/node.ts"
   },
   "scripts": {
     "test": "vitest run",

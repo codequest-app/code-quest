@@ -1,7 +1,7 @@
 import { createServer, type Server as HttpServer } from 'node:http';
 import type { AddressInfo } from 'node:net';
-import type { Middleware } from '@code-quest/shared';
-import { RpcChannel, WsTransport, wsAdapter } from '@code-quest/shared';
+import { RpcChannel } from '@code-quest/shared';
+import { type Middleware, WsTransport, wsAdapter } from '@code-quest/shared/node';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { type WebSocket, WebSocketServer } from 'ws';
 

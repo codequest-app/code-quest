@@ -1,14 +1,13 @@
 import { createServer, type Server as HttpServer } from 'node:http';
 import type { AddressInfo } from 'node:net';
 import type { Envelope, TypedSocket } from '@code-quest/shared';
+import { auth, NullAuthenticator } from '@code-quest/shared';
 import {
-  auth,
   type ConnectionContext,
   type Middleware,
-  NullAuthenticator,
   WsTransport,
   wsAdapter,
-} from '@code-quest/shared';
+} from '@code-quest/shared/node';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { WebSocket } from 'ws';
 

@@ -22,7 +22,6 @@ export type {
 } from './socket-events.ts';
 export { EVENTS } from './socket-events.ts';
 export { TopicEmitter } from './topic-emitter.ts';
-export { toRpcSocket, wsAdapter } from './transport/adapters/ws-adapter.ts';
 export {
   type AuthContext,
   type Authenticator,
@@ -59,13 +58,6 @@ export type {
   RpcSocket as WsRpcSocket,
   WsAdapter,
 } from './transport/ws-adapter.ts';
-export {
-  type ConnectionContext,
-  type ConnectionHandler,
-  type Middleware,
-  WsTransport,
-  type WsTransportLogger,
-} from './transport/ws-transport.ts';
 // Utils
 export { errMsg } from './utils/err-msg.ts';
 export { getOrSet } from './utils/get-or-set.ts';
