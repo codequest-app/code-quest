@@ -21,6 +21,7 @@ import { Container } from 'inversify';
 import { config } from './config.ts';
 import type { MysqlDatabase } from './db/mysql-client.ts';
 import { createDatabase, type DrizzleDatabase } from './db/sqlite-client.ts';
+import { logger } from './logger.ts';
 import { RemoteFilesystemService } from './remote/filesystem-service.ts';
 import { RemoteGitService } from './remote/git-service.ts';
 import { RemoteProcessProvider } from './remote/process-provider.ts';
@@ -141,6 +142,7 @@ export function createContainer(options: ContainerOptions): Container {
       if (!row?.cwd) {
         // L2 territory: legacy rows with null cwd exist until the DB
         // migration runs. This throw surfaces the bad state clearly.
+        logger.error({ channelId }, `Channel ${channelId} has no recorded cwd`);
         throw new Error(`Channel ${channelId} has no recorded cwd`);
       }
       return row.cwd;
@@ -285,6 +287,9 @@ function buildStores(
   }
 
   if (eventStores.length === 0) {
+    logger.error(
+      'At least one database backend must be configured. Provide sqliteDatabase and/or mysqlDatabase in StoreConfig.',
+    );
     throw new Error(
       'At least one database backend must be configured. ' +
         'Provide sqliteDatabase and/or mysqlDatabase in StoreConfig.',

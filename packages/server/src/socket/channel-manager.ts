@@ -186,11 +186,13 @@ export class ChannelManager {
     const cwd = resolve(rawCwd);
     const runner = this.runnerFactory.create(opts.launchOptions, { cwd });
     const channel = this.setupChannel(channelId, runner, cwd);
+    logger.info({ channelId }, 'Channel created');
 
     if (opts.worktree) channel.worktree = opts.worktree;
 
     opts.onBeforeSpawn?.(channel);
     runner.spawn();
+    logger.info({ channelId }, 'CLI process started');
 
     const initResultPromise = channel.sendRequest('session:initialize', opts.initOptions ?? {});
     const readyPromise = initResultPromise.then(() => {});
@@ -219,7 +221,9 @@ export class ChannelManager {
 
     const runner = this.runnerFactory.create({ resumeSessionId: sessionId }, { cwd });
     const channel = this.setupChannel(channelId, runner, cwd);
+    logger.info({ channelId }, 'Channel created');
     runner.spawn();
+    logger.info({ channelId }, 'CLI process started');
     await channel.sendRequest('session:initialize');
 
     return { channel };
@@ -233,10 +237,11 @@ export class ChannelManager {
       channel.kill();
     } catch (err) {
       // kill() may throw if process already exited — safe to ignore
-      logger.debug(err, 'kill() failed during channel removal');
+      logger.debug({ err, channelId }, 'kill() failed during channel removal');
     }
     channel.destroy();
     this.channels.delete(channelId);
+    logger.info({ channelId }, 'Channel destroyed');
     // Release any per-socket subs that were tied to this channel.
     for (const [socketId, perCh] of this.socketChannelSubs) {
       if (perCh.has(channelId)) {

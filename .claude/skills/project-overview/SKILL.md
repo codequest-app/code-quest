@@ -28,18 +28,21 @@ description: >
 │  - SessionContext / ChannelProvider      │
 │  - Storybook stories, Tailwind v4 tokens │
 └──────────────────┬───────────────────────┘
-                   │ socket.io
+                   │ WebSocket /ws
 ┌──────────────────▼───────────────────────┐
 │  Server (packages/server)                │  ← Node + Inversify
+│  - WsTransport + middleware pipeline     │
 │  - socket handlers, ChannelManager       │
 │  - SessionStore (Drizzle / SQLite)       │
 │  - 對齊 Claude Code extension protocol   │
 └──────────────────┬───────────────────────┘
-                   │ summoner abstraction
+                   │ WebSocket /summoner (RPC)
 ┌──────────────────▼───────────────────────┐
-│  Summoner (packages/summoner)            │  ← CLI adapter
-│  - ClaudeAdapter / GeminiAdapter         │
-│  - ProcessRunner + stream parser         │
+│  Summoner (packages/summoner)            │  ← 獨立 process，本地端執行
+│  - Agent: 接收 server RPC 指令           │
+│  - ChildProcessProvider (spawn CLI)      │
+│  - LocalFilesystemService / LocalGitService │
+│  - createConnectionLoop 自動重連          │
 └──────────────────┬───────────────────────┘
                    │ child_process
 ┌──────────────────▼───────────────────────┐
@@ -47,19 +50,35 @@ description: >
 └──────────────────────────────────────────┘
 ```
 
+### 部署模式
+
+Server 可部署在雲端或遠端主機，Summoner 在**本地端**獨立執行：
+```bash
+# 1. 啟動 server（遠端）
+pnpm --filter server start
+
+# 2. 本地跑 summoner，連回 server
+pnpm --filter @code-quest/summoner start --server <url> --token <token>
+
+# 3. 瀏覽器開 client
+```
+Summoner 負責所有本地操作（檔案讀寫、git、spawn CLI），server 只做路由和狀態管理。
+
 ### Packages
 
 | Package | 職責 |
 |---|---|
-| `client` | React UI，socket.io 連線，Storybook，Tailwind v4 |
-| `server` | Express + socket.io，DI container，session 持久化 |
-| `summoner` | CLI provider adapter（Claude / Gemini），協定解析 |
-| `shared` | 跨 package 的型別、zod schema、socket event 定義 |
+| `client` | React UI，WebSocket 連線，Storybook，Tailwind v4 |
+| `server` | Express + WsTransport，DI container，session 持久化 |
+| `summoner` | 獨立 agent process — ws client 連回 server，本地執行 CLI / fs / git |
+| `shared` | 跨 package 的型別、zod schema、transport 層（WsTransport, Envelope, Pipeline） |
 
 ### 關鍵設計原則（當前）
 
 - **Protocol alignment**：跟 Claude Code VS Code extension 的 stream JSON / control request / permission 流程對齊；以實際 CLI output 為真相來源（`docs/protocol/`）
 - **Multi-provider**：Claude / Gemini 透過 summoner adapter 抽象
+- **Transport 解耦**：WsTransport + Envelope protocol + middleware pipeline（auth / heartbeat / resumable），handler 透過 TypedSocket 抽象不依賴具體傳輸層
+- **分離式部署**：server 在雲端，summoner 在本地端，透過 WebSocket RPC 通訊
 - **Session lifecycle**：spawn → channel → resume；session 可跨 window 共享、可從 DB 還原
 
 ---

@@ -5,6 +5,7 @@ import {
   oauthCodePayloadSchema,
 } from '@code-quest/shared';
 import type { SocketCallback, TypedSocket } from '@code-quest/shared/node';
+import { logger } from '../../logger.ts';
 import type { HandlerContext } from '../../types.ts';
 import type { Channel } from '../channel.ts';
 import { BROADCAST_CHANNEL_ID } from '../channel-emitter.ts';
@@ -51,6 +52,7 @@ export function create({
       }
       callback?.(ok({ auth: authData }));
     } catch (e) {
+      logger.error({ err: e }, 'Login failed');
       callback?.(err(errMsg(e, 'Login failed')));
     }
   }
@@ -80,6 +82,7 @@ export function create({
       });
       callback?.(ok({}));
     } catch (e) {
+      logger.error({ err: e }, 'OAuth failed');
       callback?.(err(errMsg(e, 'OAuth failed')));
     }
   }

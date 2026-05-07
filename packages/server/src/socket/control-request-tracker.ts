@@ -1,5 +1,6 @@
 import type { ControlResponse } from '@code-quest/shared';
 import type { ResolvedControlResponse } from '@code-quest/summoner';
+import { logger } from '../logger.ts';
 import type { RequestMeta } from './schemas.ts';
 
 /** Default timeout for control requests (ms). */
@@ -59,6 +60,7 @@ export class ControlRequestTracker {
     return new Promise<ControlResponse>((resolve, reject) => {
       const timer = setTimeout(() => {
         this.pending.delete(requestId);
+        logger.warn({ requestId }, 'Control request timed out');
         reject(new Error(`Control request '${subtype}' timed out`));
       }, this.timeoutMs);
 
@@ -81,6 +83,10 @@ export class ControlRequestTracker {
 
   /** Reject all outstanding outbound requests. Used on process exit / destroy. */
   rejectAllPending(reason: string): void {
+    logger.warn(
+      { count: this.pending.size },
+      'Rejecting all pending control requests on disconnect',
+    );
     for (const [id, p] of this.pending) {
       clearTimeout(p.timer);
       p.reject(new Error(reason));

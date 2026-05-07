@@ -1,4 +1,5 @@
 import { parseFsRoots } from '@code-quest/shared';
+import { type LogConfig, parseLogConfig } from '@code-quest/shared/node';
 
 type Env = Record<string, string | undefined>;
 
@@ -6,6 +7,7 @@ export interface RemoteConfig {
   readonly server: string | undefined;
   readonly token: string | undefined;
   readonly fsRoots: string[];
+  readonly log: LogConfig;
 }
 
 interface LoadOptions {
@@ -35,5 +37,6 @@ export function loadConfig(options: LoadOptions = {}): RemoteConfig {
     server: parseString(cli.server ?? env.REMOTE_SERVER),
     token: parseString(cli.token ?? env.REMOTE_TOKEN),
     fsRoots: parseFsRoots(env.EXPLORER_ROOTS),
+    log: parseLogConfig(env),
   };
 }

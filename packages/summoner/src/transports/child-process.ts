@@ -1,5 +1,6 @@
 import { type SpawnOptions, spawn } from 'node:child_process';
 import { createInterface } from 'node:readline';
+import { logger } from '../logger.ts';
 import type { ProcessHandle, ProcessProvider, ProcessRunResult } from '../types.ts';
 
 export class ChildProcessProvider implements ProcessProvider {
@@ -19,7 +20,7 @@ export class ChildProcessProvider implements ProcessProvider {
     proc.on('error', (err) => {
       // Log so operators can distinguish 'CLI not installed' (ENOENT) from
       // a normal exit with no output — both look identical downstream.
-      console.error('[ChildProcessProvider] spawn error:', command, err);
+      logger.error({ err, command }, '[ChildProcessProvider] spawn error');
       if (!controller.signal.aborted) controller.abort();
     });
 

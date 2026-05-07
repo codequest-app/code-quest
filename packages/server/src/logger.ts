@@ -1,9 +1,7 @@
 import pino from 'pino';
+import { config } from './config.ts';
 
 export const logger: pino.Logger = pino({
-  level: process.env.LOG_LEVEL ?? 'info',
-  transport:
-    process.env.NODE_ENV !== 'production'
-      ? { target: 'pino/file', options: { destination: 1 } }
-      : undefined,
+  level: config.log.level,
+  transport: config.log.pretty ? { target: 'pino-pretty' } : undefined,
 });

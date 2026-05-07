@@ -45,6 +45,10 @@ export class SocketIoTransport implements Transport {
     });
 
     io.on('connection', (socket) => {
+      logger.info({ socketId: socket.id }, 'Socket connected');
+      socket.on('disconnect', () => {
+        logger.info({ socketId: socket.id }, 'Socket disconnected');
+      });
       const typed = socket as unknown as TypedSocket;
       for (const cb of this.listeners) {
         try {

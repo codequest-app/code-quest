@@ -1,5 +1,6 @@
 import { relative } from 'node:path';
 import chokidar, { type FSWatcher } from 'chokidar';
+import { logger } from '../logger.ts';
 import { errorCode } from '../utils.ts';
 import type { Unsubscribe, WatchCallback, WatchEvent, WatchService } from './types.ts';
 
@@ -63,7 +64,7 @@ export class LocalWatchService implements WatchService {
         try {
           sub(event);
         } catch (err) {
-          console.error('[LocalWatchService] subscriber threw:', err);
+          logger.error({ err }, '[LocalWatchService] subscriber threw');
         }
       }
     });
@@ -71,13 +72,13 @@ export class LocalWatchService implements WatchService {
       const code = errorCode(err);
       if (code === 'ENOSPC' && !inotifyWarned) {
         inotifyWarned = true;
-        console.error(
+        logger.warn(
           '[LocalWatchService] inotify watch limit reached. ' +
             'Increase with: sudo sysctl -n fs.inotify.max_user_watches=524288',
         );
         return;
       }
-      console.error('[LocalWatchService] watcher error:', err);
+      logger.error({ err }, '[LocalWatchService] watcher error');
     });
     return entry;
   }

@@ -10,8 +10,10 @@ export class ReconnectableRpc implements RemoteRpcWithEvents {
 
   replace(rpc: RemoteRpcWithEvents): void {
     this.current = rpc;
+    logger.info('Remote daemon connected');
     rpc.on('disconnect', () => {
       if (this.current === rpc) {
+        logger.info('Remote daemon disconnected');
         this.current = null;
       }
     });

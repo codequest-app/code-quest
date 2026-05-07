@@ -1,5 +1,6 @@
 import { errMsg } from '@code-quest/shared/node';
 import { GitResponseError, type SimpleGit, simpleGit } from 'simple-git';
+import { logger } from '../logger.ts';
 
 export function createGit(cwd?: string): SimpleGit {
   return simpleGit({ baseDir: cwd ?? process.cwd(), trimmed: true });
@@ -13,7 +14,7 @@ export async function rawGit(
     const stdout = await git.raw(args);
     return { stdout, exitCode: 0 };
   } catch (err) {
-    console.debug('[GitService] git raw failed:', args.join(' '), errMsg(err));
+    logger.debug({ err, args: args.join(' ') }, '[GitService] git raw failed');
     // simple-git puts the parsed git output on `.git` (often empty) — fall back
     // to the actual error message so downstream callers can surface a real
     // diagnostic instead of an empty 'failed (exit 1)' string.

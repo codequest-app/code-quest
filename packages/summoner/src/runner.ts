@@ -1,4 +1,5 @@
 import { EventEmitter } from 'node:events';
+import { logger } from './logger.ts';
 import type {
   ClientMessage,
   ParseResult,
@@ -29,7 +30,7 @@ function toProtocolMessage<E>(result: ParseResult<E>): E | null {
       try {
         data = JSON.parse(result.raw);
       } catch (err) {
-        console.debug('Failed to parse JSON', err);
+        logger.debug({ err }, 'Failed to parse JSON');
         data = { raw: result.raw };
       }
       return { type: 'raw_event', rawType: 'parse_error', data } as E;
@@ -83,7 +84,7 @@ export class ProcessRunner<E = unknown, L = unknown> extends EventEmitter {
           this._processLine(line);
         }
       } catch (error) {
-        console.debug('Async iteration ended with error', error);
+        logger.debug({ err: error }, 'Async iteration ended with error');
       }
       this.handle = null;
       this.emit('exit', null);

@@ -59,7 +59,8 @@ describe('ChildProcessProvider', () => {
     const provider = new ChildProcessProvider();
     // Without the 'error' listener, this throws an unhandled 'error' event
     // and crashes the Node process. With the listener it must abort cleanly.
-    const errSpy = vi.spyOn(console, 'error').mockImplementation(() => {});
+    const { logger } = await import('../../logger.ts');
+    const errSpy = vi.spyOn(logger, 'error').mockImplementation(() => {});
     const handle = provider.spawn('this-binary-does-not-exist-xyz', []);
 
     const lines: string[] = [];

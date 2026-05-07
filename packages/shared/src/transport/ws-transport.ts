@@ -1,6 +1,7 @@
 import { randomUUID } from 'node:crypto';
 import type { Server as HttpServer, IncomingMessage } from 'node:http';
 import type { Duplex } from 'node:stream';
+import { type Logger, NOOP_LOGGER } from '../logger.ts';
 import { type Envelope, PONG_JSON, parseEnvelope } from './envelope.ts';
 import { Pipeline } from './pipeline.ts';
 import { RESUME_EVENT, RpcChannel } from './rpc-channel.ts';
@@ -36,20 +37,14 @@ interface SocketMeta {
   lastSeen: number;
 }
 
-export interface WsTransportLogger {
-  warn(...args: unknown[]): void;
-}
-
-const NOOP_LOGGER: WsTransportLogger = { warn() {} };
-
 export class WsTransport {
   private readonly adapter: WsAdapter;
-  private readonly logger: WsTransportLogger;
+  private readonly logger: Logger;
   private readonly routes: Route[] = [];
   private readonly connectionListeners = new Set<(socket: TypedSocket) => void>();
   private readonly meta = new WeakMap<RpcSocket, SocketMeta>();
 
-  constructor(adapter: WsAdapter, logger?: WsTransportLogger) {
+  constructor(adapter: WsAdapter, logger?: Logger) {
     this.adapter = adapter;
     this.logger = logger ?? NOOP_LOGGER;
   }

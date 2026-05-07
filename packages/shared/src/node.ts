@@ -1,5 +1,13 @@
-// Node-only transport exports — NOT safe for browser/client bundles.
+// Node-only exports — NOT safe for browser/client bundles.
 // Client code should import from '@code-quest/shared' (barrel) instead.
+
+export {
+  type LogConfig,
+  type Logger,
+  type LogLevel,
+  NOOP_LOGGER,
+  parseLogConfig,
+} from './logger.ts';
 
 export { toRpcSocket, wsAdapter } from './transport/adapters/ws-adapter.ts';
 export {
@@ -42,6 +50,5 @@ export {
   type ConnectionHandler,
   type Middleware,
   WsTransport,
-  type WsTransportLogger,
 } from './transport/ws-transport.ts';
 export { errMsg } from './utils/err-msg.ts';

@@ -12,6 +12,7 @@ import {
 } from '@code-quest/shared';
 import type { SocketCallback, TypedSocket } from '@code-quest/shared/node';
 import type { z } from 'zod';
+import { logger } from '../../logger.ts';
 import type { HandlerContext } from '../../types.ts';
 import type { Channel } from '../channel.ts';
 import { withChannel, withError } from '../channel-emitter.ts';
@@ -43,6 +44,7 @@ function createRequestHandler<T extends z.ZodObject<z.ZodRawShape>>(opts: Reques
   ): Promise<void> {
     try {
       const parsed = schema.parse(payload);
+      logger.debug({ event }, 'MCP request');
       const requestPayload = mapParsed ? mapParsed(parsed) : parsed;
       const result = await ch.sendRequest(event, requestPayload);
       if (!mapSuccess) {
@@ -55,6 +57,7 @@ function createRequestHandler<T extends z.ZodObject<z.ZodRawShape>>(opts: Reques
           : err(result.error ?? failureMessage ?? errorMessage),
       );
     } catch (e) {
+      logger.error({ err: e }, 'MCP request failed');
       callback?.(wrapThrown(e));
     }
   };

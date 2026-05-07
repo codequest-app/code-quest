@@ -78,6 +78,7 @@ export function create({
         cwd: parentRow.cwd,
         projectRoot,
       });
+      logger.info({ channelId: forkedFromChannelId, newChannelId }, 'Session forked');
       callback?.(ok({ channelId: newChannelId, parentChannelId: forkedFromChannelId }));
     } catch (e) {
       callback?.(err(errMsg(e, 'Failed to fork session')));

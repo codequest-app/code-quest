@@ -310,6 +310,7 @@ export class Channel {
     };
 
     const onExit = (code: number | null) => {
+      logger.info({ channelId: this.channelId, exitCode: code }, 'CLI process exited');
       this.exited = true;
       this.controlRequests.rejectAllPending(this.lastError ?? `Process exited with code ${code}`);
 

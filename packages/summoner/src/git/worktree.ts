@@ -4,6 +4,7 @@ import {
   validateWorktreeName as validateWorktreeNameShared,
   type WorktreeInfo,
 } from '@code-quest/shared';
+import { logger } from '../logger.ts';
 import type { GitCommands } from './commands.ts';
 import { NotARepoError } from './errors.ts';
 import { createGit, rawGit } from './git-runner.ts';
@@ -120,6 +121,7 @@ export class GitWorktreeOps {
         throw new Error(result.stdout.trim() || 'git worktree add failed');
       }
     }
+    logger.info({ name: worktreeName, cwd: worktreePath }, 'Worktree created');
     return { name: worktreeName, path: worktreePath, branch };
   }
 
@@ -140,6 +142,7 @@ export class GitWorktreeOps {
 
     await rawGit(git, ['worktree', 'remove', worktreePath]);
     await rawGit(git, ['branch', '-D', branchName]);
+    logger.info({ name, repoRoot }, 'Worktree deleted');
   }
 
   async renameWorktree(worktreeCwd: string, newBranchName: string): Promise<{ branch: string }> {

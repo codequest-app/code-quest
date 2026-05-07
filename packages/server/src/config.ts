@@ -1,5 +1,6 @@
 import 'dotenv/config';
 import { parseFsRoots, type ThinkingDisplay } from '@code-quest/shared';
+import { type LogConfig, parseLogConfig } from '@code-quest/shared/node';
 
 type Env = Record<string, string | undefined>;
 
@@ -58,6 +59,7 @@ interface AppConfig {
   readonly autoMode: boolean;
   readonly transport: { readonly ws: boolean; readonly socketio: boolean };
   readonly historyBatchSize: number;
+  readonly log: LogConfig;
   readonly remoteMode: 'local' | 'remote';
   readonly remoteToken: string | undefined;
 }
@@ -79,6 +81,7 @@ export function loadConfig(env: Env = process.env): AppConfig {
     fsRoots: parseFsRoots(env.EXPLORER_ROOTS),
     autoMode: parseBool(env.CLI_AUTO_MODE, true),
     transport: parseTransport(env.TRANSPORT),
+    log: parseLogConfig(env),
     historyBatchSize: parseNumber(env.SESSION_HISTORY_BATCH_SIZE, 5000),
     remoteMode: env.REMOTE_MODE === 'remote' ? 'remote' : 'local',
     remoteToken: env.REMOTE_TOKEN || undefined,

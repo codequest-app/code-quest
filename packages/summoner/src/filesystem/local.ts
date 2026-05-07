@@ -5,6 +5,7 @@ import { errMsg } from '@code-quest/shared/node';
 import Fuse from 'fuse.js';
 import { glob } from 'glob';
 import type { Unsubscribe, WatchService } from '../fs-watch/types.ts';
+import { logger } from '../logger.ts';
 import { mimeForPath } from './mime-types.ts';
 import type {
   DirectoryEntry,
@@ -110,7 +111,7 @@ export class LocalFilesystemService implements FilesystemService {
       files.sort((a, b) => a.name.localeCompare(b.name));
       return { directories, files };
     } catch (err) {
-      console.debug('[LocalFilesystemService] readBrowseEntries failed:', errMsg(err));
+      logger.debug({ err }, '[LocalFilesystemService] readBrowseEntries failed');
       return { directories: [], files: [] };
     }
   }
@@ -168,7 +169,7 @@ export class LocalFilesystemService implements FilesystemService {
       const content = await readFile(validated, 'utf-8');
       return { content, contentType, encoding };
     } catch (err) {
-      console.debug('[LocalFilesystemService] readFileAbsolute failed:', errMsg(err));
+      logger.debug({ err }, '[LocalFilesystemService] readFileAbsolute failed');
       return { error: `File not found: ${absolutePath}` };
     }
   }
@@ -263,7 +264,7 @@ export class LocalFilesystemService implements FilesystemService {
       const content = await readFile(absolute, 'utf-8');
       return { content };
     } catch (err) {
-      console.debug('[LocalFilesystemService] readFile failed:', errMsg(err));
+      logger.debug({ err }, '[LocalFilesystemService] readFile failed');
       return { error: `File not found: ${filePath}` };
     }
   }

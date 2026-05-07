@@ -1,16 +1,43 @@
 ---
-description: Summoner package structure and conventions. Use when adding new providers, transports, or modifying the CLI adapter pipeline.
+description: >
+  Summoner package structure and conventions. Summoner is an independent agent
+  process that runs locally, connects back to the server via WebSocket RPC, and
+  executes local operations (fs, git, spawn CLI). Use when adding providers,
+  transports, connection logic, or modifying the CLI adapter pipeline.
 ---
 
 # Summoner Package Structure
 
+Summoner is a **standalone process** (not a library imported by server). It connects
+to the server's `/summoner` WebSocket endpoint via `createConnectionLoop` with
+bearer token auth, receives RPC calls from the server, and executes them locally.
+
+## Deployment
+
+```bash
+# Summoner runs on the local machine, server can be remote
+pnpm --filter @code-quest/summoner start --server <url> --token <token>
+# Or via env vars: REMOTE_SERVER=<url> REMOTE_TOKEN=<token>
+```
+
+## Directory Structure
+
 ```
 packages/summoner/src/
-├── index.ts                     # barrel export (public API)
+├── main.ts                      # entry point — creates WsTransport, connection loop, Agent
+├── config.ts                    # CLI args + env var parsing (server, token, fsRoots)
+├── index.ts                     # barrel export (public API for server-side imports)
 ├── types.ts                     # generic types: ProviderAdapter<E,L>, AdapterOutput, ServerAction, ParseResult, ProcessHandle, ProcessProvider
 ├── runner.ts                    # ProcessRunner — generic process orchestrator
+├── connection/
+│   └── agent.ts                 # Agent — registers RPC handlers for fs/git/process on RpcChannel
 ├── transports/
 │   └── child-process.ts         # ChildProcessProvider (Node.js spawn)
+├── filesystem/
+│   ├── local.ts                 # LocalFilesystemService — implements FilesystemService
+│   └── local-root-guard.ts      # path validation against allowed fsRoots
+├── git/
+│   └── local.ts                 # LocalGitService — implements GitService
 ├── claude/
 │   ├── index.ts                 # barrel: ClaudeAdapter, ClaudeProtocol, LaunchOptions
 │   ├── adapter.ts               # ClaudeAdapter implements ProviderAdapter<ProtocolEvent, LaunchOptions>
@@ -30,6 +57,29 @@ packages/summoner/src/
     ├── fake-socket.ts           # Dual-emitter fake socket
     └── index.ts                 # test barrel
 ```
+
+## Connection Architecture
+
+```
+main.ts
+├── WsTransport(wsAdapter())              ← shared transport layer
+├── createConnectionLoop(transport, url, {
+│     middleware: [bearerToken(token)],    ← auth via bearer token
+│     createAgent: (rpc) => new Agent(rpc, processProvider, fs, git),
+│     onConnect / onDisconnect / onReconnecting
+│   })
+└── Agent(rpc: RpcChannel, ...)
+    ├── rpc.on('process:spawn', ...)      ← server calls summoner to spawn CLI
+    ├── rpc.on('process:stdin', ...)
+    ├── rpc.on('process:kill', ...)
+    ├── rpc.on('fs:browse', ...)          ← server calls summoner for local fs ops
+    ├── rpc.on('fs:read', ...)
+    ├── rpc.on('git:root', ...)           ← server calls summoner for local git ops
+    └── ... (all RPC handlers with Zod schema validation)
+```
+
+The server initiates RPC requests; summoner responds. Process stdout/stderr events
+flow back via `rpc.emit()` (event envelopes with seq tracking).
 
 ## Adding a New Provider (e.g., Gemini)
 
@@ -57,4 +107,5 @@ No changes needed to `runner.ts` or provider code.
 - Each transform file exports a single function: `transformXxxEvent(event: Record<string, unknown>): SocketEvent | ...`
 - Provider adapter dispatches to transforms based on `event.type`
 - `ProviderAdapter<E, L>` is generic — `E` = protocol event type, `L` = launch options type
+- Agent RPC handlers validate payloads with Zod schemas from `@code-quest/shared`
 - Public API exposed only through `index.ts` barrel

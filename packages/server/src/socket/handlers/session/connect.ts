@@ -245,6 +245,7 @@ export function create({
 
       // persist is deferred to onSessionInit (session:init may arrive after control_response)
 
+      logger.info({ channelId }, 'Session created');
       await finalizeAndNotify(channel, parsed, initResult, socket, callback);
     } catch (e) {
       logger.error({ err: e }, 'Failed to create session');
@@ -298,6 +299,7 @@ export function create({
         channelManager.addSocketToChannel(channel, socket);
       }
 
+      logger.info({ channelId }, 'Session joined');
       const state = channel.isProcessing ? 'busy' : 'idle';
       callback?.(ok({ channelId, state, meta: channel.metaCache, cwd: channel.cwd }));
     } catch (e) {
@@ -349,6 +351,7 @@ export function create({
     }
     channelManager.broadcastSessionState(ch.channelId, 'exited');
     ch.resetSessionConfig();
+    logger.info({ channelId: ch.channelId }, 'Session closed');
     emitter.emit(ch.channelId, EVENTS.session.closed, {
       channelId: ch.channelId,
       ...(ch.lastError ? { error: ch.lastError } : {}),

@@ -5,6 +5,7 @@ import { Agent } from './connection/agent.ts';
 import { LocalFilesystemService } from './filesystem/local.ts';
 import { LocalRootGuard } from './filesystem/local-root-guard.ts';
 import { LocalGitService } from './git/local.ts';
+import { logger } from './logger.ts';
 import { ChildProcessProvider } from './transports/child-process.ts';
 
 const config = loadConfig({
@@ -13,7 +14,7 @@ const config = loadConfig({
 });
 
 if (!config.server || !config.token) {
-  console.error(
+  logger.error(
     '[summoner] Server URL and token required. Use --server <url> --token <token> or set REMOTE_SERVER / REMOTE_TOKEN env vars.',
   );
   process.exit(1);
@@ -29,7 +30,7 @@ const transport = new WsTransport(wsAdapter());
 createConnectionLoop(transport, config.server, {
   middleware: [bearerToken(config.token)],
   createAgent: (rpc) => new Agent(rpc, processProvider, filesystem, git),
-  onConnect: () => console.log(`[summoner] connected to ${config.server}`),
-  onDisconnect: () => console.warn('[summoner] disconnected, will reconnect...'),
-  onReconnecting: () => console.log('[summoner] reconnecting...'),
+  onConnect: () => logger.info(`[summoner] connected to ${config.server}`),
+  onDisconnect: () => logger.warn('[summoner] disconnected, will reconnect...'),
+  onReconnecting: () => logger.info('[summoner] reconnecting...'),
 });

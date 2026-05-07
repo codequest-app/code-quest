@@ -3,6 +3,7 @@ import { mkdtemp, open, readFile, rm } from 'node:fs/promises';
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
 import { errMsg } from '@code-quest/shared/node';
+import { logger } from '../logger.ts';
 
 export interface PluginCliRunResult {
   stdout: string;
@@ -67,7 +68,10 @@ export class LocalPluginCliService implements PluginCliService {
       const stdout = await readFile(outPath, 'utf-8');
       return { stdout, stderr: result.stderr, ok: result.ok };
     } catch (err) {
-      console.error('[LocalPluginCliService] run failed:', this.binary, fullArgs, errMsg(err));
+      logger.error(
+        { err, binary: this.binary, args: fullArgs },
+        '[LocalPluginCliService] run failed',
+      );
       return { stdout: '', stderr: errMsg(err), ok: false };
     } finally {
       if (outFh) await outFh.close().catch(() => {});

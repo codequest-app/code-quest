@@ -41,6 +41,7 @@ import {
   REMOTE_METHODS,
 } from '@code-quest/shared';
 import type { RpcChannel } from '@code-quest/shared/node';
+import { logger } from '../logger.ts';
 
 export class Agent {
   private readonly spawned = new Map<string, ProcessHandle>();
@@ -67,6 +68,7 @@ export class Agent {
         env: p.env,
       });
       this.spawned.set(p.sessionId, handle);
+      logger.info({ sessionId: p.sessionId }, 'Process spawned');
       void this.streamProcess(p.sessionId, handle);
       return { ok: true };
     });
@@ -81,6 +83,7 @@ export class Agent {
       const p = processKillParamsSchema.parse(params);
       this.spawned.get(p.sessionId)?.abort();
       this.spawned.delete(p.sessionId);
+      logger.info({ sessionId: p.sessionId }, 'Process killed');
       return { ok: true };
     });
   }
@@ -239,6 +242,7 @@ export class Agent {
       handle.abort();
     }
     this.spawned.clear();
+    logger.info('Agent disposed');
   }
 
   private async streamProcess(sessionId: string, handle: ProcessHandle): Promise<void> {
@@ -255,6 +259,7 @@ export class Agent {
     } finally {
       this.spawned.delete(sessionId);
       const code = typeof handle.signal.reason === 'number' ? handle.signal.reason : null;
+      logger.info({ sessionId }, 'Process exited');
       this.rpc.emit(REMOTE_METHODS.process.exit, { sessionId, code } satisfies ProcessExitParams);
     }
   }
