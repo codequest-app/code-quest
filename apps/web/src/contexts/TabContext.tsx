@@ -157,7 +157,6 @@ export function TabProvider({
     },
   }));
 
-  // Sync tabs from sessions prop (incremental diff)
   const prevSessionIds = useRef<Set<string>>(new Set());
   // biome-ignore lint/correctness/useExhaustiveDependencies: addTab/removeTab/replaceActiveTab only call setState — deps are intentionally limited to sessions to avoid re-running the diff on every render
   useEffect(() => {

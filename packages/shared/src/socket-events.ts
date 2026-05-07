@@ -330,7 +330,7 @@ export interface ClientToServerEvents {
     callback: (response: RpcResult<{ response: { type: 'ask_debugger_help_response' } }>) => void,
   ) => void;
 
-  // ── Filesystem (global, cwd-scoped — replaces explorer:* namespace) ──
+  // ── Filesystem (global, cwd-scoped — ) ──
   'fs:browse': (payload: FsBrowsePayload, callback: (response: FsBrowseResponse) => void) => void;
   'fs:read': (payload: FsReadPayload, callback: (response: FsReadResponse) => void) => void;
   'fs:search': (payload: FsSearchPayload, callback: (response: FsSearchResponse) => void) => void;
@@ -813,7 +813,7 @@ export const EVENTS = {
     removed: 'projects:removed',
   },
   fs: {
-    // RPC (cwd-scoped, replaces explorer:*)
+    // RPC (cwd-scoped, )
     browse: 'fs:browse',
     read: 'fs:read',
     search: 'fs:search',

@@ -123,7 +123,6 @@ function removeProjectImpl(
     }
     pre.socket.emit(EVENTS.projects.remove, { id: pre.target.id }, (res) => {
       logOnError('projects:remove', res);
-      // server returns { ok: true }; resolve with the removed project shape
       resolve('error' in res ? res : toUiProject(pre.target));
     });
   });
@@ -133,7 +132,6 @@ type ProjectMutationResult = Project | { error: string; activeSessionCount?: num
 
 function pickNextActive(remaining: ServerProject[]): string | null {
   if (remaining.length === 0) return null;
-  // pinned first, then by lastOpenedAt desc
   const sorted = [...remaining].sort((a, b) => {
     if (a.pinned !== b.pinned) return a.pinned ? -1 : 1;
     return a.lastOpenedAt < b.lastOpenedAt ? 1 : -1;
@@ -159,7 +157,6 @@ export function ProjectProvider({ children }: { children: ReactNode }): React.JS
     activeRef.current = activeProjectCwd;
   }, [activeProjectCwd]);
 
-  // Subscribe to server-pushed projects:* events + initial load.
   useEffect(() => {
     if (!socket) return;
 
@@ -219,8 +216,6 @@ export function ProjectProvider({ children }: { children: ReactNode }): React.JS
             resolve(res);
             return;
           }
-          // Success — state will also update via projects:added broadcast.
-          // Set active here directly for snappy UI.
           setActiveProjectCwd(res.path);
           resolve(toUiProject(res));
         });

@@ -70,7 +70,7 @@ export const channelMetaCacheSchema: z.ZodObject<
 });
 export type ChannelMetaCache = z.infer<typeof channelMetaCacheSchema>;
 
-// ── Error (moved from notification.ts) ──
+// ── Error ──
 
 export const errorMessagePayloadSchema: z.ZodObject<
   { channelId: z.ZodString; message: z.ZodString; kind: z.ZodOptional<z.ZodString> },
@@ -82,7 +82,7 @@ export const errorMessagePayloadSchema: z.ZodObject<
 });
 export type ErrorMessagePayload = z.infer<typeof errorMessagePayloadSchema>;
 
-// ── Speech (moved from notification.ts) ──
+// ── Speech ──
 
 export const speechToTextMessagePayloadSchema: z.ZodObject<
   { channelId: z.ZodString; text: z.ZodString; done: z.ZodBoolean },
@@ -93,6 +93,3 @@ export const speechToTextMessagePayloadSchema: z.ZodObject<
   done: z.boolean(),
 });
 export type SpeechToTextMessagePayload = z.infer<typeof speechToTextMessagePayloadSchema>;
-
-// sessionSummarySchema — moved to session.ts
-// sessionListResponseSchema — moved to session.ts

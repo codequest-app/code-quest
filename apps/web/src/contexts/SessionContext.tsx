@@ -159,14 +159,12 @@ export function SessionProvider({ children }: { children: ReactNode }): React.JS
     };
   }, [socket]);
 
-  // Receive initial sessions from AppInitContext (single app:init source).
   useEffect(() => {
     return subscribeInit((data) => {
       setSessions(data.sessions);
     });
   }, [subscribeInit]);
 
-  // session:* broadcasts — maintain the live session list.
   useEffect(() => {
     const apply = (handler: (raw: unknown) => SessionUpdater | null) => (raw: unknown) => {
       const updater = handler(raw);

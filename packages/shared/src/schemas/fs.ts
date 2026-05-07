@@ -7,7 +7,7 @@ export const fsEntryTypeSchema: z.ZodEnum<{ file: 'file'; directory: 'directory'
 ]);
 export type FsEntryType = z.infer<typeof fsEntryTypeSchema>;
 
-// ── Browse (was explorer:browse) ──
+// ── Browse ──
 
 export const fsDirectorySchema: z.ZodObject<
   { name: z.ZodString; path: z.ZodString },
@@ -51,7 +51,7 @@ export const fsBrowseResponseSchema: z.ZodUnion<
 ]);
 export type FsBrowseResponse = z.infer<typeof fsBrowseResponseSchema>;
 
-// ── Read (was explorer:read; replaces channel-scoped file:read) ──
+// ── Read ──
 
 export const fsReadPayloadSchema: z.ZodObject<{ path: z.ZodString }, z.core.$strip> = z.object({
   path: z.string(),
@@ -80,7 +80,7 @@ export const fsReadResponseSchema: z.ZodUnion<
 ]);
 export type FsReadResponse = z.infer<typeof fsReadResponseSchema>;
 
-// ── Search (was channel-scoped file:list — now cwd-scoped) ──
+// ── Search ──
 
 export const fsSearchPayloadSchema: z.ZodObject<
   { cwd: z.ZodString; pattern: z.ZodString },
@@ -162,7 +162,7 @@ export const fsMovePayloadSchema: z.ZodObject<
 > = z.object({ from: z.string(), to: z.string() });
 export type FsMovePayload = z.infer<typeof fsMovePayloadSchema>;
 
-// ── Watch / unwatch (was explorer:watch / unwatch) ──
+// ── Watch / unwatch ──
 
 export const fsWatchPayloadSchema: z.ZodObject<{ cwd: z.ZodString }, z.core.$strip> = z.object({
   cwd: z.string(),

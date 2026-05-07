@@ -32,8 +32,6 @@ export function ChannelMetaProvider({
   cwd?: string;
   children: ReactNode;
 }): React.JSX.Element {
-  // Memoize so context consumers don't re-render on every parent render —
-  // only when channelId or cwd actually changes.
   const value = useMemo<ChannelMeta>(() => ({ channelId, cwd }), [channelId, cwd]);
   return <ChannelMetaContext.Provider value={value}>{children}</ChannelMetaContext.Provider>;
 }

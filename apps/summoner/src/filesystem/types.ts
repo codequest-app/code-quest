@@ -1,4 +1,3 @@
-// Re-export from shared — canonical definitions live in @code-quest/shared
 export type {
   DirectoryEntry,
   FileKind,

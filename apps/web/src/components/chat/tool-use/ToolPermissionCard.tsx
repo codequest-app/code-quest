@@ -33,7 +33,6 @@ export function ToolPermissionCard({
   const hasInput = Object.keys(input).length > 0;
   const isQuestion = toolName === 'AskUserQuestion' && isAskUserQuestion(input);
 
-  // Track question answers
   const [questionAnswers, setQuestionAnswers] = useState<Record<string, string>>({});
   const [allQuestionsAnswered, setAllQuestionsAnswered] = useState(false);
 

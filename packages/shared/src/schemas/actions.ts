@@ -1,6 +1,6 @@
 import { z } from 'zod';
 
-// ── Actions (moved from notification.ts) ──
+// ── Actions ──
 
 export const actionOpenUrlPayloadSchema: z.ZodObject<
   { channelId: z.ZodString; url: z.ZodString },

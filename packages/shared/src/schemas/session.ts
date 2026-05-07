@@ -5,7 +5,7 @@ import { effortLevelSchema } from './settings.ts';
 
 const SESSION_LIST_LIMIT = 100;
 
-// ── Session summary (moved from common.ts) ──
+// ── Session summary ──
 
 export const sessionSummarySchema: z.ZodObject<
   {
@@ -641,7 +641,7 @@ export const cancelRequestEventPayloadSchema: z.ZodObject<
 });
 export type CancelRequestEventPayload = z.infer<typeof cancelRequestEventPayloadSchema>;
 
-// ── Session title (moved from control.ts) ──
+// ── Session title ──
 
 export const sessionGenerateTitlePayloadSchema: z.ZodObject<
   { channelId: z.ZodString; description: z.ZodString; persist: z.ZodBoolean },
@@ -663,7 +663,7 @@ export const generateSessionTitleResponseSchema: z.ZodObject<
 });
 export type GenerateSessionTitleResponse = z.infer<typeof generateSessionTitleResponseSchema>;
 
-// ── Rewind (moved from message-payloads.ts) ──
+// ── Rewind ──
 
 export const fileDiffSchema: z.ZodObject<
   { oldContent: z.ZodNullable<z.ZodString>; newContent: z.ZodNullable<z.ZodString> },

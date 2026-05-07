@@ -93,11 +93,6 @@ export const notificationAuthStatusPayloadSchema: z.ZodObject<
 });
 export type NotificationAuthStatusPayload = z.infer<typeof notificationAuthStatusPayloadSchema>;
 
-// actionOpenUrlPayloadSchema, actionOpenFilePayloadSchema — moved to actions.ts
-// errorMessagePayloadSchema — moved to common.ts
-// stateUsagePayloadSchema, contextCategorySchema, contextUsageDataSchema — moved to settings.ts
-// speechToTextMessagePayloadSchema — moved to common.ts
-
 // ── Raw ──
 
 export const rawEventPayloadSchema: z.ZodObject<

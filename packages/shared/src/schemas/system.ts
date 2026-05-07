@@ -307,7 +307,7 @@ export const systemMirrorErrorPayloadSchema: z.ZodObject<
 });
 export type SystemMirrorErrorPayload = z.infer<typeof systemMirrorErrorPayloadSchema>;
 
-// ── Hook C2S (moved from control.ts) ──
+// ── Hook C2S ──
 
 export const chatHookCallbackRespondPayloadSchema: z.ZodObject<
   {
@@ -323,7 +323,7 @@ export const chatHookCallbackRespondPayloadSchema: z.ZodObject<
 });
 export type ChatHookCallbackRespondPayload = z.infer<typeof chatHookCallbackRespondPayloadSchema>;
 
-// ── Hook S2C (moved from control.ts) ──
+// ── Hook S2C ──
 
 export const controlHookCallbackPayloadSchema: z.ZodObject<
   {

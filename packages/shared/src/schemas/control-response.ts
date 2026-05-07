@@ -54,7 +54,7 @@ export const controlGenerateTitleResponseSchema: z.ZodObject<
 
 export type ControlGenerateTitleResponse = z.infer<typeof controlGenerateTitleResponseSchema>;
 
-/** get_claude_state response (moved from control.ts) */
+/** get_claude_state response */
 export const getClaudeStateResponseSchema: z.ZodObject<
   {
     success: z.ZodBoolean;

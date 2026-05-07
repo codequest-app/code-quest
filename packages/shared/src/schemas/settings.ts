@@ -344,7 +344,7 @@ export const settingsUpdatedPayloadSchema: z.ZodObject<
 });
 export type SettingsUpdatedPayload = z.infer<typeof settingsUpdatedPayloadSchema>;
 
-// ── State usage (moved from notification.ts) ──
+// ── State usage ──
 
 export const stateUsagePayloadSchema: z.ZodObject<
   {
@@ -424,7 +424,7 @@ export const contextUsageDataSchema: z.ZodObject<
 });
 export type ContextUsageData = z.infer<typeof contextUsageDataSchema>;
 
-// ── Settings C2S (moved from control.ts) ──
+// ── Settings C2S ──
 
 export const settingsSetProactivePayloadSchema: z.ZodObject<
   { channelId: z.ZodString; enabled: z.ZodBoolean },

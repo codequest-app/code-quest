@@ -36,7 +36,6 @@ export function createFakeSocket(): FakeSocket {
   const clientEmitter = new EventEmitter();
   const serverEmitter = new EventEmitter();
 
-  // Track last handler Promise for send() to await
   let _lastHandlerPromise: Promise<unknown> | null = null;
   type AnyFn = (...args: unknown[]) => unknown;
   const _wrapperMap = new WeakMap<AnyFn, AnyFn>();
@@ -114,5 +113,3 @@ export function createFakeSocket(): FakeSocket {
 
   return socket;
 }
-
-// FakeSocket is now exported as an interface above
