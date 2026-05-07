@@ -20,8 +20,8 @@ Tab 建立流程存在三種不同的 tab 建立路徑（createNewTab、session:
 
 ## Impact
 
-- `packages/client/src/contexts/TabContext.tsx` — createNewTab、setChannelId、onCreated、syncFromServer
-- `packages/client/src/contexts/channel/ChannelContext.tsx` — launch mode、onChange callback
-- `packages/client/src/components/WorkspaceLayout.tsx` — onChange handler、tab rendering
-- `packages/client/src/test/render-with-workspace.tsx` — test helper 需同步調整
+- `apps/web/src/contexts/TabContext.tsx` — createNewTab、setChannelId、onCreated、syncFromServer
+- `apps/web/src/contexts/channel/ChannelContext.tsx` — launch mode、onChange callback
+- `apps/web/src/components/WorkspaceLayout.tsx` — onChange handler、tab rendering
+- `apps/web/src/test/render-with-workspace.tsx` — test helper 需同步調整
 - 所有使用 `renderWithWorkspace` 的測試檔案（約 21 個）可能受影響

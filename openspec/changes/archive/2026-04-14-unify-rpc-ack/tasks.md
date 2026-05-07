@@ -9,8 +9,8 @@
 ## 1. Foundation
 
 - [x] 1.1 `packages/shared/src/schemas/rpc.ts`: export `RpcResult<T>` type + `rpcResult<T>(schema)` zod builder (discriminated union on `ok`).
-- [x] 1.2 `packages/server/src/socket/utils/rpc.ts`: export `ok(data)` + `err(error, code?)` helpers.
-- [x] 1.3 `packages/client/src/socket/rpc.ts`: add `call<T>(socket, event, payload): Promise<T>` wrapper (throws on err with RpcError carrying code).
+- [x] 1.2 `apps/server/src/socket/utils/rpc.ts`: export `ok(data)` + `err(error, code?)` helpers.
+- [x] 1.3 `apps/web/src/socket/rpc.ts`: add `call<T>(socket, event, payload): Promise<T>` wrapper (throws on err with RpcError carrying code).
 - [x] 1.4 Unit tests for all three modules.
 
 ## 2. session family (highest usage)

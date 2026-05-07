@@ -1,8 +1,8 @@
 #!/usr/bin/env node
 // Dump CSS vars + screenshots for every (theme × density) combination.
 // Run storybook-static via http-server on port 6107 before invoking.
-//   pnpm -C packages/client build-storybook --quiet
-//   packages/client/node_modules/.bin/http-server packages/client/storybook-static -p 6107 --silent &
+//   pnpm -C apps/web build-storybook --quiet
+//   apps/web/node_modules/.bin/http-server apps/web/storybook-static -p 6107 --silent &
 //   node tools/dump-theme-variants.mjs
 import { writeFile, mkdir } from 'node:fs/promises';
 import { chromium } from 'playwright';

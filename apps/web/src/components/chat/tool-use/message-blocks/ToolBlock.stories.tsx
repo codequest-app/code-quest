@@ -33,7 +33,7 @@ export const MultipleRows: Story = {
         {'git status --short'}
       </ToolBlockRow>
       <ToolBlockRow label="output">
-        <pre className="m-0">{' M packages/client/src/foo.ts\n?? packages/client/src/bar.ts'}</pre>
+        <pre className="m-0">{' M apps/web/src/foo.ts\n?? apps/web/src/bar.ts'}</pre>
       </ToolBlockRow>
     </ToolBlock>
   ),

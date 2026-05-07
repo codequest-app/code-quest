@@ -1,7 +1,7 @@
 ## Tasks
 
 ### 1. Red — unit tests for CompositeSettingsStore
-- [x] `packages/server/src/__tests__/composite-settings-store.test.ts`
+- [x] `apps/server/src/__tests__/composite-settings-store.test.ts`
 - [x] Throws when constructed with empty stores array.
 - [x] `set` fans out to all stores (spy stores both observe the write).
 - [x] `get` / `getMany` read from `stores[0]` only.
@@ -9,7 +9,7 @@
 - [x] All-fail: throws `AggregateError`.
 
 ### 2. Green — implement CompositeSettingsStore
-- [x] `packages/server/src/services/composite-settings-store.ts`
+- [x] `apps/server/src/services/composite-settings-store.ts`
 - [x] Mirror `CompositeSessionStore` / `CompositeRawEventStore` patterns.
 
 ### 3. Container wiring

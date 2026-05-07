@@ -1,11 +1,11 @@
 ## 1. 新增 transform 模組
 
-- [x] 1.1 新增 `packages/summoner/src/claude/transforms/notification.ts`，export `transformRateLimit`（從 adapter.ts 搬入 `convertRateLimitMessage` 並改名）
-- [x] 1.2 新增 `packages/summoner/src/claude/transforms/auth.ts`，export `transformAuthStatus`（從 adapter.ts 搬入 `convertAuthStatusMessage` 並改名）
+- [x] 1.1 新增 `apps/summoner/src/claude/transforms/notification.ts`，export `transformRateLimit`（從 adapter.ts 搬入 `convertRateLimitMessage` 並改名）
+- [x] 1.2 新增 `apps/summoner/src/claude/transforms/auth.ts`，export `transformAuthStatus`（從 adapter.ts 搬入 `convertAuthStatusMessage` 並改名）
 
 ## 2. 新增 request-mappings 模組
 
-- [x] 2.1 新增 `packages/summoner/src/claude/request-mappings.ts`，export `RequestMapping` type 及 `requestMappings` const（從 adapter.ts 搬入 `RequestMapping` interface 和 `REQUEST_MAPPINGS`，並更名 const）
+- [x] 2.1 新增 `apps/summoner/src/claude/request-mappings.ts`，export `RequestMapping` type 及 `requestMappings` const（從 adapter.ts 搬入 `RequestMapping` interface 和 `REQUEST_MAPPINGS`，並更名 const）
 
 ## 3. 精簡 adapter.ts
 

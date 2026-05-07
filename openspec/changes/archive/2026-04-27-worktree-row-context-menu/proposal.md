@@ -47,20 +47,20 @@ Explicitly out of scope:
 ## Impact
 
 **Affected code (new):**
-- `packages/client/src/components/WorktreeRowMenu.tsx`
-- `packages/client/src/components/RenameWorktreeDialog.tsx`
-- `packages/client/src/components/__tests__/WorktreeRowMenu.test.tsx`
-- `packages/client/src/components/__tests__/RenameWorktreeDialog.test.tsx`
-- `packages/server/src/socket/handlers/worktree-rename.ts` (or extend `worktree.ts`)
+- `apps/web/src/components/WorktreeRowMenu.tsx`
+- `apps/web/src/components/RenameWorktreeDialog.tsx`
+- `apps/web/src/components/__tests__/WorktreeRowMenu.test.tsx`
+- `apps/web/src/components/__tests__/RenameWorktreeDialog.test.tsx`
+- `apps/server/src/socket/handlers/worktree-rename.ts` (or extend `worktree.ts`)
 - `packages/shared/src/schemas/worktree.ts` — add `WorktreeRenamePayload` / `WorktreeArchivePayload`.
 
 **Affected code (modified):**
-- `packages/client/src/components/ProjectTree.tsx` (or wherever WorktreeRow lives) — add right-click + hover-`⋯` triggers.
-- `packages/summoner/src/git/local.ts` — add `renameWorktree` + `archiveWorktree`.
-- `packages/summoner/src/git/types.ts` — extend `GitService` interface.
-- `packages/summoner/src/test/fake-git-service.ts` — implement the new methods.
-- `packages/server/src/socket/handlers/worktree.ts` — add new events.
-- `packages/server/src/socket/server.ts` — already includes worktree handler; no change if extending in-place.
+- `apps/web/src/components/ProjectTree.tsx` (or wherever WorktreeRow lives) — add right-click + hover-`⋯` triggers.
+- `apps/summoner/src/git/local.ts` — add `renameWorktree` + `archiveWorktree`.
+- `apps/summoner/src/git/types.ts` — extend `GitService` interface.
+- `apps/summoner/src/test/fake-git-service.ts` — implement the new methods.
+- `apps/server/src/socket/handlers/worktree.ts` — add new events.
+- `apps/server/src/socket/server.ts` — already includes worktree handler; no change if extending in-place.
 
 **Dependencies on other changes:**
 - Independent of the right-pane changes.

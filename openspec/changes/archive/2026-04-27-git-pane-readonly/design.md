@@ -64,7 +64,7 @@ Git-pane DiffModal needs:
 - The same line parsing + coloring.
 - No Accept/Reject — instead: Copy path / Open file / (future) Stage hunk.
 
-**Decision:** extract pure parse function (`parseUnifiedDiff(input: string): DiffLine[]`) into `packages/client/src/utils/parse-unified-diff.ts` if the existing implementation has ≥80% of what we need. Otherwise, duplicate (small) and revisit.
+**Decision:** extract pure parse function (`parseUnifiedDiff(input: string): DiffLine[]`) into `apps/web/src/utils/parse-unified-diff.ts` if the existing implementation has ≥80% of what we need. Otherwise, duplicate (small) and revisit.
 
 `<DiffModal>` composes:
 ```

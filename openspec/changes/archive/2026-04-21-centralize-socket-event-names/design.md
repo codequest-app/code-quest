@@ -1,6 +1,6 @@
 ## Context
 
-`packages/shared/src/socket-events.ts` (598 lines) currently defines typed signatures for the socket and emitter interfaces. Event names appear inside these interfaces as string-literal keys, so `socket.emit('session:list', …)` is type-checked against the interface shape. However, the *string itself* is duplicated at every call site — `packages/client/**`, `packages/server/**`, and tests — with no single source listing all names. Result: renames require global grep-and-replace, and typos at call sites compile cleanly if the event is accepted by a permissive overload.
+`packages/shared/src/socket-events.ts` (598 lines) currently defines typed signatures for the socket and emitter interfaces. Event names appear inside these interfaces as string-literal keys, so `socket.emit('session:list', …)` is type-checked against the interface shape. However, the *string itself* is duplicated at every call site — `apps/web/**`, `apps/server/**`, and tests — with no single source listing all names. Result: renames require global grep-and-replace, and typos at call sites compile cleanly if the event is accepted by a permissive overload.
 
 ## Goals / Non-Goals
 
@@ -69,8 +69,8 @@ Integration tests that assert the wire-level string (if any) keep the literal AN
 
 Single PR. Land in this order within the PR:
 1. Add `EVENTS` to `packages/shared/src/socket-events.ts` + barrel export.
-2. Migrate `packages/server/src/**` call sites.
-3. Migrate `packages/client/src/**` call sites.
+2. Migrate `apps/server/src/**` call sites.
+3. Migrate `apps/web/src/**` call sites.
 4. Run full workspace tests.
 
 Rollback: revert the PR — runtime behaviour is unchanged so there is no state to migrate back.

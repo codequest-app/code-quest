@@ -31,7 +31,7 @@ All refactors are behavior-preserving. Tests stay green without modification to 
 
 ## Impact
 
-- **Code**: `packages/client/src/lib/` (shrinks to cross-surface primitives only); `packages/client/src/components/` gains `command-menu/` subdirectory mirroring `palette/` pattern; ~25 files see import-path updates
+- **Code**: `apps/web/src/lib/` (shrinks to cross-surface primitives only); `apps/web/src/components/` gains `command-menu/` subdirectory mirroring `palette/` pattern; ~25 files see import-path updates
 - **APIs**: `FeatureRegistry` interface narrows (removes `getSlashCommandFeatures()` and `getMenuItemFeatures()`); all current registry consumers updated in the same change
 - **Tests**: no expect changes; only import paths update
 - **Risk**: medium — broad import churn, but behavior-preserving; CI catches regressions

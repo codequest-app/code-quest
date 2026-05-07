@@ -2,7 +2,7 @@
 
 ### Requirement: MCP request handlers share a single factory
 
-Handlers in `packages/server/src/socket/handlers/mcp.ts` that follow the pattern "validate payload → `ch.sendRequest` → translate CLI response → callback" SHALL be constructed via the shared `createRequestHandler` factory, not hand-written. The factory SHALL support at minimum:
+Handlers in `apps/server/src/socket/handlers/mcp.ts` that follow the pattern "validate payload → `ch.sendRequest` → translate CLI response → callback" SHALL be constructed via the shared `createRequestHandler` factory, not hand-written. The factory SHALL support at minimum:
 
 - `schema` — Zod schema used to validate the incoming payload.
 - `event` — CLI request event name to dispatch.

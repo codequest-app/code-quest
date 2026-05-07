@@ -15,28 +15,28 @@ Shared (`packages/shared/src/schemas/session.ts`):
 
 Server:
 
-- `packages/server/src/socket/channel-manager.ts`: add public `aliveChannels(): Channel[]` and `findAliveBySessionId(sessionId): Channel | undefined` (keep existing `getAliveChannels`/`getFirstAlive`).
-- `packages/server/src/socket/handlers/session/connect.ts`: add new `handleResume` sibling to `handleLaunch` (both manage channel lifecycle entry, single file).
+- `apps/server/src/socket/channel-manager.ts`: add public `aliveChannels(): Channel[]` and `findAliveBySessionId(sessionId): Channel | undefined` (keep existing `getAliveChannels`/`getFirstAlive`).
+- `apps/server/src/socket/handlers/session/connect.ts`: add new `handleResume` sibling to `handleLaunch` (both manage channel lifecycle entry, single file).
   - Reuse path: if `findAliveBySessionId(sessionId)` hits, callback `{ channelId: existing.channelId }` — NO spawn.
   - Spawn path: `channelManager.create(newChannelId, { launchOptions: { resumeSessionId: sessionId, ... } })`. Runner receives `--resume <sessionId>`. `onSessionInit` upserts row keyed by sessionId with the new channelId.
   - Dead path: on `"No conversation found"`, `sessionStore.updateStatus(sessionId, 'dead')` + error callback.
   - Server MUST NOT spawn a second concurrent CLI for the same sessionId.
 - `handleLaunch` is UNCHANGED — still handles fresh launches only.
-- `packages/server/src/socket/handlers/session/query.ts` (`handleList`): when `excludeLive === true`, compute `aliveSessionIds = channelManager.aliveChannels().map(c => c.sessionId).filter(Boolean)` and pass them through to the store as `excludeSessionIds`.
-- `packages/server/src/persistence/session-store.ts`: `SessionStore.list` opts gain `excludeSessionIds?: string[]`. `DrizzleSessionStore` appends `notInArray(sessions.id, excludeSessionIds)` to WHERE only when non-empty (guards `NOT IN ()` hazard). `CompositeSessionStore` passes through.
+- `apps/server/src/socket/handlers/session/query.ts` (`handleList`): when `excludeLive === true`, compute `aliveSessionIds = channelManager.aliveChannels().map(c => c.sessionId).filter(Boolean)` and pass them through to the store as `excludeSessionIds`.
+- `apps/server/src/persistence/session-store.ts`: `SessionStore.list` opts gain `excludeSessionIds?: string[]`. `DrizzleSessionStore` appends `notInArray(sessions.id, excludeSessionIds)` to WHERE only when non-empty (guards `NOT IN ()` hazard). `CompositeSessionStore` passes through.
 - Wire the new `session:resume` event through the socket handler registration.
 
 Client (new files):
 
-- `packages/client/src/contexts/ResumeContext.tsx`: `ResumeProvider` + `useResume()` hook. v1 contract: `{ resume: (sessionId: string) => Promise<{ channelId: string }> }`. Internally emits `session:resume { sessionId }`, validates callback via `sessionResumeResponseSchema`.
-- `packages/client/src/components/ResumePicker.tsx`: shared picker. Props `{ cwd?: string; onResume: (channelId) => void; onCancel: () => void }`. Calls `listSessions({ cwd, limit: 50, excludeLive: true })` + `useResume().resume(id)`.
-- `packages/client/src/components/ProjectContextMenu.tsx`: lightweight fixed-position menu with single "Resume session…" item (NOT Radix ContextMenu); closes on outside click + Escape.
-- `packages/client/src/components/ResumeSessionsDialog.tsx`: Radix Dialog wrapping `<ResumePicker cwd={project.cwd} onResume={handleResume} onCancel={close} />`.
+- `apps/web/src/contexts/ResumeContext.tsx`: `ResumeProvider` + `useResume()` hook. v1 contract: `{ resume: (sessionId: string) => Promise<{ channelId: string }> }`. Internally emits `session:resume { sessionId }`, validates callback via `sessionResumeResponseSchema`.
+- `apps/web/src/components/ResumePicker.tsx`: shared picker. Props `{ cwd?: string; onResume: (channelId) => void; onCancel: () => void }`. Calls `listSessions({ cwd, limit: 50, excludeLive: true })` + `useResume().resume(id)`.
+- `apps/web/src/components/ProjectContextMenu.tsx`: lightweight fixed-position menu with single "Resume session…" item (NOT Radix ContextMenu); closes on outside click + Escape.
+- `apps/web/src/components/ResumeSessionsDialog.tsx`: Radix Dialog wrapping `<ResumePicker cwd={project.cwd} onResume={handleResume} onCancel={close} />`.
 
 Client (modified):
 
-- `packages/client/src/contexts/SessionContext.tsx`: `listSessions` signature accepts `{ cwd?, excludeLive? }`.
-- `packages/client/src/components/ProjectCard.tsx`: add `onContextMenu` handler + render `ProjectContextMenu` + `ResumeSessionsDialog`. Accept `cwd` prop.
+- `apps/web/src/contexts/SessionContext.tsx`: `listSessions` signature accepts `{ cwd?, excludeLive? }`.
+- `apps/web/src/components/ProjectCard.tsx`: add `onContextMenu` handler + render `ProjectContextMenu` + `ResumeSessionsDialog`. Accept `cwd` prop.
 - Mount `ResumeProvider` inside `SocketProvider` tree (App root).
 
 ## Capabilities

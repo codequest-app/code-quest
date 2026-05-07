@@ -30,15 +30,15 @@
 
 ### 新增
 
-- `packages/client/src/components/palette/PaletteMessageList.tsx` + test + story
-- `packages/client/src/components/palette/PaletteCommandList.tsx` + test + story
-- `packages/client/src/utils/message-preview.ts` + test
+- `apps/web/src/components/palette/PaletteMessageList.tsx` + test + story
+- `apps/web/src/components/palette/PaletteCommandList.tsx` + test + story
+- `apps/web/src/utils/message-preview.ts` + test
 - `openspec/specs/palette-components/` 新 capability
 
 ### 修改
 
-- `packages/client/src/components/CommandPalette.tsx`：大幅瘦身
-- `packages/client/src/components/CommandMenu.tsx`：刪除三個 feature 註冊
+- `apps/web/src/components/CommandPalette.tsx`：大幅瘦身
+- `apps/web/src/components/CommandMenu.tsx`：刪除三個 feature 註冊
 - 既有 `CommandPalette.test.tsx` / `CommandPaletteAllTab.test.tsx`：selector 可調整但 scenario 不變
 - 既有 `CommandMenu.test.tsx`：刪除 color-theme / density / open-settings 的 3 個 click-through 測試（因對應 feature 已移除；scenario 語意 vacuously 仍持有）
 

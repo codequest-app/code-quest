@@ -1,6 +1,6 @@
 #!/usr/bin/env bash
 set -euo pipefail
-FIXTURE_DIR="packages/summoner/src/__fixtures__/claude"
+FIXTURE_DIR="apps/summoner/src/__fixtures__/claude"
 NAME="${1:?Usage: capture-fixture.sh <name> [prompt]}"
 PROMPT="${2:-}"
 OUTPUT="$FIXTURE_DIR/$NAME.jsonl"

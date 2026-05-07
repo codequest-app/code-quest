@@ -1,6 +1,6 @@
 ## 1. 盤點：找出所有寫死 hex / rgb
 
-- [x] 1.1 寫 `tools/lint-hardcoded-colors.mjs`（掃 `packages/client/src/**/*.tsx` inline style 的 color literal；allow-list: `transparent`, `currentColor`, `var(...)`-wrapped, `url(...)`）
+- [x] 1.1 寫 `tools/lint-hardcoded-colors.mjs`（掃 `apps/web/src/**/*.tsx` inline style 的 color literal；allow-list: `transparent`, `currentColor`, `var(...)`-wrapped, `url(...)`）
 - [x] 1.2 執行現況 scan，產出初始 hit list（預期：CommandPalette / PaletteMessageList 為大宗）
 - [x] 1.3 把 hit list 歸類：「需新增 token」vs「用現有 token」vs「allow-list 例外」
 

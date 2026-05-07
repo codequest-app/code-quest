@@ -4,7 +4,7 @@
 
 ## 2. Server RPC handler
 
-- [x] 2.1 Add `handleAskSideQuestion` handler in `packages/server/src/socket/handlers/message.ts` — calls `ch.sendRequest('message:side_question', { question })` and returns `RpcResult<{ answer: string }>` via callback
+- [x] 2.1 Add `handleAskSideQuestion` handler in `apps/server/src/socket/handlers/message.ts` — calls `ch.sendRequest('message:side_question', { question })` and returns `RpcResult<{ answer: string }>` via callback
 - [x] 2.2 Register `chat:ask_side_question` event on emitter
 - [x] 2.3 Write server test: successful side_question returns answer; null response returns error
 

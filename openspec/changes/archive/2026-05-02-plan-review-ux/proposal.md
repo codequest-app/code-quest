@@ -20,6 +20,6 @@ The current `PlanReviewBanner` has a confusing layout: buttons are top-right, pl
 
 ## Impact
 
-- `packages/client/src/components/chat/plan-review/PlanReviewBanner.tsx` — full redesign
-- `packages/client/src/components/chat/plan-review/PlanReviewBanner.stories.tsx` — new file
-- `packages/client/src/components/chat/plan-review/__tests__/PlanReviewBanner.test.tsx` — new/updated tests
+- `apps/web/src/components/chat/plan-review/PlanReviewBanner.tsx` — full redesign
+- `apps/web/src/components/chat/plan-review/PlanReviewBanner.stories.tsx` — new file
+- `apps/web/src/components/chat/plan-review/__tests__/PlanReviewBanner.test.tsx` — new/updated tests

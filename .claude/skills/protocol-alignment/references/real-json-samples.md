@@ -1,6 +1,6 @@
 # Real JSON Samples from DB
 
-Source: `packages/server/data/code-quest.db` (raw_entries table)
+Source: `apps/server/data/code-quest.db` (raw_entries table)
 Last updated: 2026-03-17
 
 Each sample is one real JSON line captured from CLI stdout (OUT) or sent to CLI stdin (IN).

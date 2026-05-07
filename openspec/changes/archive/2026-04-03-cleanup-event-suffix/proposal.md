@@ -25,8 +25,8 @@
 
 ## Impact
 
-- `packages/summoner/src/types.ts` — ControlResponseEvent, ParseOk.event
-- `packages/summoner/src/claude/transforms/*.ts` — param rename
-- `packages/server/src/socket/channel.ts` — param rename
-- `packages/server/src/socket/handlers/mcp.ts` — function rename
+- `apps/summoner/src/types.ts` — ControlResponseEvent, ParseOk.event
+- `apps/summoner/src/claude/transforms/*.ts` — param rename
+- `apps/server/src/socket/channel.ts` — param rename
+- `apps/server/src/socket/handlers/mcp.ts` — function rename
 - Test files

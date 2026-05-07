@@ -1,6 +1,6 @@
 ## Why
 
-`DrizzleSessionStore.persist(record)` does more than its name suggests. Reading `packages/server/src/services/drizzle-session-store.ts:27-44` reveals that when a row with the same primary-key `id` already exists, `persist`:
+`DrizzleSessionStore.persist(record)` does more than its name suggests. Reading `apps/server/src/services/drizzle-session-store.ts:27-44` reveals that when a row with the same primary-key `id` already exists, `persist`:
 
 - rebinds `channelId` to the new value (a *different* channel is now wrapping the same CLI conversation), and
 - resets `status` to `'active'`, and
@@ -13,7 +13,7 @@ The word "persist" suggests "write if not there yet" — a noun-ish operation. T
 - Rename the method on `SessionStore` interface and `DrizzleSessionStore` implementation: `persist` → `upsert`.
 - Add a one-line JSDoc on the interface method documenting rebind semantics:
   > Inserts a new row, or updates `channelId` / `status='active'` / `parentId` on an existing row keyed by `id`. The latter case is the "resume or fork with reused sessionId" path.
-- Update the single caller (`packages/server/src/socket/handlers/session/connect.ts:249`, inside `onSessionInit`).
+- Update the single caller (`apps/server/src/socket/handlers/session/connect.ts:249`, inside `onSessionInit`).
 - Update all tests that call `.persist(...)` — change the method name only. **Never modify `expect(...)` lines.**
 
 ## Capabilities

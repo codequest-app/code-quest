@@ -26,5 +26,5 @@ Browser WebSocket 連線不穩定時（網路切換、筆電休眠喚醒），se
 - `packages/shared/src/transport/` — 新增 resumable-socket.ts、middleware/resumable.ts
 - `packages/shared/src/transport/ws-transport.ts` — acceptConnection 加 3 行
 - `packages/shared/src/index.ts` — 新增 export
-- `packages/server/src/bin/server.ts` — browser route 加 middleware
+- `apps/server/src/bin/server.ts` — browser route 加 middleware
 - Client 端 sessionKey 傳遞可獨立後續處理

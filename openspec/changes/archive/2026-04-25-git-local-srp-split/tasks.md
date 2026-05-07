@@ -1,15 +1,15 @@
 ## Tasks
 
 ### 1. Extract shared runner helpers
-- [x] Create `packages/summoner/src/git/git-runner.ts` exporting `createGit(cwd?)` and `rawGit(git, args)` (the two simple-git helpers shared by both subclasses).
+- [x] Create `apps/summoner/src/git/git-runner.ts` exporting `createGit(cwd?)` and `rawGit(git, args)` (the two simple-git helpers shared by both subclasses).
 
 ### 2. Extract `GitCommands`
-- [x] Create `packages/summoner/src/git/commands.ts` with `GitCommands` class.
+- [x] Create `apps/summoner/src/git/commands.ts` with `GitCommands` class.
 - [x] Move `status`, `checkout`, `log`, `diff`, `add`, `commit`, `push`, `fetch`, `pull`, `discardFile`, `getRepoRoot`, `getProjectRoot`, `initRepo`, `listBranches` from `local.ts` into `GitCommands` (private `checkoutWithFallback` moves with `checkout`).
 - [x] Keep behavior identical; no signature changes.
 
 ### 3. Extract `GitWorktreeOps`
-- [x] Create `packages/summoner/src/git/worktree.ts` with `GitWorktreeOps` class; constructor takes `GitCommands` (used for `getRepoRoot` precondition checks).
+- [x] Create `apps/summoner/src/git/worktree.ts` with `GitWorktreeOps` class; constructor takes `GitCommands` (used for `getRepoRoot` precondition checks).
 - [x] Move `createWorktree`, `listWorktrees`, `deleteWorktree`, `renameWorktree`, `archiveWorktree` plus path conventions (`.claude/worktrees/<slug>`), `branchToSlug`, `generateWorktreeName`, `isExistingWorktree`, `addWorktree`, `getDefaultBranch`, `parseWorktreeList`, `WORKTREE_PATH_RE` into the file.
 - [x] Re-export `validateWorktreeName` and `detectWorktree` from `worktree.ts` (keep `summoner/src/index.ts` import path working).
 - [x] Keep behavior identical; no signature changes.

@@ -24,6 +24,6 @@ None.
 
 ## Impact
 
-- Affected files: `packages/client/src/contexts/channel/ChannelComposeContext.tsx`, `packages/client/src/contexts/channel/index.ts`, `packages/client/src/components/ChatPanel.tsx`, `packages/client/src/components/ChatInputArea.tsx`, `packages/client/src/contexts/__tests__/ChannelComposeProvider.test.tsx`.
+- Affected files: `apps/web/src/contexts/channel/ChannelComposeContext.tsx`, `apps/web/src/contexts/channel/index.ts`, `apps/web/src/components/ChatPanel.tsx`, `apps/web/src/components/ChatInputArea.tsx`, `apps/web/src/contexts/__tests__/ChannelComposeProvider.test.tsx`.
 - No change to server, shared, or summoner packages.
 - No change to socket protocol, DB schema, or build config.

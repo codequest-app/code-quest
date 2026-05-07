@@ -24,6 +24,6 @@
 ## Impact
 
 - `packages/shared`: remove `fsReadBinaryPayloadSchema` / `fsReadBinaryResponseSchema`, update `fsReadResponseSchema`, remove `fs:read-binary` from `EVENTS`
-- `packages/summoner`: remove `readBinaryFileAbsolute` from interface + implementations; update `readFileAbsolute` return type
-- `packages/server`: merge `handleReadBinary` into `handleRead`; remove binary handler registration
-- `packages/client`: update `FilePreviewModal` to use unified response; remove `fs:read-binary` call
+- `apps/summoner`: remove `readBinaryFileAbsolute` from interface + implementations; update `readFileAbsolute` return type
+- `apps/server`: merge `handleReadBinary` into `handleRead`; remove binary handler registration
+- `apps/web`: update `FilePreviewModal` to use unified response; remove `fs:read-binary` call

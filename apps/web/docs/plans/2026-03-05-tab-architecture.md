@@ -30,11 +30,11 @@ pnpm --filter @code-quest/client test run
 ### Task 1: Define `TabState` type and `initialTabState` factory
 
 **Files:**
-- Modify: `packages/client/src/stores/chat-store.ts`
+- Modify: `apps/web/src/stores/chat-store.ts`
 
 **Step 1: Write failing test**
 
-In `packages/client/src/stores/__tests__/chat-store.test.ts`, add:
+In `apps/web/src/stores/__tests__/chat-store.test.ts`, add:
 
 ```typescript
 describe('TabState', () => {
@@ -99,7 +99,7 @@ Expected: FAIL — `tabs` not in store
 
 **Step 3: Implement `TabState` type and store actions**
 
-In `packages/client/src/stores/chat-store.ts`, add after the existing imports:
+In `apps/web/src/stores/chat-store.ts`, add after the existing imports:
 
 ```typescript
 export interface TabState {
@@ -202,7 +202,7 @@ Expected: PASS
 **Step 5: Commit**
 
 ```bash
-git add packages/client/src/stores/chat-store.ts packages/client/src/stores/__tests__/chat-store.test.ts
+git add apps/web/src/stores/chat-store.ts apps/web/src/stores/__tests__/chat-store.test.ts
 git commit -m "feat(store): add TabState type, tabs Record, and tab management actions"
 ```
 
@@ -211,8 +211,8 @@ git commit -m "feat(store): add TabState type, tabs Record, and tab management a
 ### Task 2: Persist `tabs` sessionIds to localStorage
 
 **Files:**
-- Modify: `packages/client/src/stores/chat-store.ts`
-- Modify: `packages/client/src/stores/__tests__/chat-store.test.ts`
+- Modify: `apps/web/src/stores/chat-store.ts`
+- Modify: `apps/web/src/stores/__tests__/chat-store.test.ts`
 
 **Step 1: Write failing test**
 
@@ -267,7 +267,7 @@ pnpm --filter @code-quest/client test run src/stores/__tests__/chat-store.test.t
 **Step 5: Commit**
 
 ```bash
-git add packages/client/src/stores/chat-store.ts packages/client/src/stores/__tests__/chat-store.test.ts
+git add apps/web/src/stores/chat-store.ts apps/web/src/stores/__tests__/chat-store.test.ts
 git commit -m "feat(store): persist tab sessionIds to localStorage"
 ```
 
@@ -278,8 +278,8 @@ git commit -m "feat(store): persist tab sessionIds to localStorage"
 ### Task 3: Route `onEvent` by `sessionId` to `updateTab`
 
 **Files:**
-- Modify: `packages/client/src/hooks/use-chat.ts`
-- Modify: `packages/client/src/hooks/__tests__/use-chat.test.ts`
+- Modify: `apps/web/src/hooks/use-chat.ts`
+- Modify: `apps/web/src/hooks/__tests__/use-chat.test.ts`
 
 **Step 1: Write failing test**
 
@@ -399,7 +399,7 @@ Expected: all pass
 **Step 7: Commit**
 
 ```bash
-git add packages/client/src/hooks/use-chat.ts packages/client/src/hooks/__tests__/use-chat.test.ts
+git add apps/web/src/hooks/use-chat.ts apps/web/src/hooks/__tests__/use-chat.test.ts
 git commit -m "feat(hook): route onEvent to updateTab by sessionId"
 ```
 
@@ -408,8 +408,8 @@ git commit -m "feat(hook): route onEvent to updateTab by sessionId"
 ### Task 4: Update `onConnect` to rejoin all tabs
 
 **Files:**
-- Modify: `packages/client/src/hooks/use-chat.ts`
-- Modify: `packages/client/src/hooks/__tests__/use-chat.test.ts`
+- Modify: `apps/web/src/hooks/use-chat.ts`
+- Modify: `apps/web/src/hooks/__tests__/use-chat.test.ts`
 
 **Step 1: Write failing test**
 
@@ -500,7 +500,7 @@ pnpm --filter @code-quest/client test run src/hooks/__tests__/use-chat.test.ts
 **Step 5: Commit**
 
 ```bash
-git add packages/client/src/hooks/use-chat.ts packages/client/src/hooks/__tests__/use-chat.test.ts
+git add apps/web/src/hooks/use-chat.ts apps/web/src/hooks/__tests__/use-chat.test.ts
 git commit -m "feat(hook): onConnect rejoins all persisted tabs on reconnect"
 ```
 
@@ -509,7 +509,7 @@ git commit -m "feat(hook): onConnect rejoins all persisted tabs on reconnect"
 ### Task 5: Update actions to use `activeTabId`
 
 **Files:**
-- Modify: `packages/client/src/hooks/use-chat.ts`
+- Modify: `apps/web/src/hooks/use-chat.ts`
 
 **Step 1: Write failing test**
 
@@ -567,7 +567,7 @@ pnpm --filter @code-quest/client test run src/hooks/__tests__/use-chat.test.ts
 **Step 5: Commit**
 
 ```bash
-git add packages/client/src/hooks/use-chat.ts
+git add apps/web/src/hooks/use-chat.ts
 git commit -m "feat(hook): use activeTabId for all session-scoped actions"
 ```
 
@@ -576,7 +576,7 @@ git commit -m "feat(hook): use activeTabId for all session-scoped actions"
 ### Task 6: Update remaining socket event handlers
 
 **Files:**
-- Modify: `packages/client/src/hooks/use-chat.ts`
+- Modify: `apps/web/src/hooks/use-chat.ts`
 
 Handlers that still reference global state: `onError`, `onExit`, `onCreated`, `onSessionDead`, `onSuggestions`, `onSessionStateChanged`.
 
@@ -653,7 +653,7 @@ pnpm --filter @code-quest/client test run src/hooks/__tests__/use-chat.test.ts
 **Step 5: Commit**
 
 ```bash
-git add packages/client/src/hooks/use-chat.ts packages/client/src/hooks/__tests__/use-chat.test.ts
+git add apps/web/src/hooks/use-chat.ts apps/web/src/hooks/__tests__/use-chat.test.ts
 git commit -m "feat(hook): route onCreated/onExit/onError/onSessionDead to correct tab"
 ```
 
@@ -664,8 +664,8 @@ git commit -m "feat(hook): route onCreated/onExit/onError/onSessionDead to corre
 ### Task 7: Create `TabContainer` component
 
 **Files:**
-- Create: `packages/client/src/components/TabContainer.tsx`
-- Modify: `packages/client/src/App.tsx`
+- Create: `apps/web/src/components/TabContainer.tsx`
+- Modify: `apps/web/src/App.tsx`
 
 **Step 1: Create `TabContainer.tsx`**
 
@@ -719,7 +719,7 @@ pnpm --filter @code-quest/client build 2>&1 | grep -E "error|Error" | head -20
 **Step 4: Commit**
 
 ```bash
-git add packages/client/src/components/TabContainer.tsx packages/client/src/App.tsx
+git add apps/web/src/components/TabContainer.tsx apps/web/src/App.tsx
 git commit -m "feat(ui): add TabContainer as useChat singleton host"
 ```
 
@@ -728,7 +728,7 @@ git commit -m "feat(ui): add TabContainer as useChat singleton host"
 ### Task 8: Update `ChatPanel` to read from `tabs[sessionId]`
 
 **Files:**
-- Modify: `packages/client/src/components/ChatPanel.tsx`
+- Modify: `apps/web/src/components/ChatPanel.tsx`
 
 **Step 1: Update props**
 
@@ -798,7 +798,7 @@ pnpm --filter @code-quest/client test run
 **Step 5: Commit**
 
 ```bash
-git add packages/client/src/components/ChatPanel.tsx
+git add apps/web/src/components/ChatPanel.tsx
 git commit -m "feat(ui): ChatPanel reads from tabs[sessionId] instead of global store"
 ```
 
@@ -832,7 +832,7 @@ Expected: all pass
 **Step 3: Commit**
 
 ```bash
-git add packages/client/src/stores/chat-store.ts
+git add apps/web/src/stores/chat-store.ts
 git commit -m "refactor(store): remove deprecated global per-tab state fields"
 ```
 

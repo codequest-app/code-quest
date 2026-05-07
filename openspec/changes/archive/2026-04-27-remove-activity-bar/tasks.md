@@ -1,18 +1,18 @@
 ## 1. TDD — extract WorkspaceTopbar + wire Settings + tablet hamburger
 
-- [x] 1.1 Create `packages/client/src/components/__tests__/WorkspaceTopbar.test.tsx` — write failing tests for:
+- [x] 1.1 Create `apps/web/src/components/__tests__/WorkspaceTopbar.test.tsx` — write failing tests for:
   - renders Settings button with `aria-label="Settings"`, positioned such that it is preceded by `TopScopeSwitcher` and by hamburger (when passed)
   - click on Settings invokes the `onOpenSettings` callback
   - when `onOpenMenu` prop is provided, a hamburger button with `aria-label="Menu"` renders at the left
   - when `onOpenMenu` is NOT provided, no hamburger renders
   - preserves `data-testid="desktop-topbar"` or `"mobile-topbar"` based on prop
 - [x] 1.2 Run tests — confirm red.
-- [x] 1.3 Create `packages/client/src/components/WorkspaceTopbar.tsx` matching the contract in `specs/workspace-topbar/spec.md`. Should accept `{ testId, onOpenSettings, onOpenMenu?, children }` (children = the existing `TopScopeSwitcher`).
+- [x] 1.3 Create `apps/web/src/components/WorkspaceTopbar.tsx` matching the contract in `specs/workspace-topbar/spec.md`. Should accept `{ testId, onOpenSettings, onOpenMenu?, children }` (children = the existing `TopScopeSwitcher`).
 - [x] 1.4 Run tests — confirm green.
 
 ## 2. TDD — rewire WorkspaceLayout to use the new topbar
 
-- [x] 2.1 Update `packages/client/src/components/__tests__/WorkspaceLayoutRWD.test.tsx`:
+- [x] 2.1 Update `apps/web/src/components/__tests__/WorkspaceLayoutRWD.test.tsx`:
   - **Remove** assertions that expect an `ActivityBar` in the DOM (all 3 breakpoints).
   - **Add** assertions: at each breakpoint the Settings button is reachable via `aria-label="Settings"` and clicking it opens `SettingsDialog`.
   - **Add** tablet-specific assertion: clicking the topbar hamburger opens the sidebar drawer (same drawer the ActivityBar used to open).
@@ -25,10 +25,10 @@
 
 ## 3. Delete ActivityBar
 
-- [x] 3.1 Confirm no remaining consumers: `grep -rn "ActivityBar" packages/client/src --include='*.ts' --include='*.tsx'` should show only the files we're about to delete.
-- [x] 3.2 Delete `packages/client/src/components/ActivityBar.tsx`.
-- [x] 3.3 Delete `packages/client/src/components/ActivityBar.stories.tsx`.
-- [x] 3.4 Delete `packages/client/src/components/__tests__/ActivityBar.test.tsx`.
+- [x] 3.1 Confirm no remaining consumers: `grep -rn "ActivityBar" apps/web/src --include='*.ts' --include='*.tsx'` should show only the files we're about to delete.
+- [x] 3.2 Delete `apps/web/src/components/ActivityBar.tsx`.
+- [x] 3.3 Delete `apps/web/src/components/ActivityBar.stories.tsx`.
+- [x] 3.4 Delete `apps/web/src/components/__tests__/ActivityBar.test.tsx`.
 - [x] 3.5 Run full client suite — confirm green.
 
 ## 4. Verify no regressions

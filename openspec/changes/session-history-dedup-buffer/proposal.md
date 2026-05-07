@@ -21,9 +21,9 @@
 
 ## Impact
 
-- `packages/server/src/__tests__/session-connect.test.ts` — 多批次 history 測試
-- `packages/client/src/types/chat.ts` — `ChannelState.seenUuids`
-- `packages/client/src/contexts/channel/handlers/message.ts` — uuid 去重
-- `packages/client/src/contexts/channel/ChannelMessagesContext.tsx` — seenUuidsRef + StateBuffer 接線
-- `packages/client/src/contexts/channel/handlers/streaming.ts` — seenUuidsRef
-- `packages/client/src/contexts/channel/handlers/state-buffer.ts` — 新增
+- `apps/server/src/__tests__/session-connect.test.ts` — 多批次 history 測試
+- `apps/web/src/types/chat.ts` — `ChannelState.seenUuids`
+- `apps/web/src/contexts/channel/handlers/message.ts` — uuid 去重
+- `apps/web/src/contexts/channel/ChannelMessagesContext.tsx` — seenUuidsRef + StateBuffer 接線
+- `apps/web/src/contexts/channel/handlers/streaming.ts` — seenUuidsRef
+- `apps/web/src/contexts/channel/handlers/state-buffer.ts` — 新增

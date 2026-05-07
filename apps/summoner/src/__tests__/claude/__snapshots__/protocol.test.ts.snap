@@ -2551,7 +2551,7 @@ exports[`ClaudeProtocol.parseLine (real fixtures) > parses control-request-bash.
   "request": {
     "agent_id": "a69185b60bed65ea3",
     "input": {
-      "command": "find /Users/user/project/packages/client/src -type f -name '*.ts' -o -name '*.tsx' -o -name '*.vue' | head -80",
+      "command": "find /Users/user/project/apps/web/src -type f -name '*.ts' -o -name '*.tsx' -o -name '*.vue' | head -80",
       "description": "List frontend source files",
     },
     "permission_suggestions": [
@@ -2560,7 +2560,7 @@ exports[`ClaudeProtocol.parseLine (real fixtures) > parses control-request-bash.
         "destination": "session",
         "rules": [
           {
-            "ruleContent": "//Users/user/project/packages/client/src/**",
+            "ruleContent": "//Users/user/project/apps/web/src/**",
             "toolName": "Read",
           },
         ],
@@ -2764,7 +2764,7 @@ exports[`ClaudeProtocol.parseLine (real fixtures) > parses init.jsonl:1 1`] = `
   ],
   "apiKeySource": "none",
   "claude_code_version": "2.1.63",
-  "cwd": "/Users/user/project/packages/server",
+  "cwd": "/Users/user/project/apps/server",
   "fast_mode_state": "off",
   "mcp_servers": [
     {

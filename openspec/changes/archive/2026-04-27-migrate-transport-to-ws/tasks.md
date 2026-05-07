@@ -13,15 +13,15 @@
 ## 2. TypedSocket abstraction — DONE
 
 - [x] 2.1 RED: write `typed-socket-contract.test.ts` proving FakeSocket can drive ChannelEmitter via local TypedSocket only
-- [x] 2.2 GREEN: extract `TypedSocket` / `TypedServer` to local interfaces in `packages/server/src/socket/types.ts`; drop `import type { Server, Socket } from 'socket.io'`
+- [x] 2.2 GREEN: extract `TypedSocket` / `TypedServer` to local interfaces in `apps/server/src/socket/types.ts`; drop `import type { Server, Socket } from 'socket.io'`
 - [x] 2.3 GREEN: tsc --noEmit shows zero error; channel-emitter / channel-manager tests stay green
 
 ## 3. Transport contract + Authenticator (TDD)
 
-- [x] 3.1 RED: write `packages/server/src/socket/__tests__/transport-contract.test.ts` — assert any object satisfying `Transport` interface produces TypedSockets that an emitter can consume; use a minimal `MemoryTransport` test double in the test
-- [x] 3.2 GREEN: define `Transport` and `TransportHandle` interfaces in `packages/server/src/socket/transport.ts`
+- [x] 3.1 RED: write `apps/server/src/socket/__tests__/transport-contract.test.ts` — assert any object satisfying `Transport` interface produces TypedSockets that an emitter can consume; use a minimal `MemoryTransport` test double in the test
+- [x] 3.2 GREEN: define `Transport` and `TransportHandle` interfaces in `apps/server/src/socket/transport.ts`
 - [x] 3.3 RED: write `authenticator.test.ts` — `Authenticator.authenticate(req)` returns `AuthContext | null`; assert null path rejects, non-null path attaches userId
-- [x] 3.4 GREEN: define `Authenticator` interface in `packages/server/src/socket/authenticator.ts`; ship a `NullAuthenticator` (always-accepts default for current single-user mode); CookieAuthenticator deferred to a future change when cc-office adds multi-user
+- [x] 3.4 GREEN: define `Authenticator` interface in `apps/server/src/socket/authenticator.ts`; ship a `NullAuthenticator` (always-accepts default for current single-user mode); CookieAuthenticator deferred to a future change when cc-office adds multi-user
 - [x] 3.5 RED: refactor test — `ChannelEmitter.broadcastAll` MUST iterate `socketRefs` and call each `socket.emit`; remove dependency on `TypedServer.emit` global
 - [x] 3.6 GREEN: simplify `ChannelEmitter.broadcastAll` to per-socket fan-out; drop `this.io` / `TypedServer` global broadcast path; register sockets in `socketRefs` at handleConnection so broadcast reaches non-joined connections
 - [x] 3.7 REFACTOR: full server test suite green (607 tests); no behavioral regression; `register(io)` kept as no-op stub on ChannelManager until Group 4 rewires bin/server.ts
@@ -29,16 +29,16 @@
 ## 4. SocketIoTransport adapter (TDD)
 
 - [x] 4.1 RED: write `socket-io-transport.test.ts` — boots a real `http.createServer` + socket.io Server, attaches as `Transport`, asserts `onConnection` fires when socket.io client connects, `TypedSocket` produced has working `id` / `emit` / `on`
-- [x] 4.2 GREEN: implement `packages/server/src/socket/socket-io-transport.ts` wrapping existing socket.io setup; constructor takes `Authenticator`
+- [x] 4.2 GREEN: implement `apps/server/src/socket/socket-io-transport.ts` wrapping existing socket.io setup; constructor takes `Authenticator`
 - [x] 4.3 RED: assert authenticator gate — connection without valid auth is rejected via `io.use()` middleware
 - [x] 4.4 GREEN: wire authenticator into socket.io middleware (returns Error → connect_error on client)
 - [x] 4.5 REFACTOR: `SocketServer.register` now accepts `TransportHandle` (was raw `Server`); `bin/server.ts` instantiates `SocketIoTransport` + attaches; `fake-server.ts` provides a fake `TransportHandle`; full server suite 612 green
 
 ## 5. WsTransport real implementation (TDD, integration-first)
 
-- [x] 5.1 Add `ws` + `@types/ws` to `packages/server/package.json`
+- [x] 5.1 Add `ws` + `@types/ws` to `apps/server/package.json`
 - [x] 5.2 RED: write `ws-transport.test.ts` — boots `http.createServer` + `WsTransport` + REAL `ws` client, asserts handshake rejected without auth (HTTP 401)
-- [x] 5.3 GREEN: implement `packages/server/src/socket/ws-transport.ts` `WsTransport` class with `attach(httpServer)`; auth-on-upgrade (noServer mode so multi-transport coexistence works)
+- [x] 5.3 GREEN: implement `apps/server/src/socket/ws-transport.ts` `WsTransport` class with `attach(httpServer)`; auth-on-upgrade (noServer mode so multi-transport coexistence works)
 - [x] 5.4 RED: write test for valid auth → `onConnection` fires with TypedSocket carrying UUID id
 - [x] 5.5 GREEN: inline adapter inside WsTransport implementing `TypedSocket` (id = UUID, emit = JSON envelope send with auto-incrementing seq, on = parsed envelope dispatch)
 - [x] 5.6 RED: envelope round-trip test — real ws client sends `{ kind: 'request', id, event: 'echo', data }`, handler responds via callback, client receives `{ kind: 'response', id, ok: true, data }`
@@ -62,7 +62,7 @@
 ## 7. ResumableSocket wrapper (TDD, transport-agnostic)
 
 - [x] 7.1 RED: write `resumable-socket.test.ts` using a synthetic `TypedSocket` fake — assert `emit` increments seq + appends to buffer; pass-through to inner socket
-- [x] 7.2 GREEN: implement `packages/server/src/socket/resumable-socket.ts`
+- [x] 7.2 GREEN: implement `apps/server/src/socket/resumable-socket.ts`
 - [x] 7.3 RED: ring buffer keeps only last N events when N+M emitted (default 500)
 - [x] 7.4 GREEN: implement bounded buffer (configurable via constructor)
 - [x] 7.5 RED: `resume(lastSeq)` replays buffered events with `seq > lastSeq` in order; events with `seq ≤ lastSeq` not re-sent
@@ -76,7 +76,7 @@
 
 ## 8. Server config + boot wiring
 
-- [x] 8.1 Add `TRANSPORT` env to `packages/server/src/config.ts` accepting `'ws' | 'socketio' | 'both'`, default `'ws'`
+- [x] 8.1 Add `TRANSPORT` env to `apps/server/src/config.ts` accepting `'ws' | 'socketio' | 'both'`, default `'ws'`
 - [x] 8.2 RED: config test asserts default is `'ws'`, env override flips it (5 cases including garbage fallback)
 - [x] 8.3 GREEN: `parseTransport()` returns `{ ws, socketio }` flags
 - [x] 8.4 `SocketServer.register` split into `wireHandlers` (idempotent) + `attachTransport`; `bin/server.ts` iterates configured transports, attaches each into the same SocketServer
@@ -87,7 +87,7 @@
 
 ## 9. Extract Fake transports (after real impls green)
 
-- [N/A] 9.1 Create `packages/server/src/test/fake-ws-transport.ts` — in-memory Transport satisfying `Transport` contract; reuses test patterns from `fake-server.ts`
+- [N/A] 9.1 Create `apps/server/src/test/fake-ws-transport.ts` — in-memory Transport satisfying `Transport` contract; reuses test patterns from `fake-server.ts`
 - [N/A] 9.2 RED: a unit test using FakeWsTransport asserts the same TypedSocket contract as the real one (run shared contract test against both)
 - [N/A] 9.3 GREEN: align FakeWsTransport behavior to match real WsTransport observed semantics from §5
 - [N/A] 9.4 Refactor `FakeServer` test harness to accept either `FakeSocketIoTransport` (existing behavior) or `FakeWsTransport` via param
@@ -95,9 +95,9 @@
 
 ## 10. Client: WsClient (TDD with mock WebSocket)
 
-- [x] 10.1 Create `packages/client/src/socket/__tests__/ws-client.test.ts` and a `MockWebSocket` test double under `packages/client/src/test/`
+- [x] 10.1 Create `apps/web/src/socket/__tests__/ws-client.test.ts` and a `MockWebSocket` test double under `apps/web/src/test/`
 - [x] 10.2 RED: `connect()` opens MockWebSocket; `emit('foo', payload)` sends `kind: 'event'` envelope
-- [x] 10.3 GREEN: scaffold `packages/client/src/socket/ws-client.ts` `WsClient` class
+- [x] 10.3 GREEN: scaffold `apps/web/src/socket/ws-client.ts` `WsClient` class
 - [x] 10.4 RED: `request('foo', data)` returns Promise; resolves on matching `kind: 'response', ok=true`; rejects on ok=false
 - [x] 10.5 GREEN: implement request id generation, `pending` Map, response routing
 - [x] 10.6 RED: `on('event', cb)` fires when matching event envelope arrives; unsubscribe stops further fires
@@ -119,10 +119,10 @@
 
 ## 11. Client: rpc.ts + client.ts rewrite
 
-- [x] 11.1 Add `TRANSPORT` env to `packages/client/src/config.ts` (`'ws' | 'socketio'`), default `'ws'`
+- [x] 11.1 Add `TRANSPORT` env to `apps/web/src/config.ts` (`'ws' | 'socketio'`), default `'ws'`
 - [x] 11.2 RED: pick 3 representative existing `rpc.ts` consumer tests; confirm they exercise `emit` / `on` / `request`
-- [x] 11.3 GREEN: rewrite `packages/client/src/socket/rpc.ts` to delegate to either `WsClient` or existing socket.io client via config; preserve exported function signatures byte-for-byte
-- [x] 11.4 GREEN: rewrite `packages/client/src/socket/client.ts` similarly
+- [x] 11.3 GREEN: rewrite `apps/web/src/socket/rpc.ts` to delegate to either `WsClient` or existing socket.io client via config; preserve exported function signatures byte-for-byte
+- [x] 11.4 GREEN: rewrite `apps/web/src/socket/client.ts` similarly
 - [x] 11.5 Verify all existing socket-hook tests pass without modification (`useSocketEvent`, `useRpc`, `useChannel`, etc.) under both transports
 - [x] 11.6 RED: full hook tree under `SocketProvider` works with WsClient (renderWithWorkspace)
 - [x] 11.7 GREEN: any prop-drilling glue needed

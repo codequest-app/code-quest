@@ -1,6 +1,6 @@
 ## 1. Workspace fixture decorator
 
-- [x] 1.1 Create `packages/client/src/test/story-workspace-decorator.tsx`
+- [x] 1.1 Create `apps/web/src/test/story-workspace-decorator.tsx`
 - [x] 1.2 Define `WorkspaceFixtures` type: `{ sessions?, capabilities?, settings?, className? }`
 - [x] 1.3 Implement `withStoryWorkspaceFixtures(fixtures)` that creates a `FakeSummoner`, intercepts `app:init` emit to return seeded sessions/capabilities/settings synchronously, then wraps children with the full provider stack (`SocketProvider → SessionProvider → PluginProvider → ProjectProvider → WorktreeProvider`)
 - [x] 1.4 Providers see seeded state on first paint (intercept happens in `useMemo` before first render, `onConnect` fires during mount and hits our sync callback)
@@ -8,14 +8,14 @@
 
 ## 2. Shared fixtures module
 
-- [x] 2.1 Create `packages/client/src/test/story-fixtures.ts`
+- [x] 2.1 Create `apps/web/src/test/story-fixtures.ts`
 - [x] 2.2 Add `makeLongConversation(overrides?)` returning 20+ mixed-type messages
 - [x] 2.3 Add `makeProcessingWithTool()` returning messages ending in a `tool_use` without result
 - [x] 2.4 Add `makeConversationWithDiff()` returning a `tool_result` carrying a unified-diff payload
 - [x] 2.5 Add `makePendingPermission()` returning a `can_use_tool` pending control
 - [x] 2.6 Add `makeSession(overrides?)` returning a `SessionStateSummary` with a given channelId and projectRoot
 - [x] 2.7 Add `makeWorktreeSession()` returning a session whose cwd is a worktree path
-- [x] 2.8 Verify no runtime import of this module (`grep -rn "from '.*story-fixtures'" packages/client/src` → only `.stories.tsx`)
+- [x] 2.8 Verify no runtime import of this module (`grep -rn "from '.*story-fixtures'" apps/web/src` → only `.stories.tsx`)
 
 ## 3. WorkspaceLayout screen stories
 
@@ -35,7 +35,7 @@
 
 ## 5. App shell composition story
 
-- [x] 5.1 Read `packages/client/src/App.tsx` — it calls `createSocket()` directly, so rendering real `<App />` would connect to real backend; fallback required
+- [x] 5.1 Read `apps/web/src/App.tsx` — it calls `createSocket()` directly, so rendering real `<App />` would connect to real backend; fallback required
 - [x] 5.2 N/A — real `<App />` not used (socket is non-injectable)
 - [x] 5.3 Created `App.stories.tsx` with manual composition mirroring `App.tsx`'s provider stack + `<Toaster />` + `<ErrorBoundary>`; documented rationale in file header
 - [x] 5.4 Added `DefaultShell`, `EmptyShell`, `WorktreeShell` stories

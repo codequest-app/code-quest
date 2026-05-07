@@ -62,13 +62,13 @@ renderer picks the right mode deterministically.
 
 ## Impact
 
-- **Code**: `packages/summoner/src/claude/transforms/user.ts`,
-  `packages/summoner/src/claude/schemas.ts` (if needed for raw shape),
+- **Code**: `apps/summoner/src/claude/transforms/user.ts`,
+  `apps/summoner/src/claude/schemas.ts` (if needed for raw shape),
   `packages/shared/src/schemas/message.ts` (user payload schema),
-  `packages/client/src/types/ui.ts` (Message meta for text),
-  `packages/client/src/components/MessageContent.tsx`,
-  `packages/client/src/components/message-blocks/ToolUseBlock.tsx`,
-  `packages/client/src/contexts/channel/handlers/message.ts` (or the user
+  `apps/web/src/types/ui.ts` (Message meta for text),
+  `apps/web/src/components/MessageContent.tsx`,
+  `apps/web/src/components/message-blocks/ToolUseBlock.tsx`,
+  `apps/web/src/contexts/channel/handlers/message.ts` (or the user
   message handler that maps payload → UI state).
 - **Tests**: new fixture-driven transform tests for each `source`; client
   handler/component tests asserting the correct renderer per `source`;

@@ -2,7 +2,7 @@
 
 ### Requirement: Feature type defines capability as pure data
 
-`packages/client/src/lib/feature.ts` SHALL export `Feature` interface：
+`apps/web/src/lib/feature.ts` SHALL export `Feature` interface：
 
 ```ts
 interface Feature {

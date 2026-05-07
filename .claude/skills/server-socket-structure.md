@@ -5,7 +5,7 @@ description: Server socket package structure and conventions. Use when adding ne
 # Server Socket Structure
 
 ```
-packages/server/src/socket/
+apps/server/src/socket/
 ├── types.ts                     # TypedSocket, TypedServer, errMsg, ensureChannel
 ├── context.ts                   # HandlerContext interface (generic, no provider state)
 ├── server.ts                    # SocketServer class (DI + handler registration + buildChannelHooks)

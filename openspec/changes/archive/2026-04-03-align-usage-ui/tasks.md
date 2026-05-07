@@ -1,6 +1,6 @@
 ## 1. Shared util: formatResetTime
 
-- [x] 1.1 Extract `formatResetTime` from AccountUsageDialog to a shared util (e.g., `packages/client/src/utils/format-reset-time.ts`), update both components to import from it
+- [x] 1.1 Extract `formatResetTime` from AccountUsageDialog to a shared util (e.g., `apps/web/src/utils/format-reset-time.ts`), update both components to import from it
 - [x] 1.2 Update UsageBar to use `formatResetTime` (relative format: `in Xm/Xh/Xd`) instead of `toLocaleTimeString`
 
 ## 2. UsageBar styling alignment

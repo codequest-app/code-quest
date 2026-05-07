@@ -41,18 +41,18 @@ Explicitly out of scope:
 ## Impact
 
 **Affected code (new):**
-- `packages/server/src/services/openspec-reader.ts` — small wrapper around `readdir` + `readFile` for the `openspec/` subtree, with path-traversal guards.
-- `packages/server/src/socket/handlers/spec.ts` — handler registering `spec:list` and `spec:read`.
+- `apps/server/src/services/openspec-reader.ts` — small wrapper around `readdir` + `readFile` for the `openspec/` subtree, with path-traversal guards.
+- `apps/server/src/socket/handlers/spec.ts` — handler registering `spec:list` and `spec:read`.
 - `packages/shared/src/schemas/spec.ts` — payload + response schemas.
-- `packages/client/src/components/SpecPane.tsx`
-- `packages/client/src/components/SpecModal.tsx`
-- `packages/client/src/hooks/useSpecList.ts`
+- `apps/web/src/components/SpecPane.tsx`
+- `apps/web/src/components/SpecModal.tsx`
+- `apps/web/src/hooks/useSpecList.ts`
 - `__tests__` for each of the above.
 
 **Affected code (modified):**
 - `packages/shared/src/schemas/index.ts`, `socket-events.ts` — add new schema + event names.
-- `packages/server/src/socket/server.ts` — register `spec.create(ctx)`.
-- `packages/client/src/components/RightPane.tsx` — render `<SpecPane cwd={cwd} />` in Spec tab.
+- `apps/server/src/socket/server.ts` — register `spec.create(ctx)`.
+- `apps/web/src/components/RightPane.tsx` — render `<SpecPane cwd={cwd} />` in Spec tab.
 
 **Dependencies on other changes:**
 - Requires `files-git-right-pane-shell` merged (for `RightPane` + `useActiveCwd`).

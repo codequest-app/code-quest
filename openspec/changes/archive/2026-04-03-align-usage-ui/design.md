@@ -3,8 +3,8 @@
 cc-office 的 Usage UI（UsageBar + AccountUsageDialog）與 extension v2.1.45 在視覺行為上有 4 處差異。所有需要的資料（usage quota、auth method、subscription type）已透過現有 socket events（`system:rate_limit`、`session:init`、`state:update`）取得，不需打額外 API。
 
 現有檔案：
-- `packages/client/src/components/UsageBar.tsx` — inline toolbar usage bars
-- `packages/client/src/components/AccountUsageDialog.tsx` — `/usage` dialog
+- `apps/web/src/components/UsageBar.tsx` — inline toolbar usage bars
+- `apps/web/src/components/AccountUsageDialog.tsx` — `/usage` dialog
 - `packages/shared/src/schemas/notification.ts` — UsageQuota type
 
 ## Goals / Non-Goals

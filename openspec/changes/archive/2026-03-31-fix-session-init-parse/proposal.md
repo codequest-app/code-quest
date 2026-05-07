@@ -10,5 +10,5 @@
 
 ## Impact
 
-- `packages/server/src/socket/channel.ts` — session:init, session:status, error:message 的 parse
-- `packages/server/src/socket/hooks/channel-hooks.ts` — 所有 event payload parse
+- `apps/server/src/socket/channel.ts` — session:init, session:status, error:message 的 parse
+- `apps/server/src/socket/hooks/channel-hooks.ts` — 所有 event payload parse

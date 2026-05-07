@@ -22,12 +22,12 @@
 
 ## Impact
 
-- `packages/summoner/src/types.ts` — AdapterOutput.events → messages
-- `packages/summoner/src/claude/adapter.ts` — method + variable renames
-- `packages/summoner/src/claude/transforms/*.ts` — function name renames
-- `packages/summoner/src/runner.ts` — variable rename
-- `packages/server/src/socket/channel.ts` — parameter renames
-- `packages/server/src/socket/channel-emitter.ts` — method rename
-- `packages/server/src/socket/channel-manager.ts` — parameter rename
-- `packages/server/src/socket/session-history.ts` — variable rename
+- `apps/summoner/src/types.ts` — AdapterOutput.events → messages
+- `apps/summoner/src/claude/adapter.ts` — method + variable renames
+- `apps/summoner/src/claude/transforms/*.ts` — function name renames
+- `apps/summoner/src/runner.ts` — variable rename
+- `apps/server/src/socket/channel.ts` — parameter renames
+- `apps/server/src/socket/channel-emitter.ts` — method rename
+- `apps/server/src/socket/channel-manager.ts` — parameter rename
+- `apps/server/src/socket/session-history.ts` — variable rename
 - 所有相關 test files

@@ -16,7 +16,7 @@
 
 ## 3. Server — Socket Handler
 
-- [x] 3.1 Merge `handleReadBinary` logic into `handleRead` in `packages/server/src/socket/handlers/fs.ts`
+- [x] 3.1 Merge `handleReadBinary` logic into `handleRead` in `apps/server/src/socket/handlers/fs.ts`
 - [x] 3.2 Remove `handleReadBinary` and its registration
 
 ## 4. Client — FilePreviewModal

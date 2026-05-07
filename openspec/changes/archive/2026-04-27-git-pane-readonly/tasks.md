@@ -2,7 +2,7 @@
 
 - [x] 1.1 Audit existing `DiffViewer.tsx` parse logic; decide extract vs duplicate.
 - [x] 1.2 If extracting: Red → add `parse-unified-diff.test.ts` with cases (single file, multiple files, binary marker, rename header, empty diff, truncation).
-- [x] 1.3 Green: move pure parse into `packages/client/src/utils/parse-unified-diff.ts`; update `DiffViewer.tsx` to import from there.
+- [x] 1.3 Green: move pure parse into `apps/web/src/utils/parse-unified-diff.ts`; update `DiffViewer.tsx` to import from there.
 - [x] 1.4 Run affected tests — green.
 
 ## 2. DiffModal

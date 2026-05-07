@@ -2,7 +2,7 @@
 
 ### Requirement: Full Storybook coverage for components and features
 
-`packages/client/src/components` 下所有非 `.stories.tsx` / `.test.tsx` 的 `.tsx` 檔 MUST 有對應 `*.stories.tsx`。`packages/client/src/features/*/*.tsx` 具 UI 輸出的元件同樣 MUST 有 story。
+`apps/web/src/components` 下所有非 `.stories.tsx` / `.test.tsx` 的 `.tsx` 檔 MUST 有對應 `*.stories.tsx`。`apps/web/src/features/*/*.tsx` 具 UI 輸出的元件同樣 MUST 有 story。
 
 補齊清單（26 個）：
 - components（22）：`ActionsTab`, `ActivityBar`, `AddProjectDialog`, `ChatInputArea`, `CollapsibleTimeline`, `CommandPalette`, `EditorArea`, `EmptyState`, `FileTree`, `FilterPopover`, `MessageNodeList`, `ProjectCard`, `ProjectContextMenu`, `ProjectList`, `QuestionContent`, `RawEventFilterBar`, `ResumeSessionsDialog`, `SessionDropdown`, `SideQuestionDialog`, `SubagentChildren`, `ToolbarDialogs`, `VisibilityGroupRow`
@@ -10,12 +10,12 @@
 
 #### Scenario: Every component has a default story
 
-- **WHEN** 執行 `pnpm -C packages/client build-storybook`
+- **WHEN** 執行 `pnpm -C apps/web build-storybook`
 - **THEN** build 成功且每個上述檔案皆有至少一個 default export variant
 
 #### Scenario: Stories render without errors
 
-- **WHEN** 執行 `pnpm -C packages/client test-storybook`
+- **WHEN** 執行 `pnpm -C apps/web test-storybook`
 - **THEN** 所有 story 的 smoke test 通過（render 不 throw、無 a11y critical violation）
 
 ### Requirement: Storybook test-runner with Playwright

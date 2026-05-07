@@ -1,6 +1,6 @@
 ## 1. Pre-flight
 
-- [x] 1.1 baseline：`pnpm -C packages/client test` 通過 1277 / 170 files
+- [x] 1.1 baseline：`pnpm -C apps/web test` 通過 1277 / 170 files
 - [x] 1.2 記錄即將移除的 CommandMenu 三項測試 id（click-through for color-theme / density / open-settings）
 
 ## 2. Phase 1 — utils/message-preview（TDD）

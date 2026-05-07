@@ -19,8 +19,8 @@ Extension has a "Rewind" entry in the Command Menu that opens a message picker d
 
 ## Impact
 
-- `packages/client/src/components/command-menu-items.tsx` — add "Rewind" menu item
-- `packages/client/src/components/RewindDialog.tsx` — new component
-- `packages/client/src/components/ComposeToolbar.tsx` or `ChatPanel.tsx` — mount RewindDialog
+- `apps/web/src/components/command-menu-items.tsx` — add "Rewind" menu item
+- `apps/web/src/components/RewindDialog.tsx` — new component
+- `apps/web/src/components/ComposeToolbar.tsx` or `ChatPanel.tsx` — mount RewindDialog
 - Reuses existing `rewindToMessage` and `forkSession` actions from ChannelMessagesContext
 - No server changes needed

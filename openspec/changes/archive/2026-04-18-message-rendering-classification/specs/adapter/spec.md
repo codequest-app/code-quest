@@ -2,7 +2,7 @@
 
 ### Requirement: `transformUser` SHALL classify CLI-injected user messages
 
-`packages/summoner/src/claude/transforms/user.ts` SHALL inspect every
+`apps/summoner/src/claude/transforms/user.ts` SHALL inspect every
 `role=user` event and attach a `source` field to the `message:user` payload,
 following the rules defined in the `message-rendering` capability. The
 detection uses content shape only and MUST NOT require additional CLI state.

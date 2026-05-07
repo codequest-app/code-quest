@@ -23,11 +23,11 @@ ChannelMessagesContext 只保留 messages + streaming + status + actions。
 
 ## Impact
 
-- `packages/client/src/contexts/channel/ChannelMessagesContext.tsx` — 拆出 events + state
-- `packages/client/src/contexts/channel/ChannelNotificationContext.tsx` — 新增
-- `packages/client/src/contexts/channel/ChannelSystemContext.tsx` — 新增
-- `packages/client/src/contexts/channel/ChannelFilesContext.tsx` — 新增
-- `packages/client/src/contexts/channel/ChannelContext.tsx` — 加入新 Provider
-- `packages/client/src/contexts/channel/index.ts` — export 新 context
+- `apps/web/src/contexts/channel/ChannelMessagesContext.tsx` — 拆出 events + state
+- `apps/web/src/contexts/channel/ChannelNotificationContext.tsx` — 新增
+- `apps/web/src/contexts/channel/ChannelSystemContext.tsx` — 新增
+- `apps/web/src/contexts/channel/ChannelFilesContext.tsx` — 新增
+- `apps/web/src/contexts/channel/ChannelContext.tsx` — 加入新 Provider
+- `apps/web/src/contexts/channel/index.ts` — export 新 context
 - 消費端 component 可能需要改用新 context 的 hook
 - 所有 72 個 test files / 615 tests 維持通過

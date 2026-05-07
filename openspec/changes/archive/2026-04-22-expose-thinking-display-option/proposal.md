@@ -14,7 +14,7 @@ the UI so empty thinking blocks don't leave a ghost row on screen.
 
 ## What Changes
 
-- Extend `LaunchOptions` (`packages/summoner/src/claude/launch-options.ts`)
+- Extend `LaunchOptions` (`apps/summoner/src/claude/launch-options.ts`)
   with an optional `thinkingDisplay: 'summarized' | 'omitted'` field.
 - `protocol.ts#buildArgs` appends `--thinking-display <value>` when set, gated
   on `thinking != null && thinking !== 'disabled' && typeof thinking !== 'number'`
@@ -44,17 +44,17 @@ the UI so empty thinking blocks don't leave a ghost row on screen.
 
 ## Impact
 
-- `packages/summoner/src/claude/launch-options.ts` (schema)
-- `packages/summoner/src/claude/protocol.ts` (arg builder)
-- `packages/summoner/src/__tests__/claude/build-args.test.ts`
-- `packages/server/src/config.ts` + `packages/server/.env.example` + local `.env`
-- `packages/server/src/__tests__/config.test.ts`
-- `packages/server/src/socket/channel.ts` (launch wiring)
-- `packages/server/src/socket/handlers/settings.ts` (settings handler)
-- `packages/server/src/services/settings-store.ts` (persistence key)
+- `apps/summoner/src/claude/launch-options.ts` (schema)
+- `apps/summoner/src/claude/protocol.ts` (arg builder)
+- `apps/summoner/src/__tests__/claude/build-args.test.ts`
+- `apps/server/src/config.ts` + `apps/server/.env.example` + local `.env`
+- `apps/server/src/__tests__/config.test.ts`
+- `apps/server/src/socket/channel.ts` (launch wiring)
+- `apps/server/src/socket/handlers/settings.ts` (settings handler)
+- `apps/server/src/services/settings-store.ts` (persistence key)
 - `packages/shared` (event payload schema if the settings event grows)
-- `packages/client/src/components/ChatMessage.tsx` (NO_COPY_TYPES + empty-body
+- `apps/web/src/components/ChatMessage.tsx` (NO_COPY_TYPES + empty-body
   guard)
-- `packages/client/src/components/MessageContent.tsx` (thinking case guard)
+- `apps/web/src/components/MessageContent.tsx` (thinking case guard)
 - Client-side settings UI (follow-up; out of scope unless the existing
   `thinkingLevel` toggle already carries the new field).

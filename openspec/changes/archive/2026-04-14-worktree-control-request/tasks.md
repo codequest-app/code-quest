@@ -10,10 +10,10 @@
 
 ## 1. GitService `getProjectRoot` + capabilities
 
-- [x] 1.1 Add `getProjectRoot(cwd: string): Promise<string | null>` to `GitService` interface (`packages/summoner/src/git/types.ts`). Add `capabilities: { worktree: boolean }` readonly field.
-- [x] 1.2 RED: failing test in `packages/summoner/src/__tests__/git/local.test.ts` (or existing git test file) — verify `getProjectRoot('/some/worktree')` returns the main repo path (not the worktree path). Mock or use real temp git repo.
+- [x] 1.1 Add `getProjectRoot(cwd: string): Promise<string | null>` to `GitService` interface (`apps/summoner/src/git/types.ts`). Add `capabilities: { worktree: boolean }` readonly field.
+- [x] 1.2 RED: failing test in `apps/summoner/src/__tests__/git/local.test.ts` (or existing git test file) — verify `getProjectRoot('/some/worktree')` returns the main repo path (not the worktree path). Mock or use real temp git repo.
 - [x] 1.3 Implement `LocalGitService.getProjectRoot` via `git rev-parse --git-common-dir` → strip trailing `/.git` to get parent dir. Add `capabilities = { worktree: true }`.
-- [x] 1.4 Update `FakeGitService` (`packages/summoner/src/test/fake-git-service.ts`) to match new interface — return configurable projectRoot, `capabilities = { worktree: true }` by default.
+- [x] 1.4 Update `FakeGitService` (`apps/summoner/src/test/fake-git-service.ts`) to match new interface — return configurable projectRoot, `capabilities = { worktree: true }` by default.
 - [x] 1.5 Summoner tests green.
 
 ## 2. Persist `projectRoot` on session
@@ -26,7 +26,7 @@
 
 ## 3. Client grouping by projectRoot
 
-- [x] 3.1 `packages/client/src/contexts/ProjectContext.tsx`: change Project identity key from `cwd` to `session.projectRoot ?? session.cwd` (fallback preserves old sessions).
+- [x] 3.1 `apps/web/src/contexts/ProjectContext.tsx`: change Project identity key from `cwd` to `session.projectRoot ?? session.cwd` (fallback preserves old sessions).
 - [x] 3.2 Update `deriveProjects(sessions)` to group by projectRoot. Each Project has `cwd = projectRoot`, `sessions = all sessions with matching projectRoot`.
 - [x] 3.3 Client tests: add case where two sessions have different `cwd` but same `projectRoot` → single Project with 2 sessions.
 - [x] 3.4 Client tests green, visual verification optional.
@@ -56,7 +56,7 @@
 
 ## 5a. WorktreeProvider (React Context)
 
-- [x] 5a.1 Create `packages/client/src/contexts/WorktreeContext.tsx` with `WorktreeState` + `WorktreeActions` interfaces, `WorktreeProvider` React component, and `useWorktree` hook. Split into `WorktreeStateContext` + `WorktreeActionsContext` if justified (≥ 5 consumers); start combined.
+- [x] 5a.1 Create `apps/web/src/contexts/WorktreeContext.tsx` with `WorktreeState` + `WorktreeActions` interfaces, `WorktreeProvider` React component, and `useWorktree` hook. Split into `WorktreeStateContext` + `WorktreeActionsContext` if justified (≥ 5 consumers); start combined.
 - [x] 5a.2 `create(cwd, name)` wraps `rpc(socket, 'worktree:create', ...)`.
 - [x] 5a.3 `list(cwd)` wraps `rpc(socket, 'worktree:list', ...)` and caches result in `listing[cwd]`.
 - [x] 5a.4 `remove(cwd, name)` wraps `rpc(socket, 'worktree:delete', ...)` and invalidates the cached listing.
@@ -78,7 +78,7 @@
 
 ## 7. TabBar worktree badge + divider
 
-- [x] 7.1 `packages/client/src/components/TabBar.tsx` — extend `TabInfo` to include `worktree?: { name: string; path: string }` (passed from session metadata).
+- [x] 7.1 `apps/web/src/components/TabBar.tsx` — extend `TabInfo` to include `worktree?: { name: string; path: string }` (passed from session metadata).
 - [x] 7.2 Render tab label as `{title} · {worktree.name}` when worktree present. Badge styled subtly (muted color, smaller font).
 - [x] 7.3 Tooltip on tab shows worktree path when present.
 - [x] 7.4 Group tabs by worktree key (main = no worktree, or `worktree.name`). Render groups in order: main first, then worktrees by worktree name. Vertical divider (1px border-left) between groups.

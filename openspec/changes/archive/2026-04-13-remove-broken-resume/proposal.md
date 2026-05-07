@@ -17,7 +17,7 @@ Shared (`packages/shared/src/`):
 - `schemas/session.ts`: delete `sessionResumePayloadSchema` + `SessionResumePayload` type.
 - `socket-events.ts`: delete the two `'session:resume'` event entries (C2S `ClientToServerEvents` line 337 and S2C `ServerToClientEvents` line 406).
 
-Server (`packages/server/src/socket/handlers/session/`):
+Server (`apps/server/src/socket/handlers/session/`):
 
 - `command.ts`: delete `handleResume` (lines 31–38) and the `emitter.on('session:resume', handleResume)` registration (line 112).
 - Drop the `sessionResumePayloadSchema` import.

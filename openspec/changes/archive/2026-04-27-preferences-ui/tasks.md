@@ -34,9 +34,9 @@
 
 ## 6. 整合驗證
 
-- [x] 6.1 `pnpm -C packages/client test` 全綠（1211 passed, was 1194）
-- [x] 6.2 `pnpm -C packages/client` typecheck clean
-- [x] 6.3 `pnpm -C packages/client test-storybook:ci` 95 suites / 356 tests 綠
+- [x] 6.1 `pnpm -C apps/web test` 全綠（1211 passed, was 1194）
+- [x] 6.2 `pnpm -C apps/web` typecheck clean
+- [x] 6.3 `pnpm -C apps/web test-storybook:ci` 95 suites / 356 tests 綠
 - [x] 6.4 biome lint clean（僅剩 2 infos）
 - [ ] 6.5 手動 smoke（留給 reviewer）
 - [ ] 6.6 commit + `/opsx:archive preferences-ui`（reviewer 自行處理）

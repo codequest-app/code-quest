@@ -70,7 +70,7 @@ Permission-mode 相關的視覺樣式（send button 背景、ChatInputArea focus
 
 #### Scenario: App.css carries no permission-mode selector
 
-- **WHEN** 讀取 `packages/client/src/App.css` 內容
+- **WHEN** 讀取 `apps/web/src/App.css` 內容
 - **THEN** 不得包含 `.send-btn` class 規則
 - **AND** 不得包含 `[data-permission-mode="..."]:focus-within` selector
 - **AND** 不得包含寫死的 rgb 值對應 accent / button / text（如 `rgba(217, 119, 87, 0.2)`、`rgba(0, 127, 212, 0.2)`、`rgba(204, 204, 204, 0.1)`）
@@ -84,12 +84,12 @@ Permission-mode 相關的視覺樣式（send button 背景、ChatInputArea focus
 
 ### Requirement: Tiny text sizes (10–11 px) collapse into the existing `text-xs` token
 
-Component className strings under `packages/client/src/components/` SHALL NOT use Tailwind arbitrary values `text-[10px]` or `text-[11px]`. Both collapse into the existing `text-xs` (12 px) token. Visual weight differences for uppercase chips MUST be controlled via `tracking`, opacity (`bg-x/10`, `border-x/30`), and color choice — not by sub-12px font sizes.
+Component className strings under `apps/web/src/components/` SHALL NOT use Tailwind arbitrary values `text-[10px]` or `text-[11px]`. Both collapse into the existing `text-xs` (12 px) token. Visual weight differences for uppercase chips MUST be controlled via `tracking`, opacity (`bg-x/10`, `border-x/30`), and color choice — not by sub-12px font sizes.
 
 The token-first rule already documents the wider principle ("差 1-2px 就近取"); this requirement makes the 10/11 → xs collapse explicit so it survives future PR review.
 
 #### Scenario: New component
-- **WHEN** a new component is added under `packages/client/src/components/`
+- **WHEN** a new component is added under `apps/web/src/components/`
 - **THEN** its className strings contain no `text-[10px]` or `text-[11px]`
 - **AND** any visually "smaller than body" element uses `text-xs`
 
@@ -103,7 +103,7 @@ The token-first rule already documents the wider principle ("差 1-2px 就近取
 
 ### Requirement: Pixel-valued Tailwind arbitraries collapse to built-in utilities
 
-Component className strings under `packages/client/src/components/` SHALL NOT use Tailwind arbitrary values of the form `\w+-[Npx]` (any utility, any pixel value). Tailwind v4's integer spacing (`h-9`, `max-h-120`, `max-w-45`, etc.) and existing `@theme` tokens cover the design ranges; the 1–2 px gap allowed by the "差 1-2px 就近取" rule absorbs the rest.
+Component className strings under `apps/web/src/components/` SHALL NOT use Tailwind arbitrary values of the form `\w+-[Npx]` (any utility, any pixel value). Tailwind v4's integer spacing (`h-9`, `max-h-120`, `max-w-45`, etc.) and existing `@theme` tokens cover the design ranges; the 1–2 px gap allowed by the "差 1-2px 就近取" rule absorbs the rest.
 
 The arbitrary form survives only for these explicit categories:
 
@@ -115,7 +115,7 @@ The arbitrary form survives only for these explicit categories:
 - Documented "intentional off-grid" cases (e.g. `backdrop-blur-[2px]` for sub-token glass effect)
 
 #### Scenario: New component
-- **WHEN** a new component file under `packages/client/src/components/` is added
+- **WHEN** a new component file under `apps/web/src/components/` is added
 - **THEN** its className strings contain no `\w+-[Npx]` literal-pixel arbitraries
 
 #### Scenario: Existing arbitrary

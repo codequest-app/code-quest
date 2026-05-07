@@ -21,10 +21,10 @@
 
 ## Impact
 
-- `packages/server/src/config.ts` — historyBatchSize 預設值
-- `packages/server/.env.example` / `.env`
-- `packages/server/src/session/` — history emit 分批邏輯
-- `packages/client/src/types/chat.ts` — `ChannelState.seenUuids`
-- `packages/client/src/contexts/channel/ChannelMessagesContext.tsx` — StateBuffer 接線
-- `packages/client/src/contexts/channel/handlers/streaming.ts` — seenUuidsRef
-- `packages/client/src/contexts/channel/handlers/state-buffer.ts` — 新增
+- `apps/server/src/config.ts` — historyBatchSize 預設值
+- `apps/server/.env.example` / `.env`
+- `apps/server/src/session/` — history emit 分批邏輯
+- `apps/web/src/types/chat.ts` — `ChannelState.seenUuids`
+- `apps/web/src/contexts/channel/ChannelMessagesContext.tsx` — StateBuffer 接線
+- `apps/web/src/contexts/channel/handlers/streaming.ts` — seenUuidsRef
+- `apps/web/src/contexts/channel/handlers/state-buffer.ts` — 新增

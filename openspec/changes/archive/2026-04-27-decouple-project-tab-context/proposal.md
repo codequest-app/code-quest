@@ -19,7 +19,7 @@ ProjectContext 直接呼叫 TabContext 的 `createNewTab()` 和 `setActiveTab()`
 
 ## Impact
 
-- `packages/client/src/contexts/ProjectContext.tsx` — 移除 TabContext import + 呼叫
-- `packages/client/src/components/WorkspaceLayout.tsx` — 加入協調邏輯
-- `packages/client/src/components/EditorArea.tsx` — tab filtering 可能調整
-- `packages/client/src/contexts/__tests__/ProjectContext.test.tsx` — 簡化（不需要 TabProvider）
+- `apps/web/src/contexts/ProjectContext.tsx` — 移除 TabContext import + 呼叫
+- `apps/web/src/components/WorkspaceLayout.tsx` — 加入協調邏輯
+- `apps/web/src/components/EditorArea.tsx` — tab filtering 可能調整
+- `apps/web/src/contexts/__tests__/ProjectContext.test.tsx` — 簡化（不需要 TabProvider）

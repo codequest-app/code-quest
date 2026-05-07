@@ -19,21 +19,21 @@ CLI stdout (JSON line)
 
 | Type | File | Purpose |
 |------|------|---------|
-| `ProtocolEvent` | `packages/summoner/src/protocol/claude-schemas.ts` | Discriminated union of all CLI event types (21+) |
+| `ProtocolEvent` | `apps/summoner/src/protocol/claude-schemas.ts` | Discriminated union of all CLI event types (21+) |
 | `SocketEvent` | `packages/shared/src/schemas/common.ts` | `{ name: string; payload: Record<string, unknown> }` |
-| `ParseResult` | `packages/summoner/src/protocol/provider-adapter.ts` | `ok \| skip \| unknown \| error` discriminated union |
-| `AdapterOutput` | `packages/summoner/src/protocol/provider-adapter.ts` | events + autoResponses + controlResponses + serverActions |
+| `ParseResult` | `apps/summoner/src/protocol/provider-adapter.ts` | `ok \| skip \| unknown \| error` discriminated union |
+| `AdapterOutput` | `apps/summoner/src/protocol/provider-adapter.ts` | events + autoResponses + controlResponses + serverActions |
 
 ## Core Files
 
 | File | Purpose |
 |------|---------|
-| `packages/summoner/src/protocol/claude-schemas.ts` | Zod schemas for all event types, `getSchemaForType()`, `KNOWN_EVENT_TYPES` |
-| `packages/summoner/src/protocol/claude.ts` | `ClaudeProtocol.parseLine()` — JSON parse → Zod validate → `ParseResult` |
-| `packages/summoner/src/protocol/claude-adapter.ts` | `ClaudeAdapter.transform()` — dispatches on event.type → `SocketEvent[]` |
-| `packages/summoner/src/protocol/provider-adapter.ts` | Abstract `ProviderAdapter` interface |
-| `packages/summoner/src/protocol/server-action.ts` | `ServerAction` union: auto_respond, read_diff, forward_to_client |
-| `packages/summoner/src/process-runner.ts` | Orchestrates parseLine → transform → emit |
+| `apps/summoner/src/protocol/claude-schemas.ts` | Zod schemas for all event types, `getSchemaForType()`, `KNOWN_EVENT_TYPES` |
+| `apps/summoner/src/protocol/claude.ts` | `ClaudeProtocol.parseLine()` — JSON parse → Zod validate → `ParseResult` |
+| `apps/summoner/src/protocol/claude-adapter.ts` | `ClaudeAdapter.transform()` — dispatches on event.type → `SocketEvent[]` |
+| `apps/summoner/src/protocol/provider-adapter.ts` | Abstract `ProviderAdapter` interface |
+| `apps/summoner/src/protocol/server-action.ts` | `ServerAction` union: auto_respond, read_diff, forward_to_client |
+| `apps/summoner/src/process-runner.ts` | Orchestrates parseLine → transform → emit |
 
 ## parseLine Flow
 
@@ -64,12 +64,12 @@ Events use `type:subtype` format:
 2. Add to `KNOWN_EVENT_TYPES` set and `getSchemaForType()` dispatch
 3. Add to `ProtocolEvent` union type
 4. Add conversion method in `claude-adapter.ts` `transform()`
-5. Write tests in `packages/summoner/src/protocol/__tests__/`
+5. Write tests in `apps/summoner/src/protocol/__tests__/`
 
 ## Test Pattern
 
 ```typescript
-// packages/summoner/src/protocol/__tests__/claude-adapter.test.ts
+// apps/summoner/src/protocol/__tests__/claude-adapter.test.ts
 function toSocketEvent(line: string) {
   const parsed = adapter.parseLine(line);
   if (parsed.status !== 'ok') return null;

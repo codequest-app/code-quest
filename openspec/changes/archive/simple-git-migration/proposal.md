@@ -22,8 +22,8 @@
 
 ## Impact
 
-- `packages/server/src/socket/utils/exec-git.ts` — 移除
-- `packages/server/src/socket/handlers/git.ts` — 改用 simple-git
-- `packages/server/src/services/worktree-manager.ts` — 改用 simple-git
-- `packages/server/src/socket/handlers/session/fork.ts` — 若有用 exec-git 則更新 import
+- `apps/server/src/socket/utils/exec-git.ts` — 移除
+- `apps/server/src/socket/handlers/git.ts` — 改用 simple-git
+- `apps/server/src/services/worktree-manager.ts` — 改用 simple-git
+- `apps/server/src/socket/handlers/session/fork.ts` — 若有用 exec-git 則更新 import
 - 測試不改 expect，只改 production code

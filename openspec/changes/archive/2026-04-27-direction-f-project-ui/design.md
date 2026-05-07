@@ -1,7 +1,7 @@
 ## Project type extension (UI)
 
 ```ts
-// packages/client/src/contexts/ProjectContext.tsx
+// apps/web/src/contexts/ProjectContext.tsx
 export interface Project {
   cwd: string;          // = server's path
   name: string;

@@ -26,11 +26,11 @@ Several interactive UI patterns are hand-rolled (collapsible blocks, model picke
 
 ## Impact
 
-- `packages/client/src/components/chat/tool-use/message-blocks/primitives.tsx` — CollapsibleBlock refactor
-- `packages/client/src/components/chat/tool-use/message-blocks/ToolUseBlock.tsx`, `ToolResultBlock.tsx`, `SystemBlocks.tsx`, `HookBlocks.tsx` — consume CollapsibleBlock
-- `packages/client/src/components/chat/renderers/TruncatedContent.tsx` — uses CollapsibleBlock pattern
-- `packages/client/src/components/settings/ModelPickerPopover.tsx` — listbox refactor
-- `packages/client/src/components/chat/compose/MentionDropdown.tsx` — dropdown refactor
-- `packages/client/src/components/live-session/FilterPopover.tsx` — checkboxes
-- `packages/client/src/components/spec/TaskChecklist.tsx` — checkboxes
+- `apps/web/src/components/chat/tool-use/message-blocks/primitives.tsx` — CollapsibleBlock refactor
+- `apps/web/src/components/chat/tool-use/message-blocks/ToolUseBlock.tsx`, `ToolResultBlock.tsx`, `SystemBlocks.tsx`, `HookBlocks.tsx` — consume CollapsibleBlock
+- `apps/web/src/components/chat/renderers/TruncatedContent.tsx` — uses CollapsibleBlock pattern
+- `apps/web/src/components/settings/ModelPickerPopover.tsx` — listbox refactor
+- `apps/web/src/components/chat/compose/MentionDropdown.tsx` — dropdown refactor
+- `apps/web/src/components/live-session/FilterPopover.tsx` — checkboxes
+- `apps/web/src/components/spec/TaskChecklist.tsx` — checkboxes
 - New deps: `@radix-ui/react-collapsible`, `@radix-ui/react-checkbox`

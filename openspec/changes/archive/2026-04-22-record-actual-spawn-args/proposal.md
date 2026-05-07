@@ -48,15 +48,15 @@ needs to record them, the data arrives via the existing event stream.
 
 ## Impact
 
-- `packages/summoner/src/runner.ts` — launchArgs visibility +
+- `apps/summoner/src/runner.ts` — launchArgs visibility +
   `_processLine` session:init augmentation
-- `packages/summoner/src/test/fake-runner.ts` (or equivalent) —
+- `apps/summoner/src/test/fake-runner.ts` (or equivalent) —
   mirror the augmentation for fake spawns
 - `packages/shared/src/schemas/session.ts` —
   `sessionInitEventSchema.args`
-- `packages/server/src/container.ts` — drop `runnerFactory.args`
-- `packages/server/src/socket/channel-manager.ts` — drop
+- `apps/server/src/container.ts` — drop `runnerFactory.args`
+- `apps/server/src/socket/channel-manager.ts` — drop
   `runnerArgs` getter (and confirm no callers besides
   `onSessionInit`)
-- `packages/server/src/socket/handlers/session/connect.ts` —
+- `apps/server/src/socket/handlers/session/connect.ts` —
   `onSessionInit` reads `payload.args`

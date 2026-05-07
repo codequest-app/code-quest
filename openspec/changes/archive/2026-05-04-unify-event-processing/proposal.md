@@ -16,5 +16,5 @@ Live stream 透過 socket handlers（`onErrorMessage` 等）逐筆處理；histo
 
 ## Impact
 
-- `packages/client/src/utils/message.ts` — 提取共用轉換邏輯
-- `packages/client/src/contexts/channel/handlers/system.ts` — 使用共用邏輯
+- `apps/web/src/utils/message.ts` — 提取共用轉換邏輯
+- `apps/web/src/contexts/channel/handlers/system.ts` — 使用共用邏輯

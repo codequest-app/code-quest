@@ -25,10 +25,10 @@ The current UI has multiple scattered entry points (search button, raw panel tog
 
 ## Impact
 
-- `packages/client/src/components/HeaderBar.tsx` — props simplified
-- `packages/client/src/components/ChatPanel.tsx` — wires CommandPalette, removes SpotlightSearch
-- `packages/client/src/components/MessageList.tsx` — reads MessageVisibilityContext
-- `packages/client/src/contexts/` — new MessageVisibilityContext
-- `packages/client/src/components/SpotlightSearch.tsx` — deleted
-- `packages/client/src/components/SpotlightFilterBar.tsx` — deleted
-- `packages/client/src/components/__tests__/HeaderBar.test.tsx` — updated props
+- `apps/web/src/components/HeaderBar.tsx` — props simplified
+- `apps/web/src/components/ChatPanel.tsx` — wires CommandPalette, removes SpotlightSearch
+- `apps/web/src/components/MessageList.tsx` — reads MessageVisibilityContext
+- `apps/web/src/contexts/` — new MessageVisibilityContext
+- `apps/web/src/components/SpotlightSearch.tsx` — deleted
+- `apps/web/src/components/SpotlightFilterBar.tsx` — deleted
+- `apps/web/src/components/__tests__/HeaderBar.test.tsx` — updated props

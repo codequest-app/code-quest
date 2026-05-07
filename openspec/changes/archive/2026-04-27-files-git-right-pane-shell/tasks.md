@@ -1,27 +1,27 @@
 ## 1. Dependency + test mock sanity
 
-- [x] 1.1 Add `react-resizable-panels` to `packages/client/package.json` dependencies (latest 2.x compatible with React 19).
+- [x] 1.1 Add `react-resizable-panels` to `apps/web/package.json` dependencies (latest 2.x compatible with React 19).
 - [x] 1.2 `pnpm install` (or equivalent).
 - [x] 1.3 Verify `test/setup.ts`'s existing `vi.mock('react-resizable-panels', ...)` stub still compiles against the installed version's TS types. If any new exports are needed, add to the mock.
 
 ## 2. TDD — useActiveCwd hook
 
-- [x] 2.1 Red: new file `packages/client/src/hooks/__tests__/useActiveCwd.test.ts` with failing cases:
+- [x] 2.1 Red: new file `apps/web/src/hooks/__tests__/useActiveCwd.test.ts` with failing cases:
   - returns `null` when no project active
   - returns `activeProjectCwd` when project active but no active tab
   - returns `activeTab.cwd` when both project and active tab exist
-- [x] 2.2 Green: create `packages/client/src/hooks/useActiveCwd.ts` implementing `activeTab?.cwd ?? activeProjectCwd ?? null`.
+- [x] 2.2 Green: create `apps/web/src/hooks/useActiveCwd.ts` implementing `activeTab?.cwd ?? activeProjectCwd ?? null`.
 - [x] 2.3 Run hook tests — confirm green.
 
 ## 3. TDD — RightPane component
 
-- [x] 3.1 Red: new file `packages/client/src/components/__tests__/RightPane.test.tsx`:
+- [x] 3.1 Red: new file `apps/web/src/components/__tests__/RightPane.test.tsx`:
   - renders three tab buttons with accessible names: Files, Git, Spec
   - Files tab active by default (aria-selected or data-active)
   - clicking a tab updates which placeholder body is visible
   - placeholder body text contains "coming soon" (or a stable sentinel)
   - passes `cwd` prop down to a child slot (assert presence of a `data-cwd` attr or similar testable surface)
-- [x] 3.2 Green: create `packages/client/src/components/RightPane.tsx`:
+- [x] 3.2 Green: create `apps/web/src/components/RightPane.tsx`:
   - props: `{ cwd: string | null }`
   - internal useState for active tab
   - reuse `TabButton` from `components/worktree-dialog/TabButton.tsx` (or move it to `components/ui/TabButton.tsx` if reuse makes it clearly shared — decide by touching exactly 1 other file otherwise leave in place)
@@ -29,7 +29,7 @@
 
 ## 4. TDD — WorkspaceTopbar dual-role triggers
 
-- [x] 4.1 Red: update `packages/client/src/components/__tests__/WorkspaceTopbar.test.tsx`:
+- [x] 4.1 Red: update `apps/web/src/components/__tests__/WorkspaceTopbar.test.tsx`:
   - rename `onOpenMenu` call-sites in existing tests → `onToggleLeft`
   - add a `onToggleRight` prop; new test: right trigger renders when provided; click invokes `onToggleRight`.
   - assert both triggers render on desktop mode (previously gated behind `onOpenMenu`-only-on-non-desktop)
@@ -43,7 +43,7 @@
 
 ## 5. TDD — WorkspaceLayout PanelGroup + right drawer
 
-- [x] 5.1 Red: update `packages/client/src/components/__tests__/WorkspaceLayoutRWD.test.tsx`:
+- [x] 5.1 Red: update `apps/web/src/components/__tests__/WorkspaceLayoutRWD.test.tsx`:
   - Desktop: `data-testid="panel-group"` (from existing mock) renders; `RightPane` renders; topbar has both `Toggle sidebar` + `Toggle right pane` buttons.
   - Desktop clicking left trigger: invokes collapse on sidebar panel — assert via a spy on a `leftPanelRef.current?.collapse` equivalent, or via observable DOM state if mock exposes it.
   - Tablet: clicking right trigger opens a new `right-drawer-panel` testid; backdrop closes it; Esc closes it.

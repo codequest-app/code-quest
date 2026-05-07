@@ -32,10 +32,10 @@
 
 ## Impact
 
-- `packages/client/src/contexts/TabContext.tsx` — 加入 project grouping 或新建 ProjectContext
-- `packages/client/src/components/WorkspaceLayout.tsx` — sidebar 改為 ProjectList
-- `packages/client/src/components/FileExplorerPanel.tsx` — 改為 dialog component
-- `packages/client/src/components/ProjectCard.tsx` — 新 component
-- `packages/client/src/components/ProjectList.tsx` — 新 component
-- `packages/client/src/components/AddProjectDialog.tsx` — 新 component（包含 DirectoryTree）
-- `packages/server/` — 可能需要新的 socket event 查詢 projects（或從 session:states 推導）
+- `apps/web/src/contexts/TabContext.tsx` — 加入 project grouping 或新建 ProjectContext
+- `apps/web/src/components/WorkspaceLayout.tsx` — sidebar 改為 ProjectList
+- `apps/web/src/components/FileExplorerPanel.tsx` — 改為 dialog component
+- `apps/web/src/components/ProjectCard.tsx` — 新 component
+- `apps/web/src/components/ProjectList.tsx` — 新 component
+- `apps/web/src/components/AddProjectDialog.tsx` — 新 component（包含 DirectoryTree）
+- `apps/server/` — 可能需要新的 socket event 查詢 projects（或從 session:states 推導）

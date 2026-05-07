@@ -1,7 +1,7 @@
 ## Schema
 
 ```sql
--- packages/server/migrations/sqlite/0001_projects.sql
+-- apps/server/migrations/sqlite/0001_projects.sql
 CREATE TABLE projects (
   id          TEXT PRIMARY KEY,         -- uuid
   path        TEXT NOT NULL UNIQUE,     -- absolute path (canonical project root)
@@ -15,7 +15,7 @@ CREATE INDEX idx_projects_pinned ON projects(pinned, last_opened_at DESC);
 ```
 
 ```ts
-// packages/server/src/db/schema-sqlite.ts (excerpt)
+// apps/server/src/db/schema-sqlite.ts (excerpt)
 export const projects = sqliteTable('projects', {
   id: text('id').primaryKey(),
   path: text('path').notNull().unique(),
@@ -293,7 +293,7 @@ socket.io broadcasts `projects:added/updated/removed` to all sockets in the chan
 ### Tests
 
 ```
-packages/client/src/contexts/__tests__/ProjectContext.test.tsx
+apps/web/src/contexts/__tests__/ProjectContext.test.tsx
   - 'loads projects on mount via projects:list'
   - 'handles projects:added event by appending'
   - 'handles projects:updated by replacing matching cwd'
@@ -302,12 +302,12 @@ packages/client/src/contexts/__tests__/ProjectContext.test.tsx
   - 'addProject surfaces error when server returns { error }'
   - 'cleans up socket listeners on unmount'
 
-packages/client/src/components/__tests__/AddProjectDialog.test.tsx
+apps/web/src/components/__tests__/AddProjectDialog.test.tsx
   - existing tests pass (form behavior unchanged)
   - 'shows error toast when addProject returns path_not_found'  (NEW)
   - 'closes dialog on successful add'  (NEW or update existing)
 
-packages/client/src/components/__tests__/ProjectList.test.tsx
+apps/web/src/components/__tests__/ProjectList.test.tsx
   - existing tests pass (no behavior change)
 ```
 
@@ -454,7 +454,7 @@ cb(project)
 ### FilesystemService interface change
 
 ```ts
-// packages/summoner/src/filesystem/types.ts
+// apps/summoner/src/filesystem/types.ts
 export interface FilesystemService {
   browseDirectories(path?: string): Promise<DirectoryEntry[]>;
   listFiles(cwd: string, pattern: string): Promise<FileResult[]>;

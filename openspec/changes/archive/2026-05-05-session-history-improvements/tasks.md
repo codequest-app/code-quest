@@ -1,7 +1,7 @@
 ## 1. Server: Configurable batch size
 
-- [x] 1.1 `packages/server/src/config.ts` — `historyBatchSize` 預設改為 1000
-- [x] 1.2 `packages/server/.env.example` / `.env` — 加入 `SESSION_HISTORY_BATCH_SIZE=1000` 說明
+- [x] 1.1 `apps/server/src/config.ts` — `historyBatchSize` 預設改為 1000
+- [x] 1.2 `apps/server/.env.example` / `.env` — 加入 `SESSION_HISTORY_BATCH_SIZE=1000` 說明
 
 ## 2. Server: Multi-batch history emit
 

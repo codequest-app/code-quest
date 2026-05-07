@@ -21,11 +21,11 @@
 
 - [ ] 3.1 Shared: `packages/shared/src/schemas/session.ts` — delete `sessionResumePayloadSchema` + `SessionResumePayload`.
 - [ ] 3.2 Shared: `packages/shared/src/socket-events.ts` — delete both `'session:resume'` entries (C2S + S2C). Drop the now-unused `SessionResumePayload` import.
-- [ ] 3.3 Server: `packages/server/src/socket/handlers/session/command.ts` — delete `handleResume` + `emitter.on('session:resume', handleResume)`. Drop `sessionResumePayloadSchema` import.
-- [ ] 3.4 Client: `packages/client/src/contexts/SessionContext.tsx` — remove `resumeSession` from the interface and the actions object.
-- [ ] 3.5 Client: `packages/client/src/contexts/ProjectContext.tsx` — remove `handleResume`, the `socket.on('session:resume', onResume)` + `socket.off` calls, and the `sessionResumePayloadSchema` import.
-- [ ] 3.6 Client: `packages/client/src/components/command-menu-items.tsx` — delete the `Resume conversation` menu entry. Keep the `onResumeConversation?` callback typing on params for now (change 3 will repopulate it).
-- [ ] 3.7 Client: `packages/client/src/components/ChatPanel.tsx` — delete:
+- [ ] 3.3 Server: `apps/server/src/socket/handlers/session/command.ts` — delete `handleResume` + `emitter.on('session:resume', handleResume)`. Drop `sessionResumePayloadSchema` import.
+- [ ] 3.4 Client: `apps/web/src/contexts/SessionContext.tsx` — remove `resumeSession` from the interface and the actions object.
+- [ ] 3.5 Client: `apps/web/src/contexts/ProjectContext.tsx` — remove `handleResume`, the `socket.on('session:resume', onResume)` + `socket.off` calls, and the `sessionResumePayloadSchema` import.
+- [ ] 3.6 Client: `apps/web/src/components/command-menu-items.tsx` — delete the `Resume conversation` menu entry. Keep the `onResumeConversation?` callback typing on params for now (change 3 will repopulate it).
+- [ ] 3.7 Client: `apps/web/src/components/ChatPanel.tsx` — delete:
   - `showResumeOverlay`, `resumeSessions`, `resumeLoading` state
   - `openResumeOverlay`, `handleResumeSelect`
   - the `<SessionDropdown … />` JSX block

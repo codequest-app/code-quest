@@ -35,9 +35,9 @@ changes)
 
 ## Impact
 
-- `packages/client/src/contexts/channel/handlers/guard.ts` — `wireHandlers`
+- `apps/web/src/contexts/channel/handlers/guard.ts` — `wireHandlers`
   becomes internal to the router or is replaced.
-- `packages/client/src/contexts/channel/ChannelMessagesContext.tsx`,
+- `apps/web/src/contexts/channel/ChannelMessagesContext.tsx`,
   `ChannelConfigContext.tsx`, `ChannelControlContext.tsx` — each drops its
   `wireHandlers` useEffect and calls `router.register(...)` instead.
 - A new `ChannelSocketRouter` provider/hook is added at the channel scope so

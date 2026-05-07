@@ -30,13 +30,13 @@ When the user has not yet picked any project/worktree (`cwd === null`), `<RightP
 ## Impact
 
 **Modified:**
-- `packages/client/src/components/WorkspaceLayout.tsx` — conditional Panel rendering on cwd
-- `packages/client/src/components/WorkspaceTopbar.tsx` — hide right-toggle when no cwd
-- `packages/client/src/components/RightPane.tsx` — `cwd: string`
-- `packages/client/src/components/FilesPane.tsx` — `cwd: string`, drop empty branch, pass rootCwd
-- `packages/client/src/components/GitPane.tsx` — `cwd: string`, drop empty branch
-- `packages/client/src/components/SpecPane.tsx` — `cwd: string`, drop empty branch
-- `packages/client/src/components/FileTree.tsx` — new `rootCwd` prop
+- `apps/web/src/components/WorkspaceLayout.tsx` — conditional Panel rendering on cwd
+- `apps/web/src/components/WorkspaceTopbar.tsx` — hide right-toggle when no cwd
+- `apps/web/src/components/RightPane.tsx` — `cwd: string`
+- `apps/web/src/components/FilesPane.tsx` — `cwd: string`, drop empty branch, pass rootCwd
+- `apps/web/src/components/GitPane.tsx` — `cwd: string`, drop empty branch
+- `apps/web/src/components/SpecPane.tsx` — `cwd: string`, drop empty branch
+- `apps/web/src/components/FileTree.tsx` — new `rootCwd` prop
 
 **Tests:**
 - WorkspaceLayoutRWD: assert right Panel absent when no project

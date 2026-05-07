@@ -34,10 +34,10 @@ Extension 支援 git worktree 讓 Claude 在隔離環境中工作，避免影響
 
 ## Impact
 
-- `packages/server/src/services/` — 新增 WorktreeService
-- `packages/server/src/socket/handlers/` — 新增 worktree handler
-- `packages/server/src/socket/channel.ts` — worktree 綁定
+- `apps/server/src/services/` — 新增 WorktreeService
+- `apps/server/src/socket/handlers/` — 新增 worktree handler
+- `apps/server/src/socket/channel.ts` — worktree 綁定
 - `packages/shared/src/schemas/` — worktree 相關 schema
 - `packages/shared/src/socket-events.ts` — 新增 socket events
-- `packages/client/src/components/` — WorktreeBanner
-- `packages/client/src/contexts/` — worktree state
+- `apps/web/src/components/` — WorktreeBanner
+- `apps/web/src/contexts/` — worktree state

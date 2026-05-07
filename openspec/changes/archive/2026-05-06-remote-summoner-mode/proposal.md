@@ -26,8 +26,8 @@
 
 ## Impact
 
-- `packages/server`：`container.ts` 增加 mode-based binding，新增 `remote/` 目錄放 remote 實作
-- `packages/summoner`：新增 `daemon.ts` 入口，`SummonerAgent` class
+- `apps/server`：`container.ts` 增加 mode-based binding，新增 `remote/` 目錄放 remote 實作
+- `apps/summoner`：新增 `daemon.ts` 入口，`SummonerAgent` class
 - `packages/shared`：新增 summoner ↔ server protocol type 定義
 - 現有 local 模式行為不變，無 breaking change
 - single-user only，不處理多用戶隔離（`NullAuthenticator` 仍適用，只是 token 換成配對用途）

@@ -3,7 +3,7 @@
 ### 1. Dependencies
 - [ ] `pnpm --filter @code-quest/client add @iconify/react @iconify-json/material-icon-theme`
 
-### 2. `getFileIcon` helper (TDD in `packages/client`)
+### 2. `getFileIcon` helper (TDD in `apps/web`)
 - [ ] Test: filename match wins over extension (e.g. `package.json` → npm icon, not generic JSON).
 - [ ] Test: extension match returns the right Iconify name (`.ts`, `.tsx`, `.json`, `.md`, `.css`, `.svg`, `.png`).
 - [ ] Test: unknown extension returns the fallback `material-icon-theme:file`.

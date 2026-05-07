@@ -8,14 +8,14 @@
 
 ## 2. GREEN — rename method
 
-- [ ] 2.1 🟢 `packages/server/src/services/session-store.ts`: rename interface method `persist` → `upsert`. Add JSDoc:
+- [ ] 2.1 🟢 `apps/server/src/services/session-store.ts`: rename interface method `persist` → `upsert`. Add JSDoc:
   ```
   /** Insert a new row, or on duplicate `id`: rebind `channelId`, reset `status='active'`,
    *  and overwrite `parentId` when the new record carries one. */
   ```
-- [ ] 2.2 🟢 `packages/server/src/services/drizzle-session-store.ts`: rename `async persist(...)` → `async upsert(...)`. Body unchanged.
-- [ ] 2.3 🟢 `packages/server/src/services/composite-session-store.ts` (+ any fake surfaced by tsc): rename forwarded method.
-- [ ] 2.4 🟢 `packages/server/src/socket/handlers/session/connect.ts` (`onSessionInit`): rename `sessionStore.persist(...)` → `sessionStore.upsert(...)`.
+- [ ] 2.2 🟢 `apps/server/src/services/drizzle-session-store.ts`: rename `async persist(...)` → `async upsert(...)`. Body unchanged.
+- [ ] 2.3 🟢 `apps/server/src/services/composite-session-store.ts` (+ any fake surfaced by tsc): rename forwarded method.
+- [ ] 2.4 🟢 `apps/server/src/socket/handlers/session/connect.ts` (`onSessionInit`): rename `sessionStore.persist(...)` → `sessionStore.upsert(...)`.
 
 ## 3. GREEN — test callsites
 

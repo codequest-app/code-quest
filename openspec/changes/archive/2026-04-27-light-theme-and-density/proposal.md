@@ -21,11 +21,11 @@
 ## Impact
 
 - 修改：
-  - `packages/client/src/App.css`（新增 `:root[data-theme="light"]` + `:root[data-density="compact"]` blocks）
-  - `packages/client/src/stores/usePreferencesStore.ts`（`ColorTheme` 型別）
-  - `packages/client/src/stores/__tests__/usePreferencesStore.test.ts`（light theme case）
+  - `apps/web/src/App.css`（新增 `:root[data-theme="light"]` + `:root[data-density="compact"]` blocks）
+  - `apps/web/src/stores/usePreferencesStore.ts`（`ColorTheme` 型別）
+  - `apps/web/src/stores/__tests__/usePreferencesStore.test.ts`（light theme case）
 - 新增：
-  - `packages/client/src/test/story-decorator.tsx`（加 `withThemePreset`）
+  - `apps/web/src/test/story-decorator.tsx`（加 `withThemePreset`）
   - `tools/dump-theme-variants.mjs`（多組合驗證）
   - `tools/snapshots/theme-variants/`（基準截圖）
 - 不改任何元件；所有視覺變化來自 CSS var 覆寫

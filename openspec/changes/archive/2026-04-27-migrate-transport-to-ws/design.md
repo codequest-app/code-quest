@@ -2,7 +2,7 @@
 
 cc-office 現況：
 - Server（Node + inversify）用 `socket.io` 當 transport 入口，handler 全部透過 `ChannelEmitter` 訂閱事件。`ChannelEmitter` 已經做了 transport 抽象：維護 `channelSockets / socketChannels / socketRefs` 三張 map，handler 完全沒碰 `io.emit`。
-- Client（React）用 `socket.io-client`，被 `packages/client/src/socket/client.ts` + `rpc.ts` 包起來，上層 hooks / components 透過 `emit` / `on` / `request` API 溝通，不直接接觸 socket.io。
+- Client（React）用 `socket.io-client`，被 `apps/web/src/socket/client.ts` + `rpc.ts` 包起來，上層 hooks / components 透過 `emit` / `on` / `request` API 溝通，不直接接觸 socket.io。
 - 測試用 `FakeSummoner` harness，server 跑真 socket.io server、client 跑真 socket.io-client，搭配 in-memory DB 和 FakeCLI。
 
 觸發本次 change 的長期壓力：
@@ -77,7 +77,7 @@ type Envelope =
 
 設計上劃**兩層**而非一層：
 
-- **`TypedSocket`（已存在於 `packages/server/src/socket/types.ts`）**：單一連線的最小介面（`id` / `emit` / `on`）。socket.io 的 `Socket` 和未來的 `WsSocketAdapter` 都結構性相容。
+- **`TypedSocket`（已存在於 `apps/server/src/socket/types.ts`）**：單一連線的最小介面（`id` / `emit` / `on`）。socket.io 的 `Socket` 和未來的 `WsSocketAdapter` 都結構性相容。
 - **`Transport`（新）**：協定整體的 contract，負責「掛上 HTTP server / 接受連線 / 產生 `TypedSocket`」。
 
 ```ts
@@ -227,8 +227,8 @@ Ring buffer 大小預設 500 筆 / per socket，可調。
    - `client.ts` / `rpc.ts` 改走 `WsClient`，既有 hook / component 測試**零改動**全綠
 
 4. **Phase 4 — Default 切換**：
-   - `packages/server/src/config.ts` 加 `TRANSPORT` env（值 `ws` / `socketio` / `both`），預設 `ws`
-   - `packages/client/src/config.ts` 對應加 client 端 transport 選擇
+   - `apps/server/src/config.ts` 加 `TRANSPORT` env（值 `ws` / `socketio` / `both`），預設 `ws`
+   - `apps/web/src/config.ts` 對應加 client 端 transport 選擇
    - Staging 跑 ws default 1–2 天監控
 
 5. **永久狀態**：socket.io 不刪。default = ws，socket.io 為 fallback / legacy client 通道。任一 transport 都能透過 env 開關獨立啟停。
@@ -237,7 +237,7 @@ Ring buffer 大小預設 500 筆 / per socket，可調。
 
 ## Open Questions
 
-- 授權：目前 handshake 用 cookie，這邏輯跟 HTTP route 的 auth middleware 共用嗎？需要再 review `packages/server/src/routes/**` 確認，最終 `Authenticator` 實作直接重用既有 cookie 解析。
+- 授權：目前 handshake 用 cookie，這邏輯跟 HTTP route 的 auth middleware 共用嗎？需要再 review `apps/server/src/routes/**` 確認，最終 `Authenticator` 實作直接重用既有 cookie 解析。
 - sessionKey 產生時機：handshake query string？還是第一個 request envelope？傾向 handshake query（early validation + ResumableSocket 認回邏輯前置）。
 - Ring buffer 500 筆是否足夠：需要根據實測決定，初版先跑再調，跨 transport 共用同一個 buffer 大小。
 - Fake 萃取顆粒度：`FakeWsTransport` 是否需要支援多 socket？目前看單 socket 已涵蓋大部分 unit test，多 socket 場景由 `FakeSummoner` harness 提供，不重複設計。

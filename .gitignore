@@ -86,7 +86,7 @@ yarn.lock
 .stylelintcache
 .spectra/
 openspec/.vector-search.db
-packages/server/data/
+apps/server/data/
 .vscode/
 .claude/worktrees/
 openspec/.vector-search.db*

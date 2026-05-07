@@ -55,7 +55,7 @@ pnpm biome check .
 pnpm biome check --write .
 
 # 只檢查特定檔案
-pnpm biome check packages/server/src/chat/parsers/
+pnpm biome check apps/server/src/chat/parsers/
 
 # CI 模式（不修正，只報錯）
 pnpm biome ci .
@@ -78,10 +78,10 @@ pre-commit:
       run: pnpm biome check --write {staged_files}
       stage_fixed: true
     typecheck-server:
-      glob: "packages/server/**/*.ts"
+      glob: "apps/server/**/*.ts"
       run: pnpm --filter server exec tsc --noEmit
     typecheck-client:
-      glob: "packages/client/**/*.{ts,tsx}"
+      glob: "apps/web/**/*.{ts,tsx}"
       run: pnpm --filter client exec tsc --noEmit
 
 pre-push:
@@ -133,7 +133,7 @@ pnpm lefthook run pre-commit
 ### Schema 位置
 
 ```
-packages/server/src/chat/schemas/
+apps/server/src/chat/schemas/
 ├── claude.ts    # Claude CLI 原始輸出
 ├── gemini.ts    # Gemini CLI 原始輸出
 ├── events.ts    # 統一的 ChatStreamEvent

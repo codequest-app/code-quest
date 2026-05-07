@@ -17,6 +17,6 @@
 
 ## Impact
 
-- `packages/server/src/socket/session-history.ts` → 移至 `packages/server/src/socket/handlers/session/history.ts`
-- `packages/server/src/socket/handlers/session/connect.ts`（更新 import）
-- `packages/server/src/__tests__/session-connect.test.ts`（expect 不變）
+- `apps/server/src/socket/session-history.ts` → 移至 `apps/server/src/socket/handlers/session/history.ts`
+- `apps/server/src/socket/handlers/session/connect.ts`（更新 import）
+- `apps/server/src/__tests__/session-connect.test.ts`（expect 不變）

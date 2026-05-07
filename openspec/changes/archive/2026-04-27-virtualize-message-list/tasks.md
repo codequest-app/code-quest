@@ -2,8 +2,8 @@
 
 - [x] 1.1 Baseline: confirm main's `MessageList.tsx` scroll logic is restored (post-revert)
 - [x] 1.2 `pnpm --filter client exec vitest run` — all 1298 tests pass
-- [x] 1.3 Install `@tanstack/react-virtual`, remove `react-virtuoso` from `packages/client/package.json`
-- [x] 1.4 Remove any `vi.mock('react-virtuoso')` from `packages/client/src/test/setup.ts`
+- [x] 1.3 Install `@tanstack/react-virtual`, remove `react-virtuoso` from `apps/web/package.json`
+- [x] 1.4 Remove any `vi.mock('react-virtuoso')` from `apps/web/src/test/setup.ts`
 - [x] 1.5 Polyfill `ResizeObserver` in `test/setup.ts` if not already present
 
 ## 2. Step A — Virtualize MessageList (scroll logic untouched)

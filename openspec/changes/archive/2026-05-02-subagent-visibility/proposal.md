@@ -56,8 +56,8 @@ subagent 有兩種類型需要區分：
 ## Impact
 
 - 依賴 `tool-use-grouping` change（SubagentChildren 內部用相同 grouping）
-- `packages/client/src/contexts/channel/handlers/system.ts` — 新增 `task_progress`、`task_notification` handler，更新對應 tool_use meta
-- `packages/summoner/src/claude/schemas.ts` — 已有 schema，確認完整
-- `packages/client/src/types/ui.ts` — ToolUseMeta 新增 taskStatus、taskSummary、lastToolName 欄位
-- `packages/client/src/components/chat/tool-use/message-blocks/ToolUseBlock.tsx` — Task tool block header 顯示狀態
-- `packages/client/src/components/chat/conversation/SubagentChildren.tsx` — 改用 CollapsibleTimeline（依賴 tool-use-grouping）
+- `apps/web/src/contexts/channel/handlers/system.ts` — 新增 `task_progress`、`task_notification` handler，更新對應 tool_use meta
+- `apps/summoner/src/claude/schemas.ts` — 已有 schema，確認完整
+- `apps/web/src/types/ui.ts` — ToolUseMeta 新增 taskStatus、taskSummary、lastToolName 欄位
+- `apps/web/src/components/chat/tool-use/message-blocks/ToolUseBlock.tsx` — Task tool block header 顯示狀態
+- `apps/web/src/components/chat/conversation/SubagentChildren.tsx` — 改用 CollapsibleTimeline（依賴 tool-use-grouping）

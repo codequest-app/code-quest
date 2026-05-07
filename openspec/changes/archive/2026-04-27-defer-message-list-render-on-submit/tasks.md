@@ -1,6 +1,6 @@
 ## 1. Implementation
 
-- [x] 1.1 Import `flushSync` from `react-dom` in `packages/client/src/contexts/channel/ChannelComposeContext.tsx`
+- [x] 1.1 Import `flushSync` from `react-dom` in `apps/web/src/contexts/channel/ChannelComposeContext.tsx`
 - [x] 1.2 In `submit`, wrap the `setState({ value: '', slashOpen: false })` call with `flushSync(() => ...)` before the `if (files.length > 0) { ... } else { ... }` branch
 - [x] 1.3 Leave `sendMessage` / `setChannelState` at default React priority (no `startTransition`)
 - [x] 1.4 Leave socket emit unchanged

@@ -1,6 +1,6 @@
 ## Why
 
-`packages/server/src/socket/handlers/worktree.ts` `handleCreate` mixes four responsibilities — git-repo validation, worktree filesystem creation, channel spawning, and rollback on failure — in a single ~55-line function with three nested `try` blocks. This makes the happy-path hard to read and the rollback path easy to forget when a future branch or failure mode is added.
+`apps/server/src/socket/handlers/worktree.ts` `handleCreate` mixes four responsibilities — git-repo validation, worktree filesystem creation, channel spawning, and rollback on failure — in a single ~55-line function with three nested `try` blocks. This makes the happy-path hard to read and the rollback path easy to forget when a future branch or failure mode is added.
 
 ## What Changes
 
@@ -23,6 +23,6 @@ None.
 
 ## Impact
 
-- Affected file: `packages/server/src/socket/handlers/worktree.ts`.
-- Test file: `packages/server/src/__tests__/worktree.test.ts` (existing cases must stay green; no `expect` modifications).
+- Affected file: `apps/server/src/socket/handlers/worktree.ts`.
+- Test file: `apps/server/src/__tests__/worktree.test.ts` (existing cases must stay green; no `expect` modifications).
 - No client / shared / summoner changes.

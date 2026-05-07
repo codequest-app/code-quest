@@ -29,12 +29,12 @@
 ## Impact
 
 - 新增：
-  - `packages/client/src/features/color-theme/color-theme-feature.tsx` + test + story
-  - `packages/client/src/features/density/density-feature.tsx` + test + story
-  - `packages/client/src/features/open-settings/open-settings-feature.tsx` + test
-  - `packages/client/src/components/SettingsDialog.tsx` + story + interaction test
+  - `apps/web/src/features/color-theme/color-theme-feature.tsx` + test + story
+  - `apps/web/src/features/density/density-feature.tsx` + test + story
+  - `apps/web/src/features/open-settings/open-settings-feature.tsx` + test
+  - `apps/web/src/components/SettingsDialog.tsx` + story + interaction test
 - 修改：
-  - `packages/client/src/components/CommandMenu.tsx`（註冊 3 個新 feature）
-  - `packages/client/src/components/ActivityBar.tsx`（加 gear icon 按鈕）
+  - `apps/web/src/components/CommandMenu.tsx`（註冊 3 個新 feature）
+  - `apps/web/src/components/ActivityBar.tsx`（加 gear icon 按鈕）
 - 不改 store / CSS（底層沿用）
 - 風險：SettingsDialog 內 live preview 可能讓使用者覺得「還沒確認」就變了 → 以清晰視覺（radio 立即高亮）讓意圖明確；標明「變更自動儲存」

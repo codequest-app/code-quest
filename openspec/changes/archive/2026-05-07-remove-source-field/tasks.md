@@ -10,7 +10,7 @@
 
 ## 3. Client — add fromInput to TextMeta
 
-- [x] 3.1 Add `fromInput?: boolean` to `TextMeta` in `packages/client/src/types/ui.ts`
+- [x] 3.1 Add `fromInput?: boolean` to `TextMeta` in `apps/web/src/types/ui.ts`
 
 ## 4. Client — sendMessage belt-and-suspenders
 

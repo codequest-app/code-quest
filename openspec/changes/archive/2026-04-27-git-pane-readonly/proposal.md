@@ -41,14 +41,14 @@ Explicitly out of scope:
 ## Impact
 
 **Affected code (new):**
-- `packages/client/src/components/GitPane.tsx`
-- `packages/client/src/components/DiffModal.tsx`
-- `packages/client/src/components/__tests__/GitPane.test.tsx`
-- `packages/client/src/components/__tests__/DiffModal.test.tsx`
-- Maybe: `packages/client/src/utils/parse-unified-diff.ts` — extracted if we share logic with the existing `DiffViewer`.
+- `apps/web/src/components/GitPane.tsx`
+- `apps/web/src/components/DiffModal.tsx`
+- `apps/web/src/components/__tests__/GitPane.test.tsx`
+- `apps/web/src/components/__tests__/DiffModal.test.tsx`
+- Maybe: `apps/web/src/utils/parse-unified-diff.ts` — extracted if we share logic with the existing `DiffViewer`.
 
 **Affected code (modified):**
-- `packages/client/src/components/RightPane.tsx` (from shell change) — render `<GitPane cwd={cwd} />` inside the Git tab body.
+- `apps/web/src/components/RightPane.tsx` (from shell change) — render `<GitPane cwd={cwd} />` inside the Git tab body.
 - Existing `DiffViewer.tsx` — if we extract parse logic, update imports; no behavior change to the ModifiedFilesPanel flow.
 
 **Dependencies on other changes:**

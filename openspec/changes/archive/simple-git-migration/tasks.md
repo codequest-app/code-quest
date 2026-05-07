@@ -1,7 +1,7 @@
 ## 1. Setup
 
 - [x] 1.1 安裝 simple-git
-- [x] 1.2 建立 `packages/server/src/socket/utils/git.ts` — `createGit(cwd)` factory
+- [x] 1.2 建立 `apps/server/src/socket/utils/git.ts` — `createGit(cwd)` factory
 
 ## 2. git.ts handler 替換
 

@@ -4,8 +4,8 @@
 
 Client source files that export only pure functions (no JSX, no React
 hooks, no DOM/socket side effects) SHALL live under
-`packages/client/src/utils/` or a comparable non-component directory.
-`packages/client/src/components/` is reserved for React components and
+`apps/web/src/utils/` or a comparable non-component directory.
+`apps/web/src/components/` is reserved for React components and
 component-scoped JSX helpers.
 
 #### Scenario: Pure routing decision function is in utils/

@@ -46,16 +46,16 @@ Since we're already doing DB migration for the rename, it costs nothing extra to
 
 ## Impact
 
-- `packages/server/drizzle/{sqlite,mysql}/0017_*.sql` — hand-written migration.
-- `packages/server/src/db/schema-{sqlite,mysql,columns}.ts` — rename existing table + add new `rawDeltas`.
-- `packages/server/src/services/drizzle-raw-event-store.ts` — point at `rawEvents` table, `append` returns id.
-- `packages/server/src/services/drizzle-raw-delta-store.ts` (new).
-- `packages/server/src/services/composite-raw-event-store.ts` — propagate `append` id return.
-- `packages/server/src/socket/raw-recorder.ts` — classification + routing + closure-local `currentTurnRootId`.
-- `packages/server/src/config.ts` — add `persistDeltas: boolean` under `config.rawEvents`.
-- `packages/server/src/container.ts` — wire `RawDeltaStore`.
-- `packages/server/src/socket/handlers/session/query.ts` — conditional UNION for RawEventPanel.
-- `packages/summoner/src/types.ts` — `RawEntry` → `RawEvent`.
+- `apps/server/drizzle/{sqlite,mysql}/0017_*.sql` — hand-written migration.
+- `apps/server/src/db/schema-{sqlite,mysql,columns}.ts` — rename existing table + add new `rawDeltas`.
+- `apps/server/src/services/drizzle-raw-event-store.ts` — point at `rawEvents` table, `append` returns id.
+- `apps/server/src/services/drizzle-raw-delta-store.ts` (new).
+- `apps/server/src/services/composite-raw-event-store.ts` — propagate `append` id return.
+- `apps/server/src/socket/raw-recorder.ts` — classification + routing + closure-local `currentTurnRootId`.
+- `apps/server/src/config.ts` — add `persistDeltas: boolean` under `config.rawEvents`.
+- `apps/server/src/container.ts` — wire `RawDeltaStore`.
+- `apps/server/src/socket/handlers/session/query.ts` — conditional UNION for RawEventPanel.
+- `apps/summoner/src/types.ts` — `RawEntry` → `RawEvent`.
 - Tests: classifier unit, store unit, recorder routing, RPC integration, migration smoke.
 - `.env` / `.env.example` — uncomment the `RAW_EVENTS_PERSIST_DELTAS=false` placeholder.
 - **No client change. No protocol change.** Chat replay is unaffected.

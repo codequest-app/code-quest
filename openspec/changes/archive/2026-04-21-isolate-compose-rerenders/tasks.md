@@ -1,11 +1,11 @@
 ## 1. Red test
 
-- [x] 1.1 Add `re-render isolation` describe block to `packages/client/src/contexts/__tests__/ChannelComposeProvider.test.tsx` with a `Typer` + `SiblingSpy` harness. Assert `SiblingSpy` render count stays at initial after 5 keystrokes. Confirm test fails against current code.
+- [x] 1.1 Add `re-render isolation` describe block to `apps/web/src/contexts/__tests__/ChannelComposeProvider.test.tsx` with a `Typer` + `SiblingSpy` harness. Assert `SiblingSpy` render count stays at initial after 5 keystrokes. Confirm test fails against current code.
 
 ## 2. Context split
 
-- [x] 2.1 In `packages/client/src/contexts/channel/ChannelComposeContext.tsx`, add `useChannelComposeActions()` that only calls `useContext(ComposeActionsContext)` and throws when used outside the provider.
-- [x] 2.2 Re-export `useChannelComposeActions` from `packages/client/src/contexts/channel/index.ts`.
+- [x] 2.1 In `apps/web/src/contexts/channel/ChannelComposeContext.tsx`, add `useChannelComposeActions()` that only calls `useContext(ComposeActionsContext)` and throws when used outside the provider.
+- [x] 2.2 Re-export `useChannelComposeActions` from `apps/web/src/contexts/channel/index.ts`.
 - [x] 2.3 Do NOT export `useChannelComposeState`; only the actions hook has a real consumer.
 
 ## 3. Provider stabilization
@@ -15,8 +15,8 @@
 
 ## 4. Migrate action-only consumers
 
-- [x] 4.1 `packages/client/src/components/ChatPanel.tsx`: swap `useChannelCompose()` → `useChannelComposeActions()` for the `focusTextarea` destructure.
-- [x] 4.2 `packages/client/src/components/ChatInputArea.tsx`: swap `useChannelCompose()` → `useChannelComposeActions()` for the `focusTextarea, addAttachments` destructure.
+- [x] 4.1 `apps/web/src/components/ChatPanel.tsx`: swap `useChannelCompose()` → `useChannelComposeActions()` for the `focusTextarea` destructure.
+- [x] 4.2 `apps/web/src/components/ChatInputArea.tsx`: swap `useChannelCompose()` → `useChannelComposeActions()` for the `focusTextarea, addAttachments` destructure.
 
 ## 5. Mention insertion dedupe
 

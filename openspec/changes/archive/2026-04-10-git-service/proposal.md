@@ -25,12 +25,12 @@ Git 操作分散在三處：`socket/utils/git.ts`（createGit、checkoutWithFall
 
 ## Impact
 
-- `packages/summoner/src/git/` — 新增 types.ts、local.ts
-- `packages/summoner/src/test/` — 新增 fake-git-service.ts
-- `packages/summoner/src/index.ts` — export 新增
-- `packages/server/src/socket/handlers/git.ts` — 改用 GitService
-- `packages/server/src/socket/handlers/worktree.ts` — 改用 GitService
-- `packages/server/src/services/worktree-manager.ts` — 移除
-- `packages/server/src/socket/utils/git.ts` — 移除
-- `packages/server/src/container.ts` — 新增 binding
-- `packages/server/src/types.ts` — 新增 TYPES.GitService
+- `apps/summoner/src/git/` — 新增 types.ts、local.ts
+- `apps/summoner/src/test/` — 新增 fake-git-service.ts
+- `apps/summoner/src/index.ts` — export 新增
+- `apps/server/src/socket/handlers/git.ts` — 改用 GitService
+- `apps/server/src/socket/handlers/worktree.ts` — 改用 GitService
+- `apps/server/src/services/worktree-manager.ts` — 移除
+- `apps/server/src/socket/utils/git.ts` — 移除
+- `apps/server/src/container.ts` — 新增 binding
+- `apps/server/src/types.ts` — 新增 TYPES.GitService

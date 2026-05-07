@@ -2,7 +2,7 @@
 
 ### Requirement: Socket event names are referenced via the shared `EVENTS` constant
 
-All code under `packages/server` and `packages/client` that registers handlers, emits, or awaits a reply on a project-defined socket event SHALL reference the event name via the `EVENTS` constant exported from `@code-quest/shared`. Bare string literals MUST NOT be used for project-defined event names.
+All code under `apps/server` and `apps/web` that registers handlers, emits, or awaits a reply on a project-defined socket event SHALL reference the event name via the `EVENTS` constant exported from `@code-quest/shared`. Bare string literals MUST NOT be used for project-defined event names.
 
 Exemptions:
 - Socket.IO transport events (`'connection'`, `'disconnect'`, `'error'`) — these are library-level and not part of the project protocol.

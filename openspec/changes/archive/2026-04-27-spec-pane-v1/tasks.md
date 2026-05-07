@@ -7,15 +7,15 @@
 
 ## 2. Server-side openspec reader + handler (TDD)
 
-- [x] 2.1 Red: add `packages/server/src/services/__tests__/openspec-reader.test.ts` — list returns changes/specs from a fake fs tree; non-existent dir returns empty.
-- [x] 2.2 Green: implement `packages/server/src/services/openspec-reader.ts` (delegates to `FilesystemService.browseEntries` + `readFileAbsolute`).
+- [x] 2.1 Red: add `apps/server/src/services/__tests__/openspec-reader.test.ts` — list returns changes/specs from a fake fs tree; non-existent dir returns empty.
+- [x] 2.2 Green: implement `apps/server/src/services/openspec-reader.ts` (delegates to `FilesystemService.browseEntries` + `readFileAbsolute`).
 - [x] 2.3 Red: add handler test covering `spec:list` + `spec:read` (path-traversal guard, missing-dir empty result).
-- [x] 2.4 Green: implement `packages/server/src/socket/handlers/spec.ts` + register in `server.ts`.
+- [x] 2.4 Green: implement `apps/server/src/socket/handlers/spec.ts` + register in `server.ts`.
 - [x] 2.5 Run server tests — green.
 
 ## 3. Client hook + SpecPane (TDD)
 
-- [x] 3.1 Red: `packages/client/src/components/__tests__/SpecPane.test.tsx` — null cwd → empty state, populated → list rendered, click → modal opens.
+- [x] 3.1 Red: `apps/web/src/components/__tests__/SpecPane.test.tsx` — null cwd → empty state, populated → list rendered, click → modal opens.
 - [x] 3.2 Green: `useSpecList(cwd)` hook + `<SpecPane>` component.
 - [x] 3.3 Run tests — green.
 

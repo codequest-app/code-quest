@@ -12,9 +12,9 @@
 
 ## 3. Feature Factories
 
-- [x] 3.1 新增 `packages/client/src/features/effort/effort-feature.ts`（`createEffortFeature`）
-- [x] 3.2 新增 `packages/client/src/features/thinking/thinking-feature.ts`（`createThinkingFeature`）
-- [x] 3.3 新增 `packages/client/src/features/fast-mode/fast-mode-feature.ts`（`createFastModeFeature`）
+- [x] 3.1 新增 `apps/web/src/features/effort/effort-feature.ts`（`createEffortFeature`）
+- [x] 3.2 新增 `apps/web/src/features/thinking/thinking-feature.ts`（`createThinkingFeature`）
+- [x] 3.3 新增 `apps/web/src/features/fast-mode/fast-mode-feature.ts`（`createFastModeFeature`）
 
 ## 4. buildMenuItems 重構
 

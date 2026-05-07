@@ -52,7 +52,7 @@ No `content` globs needed — auto-detected. No autoprefixer — Lightning CSS h
 **正確順序（寫 JSX 前跑一遍）：**
 
 1. **先查既有 token** — 需要的顏色 / 字級 / 間距 / radius / shadow / z-index 是否已經在 `@theme` 或內建 scale？
-   - 顏色：`grep "^\s*--color-" packages/client/src/App.css`
+   - 顏色：`grep "^\s*--color-" apps/web/src/App.css`
    - Spacing / text / z：用「優先內建 utility」表對照
 2. **差 1–2px / 1–2 階 → 就近取** — design system 的一致性 > pixel-perfect。`13px` 取 `text-xs` 或 `text-sm`、`#3a7d5e` 取 `text-success`。
 3. **超出既有 token 範圍 → 先擴 token，不要寫 arbitrary**
@@ -92,7 +92,7 @@ No `content` globs needed — auto-detected. No autoprefixer — Lightning CSS h
 - `max-w-50` = 175px、`max-w-51` = 178.5px
 - `max-h-120` = 420px（不是 480px）—— 4 處重複的 480px dialog body 抽 `@utility max-h-dialog-body { max-height: 30rem; }`，30rem 直接用 rem 不靠 spacing 計算
 
-guard test: `packages/client/src/utils/__tests__/no-arbitrary-utility.test.ts` 掃 components + stories，PR 加新 `\w+-[Npx]` 時擋下來。
+guard test: `apps/web/src/utils/__tests__/no-arbitrary-utility.test.ts` 掃 components + stories，PR 加新 `\w+-[Npx]` 時擋下來。
 
 **為什麼**：
 - arbitrary 值無法透過 `data-theme` / `data-font` / `data-density` axis 重載，使用者切主題或調密度時視覺破版。
@@ -253,7 +253,7 @@ Component composition 放心用 `className` prop override，不用擔心 CSS 順
 
 ## 此專案已有的 @utility
 
-（`packages/client/src/App.css`）
+（`apps/web/src/App.css`）
 
 - `dialog-viewport` — `max-w: calc(100vw - 2rem); max-h: calc(100vh - 4rem);`
 - `floating-popover-lg` / `floating-popover-sm` — gradient bg + layered shadow for CommandPalette / FilterPopover

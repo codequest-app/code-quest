@@ -21,10 +21,10 @@ Extension 的 `/resume` 是在聊天區域內顯示 session list overlay，按 c
 
 ## Impact
 
-- `packages/client/src/components/SessionHistory.tsx` — 簡化 UI
-- `packages/client/src/components/SessionRow.tsx` — 簡化為 title + 相對日期
-- `packages/client/src/components/ChatPanel.tsx` — 加入 overlay 狀態
-- `packages/client/src/components/WorkspaceLayout.tsx` — 移除 history sidebar
-- `packages/client/src/components/CommandMenu.tsx` — resume 觸發 overlay
-- `packages/server/src/socket/handlers/session-handler.ts` — session:list 加 cwd filter
-- `packages/server/src/services/session-store.ts` — query 加 cwd 條件
+- `apps/web/src/components/SessionHistory.tsx` — 簡化 UI
+- `apps/web/src/components/SessionRow.tsx` — 簡化為 title + 相對日期
+- `apps/web/src/components/ChatPanel.tsx` — 加入 overlay 狀態
+- `apps/web/src/components/WorkspaceLayout.tsx` — 移除 history sidebar
+- `apps/web/src/components/CommandMenu.tsx` — resume 觸發 overlay
+- `apps/server/src/socket/handlers/session-handler.ts` — session:list 加 cwd filter
+- `apps/server/src/services/session-store.ts` — query 加 cwd 條件

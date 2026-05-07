@@ -37,7 +37,7 @@
 ## Impact
 
 - 新增：
-  - `packages/client/src/hooks/useEffectiveColorTheme.ts` + test
+  - `apps/web/src/hooks/useEffectiveColorTheme.ts` + test
   - `packages/shared/src/schemas/preferences.ts` 加 `EffectiveColorTheme` type
 - 修改：
   - shared `colorThemeSchema` enum

@@ -37,11 +37,11 @@ Explicitly out of scope:
 ## Impact
 
 **Affected code:**
-- `packages/client/package.json` — add `react-resizable-panels` dep.
-- `packages/client/src/components/WorkspaceLayout.tsx` — wrap desktop columns in `PanelGroup`; new right-drawer state; renders `<RightPane>`.
-- `packages/client/src/components/WorkspaceTopbar.tsx` — both left and right triggers now dual-role (collapse on desktop, drawer on non-desktop); add `onOpenRightPane?` prop and make existing `onOpenMenu` unconditional across breakpoints.
-- `packages/client/src/components/RightPane.tsx` (new) — container + Files/Git/Spec tab strip + placeholder bodies.
-- `packages/client/src/hooks/useActiveCwd.ts` (new) — the composed-cwd hook.
+- `apps/web/package.json` — add `react-resizable-panels` dep.
+- `apps/web/src/components/WorkspaceLayout.tsx` — wrap desktop columns in `PanelGroup`; new right-drawer state; renders `<RightPane>`.
+- `apps/web/src/components/WorkspaceTopbar.tsx` — both left and right triggers now dual-role (collapse on desktop, drawer on non-desktop); add `onOpenRightPane?` prop and make existing `onOpenMenu` unconditional across breakpoints.
+- `apps/web/src/components/RightPane.tsx` (new) — container + Files/Git/Spec tab strip + placeholder bodies.
+- `apps/web/src/hooks/useActiveCwd.ts` (new) — the composed-cwd hook.
 - Tests: `WorkspaceLayoutRWD.test.tsx` extended; new `RightPane.test.tsx` + `useActiveCwd.test.ts`.
 
 **No server-side impact.** No API / DB / socket-event changes — this is shell only.

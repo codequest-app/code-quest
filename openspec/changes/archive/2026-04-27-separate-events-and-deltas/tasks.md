@@ -1,20 +1,20 @@
 ## Tasks
 
 ### 1. Hand-written migration (sqlite + mysql)
-- [x] `packages/server/drizzle/sqlite/0016_separate_events_and_deltas.sql` — create raw_deltas, copy delta rows from raw_entries, delete from raw_entries, rename raw_entries → raw_events, rename index.
-- [x] `packages/server/drizzle/mysql/0017_separate_events_and_deltas.sql` — same plan, RENAME TABLE + ALTER TABLE RENAME INDEX.
+- [x] `apps/server/drizzle/sqlite/0016_separate_events_and_deltas.sql` — create raw_deltas, copy delta rows from raw_entries, delete from raw_entries, rename raw_entries → raw_events, rename index.
+- [x] `apps/server/drizzle/mysql/0017_separate_events_and_deltas.sql` — same plan, RENAME TABLE + ALTER TABLE RENAME INDEX.
 - [x] Update both `_journal.json`.
 
 ### 2. Schema code rename + new rawDeltas
-- [x] `packages/server/src/db/schema-sqlite.ts` — rename `rawEntries` → `rawEvents`; add `rawDeltas`.
+- [x] `apps/server/src/db/schema-sqlite.ts` — rename `rawEntries` → `rawEvents`; add `rawDeltas`.
 - [x] Same for `schema-mysql.ts`.
 - [x] `schema-columns.ts`: `RAW_ENTRY_COLUMNS` → `RAW_EVENT_COLUMNS`; add `RAW_DELTA_COLUMNS`.
 - [x] `RawEntryColumnName` → `RawEventColumnName`; add `RawDeltaColumnName`.
 - [x] `pnpm db:migrate` runs cleanly on both drivers; counts verified (25,788 events / 117,487 deltas post-migration).
 
 ### 3. Types + zod
-- [x] `packages/summoner/src/types.ts`: `rawEntrySchema` → `rawEventSchema`; `RawEntry` → `RawEvent`.
-- [x] `packages/server/src/services/drizzle-raw-event-store.ts`: point at `rawEvents`; rename row schema and types.
+- [x] `apps/summoner/src/types.ts`: `rawEntrySchema` → `rawEventSchema`; `RawEntry` → `RawEvent`.
+- [x] `apps/server/src/services/drizzle-raw-event-store.ts`: point at `rawEvents`; rename row schema and types.
 - [x] All source sites migrated (grep-clean).
 
 ### 4. `DrizzleRawEventStore.append` returns id
@@ -24,12 +24,12 @@
 - [x] Tests covering both behaviours.
 
 ### 5. Classifier
-- [x] `packages/server/src/socket/raw-classifier.ts` `isDelta(raw)`.
+- [x] `apps/server/src/socket/raw-classifier.ts` `isDelta(raw)`.
 - [x] Unit tests covering delta subtypes, non-delta, malformed.
 
 ### 6. `DrizzleRawDeltaStore` + `RawDeltaStore` interface
-- [x] `packages/server/src/services/raw-delta-store.ts` interface + entry type.
-- [x] `packages/server/src/services/drizzle-raw-delta-store.ts` impl.
+- [x] `apps/server/src/services/raw-delta-store.ts` interface + entry type.
+- [x] `apps/server/src/services/drizzle-raw-delta-store.ts` impl.
 - [x] Unit tests (round-trip, parent_id preservation, order).
 - [x] `CompositeRawDeltaStore` for multi-driver fan-out (symmetric with events).
 
@@ -38,7 +38,7 @@
 - [x] Unit tests covering default / `'true'` / `'1'` / unset.
 
 ### 8. Facade `RawEventService` (consolidates `RawEventStore` public interface)
-- [x] New file `packages/server/src/services/raw-event-service.ts`.
+- [x] New file `apps/server/src/services/raw-event-service.ts`.
 - [x] Wraps `RawEventStore` (low-level events) + `RawDeltaStore`.
 - [x] Public methods: `appendEvent`, `appendDelta`, `getBySession(id, opts?)`, `getPreview`, `cloneEvents`.
 - [x] `getBySession(id, { includeDeltas: true })` UNIONs both tables, sorted by `seq`.

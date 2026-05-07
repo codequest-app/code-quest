@@ -17,7 +17,7 @@
 
 ## 2. ClientMessage discriminated union (root fix #2)
 
-- [x] 2.1 Locate `ClientMessage` definition (`packages/summoner/src/...` or `packages/shared/src/...`).
+- [x] 2.1 Locate `ClientMessage` definition (`apps/summoner/src/...` or `packages/shared/src/...`).
 - [x] 2.2 Identify the message-name → payload mapping (likely scattered across adapter transforms).
 - [x] 2.3 Build a single `MessagePayloadMap` interface keyed by `name`, then derive `ClientMessage` as a discriminated union: `{ [K in keyof MessagePayloadMap]: { name: K; payload: MessagePayloadMap[K] } }[keyof MessagePayloadMap]`.
 - [x] 2.4 Update producers (adapter transforms) to emit values that satisfy the new type — TS will surface mismatches.

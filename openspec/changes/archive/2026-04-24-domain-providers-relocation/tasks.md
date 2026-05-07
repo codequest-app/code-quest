@@ -9,20 +9,20 @@ Per "expect 不變或等價" — assertions preserved across both commits.
 ## Step 1 — File relocation
 
 ### 1. Git folder
-- [ ] 1.1 Create `packages/client/src/contexts/git/` folder.
+- [ ] 1.1 Create `apps/web/src/contexts/git/` folder.
 - [ ] 1.2 Move `contexts/GitContext.tsx` → `contexts/git/GitContext.tsx` (git mv).
 - [ ] 1.3 Move `hooks/useGitStatus.ts` → `contexts/git/useGitStatus.ts` (git mv).
 - [ ] 1.4 Add `contexts/git/index.ts` re-exporting GitProvider, useGitState, useGitActions, useGitStatus.
 
 ### 2. Fs folder
-- [ ] 2.1 Create `packages/client/src/contexts/fs/` folder.
+- [ ] 2.1 Create `apps/web/src/contexts/fs/` folder.
 - [ ] 2.2 Move `hooks/useExplorerBrowse.ts` → `contexts/fs/useFsBrowse.ts` (git mv + rename).
 - [ ] 2.3 Create `contexts/fs/FsContext.tsx` — minimal Provider that just wraps children for now (Step 2 adds actions).
 - [ ] 2.4 Mount `<FsProvider>` in `App.tsx` (or `WorkspaceLayout`) above ProjectProvider.
 - [ ] 2.5 Add `contexts/fs/index.ts` barrel.
 
 ### 3. Openspec folder
-- [ ] 3.1 Create `packages/client/src/contexts/openspec/` folder.
+- [ ] 3.1 Create `apps/web/src/contexts/openspec/` folder.
 - [ ] 3.2 Move `hooks/useOpenspecList.ts` → `contexts/openspec/useOpenspecList.ts`.
 - [ ] 3.3 Create `contexts/openspec/OpenspecContext.tsx` — minimal Provider (Step 2 adds actions).
 - [ ] 3.4 Mount `<OpenspecProvider>` (decision: per-project or global — start with global for simplicity).

@@ -16,6 +16,6 @@
 
 ## Impact
 
-- `packages/client/src/contexts/channel/ChannelMessagesContext.tsx`
-- `packages/client/src/contexts/channel/handlers/message.ts`（`applyUserContent` 拆職責）
-- `packages/client/src/contexts/__tests__/ChannelContext.test.tsx`（expect 不變）
+- `apps/web/src/contexts/channel/ChannelMessagesContext.tsx`
+- `apps/web/src/contexts/channel/handlers/message.ts`（`applyUserContent` 拆職責）
+- `apps/web/src/contexts/__tests__/ChannelContext.test.tsx`（expect 不變）

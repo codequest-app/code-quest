@@ -1,7 +1,7 @@
 ## Tasks
 
 ### 1. Audit current consumers
-- [ ] `grep -rn "var(--color-[a-z]+-rgb)" packages/client/src` — list every reference grouped by token name. Confirm:
+- [ ] `grep -rn "var(--color-[a-z]+-rgb)" apps/web/src` — list every reference grouped by token name. Confirm:
   - `accent-rgb`: inline style + mode-accent re-export → keep
   - `shadow-rgb`: tw-prose-kbd-shadows → keep
   - `text-rgb`: EffortSwitch (className arbitrary) → migrate

@@ -31,11 +31,11 @@
 ## Impact
 
 **Modified:**
-- `packages/client/src/components/TabBar.tsx` — Radix-based 重寫，drop shift-click split
-- `packages/client/src/components/TabContainer.tsx` — 砍 split 分支 + PanelGroup，body 用 `Tabs.Content forceMount + hidden`
-- `packages/client/src/contexts/TabContext.tsx` — 移除 `splitTabId` / `enterSplit` / `exitSplit`
-- `packages/client/src/components/__tests__/TabBar.test.tsx` — query 升級到 `getByRole('tab')` / `aria-selected`
-- `packages/client/src/contexts/__tests__/TabContext/split.test.tsx` — 整檔刪除（split 砍掉）
+- `apps/web/src/components/TabBar.tsx` — Radix-based 重寫，drop shift-click split
+- `apps/web/src/components/TabContainer.tsx` — 砍 split 分支 + PanelGroup，body 用 `Tabs.Content forceMount + hidden`
+- `apps/web/src/contexts/TabContext.tsx` — 移除 `splitTabId` / `enterSplit` / `exitSplit`
+- `apps/web/src/components/__tests__/TabBar.test.tsx` — query 升級到 `getByRole('tab')` / `aria-selected`
+- `apps/web/src/contexts/__tests__/TabContext/split.test.tsx` — 整檔刪除（split 砍掉）
 - 任何呼叫 `enterSplit` / `exitSplit` 的元件（grep 確認）
 
 **Dependencies:**

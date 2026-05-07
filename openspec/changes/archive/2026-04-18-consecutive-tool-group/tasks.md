@@ -1,6 +1,6 @@
 ## 1. Classifier utility (TDD)
 
-- [x] 1.1 Create `packages/client/src/utils/tool-group-rules.ts` exporting `READ_ONLY_TOOLS: ReadonlySet<string>` containing the tools that qualify for grouping. Seed from extension whitelist: `Read`, `Grep`, `Glob`, `WebSearch`, `WebFetch`, `TodoRead`, `TodoWrite`, `NotebookRead`, `ToolSearch` (confirm against `packages/client/src/utils/tool-registry.ts`)
+- [x] 1.1 Create `apps/web/src/utils/tool-group-rules.ts` exporting `READ_ONLY_TOOLS: ReadonlySet<string>` containing the tools that qualify for grouping. Seed from extension whitelist: `Read`, `Grep`, `Glob`, `WebSearch`, `WebFetch`, `TodoRead`, `TodoWrite`, `NotebookRead`, `ToolSearch` (confirm against `apps/web/src/utils/tool-registry.ts`)
 - [x] 1.2 Export `isReadOnlyToolNode(node: MessageNode): boolean` — returns true iff `node.message.type === 'tool_use'` and `node.message.content` ∈ READ_ONLY_TOOLS. Unit test.
 - [x] 1.3 Export `splitTimelineRuns(nodes: MessageNode[]): TimelineRun[]` where `TimelineRun = { kind: 'grouped'; nodes: MessageNode[] } | { kind: 'solo'; node: MessageNode }`. Rules:
   - Accumulate consecutive `isReadOnlyToolNode` into a grouped run
@@ -25,7 +25,7 @@
 
 ## 4. Regression + polish
 
-- [x] 4.1 Run `pnpm -C packages/client test` — all green
+- [x] 4.1 Run `pnpm -C apps/web test` — all green
 - [x] 4.2 Run `biome check` on touched files
 - [x] 4.3 Manually verify in dev: sequence of 3+ Reads collapses, sequence of 3 Bash stays expanded, mixed sequences split correctly, scroll-to-message still expands the group first
 

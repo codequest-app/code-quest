@@ -19,6 +19,6 @@ When a CLI session ends, the channel status gets incorrectly overridden back to 
 
 ## Impact
 
-- `packages/client/src/contexts/channel/ChannelMessagesContext.tsx` — `onSessionStates` function
-- `packages/client/src/contexts/channel/ChannelControlContext.tsx` — `onSessionClosed` function (partial fix already applied in working tree)
-- `packages/client/src/contexts/channel/__tests__/` — test files for both contexts
+- `apps/web/src/contexts/channel/ChannelMessagesContext.tsx` — `onSessionStates` function
+- `apps/web/src/contexts/channel/ChannelControlContext.tsx` — `onSessionClosed` function (partial fix already applied in working tree)
+- `apps/web/src/contexts/channel/__tests__/` — test files for both contexts

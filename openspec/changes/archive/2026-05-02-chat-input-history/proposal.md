@@ -18,7 +18,7 @@ Chat input has no message history across reloads — pressing ArrowUp works with
 
 ## Impact
 
-- `packages/client/src/components/chat/compose/ComposeInput.tsx` — inline history logic, fix ArrowUp guard
-- `packages/client/src/hooks/useInputHistory.ts` — deleted
-- `packages/client/src/hooks/__tests__/useInputHistory.test.ts` — deleted
+- `apps/web/src/components/chat/compose/ComposeInput.tsx` — inline history logic, fix ArrowUp guard
+- `apps/web/src/hooks/useInputHistory.ts` — deleted
+- `apps/web/src/hooks/__tests__/useInputHistory.test.ts` — deleted
 - No server changes, no socket events, no schema changes

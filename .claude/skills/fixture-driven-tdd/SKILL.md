@@ -12,12 +12,12 @@ description: Fixture-driven TDD workflow for CLI parsers and session tests. Uses
 ## Fixture Locations
 
 ```
-packages/summoner/src/__fixtures__/claude/
+apps/summoner/src/__fixtures__/claude/
 ├── real/        # 40+ files — DB exports & real CLI recordings
 └── synthetic/   # 18 files — hand-crafted for untriggerable events
 ```
 
-Fixtures are auto-loaded by TEMPLATES in `packages/summoner/src/test/fake-claude.ts`.
+Fixtures are auto-loaded by TEMPLATES in `apps/summoner/src/test/fake-claude.ts`.
 
 ## Workflow
 
@@ -32,15 +32,15 @@ mysql -u root -h 127.0.0.1 -P 3306 code_quest -N -e \
   "SELECT raw FROM raw_entries WHERE raw LIKE '{\"type\":\"<event_type>\"%' LIMIT 1;"
 ```
 
-DB connection in `packages/server/.env` → `DATABASE_URL`.
+DB connection in `apps/server/.env` → `DATABASE_URL`.
 
 ### 2. Add to fixtures
 
-Save to `packages/summoner/src/__fixtures__/claude/real/<name>.jsonl` (or `synthetic/` if hand-crafted).
+Save to `apps/summoner/src/__fixtures__/claude/real/<name>.jsonl` (or `synthetic/` if hand-crafted).
 
 ### 3. Add segment builder
 
-In `packages/summoner/src/test/fake-claude.ts`, add to `segments` object:
+In `apps/summoner/src/test/fake-claude.ts`, add to `segments` object:
 
 ```typescript
 myEvent(param: string): string {
@@ -79,4 +79,4 @@ expect(claude.received('message:my_event')).toHaveLength(1);
 
 - Capture script: `scripts/capture-fixture.sh`
 - Tracking: `docs/fixture-capture-tracking.md`
-- Segment builders: `packages/summoner/src/test/fake-claude.ts` (60+ builders)
+- Segment builders: `apps/summoner/src/test/fake-claude.ts` (60+ builders)

@@ -62,7 +62,7 @@
 - [ ] 8.2 RED: when callback returns `{ error: 'boom' }`, `resume()` rejects with `Error('boom')`.
 - [ ] 8.3 RED: when callback returns a shape failing `sessionResumeResponseSchema.safeParse`, `resume()` rejects with `Error('Invalid response')`.
 - [ ] 8.4 RED: `useResume()` outside Provider throws.
-- [ ] 8.5 GREEN: implement `packages/client/src/contexts/ResumeContext.tsx`. Use `sessionResumeResponseSchema.safeParse` on the callback payload.
+- [ ] 8.5 GREEN: implement `apps/web/src/contexts/ResumeContext.tsx`. Use `sessionResumeResponseSchema.safeParse` on the callback payload.
 
 ## 9. ResumePicker
 
@@ -71,21 +71,21 @@
 - [ ] 9.3 RED: click row → calls `useResume().resume(row.id)` → on resolve calls `onResume(channelId)`.
 - [ ] 9.4 RED: on reject, renders inline error; row no longer in loading state; other rows still clickable.
 - [ ] 9.5 RED: empty list with cwd → `"No resumable sessions for this project."`; without cwd → `"No resumable sessions."`; Close button calls `onCancel`.
-- [ ] 9.6 GREEN: implement `packages/client/src/components/ResumePicker.tsx`.
+- [ ] 9.6 GREEN: implement `apps/web/src/components/ResumePicker.tsx`.
 
 ## 10. ProjectContextMenu
 
 - [ ] 10.1 RED: renders at `{x, y}`; single item "Resume session…"; click invokes `onSelectResume`.
 - [ ] 10.2 RED: outside click calls `onClose`.
 - [ ] 10.3 RED: Escape calls `onClose`.
-- [ ] 10.4 GREEN: implement `packages/client/src/components/ProjectContextMenu.tsx` as fixed-position `<div>` with mousedown/keydown listeners.
+- [ ] 10.4 GREEN: implement `apps/web/src/components/ProjectContextMenu.tsx` as fixed-position `<div>` with mousedown/keydown listeners.
 
 ## 11. ProjectContext pendingActivateChannel intent (see Decision 10)
 
 - [ ] 11.1 RED: initial `pendingActivateChannel` is `null`.
 - [ ] 11.2 RED: `requestActivateChannel('/proj', 'ch-1')` sets `pendingActivateChannel` to `{ cwd: '/proj', channelId: 'ch-1' }`.
 - [ ] 11.3 RED: `clearPendingActivate()` resets `pendingActivateChannel` to `null`.
-- [ ] 11.4 GREEN: extend `ProjectContext` state + actions in `packages/client/src/contexts/ProjectContext.tsx`.
+- [ ] 11.4 GREEN: extend `ProjectContext` state + actions in `apps/web/src/contexts/ProjectContext.tsx`.
 
 ## 12. TabProvider consumes pendingActivateChannel (see Decision 10)
 

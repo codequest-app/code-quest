@@ -2,7 +2,7 @@
 
 ### Requirement: Floating UI surfaces use Radix primitives
 
-All floating UI surfaces in `packages/client/src/components/` (popovers, dropdown menus, context menus) SHALL use the matching Radix primitive (`@radix-ui/react-popover`, `@radix-ui/react-dropdown-menu`, `@radix-ui/react-context-menu`) rather than hand-rolled `position: fixed` + `getBoundingClientRect()` placement. Modals continue to use `@radix-ui/react-dialog`.
+All floating UI surfaces in `apps/web/src/components/` (popovers, dropdown menus, context menus) SHALL use the matching Radix primitive (`@radix-ui/react-popover`, `@radix-ui/react-dropdown-menu`, `@radix-ui/react-context-menu`) rather than hand-rolled `position: fixed` + `getBoundingClientRect()` placement. Modals continue to use `@radix-ui/react-dialog`.
 
 A floating surface is anything that visually overlays the page anchored to a trigger element: branch pickers, message action menus, worktree / project / file context menus, live-session popovers, plan-comment popovers, and any future popover/menu added.
 

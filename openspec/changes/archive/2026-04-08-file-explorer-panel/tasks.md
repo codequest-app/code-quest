@@ -16,13 +16,13 @@
 
 ## 3. Server — Config & Security
 
-- [x] 3.1 在 `packages/server/src/config.ts` 新增 `explorerRoots` 設定：讀取 `FILE_EXPLORER_ROOTS` env var（逗號分隔），未設定時預設 `[os.homedir()]`
+- [x] 3.1 在 `apps/server/src/config.ts` 新增 `explorerRoots` 設定：讀取 `FILE_EXPLORER_ROOTS` env var（逗號分隔），未設定時預設 `[os.homedir()]`
 - [x] 3.2 建立 path validation utility function + 測試：接收 path + explorerRoots，回傳 resolved absolute path 或 null（path traversal / out of scope 回傳 null）
 
 ## 4. Server — Explorer Handler
 
 - [x] 4.1 為 explorer handler 撰寫測試：roots 回傳、子目錄列表、path 安全驗證、權限錯誤處理、symlink 排除
-- [x] 4.2 建立 `packages/server/src/socket/handlers/explorer.ts`，實作 `explorer:browse` handler（不使用 `withChannel`）
+- [x] 4.2 建立 `apps/server/src/socket/handlers/explorer.ts`，實作 `explorer:browse` handler（不使用 `withChannel`）
 - [x] 4.3 handler 邏輯：無 path → 回傳 explorerRoots 列表；有 path → 讀取子目錄（`readdirSync` + `Dirent.isDirectory()`）
 - [x] 4.4 過濾隱藏目錄（`.` 開頭）和忽略目錄（`node_modules`、`.git`、`dist`、`coverage`）
 - [x] 4.5 使用 `lstatSync` 排除 symlink 目錄
@@ -47,7 +47,7 @@
 ## 7. Environment & Documentation
 
 - [x] 7.1 在 `.env.example` 新增 `FILE_EXPLORER_ROOTS` 說明
-- [x] 7.2 在 `packages/client/src/config.ts` 確認無需新增 client env（所有設定都在 server 端）
+- [x] 7.2 在 `apps/web/src/config.ts` 確認無需新增 client env（所有設定都在 server 端）
 
 ## 8. Bug fixes
 

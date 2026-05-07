@@ -24,6 +24,6 @@ The slash command palette has three inconsistent matching/submit behaviors that 
 
 ## Impact
 
-- `packages/client/src/components/command-menu/menu-layout.ts` — `filterMenuItems` empty-first-token guard.
-- `packages/client/src/components/command-menu/CommandMenu.tsx` — visibility + Enter key fallthrough.
+- `apps/web/src/components/command-menu/menu-layout.ts` — `filterMenuItems` empty-first-token guard.
+- `apps/web/src/components/command-menu/CommandMenu.tsx` — visibility + Enter key fallthrough.
 - Existing tests in `command-menu/__tests__/` need new cases; no migration / no schema changes.

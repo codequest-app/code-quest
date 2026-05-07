@@ -1,10 +1,10 @@
 ---
 name: vitest-testing
 description: >
-  Project-specific Vitest testing reference for the **server** package (packages/server). Use when writing
+  Project-specific Vitest testing reference for the **server** package (apps/server). Use when writing
   or modifying server-side vitest tests, fixing failing tests, testing DB / socket.io server-side,
   choosing mocking strategies, or working with async patterns and fake timers. For frontend tests
-  (packages/client) see `frontend-testing`.
+  (apps/web) see `frontend-testing`.
 ---
 
 # Vitest Testing — Server Reference

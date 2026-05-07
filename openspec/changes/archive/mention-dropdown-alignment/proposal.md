@@ -28,6 +28,6 @@
 - File manager 功能
 
 ## Affected packages
-- `packages/client` — MentionDropdown, AddButton, ComposeInput
-- `packages/server` — handlers/file.ts
+- `apps/web` — MentionDropdown, AddButton, ComposeInput
+- `apps/server` — handlers/file.ts
 - `packages/shared` — schemas/file.ts, socket-events.ts

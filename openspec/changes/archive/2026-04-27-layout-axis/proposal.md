@@ -25,11 +25,11 @@
 ## Impact
 
 - 新增：
-  - `packages/client/src/features/layout/layout-feature.ts` + test + story
+  - `apps/web/src/features/layout/layout-feature.ts` + test + story
 - 修改：
-  - `packages/client/src/App.tsx`（同步 `data-layout`）
-  - `packages/client/src/App.css`（新增 `:root[data-layout="b"]` block）
-  - `packages/client/src/components/SettingsDialog.tsx`（radio group）
-  - `packages/client/src/components/CommandPalette.tsx`（register feature）
+  - `apps/web/src/App.tsx`（同步 `data-layout`）
+  - `apps/web/src/App.css`（新增 `:root[data-layout="b"]` block）
+  - `apps/web/src/components/SettingsDialog.tsx`（radio group）
+  - `apps/web/src/components/CommandPalette.tsx`（register feature）
 - 測試：vitest + typecheck + test-storybook 全綠
 - 風險：B layout 視覺設計未定 → 先用明顯 class 切換（如 sidebar 寬度、accent color）作為 scaffold，視覺細節 follow-up

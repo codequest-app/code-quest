@@ -1,6 +1,6 @@
 ## Context
 
-`ClaudeAdapter`（`packages/summoner/src/claude/adapter.ts`）實作 `ProviderAdapter` interface，是 Claude CLI stdout → ClientMessage 的轉換橋樑。目前有三種職責混在同一個檔案：
+`ClaudeAdapter`（`apps/summoner/src/claude/adapter.ts`）實作 `ProviderAdapter` interface，是 Claude CLI stdout → ClientMessage 的轉換橋樑。目前有三種職責混在同一個檔案：
 
 1. **Inbound transform**：`convertRateLimitMessage`、`convertAuthStatusMessage` 是 inline 函式，但 `transforms/` 目錄已有六個風格一致的 transformer 檔案（`assistant.ts`、`system.ts` 等）
 2. **Outbound mapping**：`REQUEST_MAPPINGS` 是 60+ 行的靜態資料表，混在 class 定義旁邊

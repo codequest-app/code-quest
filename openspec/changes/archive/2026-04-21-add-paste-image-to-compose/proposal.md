@@ -21,7 +21,7 @@ Package research confirmed no suitable npm dependency: `react-gluejar` (the only
 
 ## Impact
 
-- **Affected code**: `packages/client/src/components/ComposeInput.tsx` (add onPaste handler), associated tests
+- **Affected code**: `apps/web/src/components/ComposeInput.tsx` (add onPaste handler), associated tests
 - **No new dependencies**: native Web Platform API
 - **No production behavioral change for non-image paste**: text paste unchanged
 - **Risk**: low — additive handler, falls through to default on non-image clipboard contents

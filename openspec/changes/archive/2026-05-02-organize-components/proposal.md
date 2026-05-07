@@ -2,7 +2,7 @@
 
 ## Summary
 
-將 `packages/client/src/components/` 下 100+ 個打平的 component 檔案，依 domain 分類到子目錄。
+將 `apps/web/src/components/` 下 100+ 個打平的 component 檔案，依 domain 分類到子目錄。
 
 ## Scope
 

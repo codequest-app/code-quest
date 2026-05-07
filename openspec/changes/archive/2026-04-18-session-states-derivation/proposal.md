@@ -41,9 +41,9 @@ signals in `SessionContext`) that belongs in a follow-up change.
 
 ## Impact
 
-- `packages/client/src/contexts/channel/ChannelConfigContext.tsx` —
+- `apps/web/src/contexts/channel/ChannelConfigContext.tsx` —
   replace `router.on('session:states', ...)` useEffect with a derivation
   useEffect reading `useSession().sessions`.
-- `packages/client/src/contexts/channel/handlers/settings.ts` —
+- `apps/web/src/contexts/channel/handlers/settings.ts` —
   `onSessionStates` export removed (no remaining callers).
 - No test changes, no expect changes. 1147 tests green.

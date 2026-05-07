@@ -18,5 +18,5 @@ A 視窗送出 prompt 後顯示 spinner + stop 按鈕，但 B 視窗沒有任何
 
 ## Impact
 
-- `packages/client/src/contexts/channel/ChannelMessagesContext.tsx` — 監聽 `session:states` 更新 status
-- 或 `packages/client/src/contexts/channel/ChannelConfigContext.tsx` — 在現有 `onSessionStates` handler 中加 status 更新
+- `apps/web/src/contexts/channel/ChannelMessagesContext.tsx` — 監聽 `session:states` 更新 status
+- 或 `apps/web/src/contexts/channel/ChannelConfigContext.tsx` — 在現有 `onSessionStates` handler 中加 status 更新

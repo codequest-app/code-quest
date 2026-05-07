@@ -56,7 +56,7 @@ summoner `loadConfig()` SHALL include `log: { level: string; pretty: boolean }` 
 - **THEN** a `logger.ts` SHALL exist exporting a pino logger configured from `config.log`
 
 ### Requirement: env documentation
-Both `packages/server/.env.example` and `packages/summoner/.env.example` SHALL document `LOG_LEVEL` and `LOG_PRETTY` with valid values and defaults.
+Both `apps/server/.env.example` and `apps/summoner/.env.example` SHALL document `LOG_LEVEL` and `LOG_PRETTY` with valid values and defaults.
 
 #### Scenario: .env.example contains log vars
 - **WHEN** a developer reads `.env.example`

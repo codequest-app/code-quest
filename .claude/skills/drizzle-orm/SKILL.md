@@ -11,7 +11,7 @@ description: >
 ## File Structure
 
 ```
-packages/server/
+apps/server/
 ├── src/db/
 │   ├── schema-sqlite.ts        # sqliteTable() definitions
 │   ├── schema-mysql.ts         # mysqlTable() definitions

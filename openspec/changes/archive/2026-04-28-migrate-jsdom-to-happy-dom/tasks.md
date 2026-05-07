@@ -5,8 +5,8 @@
 
 ## 2. 切換測試環境
 
-- [x] 2.1 `packages/client/package.json` 新增 `happy-dom` devDependency
-- [x] 2.2 `packages/client/vitest.config.ts` 的 `environment` 從 `jsdom` 改為 `happy-dom`
+- [x] 2.1 `apps/web/package.json` 新增 `happy-dom` devDependency
+- [x] 2.2 `apps/web/vitest.config.ts` 的 `environment` 從 `jsdom` 改為 `happy-dom`
 - [x] 2.3 確認 happy-dom 下全 tests pass
 
 ## 3. 移除不再需要的 polyfill

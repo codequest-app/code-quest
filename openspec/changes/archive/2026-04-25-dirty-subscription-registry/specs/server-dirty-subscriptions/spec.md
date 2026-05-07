@@ -2,7 +2,7 @@
 
 ### Requirement: Dirty matchers live in a dedicated module
 
-`matchesFs`, `matchesGit`, `matchesOpenspec`, `IGNORE_RES`, and `GIT_META_RE` SHALL be defined in `packages/server/src/socket/dirty-matchers.ts`. Handler files (`handlers/fs.ts`, `handlers/git.ts`, `handlers/openspec.ts`) MUST NOT export these predicates and MUST NOT import predicates or regexes from each other. `container.ts` MUST import the three predicates from `dirty-matchers.ts` when constructing the `DirtyBroadcaster` instances.
+`matchesFs`, `matchesGit`, `matchesOpenspec`, `IGNORE_RES`, and `GIT_META_RE` SHALL be defined in `apps/server/src/socket/dirty-matchers.ts`. Handler files (`handlers/fs.ts`, `handlers/git.ts`, `handlers/openspec.ts`) MUST NOT export these predicates and MUST NOT import predicates or regexes from each other. `container.ts` MUST import the three predicates from `dirty-matchers.ts` when constructing the `DirtyBroadcaster` instances.
 
 #### Scenario: Adding a new ignore pattern
 - **WHEN** a developer needs to ignore an additional path family in dirty events
@@ -14,7 +14,7 @@
 
 ### Requirement: Socket-to-broadcaster wiring is centralized in `subscribeDirtyForSocket`
 
-`packages/server/src/socket/dirty-subscriber.ts` SHALL export `subscribeDirtyForSocket(socket, cwd, dirty): Unsubscribe[]`, which subscribes the socket to `dirty.files`, `dirty.git`, and `dirty.openspec` for the given `cwd`, emitting `files:dirty` / `git:dirty` / `openspec:dirty` events to the socket with the established payload shape, and returns the three unsubscribe handles. Both `socket/channel-manager.ts` and `socket/handlers/fs.ts` MUST call this helper instead of re-implementing the three subscribe calls inline.
+`apps/server/src/socket/dirty-subscriber.ts` SHALL export `subscribeDirtyForSocket(socket, cwd, dirty): Unsubscribe[]`, which subscribes the socket to `dirty.files`, `dirty.git`, and `dirty.openspec` for the given `cwd`, emitting `files:dirty` / `git:dirty` / `openspec:dirty` events to the socket with the established payload shape, and returns the three unsubscribe handles. Both `socket/channel-manager.ts` and `socket/handlers/fs.ts` MUST call this helper instead of re-implementing the three subscribe calls inline.
 
 #### Scenario: Channel-manager subscribes a socket to a cwd
 - **WHEN** `channel-manager.ts` joins a socket to a channel and needs dirty broadcasting

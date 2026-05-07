@@ -24,10 +24,10 @@ Client components 有 ~146 行 Claude-specific hardcoded 值散落在 15 個檔�
 
 ## Impact
 
-- `packages/summoner/src/protocol/provider-adapter.ts` — ProviderAdapter interface 擴展
-- `packages/summoner/src/protocol/claude-adapter.ts` — ClaudeAdapter 實作 clientConfig
-- `packages/server/src/socket/handlers/misc-handler.ts` — init response 帶 clientConfig
-- `packages/client/src/utils/model-utils.ts` — 刪除 hardcoded fallback
-- `packages/client/src/components/` — 15 個檔案移除 hardcode，改讀 Context
-- `packages/client/src/contexts/SessionContext.tsx` — 存儲 providerConfig
+- `apps/summoner/src/protocol/provider-adapter.ts` — ProviderAdapter interface 擴展
+- `apps/summoner/src/protocol/claude-adapter.ts` — ClaudeAdapter 實作 clientConfig
+- `apps/server/src/socket/handlers/misc-handler.ts` — init response 帶 clientConfig
+- `apps/web/src/utils/model-utils.ts` — 刪除 hardcoded fallback
+- `apps/web/src/components/` — 15 個檔案移除 hardcode，改讀 Context
+- `apps/web/src/contexts/SessionContext.tsx` — 存儲 providerConfig
 - `packages/shared/src/schemas/` — 新增 ProviderClientConfig Zod schema

@@ -23,5 +23,5 @@ Also document the error handling convention so future contributors know the rule
 
 ## Scope
 
-- `packages/client/src/components/SessionRow.tsx` — rename failure
-- `packages/client/src/hooks/useSpeechToText.ts` — speech recognition error
+- `apps/web/src/components/SessionRow.tsx` — rename failure
+- `apps/web/src/hooks/useSpeechToText.ts` — speech recognition error

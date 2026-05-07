@@ -34,19 +34,19 @@ Out of scope:
 ## Impact
 
 **New code:**
-- `packages/client/src/components/RenameWorktreeDialog.tsx` + test.
-- `packages/client/src/components/ArchiveWorktreeConfirmDialog.tsx` + test.
-- `packages/server/src/socket/handlers/worktree-rename.ts` (or extend `worktree.ts` in place).
+- `apps/web/src/components/RenameWorktreeDialog.tsx` + test.
+- `apps/web/src/components/ArchiveWorktreeConfirmDialog.tsx` + test.
+- `apps/server/src/socket/handlers/worktree-rename.ts` (or extend `worktree.ts` in place).
 
 **Modified code:**
-- `packages/summoner/src/git/types.ts` — add 2 methods.
-- `packages/summoner/src/git/local.ts` — implement.
-- `packages/summoner/src/test/fake-git-service.ts` — implement + new error setters for tests.
+- `apps/summoner/src/git/types.ts` — add 2 methods.
+- `apps/summoner/src/git/local.ts` — implement.
+- `apps/summoner/src/test/fake-git-service.ts` — implement + new error setters for tests.
 - `packages/shared/src/schemas/worktree.ts` — add 2 payload/response schemas + `WorktreeArchiveError` discriminated union for the dirty case.
 - `packages/shared/src/socket-events.ts` — register events.
-- `packages/server/src/socket/handlers/worktree.ts` — handlers.
-- `packages/client/src/contexts/WorktreeContext.tsx` — add `rename` + `archive` to actions.
-- `packages/client/src/components/WorktreeChildList.tsx` — replace toast placeholders with dialog flows.
+- `apps/server/src/socket/handlers/worktree.ts` — handlers.
+- `apps/web/src/contexts/WorktreeContext.tsx` — add `rename` + `archive` to actions.
+- `apps/web/src/components/WorktreeChildList.tsx` — replace toast placeholders with dialog flows.
 
 **Risk:** medium.
 - `git branch -m` from a non-checked-out worktree — must use `-C <worktree-path>` to scope correctly, otherwise it renames the main repo's branch.

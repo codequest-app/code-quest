@@ -41,8 +41,8 @@ Switch to **TanStack Virtual** (`@tanstack/react-virtual`) — a **headless** vi
 ## Impact
 
 - **Affected code**:
-  - `packages/client/src/components/MessageList.tsx` — add virtualizer around the existing scroll container
-  - `packages/client/src/components/RawEventPanel.tsx` — swap Virtuoso for TanStack Virtual
-  - `packages/client/package.json` — remove `react-virtuoso`, add `@tanstack/react-virtual`
+  - `apps/web/src/components/MessageList.tsx` — add virtualizer around the existing scroll container
+  - `apps/web/src/components/RawEventPanel.tsx` — swap Virtuoso for TanStack Virtual
+  - `apps/web/package.json` — remove `react-virtuoso`, add `@tanstack/react-virtual`
   - `test/setup.ts` — remove `react-virtuoso` mock if present; TanStack Virtual works with jsdom given a mocked `ResizeObserver`
 - **Risk**: low. Scroll logic is unchanged (already working on main). Only the DOM inside the scroll container changes. Existing tests that assert scroll behavior (`ScrollToBottom.test.tsx`, MessageList scroll tests) keep passing because scroll code is untouched.

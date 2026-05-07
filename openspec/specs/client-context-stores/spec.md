@@ -5,7 +5,7 @@ TBD - created by archiving change cwd-query-store-extract. Update Purpose after 
 ## Requirements
 ### Requirement: createCwdQueryStore factory SHALL provide the per-cwd cached external-store pattern
 
-A factory `createCwdQueryStore<TRaw, TData>({ fetch, dirtyEvent, parse, getCwdFromDirtyPayload })` SHALL be provided in `packages/client/src/contexts/lib/createCwdQueryStore.ts`. It returns `{ useStoreValue, refetch, clear }`. The factory SHALL keep an internal per-cwd cache, dedup concurrent fetches for the same cwd, and refetch the matching entry when the named dirty event fires.
+A factory `createCwdQueryStore<TRaw, TData>({ fetch, dirtyEvent, parse, getCwdFromDirtyPayload })` SHALL be provided in `apps/web/src/contexts/lib/createCwdQueryStore.ts`. It returns `{ useStoreValue, refetch, clear }`. The factory SHALL keep an internal per-cwd cache, dedup concurrent fetches for the same cwd, and refetch the matching entry when the named dirty event fires.
 
 #### Scenario: First mount triggers a fetch
 

@@ -21,9 +21,9 @@ channelId 代表 server-side 資源（CLI process + session），應由 server �
 
 ## Impact
 
-- `packages/client/src/contexts/channel/ChannelContext.tsx` — channelId optional
-- `packages/client/src/contexts/channel/ChannelMessagesContext.tsx` — launch/join 邏輯
-- `packages/client/src/contexts/TabContext.tsx` — temp ID + replace
-- `packages/client/src/components/WorkspaceLayout.tsx` — 傳遞 props
-- `packages/server/src/socket/handlers/app.ts` — app:init 回傳 cwd
+- `apps/web/src/contexts/channel/ChannelContext.tsx` — channelId optional
+- `apps/web/src/contexts/channel/ChannelMessagesContext.tsx` — launch/join 邏輯
+- `apps/web/src/contexts/TabContext.tsx` — temp ID + replace
+- `apps/web/src/components/WorkspaceLayout.tsx` — 傳遞 props
+- `apps/server/src/socket/handlers/app.ts` — app:init 回傳 cwd
 - `packages/shared/src/schemas/session.ts` — channelId optional in launch schema

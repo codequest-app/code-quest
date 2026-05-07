@@ -43,14 +43,14 @@ scoped audits.
 
 ## Impact
 
-- `packages/client/src/components/ComposeInput.tsx`
-- `packages/client/src/components/tools/tool-registry.ts`
-- `packages/client/src/components/InitOptionsDialog.tsx`
-- `packages/client/src/components/ModelPickerPanel.tsx`
-- `packages/client/src/components/resume-route.ts` → moved to
-  `packages/client/src/utils/resume-route.ts`
-- `packages/client/src/components/__tests__/resume-route.test.ts` →
-  moved to `packages/client/src/utils/__tests__/resume-route.test.ts`
-- `packages/client/src/components/ChatPanel.tsx` — import path update
+- `apps/web/src/components/ComposeInput.tsx`
+- `apps/web/src/components/tools/tool-registry.ts`
+- `apps/web/src/components/InitOptionsDialog.tsx`
+- `apps/web/src/components/ModelPickerPanel.tsx`
+- `apps/web/src/components/resume-route.ts` → moved to
+  `apps/web/src/utils/resume-route.ts`
+- `apps/web/src/components/__tests__/resume-route.test.ts` →
+  moved to `apps/web/src/utils/__tests__/resume-route.test.ts`
+- `apps/web/src/components/ChatPanel.tsx` — import path update
 - No test changes beyond relocation; all 1147 client tests must still
   pass with no expect changes.

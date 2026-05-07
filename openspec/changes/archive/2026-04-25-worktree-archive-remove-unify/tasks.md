@@ -2,7 +2,7 @@
 
 ### 1. Add unified action
 
-- [x] In `packages/client/src/contexts/GitContext.tsx`, add `removeWorktree(projectCwd, name, opts?: { force?: boolean; deleteBranch?: boolean })`.
+- [x] In `apps/web/src/contexts/GitContext.tsx`, add `removeWorktree(projectCwd, name, opts?: { force?: boolean; deleteBranch?: boolean })`.
 - [x] Forward `opts` to `EVENTS.git.worktree.remove` unchanged.
 - [x] On success, update the local `listing` cache for the project (drop the removed entry).
 - [x] On error, return the error unchanged (no swallow / no rewrap).

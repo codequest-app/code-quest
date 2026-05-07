@@ -27,13 +27,13 @@
 ## Impact
 
 - 新增/修改檔案：
-  - `packages/client/src/stores/usePreferencesStore.ts`（擴充軸線）
-  - `packages/client/src/App.tsx`（掛載時同步 data-attr）
-  - `packages/client/src/App.css`（拆 `@theme` 成 `:root[data-theme="..."]` / `:root[data-font="..."]`）
-  - 新增 `packages/client/src/components/**/*.stories.tsx`（22 個）
-  - 新增 `packages/client/src/features/**/*.stories.tsx`（4 個）
-  - 新增 `packages/client/.storybook/test-runner` 配置
-  - `packages/client/package.json`（加 `@storybook/test-runner`、`test-storybook` script）
+  - `apps/web/src/stores/usePreferencesStore.ts`（擴充軸線）
+  - `apps/web/src/App.tsx`（掛載時同步 data-attr）
+  - `apps/web/src/App.css`（拆 `@theme` 成 `:root[data-theme="..."]` / `:root[data-font="..."]`）
+  - 新增 `apps/web/src/components/**/*.stories.tsx`（22 個）
+  - 新增 `apps/web/src/features/**/*.stories.tsx`（4 個）
+  - 新增 `apps/web/.storybook/test-runner` 配置
+  - `apps/web/package.json`（加 `@storybook/test-runner`、`test-storybook` script）
 - 依賴：`@storybook/test-runner`（Playwright 已裝）
 - 測試：既有 vitest + typecheck + lint 全綠；新增 Storybook smoke/snapshot
 - 風險：CSS vars 拆 block 時若預設值寫錯會整頁變色 → 以 dump diff 驗證阻擋

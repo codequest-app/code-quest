@@ -24,10 +24,10 @@ Server:
 
 Tests:
 
-- `packages/server/src/__tests__/channel.test.ts`: 8 `new Channel(...)` calls gain a `'/test/cwd'` 4th argument. Pure setup correction.
-- `packages/server/src/__tests__/session-connect.test.ts`: test setups that upsert sessionStore rows or call `session:resume` without cwd gain a cwd. Setup correction.
-- `packages/client/src/test/render-with-channel.tsx`: `claude.initialize` launch payload defaults to `'/test/cwd'` when `options.cwd` not supplied (so handleLaunch doesn't reject). TabProvider default already added in earlier iteration. `ChannelProvider.cwd` stays `options.cwd` (undefined in most tests to skip React-side launch; avoids double-launch).
-- `packages/client/src/components/__tests__/ComposeInput.test.tsx`: the one test that depends on `channel.cwd === packages/server` (seeded files) passes `cwd: serverCwd` explicitly. Setup correction.
+- `apps/server/src/__tests__/channel.test.ts`: 8 `new Channel(...)` calls gain a `'/test/cwd'` 4th argument. Pure setup correction.
+- `apps/server/src/__tests__/session-connect.test.ts`: test setups that upsert sessionStore rows or call `session:resume` without cwd gain a cwd. Setup correction.
+- `apps/web/src/test/render-with-channel.tsx`: `claude.initialize` launch payload defaults to `'/test/cwd'` when `options.cwd` not supplied (so handleLaunch doesn't reject). TabProvider default already added in earlier iteration. `ChannelProvider.cwd` stays `options.cwd` (undefined in most tests to skip React-side launch; avoids double-launch).
+- `apps/web/src/components/__tests__/ComposeInput.test.tsx`: the one test that depends on `channel.cwd === apps/server` (seeded files) passes `cwd: serverCwd` explicitly. Setup correction.
 
 ## Scope — out of scope
 

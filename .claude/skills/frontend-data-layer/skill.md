@@ -196,7 +196,7 @@ emit('chat:send', sessionId, message);
 ## 7. Directory Structure & Naming
 
 ```
-packages/client/src/
+apps/web/src/
 ├── api/
 │   ├── api-client.ts          # ky.create() singleton
 │   ├── query-client.ts        # QueryClient + global error handlers

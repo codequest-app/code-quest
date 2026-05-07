@@ -4,7 +4,7 @@
  * These test cases are derived from:
  * - Real CLI ZodError messages (the union variants the CLI actually validates)
  * - POC branch commit 00c1317 (verified working with real CLI)
- * - Fixture: packages/summoner/src/__fixtures__/claude/control-request-can-use-tool.jsonl
+ * - Fixture: apps/summoner/src/__fixtures__/claude/control-request-can-use-tool.jsonl
  *
  * If the CLI changes its expected format, update the schema AND these tests together.
  */

@@ -2,7 +2,7 @@
 
 ## Why
 
-`handleFork` in `packages/server/src/socket/handlers/session/fork.ts` has three compounding bugs:
+`handleFork` in `apps/server/src/socket/handlers/session/fork.ts` has three compounding bugs:
 
 1. It feeds the parent **channelId** (wrapper UUID) into `launchOptions.resumeSessionId`, which becomes CLI argv `--resume <channelId>`. CLI expects the durable JSONL sessionId, so it looks up a non-existent JSONL and errors with "No conversation found".
 2. It never sets `forkSession: true`, so even if the sessionId were correct, CLI would overwrite the parent's JSONL instead of forking.
@@ -16,7 +16,7 @@ Teleport has the same argv bug but is scoped out — separate change.
 
 ## What Changes
 
-Server (`packages/server/src/socket/handlers/session/fork.ts`):
+Server (`apps/server/src/socket/handlers/session/fork.ts`):
 
 - `handleFork`: resolve the parent's real sessionId via `channelManager.resolveSessionId(forkedFromChannelId)`. If resolution yields the input channelId (no row, no live channel), ack `{ success: false, error: 'parent session not found' }` without spawning.
 - Recover parent `cwd` via `sessionStore.getById(parentSessionId)` and pass it to `channelManager.create`.
@@ -28,8 +28,8 @@ Server (`packages/server/src/socket/handlers/session/fork.ts`):
 
 Services:
 
-- `RawEventStore` interface (`packages/server/src/services/raw-event-store.ts`): add `cloneEvents(fromSessionId: string, toSessionId: string): Promise<void>`. The Drizzle impl SHALL copy all rows from `fromSessionId`, rewrite their `sessionId` to `toSessionId`, and re-sequence `seq` monotonically from 1. `CompositeRawStore` SHALL delegate to every inner store.
-- **Remove `FileRawStore`** (`packages/server/src/services/file-raw-store.ts`) and its test file. The file-backed raw event store was an optional mirror of CLI stdout and is unused in practice — sqlite is sufficient. `FileSettingsStore` is retained (different concern). `CompositeRawStore` tests replace the file-backed inner store with a second in-memory Drizzle store.
+- `RawEventStore` interface (`apps/server/src/services/raw-event-store.ts`): add `cloneEvents(fromSessionId: string, toSessionId: string): Promise<void>`. The Drizzle impl SHALL copy all rows from `fromSessionId`, rewrite their `sessionId` to `toSessionId`, and re-sequence `seq` monotonically from 1. `CompositeRawStore` SHALL delegate to every inner store.
+- **Remove `FileRawStore`** (`apps/server/src/services/file-raw-store.ts`) and its test file. The file-backed raw event store was an optional mirror of CLI stdout and is unused in practice — sqlite is sufficient. `FileSettingsStore` is retained (different concern). `CompositeRawStore` tests replace the file-backed inner store with a second in-memory Drizzle store.
 
 Client / shared schemas: UNCHANGED. Payload remains `{ forkedFromChannelId, resumeSessionAt?, newChannelId }`. `forkConversationResponseSchema`'s `events` field is retained (backwards-compat) but will be unused on the client fork path — client reads history via `session:join` after tab creation.
 
@@ -44,6 +44,6 @@ Client / shared schemas: UNCHANGED. Payload remains `{ forkedFromChannelId, resu
 ## Impact
 
 - Affected specs: `protocol` (fork requirement expanded with preset sessionId + clone semantics).
-- Affected code: `packages/server/src/socket/handlers/session/fork.ts`, `packages/server/src/services/raw-event-store.ts` (interface + Drizzle + Composite impls + tests). FileRawStore deleted.
+- Affected code: `apps/server/src/socket/handlers/session/fork.ts`, `apps/server/src/services/raw-event-store.ts` (interface + Drizzle + Composite impls + tests). FileRawStore deleted.
 - Risk: medium — introduces DB write on fork (clone cost scales with parent size); mitigated by single INSERT ... SELECT.
 - Rollout: direct merge after TDD green.

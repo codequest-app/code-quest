@@ -22,13 +22,13 @@ Shared (`packages/shared/src/schemas/rpc.ts` — new):
 - `rpcResult<T>(schema)` generic zod schema builder returning the discriminated union.
 - Replace every per-endpoint response schema with a call to `rpcResult(...)`.
 
-Server (`packages/server/src/socket/utils/rpc.ts` — new):
+Server (`apps/server/src/socket/utils/rpc.ts` — new):
 
 - `ok<T>(data: T): RpcResult<T>` helper.
 - `err(error: string, code?: string): RpcResult<never>` helper.
 - Every handler's `callback?.({...})` invocation migrates to `callback?.(ok({...}))` or `callback?.(err(...))`.
 
-Client (`packages/client/src/socket/rpc.ts`):
+Client (`apps/web/src/socket/rpc.ts`):
 
 - `call<T>(socket, event, payload): Promise<T>` wrapper: returns `data` on ok, throws (and/or toasts) on err.
 - Existing `rpc()` keeps returning the raw `RpcResult<T>` for callers that want to branch manually.
@@ -48,10 +48,10 @@ Migration covers 99 server `callback?.({...})` invocations across 15 handler fil
 - Affected specs: `protocol` (ack shape requirement added).
 - Affected code:
   - NEW: `packages/shared/src/schemas/rpc.ts`
-  - NEW: `packages/server/src/socket/utils/rpc.ts`
-  - Modified: all 15 `packages/server/src/socket/handlers/*.ts` (99 callback sites)
-  - Modified: `packages/server/src/socket/handlers/session/{connect,fork,query}.ts`
-  - Modified: `packages/client/src/contexts/channel/handlers/session.ts`, `SessionContext.tsx`, `ChannelMessagesContext.tsx`, component callers
+  - NEW: `apps/server/src/socket/utils/rpc.ts`
+  - Modified: all 15 `apps/server/src/socket/handlers/*.ts` (99 callback sites)
+  - Modified: `apps/server/src/socket/handlers/session/{connect,fork,query}.ts`
+  - Modified: `apps/web/src/contexts/channel/handlers/session.ts`, `SessionContext.tsx`, `ChannelMessagesContext.tsx`, component callers
   - Modified: all response schemas in `packages/shared/src/schemas/*.ts`
   - Modified: test fixtures and assertions — per TDD rule, `expect(result.success).toBe(true)` becomes `expect(result.ok).toBe(true)` (semantically equivalent name change), `expect(result.channelId)` becomes `expect(result.data.channelId)` (equivalent path change). These count as equivalent per the rule; no behavioral expects changed.
 

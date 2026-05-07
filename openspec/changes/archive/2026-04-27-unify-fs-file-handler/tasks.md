@@ -20,7 +20,7 @@ Now safe to flip the existing two tests that codified the bug.
 
 ## 2. ChannelMetaContext (TDD)
 - [x] 2.1 Red: `ChannelMetaContext.test.tsx` — `useChannelMeta()` returns `{channelId, cwd}`; throws when used outside provider.
-- [x] 2.2 Green: implement provider + hook in `packages/client/src/contexts/channel/ChannelMetaContext.tsx`.
+- [x] 2.2 Green: implement provider + hook in `apps/web/src/contexts/channel/ChannelMetaContext.tsx`.
 - [x] 2.3 Wire into `ChannelProvider`: replace `<ChannelIdProvider channelId={...}>` with `<ChannelMetaProvider channelId={...} cwd={cwd}>`. Keep `useChannelId()` working (read from meta).
 - [x] 2.4 Decision: keep `useChannelId()` as a thin selector over `useChannelMeta()`, or deprecate. Prefer keep — many existing call sites only need channelId and don't need to re-render on cwd change.
 
@@ -35,7 +35,7 @@ Now safe to flip the existing two tests that codified the bug.
 - [x] 4.3 Update `ChannelMessagesContext.tsx` callsite of `createFileActions` to pass `cwd` (from `useChannelMeta()`).
 
 ## 5. Delete server file handler + protocol surface
-- [x] 5.1 Delete `packages/server/src/socket/handlers/file.ts`.
+- [x] 5.1 Delete `apps/server/src/socket/handlers/file.ts`.
 - [x] 5.2 Drop `file.create(ctx)` from `socket/server.ts`.
 - [x] 5.3 Drop `'file:read'` / `'file:list'` from `socket-events.ts` (`EVENTS.file.*`, `ClientToServerEvents` interface).
 - [x] 5.4 Delete `packages/shared/src/schemas/file.ts`. Remove re-exports from `shared/schemas/index.ts`.

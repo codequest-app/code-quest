@@ -22,7 +22,7 @@ An earlier iteration also wrapped the messages update in `startTransition`. In p
 
 ## Impact
 
-- **Affected code**: `packages/client/src/contexts/channel/ChannelComposeContext.tsx` (one `setState` wrapped with `flushSync` + import from `react-dom`)
+- **Affected code**: `apps/web/src/contexts/channel/ChannelComposeContext.tsx` (one `setState` wrapped with `flushSync` + import from `react-dom`)
 - **No new dependencies**
 - **No protocol / server / socket change**
 - **Risk**: low — `flushSync` forces one extra commit per Enter. Standard React API for the paint-before-heavy-work pattern.

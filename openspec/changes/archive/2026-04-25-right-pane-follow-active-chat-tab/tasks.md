@@ -1,11 +1,11 @@
 ## Tasks
 
 ### 1. ActiveTabCwdContext + Provider
-- [x] New `packages/client/src/contexts/ActiveTabCwdContext.tsx`: `{ cwd: string | null; setCwd: (cwd: string | null) => void }`. Provider holds `useState`. Soft-binding (`useContext` returns null when outside) so `useActiveCwd` can fall through gracefully.
+- [x] New `apps/web/src/contexts/ActiveTabCwdContext.tsx`: `{ cwd: string | null; setCwd: (cwd: string | null) => void }`. Provider holds `useState`. Soft-binding (`useContext` returns null when outside) so `useActiveCwd` can fall through gracefully.
 - [x] Mount `<ActiveTabCwdProvider>` in WorkspaceLayout above the row containing `<main>` and the right `<DrawerAside>`.
 
 ### 2. Publisher hook
-- [x] New `packages/client/src/hooks/useActiveTabCwdPublisher.ts`: reads `useTabState` + this project's cwd (prop or context) + `useProjectState().activeProjectCwd` + `useActiveTabCwdContext`. When `projectCwd === activeProjectCwd`, publish `activeTab?.cwd ?? null`; otherwise no-op.
+- [x] New `apps/web/src/hooks/useActiveTabCwdPublisher.ts`: reads `useTabState` + this project's cwd (prop or context) + `useProjectState().activeProjectCwd` + `useActiveTabCwdContext`. When `projectCwd === activeProjectCwd`, publish `activeTab?.cwd ?? null`; otherwise no-op.
 - [x] Hook: when this project becomes inactive (was active, now not), do NOT clear (let the new active project's hook overwrite — last-writer-wins).
 - [x] Call the hook inside `<TabContainer>` (or wherever has access to project cwd + TabContext).
 

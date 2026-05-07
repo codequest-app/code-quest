@@ -1,6 +1,6 @@
 ## 1. Dependencies & Shared Schema
 
-- [x] 1.1 Add `react-pdf` to `packages/client` dependencies
+- [x] 1.1 Add `react-pdf` to `apps/web` dependencies
 - [x] 1.2 Add `fs:read-binary` event + `fsReadBinaryResponseSchema` to `@code-quest/shared` (request: `{ path }`, response: `{ data: string }` base64 or `{ error: string }`)
 
 ## 2. Server

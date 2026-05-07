@@ -8,8 +8,8 @@ This change is scoped to the **server-side watch service + socket broadcast** on
 
 ## What Changes
 
-- Introduce **`WatchService`** in `packages/summoner`: observes a directory via `chokidar`; subscribers register a callback and get de-duplicated, debounced batches of changes.
-- Introduce **`FakeWatchService`** in `packages/summoner/test` following the established Fake pattern (manual `.simulate()` helper for deterministic tests).
+- Introduce **`WatchService`** in `apps/summoner`: observes a directory via `chokidar`; subscribers register a callback and get de-duplicated, debounced batches of changes.
+- Introduce **`FakeWatchService`** in `apps/summoner/test` following the established Fake pattern (manual `.simulate()` helper for deterministic tests).
 - Wire **`WatchService`** into the server container (inversify) with a `FileSystemWatcher` TYPES symbol.
 - Add **subscription lifecycle** to the channel/session layer: when a channel is created with a `cwd`, subscribe; when the channel dies, unsubscribe. Use refcount so N sessions on the same `cwd` share one `chokidar` watcher.
 - Add **derived-signal broadcaster**: classifies FS events into "git state may have changed" vs "file tree may have changed" and emits `files:dirty { cwd, paths }` / `git:dirty { cwd }` over socket.io.
@@ -27,21 +27,21 @@ This change is scoped to the **server-side watch service + socket broadcast** on
 ## Impact
 
 **Affected code (new):**
-- `packages/summoner/src/fs-watch/types.ts` — `WatchService` interface + event shape.
-- `packages/summoner/src/fs-watch/local.ts` — `chokidar`-backed real impl.
-- `packages/summoner/src/fs-watch/errors.ts` — typed errors (e.g. `InotifyLimitError` on Linux).
-- `packages/summoner/src/test/fake-watch-service.ts` — test double.
-- `packages/server/src/services/fs-git-dirty-broadcaster.ts` — routes events to socket emits.
+- `apps/summoner/src/fs-watch/types.ts` — `WatchService` interface + event shape.
+- `apps/summoner/src/fs-watch/local.ts` — `chokidar`-backed real impl.
+- `apps/summoner/src/fs-watch/errors.ts` — typed errors (e.g. `InotifyLimitError` on Linux).
+- `apps/summoner/src/test/fake-watch-service.ts` — test double.
+- `apps/server/src/services/fs-git-dirty-broadcaster.ts` — routes events to socket emits.
 - `packages/shared/src/schemas/fs-dirty.ts` — zod schemas for `files:dirty` / `git:dirty` payloads.
 - `packages/shared/src/socket-events.ts` — add `EVENTS.fs.*` keys.
 - Tests: unit (`WatchService` via FakeWatchService), server (broadcaster with real channel) — no client changes.
 
 **Affected code (modified):**
-- `packages/server/src/container.ts` — bind `WatchService` + `FsGitDirtyBroadcaster`.
-- `packages/server/src/socket/channel-manager.ts` (or session lifecycle equivalent) — subscribe on channel create, unsubscribe on close. Refcount handled inside `WatchService`.
+- `apps/server/src/container.ts` — bind `WatchService` + `FsGitDirtyBroadcaster`.
+- `apps/server/src/socket/channel-manager.ts` (or session lifecycle equivalent) — subscribe on channel create, unsubscribe on close. Refcount handled inside `WatchService`.
 
 **Dependencies:**
-- Adds `chokidar` to `packages/summoner` dependencies (~70 KB with deps; stable, MIT).
+- Adds `chokidar` to `apps/summoner` dependencies (~70 KB with deps; stable, MIT).
 
 **Risk:**
 - **Linux `inotify` watch limit.** Default `fs.inotify.max_user_watches` is ~8192 on many distros; pnpm workspaces can exceed this. Mitigated by aggressive ignore lists (`node_modules`, `.git/objects`, `.git/logs`, `dist`, build artifacts). `InotifyLimitError` surfaces gracefully with a server-log hint to bump the sysctl.

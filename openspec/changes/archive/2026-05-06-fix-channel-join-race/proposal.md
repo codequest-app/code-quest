@@ -22,7 +22,7 @@ _(none — this is a refactor of existing behavior)_
 
 ## Impact
 
-- `packages/client/src/contexts/channel/ChannelContext.tsx` — status state machine 重構
-- `packages/client/src/contexts/channel/ChannelMessagesContext.tsx` — 移除 isConnecting，接收外層 status，onJoinComplete → onReady
-- `packages/client/src/contexts/__tests__/ChannelContext.test.tsx` — expect 不變或等價
-- `packages/client/src/test/render-with-channel.tsx` — 可能需配合 prop 調整
+- `apps/web/src/contexts/channel/ChannelContext.tsx` — status state machine 重構
+- `apps/web/src/contexts/channel/ChannelMessagesContext.tsx` — 移除 isConnecting，接收外層 status，onJoinComplete → onReady
+- `apps/web/src/contexts/__tests__/ChannelContext.test.tsx` — expect 不變或等價
+- `apps/web/src/test/render-with-channel.tsx` — 可能需配合 prop 調整

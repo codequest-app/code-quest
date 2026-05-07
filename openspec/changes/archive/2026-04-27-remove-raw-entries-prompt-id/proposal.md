@@ -26,11 +26,11 @@ Instead of restoring a meaningless value, we remove the column. This unblocks th
 
 ## Impact
 
-- `packages/server/src/db/schema-{sqlite,mysql,columns}.ts`
-- `packages/server/src/services/drizzle-raw-store.ts`
-- `packages/server/src/socket/raw-recorder.ts`
-- `packages/server/src/socket/handlers/session/fork.ts`
-- `packages/summoner/src/types.ts`
+- `apps/server/src/db/schema-{sqlite,mysql,columns}.ts`
+- `apps/server/src/services/drizzle-raw-store.ts`
+- `apps/server/src/socket/raw-recorder.ts`
+- `apps/server/src/socket/handlers/session/fork.ts`
+- `apps/summoner/src/types.ts`
 - New Drizzle migration files (sqlite + mysql)
 - Tests: fixtures that pass `promptId: '...'` literals will break — adjust to drop the field.
 

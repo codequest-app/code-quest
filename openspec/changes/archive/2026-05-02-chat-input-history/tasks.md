@@ -11,8 +11,8 @@
 
 ## 3. Delete useInputHistory hook
 
-- [x] 3.1 Delete `packages/client/src/hooks/useInputHistory.ts`
-- [x] 3.2 Delete `packages/client/src/hooks/__tests__/useInputHistory.test.ts`
+- [x] 3.1 Delete `apps/web/src/hooks/useInputHistory.ts`
+- [x] 3.2 Delete `apps/web/src/hooks/__tests__/useInputHistory.test.ts`
 
 ## 4. Tests
 

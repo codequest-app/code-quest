@@ -5,7 +5,7 @@ TBD - created by archiving change shared-ui-primitives. Update Purpose after arc
 ## Requirements
 ### Requirement: Button primitive covers all button variants in the codebase
 
-Every rendered `<button>` in `packages/client/src/components/` SHALL either use `ui/Button` or be a trivially-styled icon button. Any new button primitive variant SHALL be added to `ui/Button` rather than inlined.
+Every rendered `<button>` in `apps/web/src/components/` SHALL either use `ui/Button` or be a trivially-styled icon button. Any new button primitive variant SHALL be added to `ui/Button` rather than inlined.
 
 #### Scenario: Primary dialog button
 - **WHEN** a dialog needs a primary action button
@@ -77,7 +77,7 @@ Popover-style components (dropdowns, filter popovers) SHALL wrap their content i
 
 ### Requirement: Floating UI surfaces use Radix primitives
 
-All floating UI surfaces in `packages/client/src/components/` (popovers, dropdown menus, context menus) SHALL use the matching Radix primitive (`@radix-ui/react-popover`, `@radix-ui/react-dropdown-menu`, `@radix-ui/react-context-menu`) rather than hand-rolled `position: fixed` + `getBoundingClientRect()` placement. Modals continue to use `@radix-ui/react-dialog`.
+All floating UI surfaces in `apps/web/src/components/` (popovers, dropdown menus, context menus) SHALL use the matching Radix primitive (`@radix-ui/react-popover`, `@radix-ui/react-dropdown-menu`, `@radix-ui/react-context-menu`) rather than hand-rolled `position: fixed` + `getBoundingClientRect()` placement. Modals continue to use `@radix-ui/react-dialog`.
 
 A floating surface is anything that visually overlays the page anchored to a trigger element: branch pickers, message action menus, worktree / project / file context menus, live-session popovers, plan-comment popovers, and any future popover/menu added.
 
@@ -100,7 +100,7 @@ Non-floating positional UI (e.g. click-to-set sliders that use `getBoundingClien
 - **THEN** Radix's built-in collision handling flips or shifts it to remain visible (no manual flip logic in component code)
 
 ### Requirement: Checkbox primitive added to ui/ directory
-A `ui/Checkbox` component SHALL exist in `packages/client/src/components/ui/Checkbox.tsx`, wrapping `@radix-ui/react-checkbox` with the project's visual style.
+A `ui/Checkbox` component SHALL exist in `apps/web/src/components/ui/Checkbox.tsx`, wrapping `@radix-ui/react-checkbox` with the project's visual style.
 
 #### Scenario: Checkbox renders with label
 - **WHEN** `<Checkbox checked={true} onCheckedChange={fn}>Label</Checkbox>` is rendered

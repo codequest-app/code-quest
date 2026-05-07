@@ -24,7 +24,7 @@ The client SHALL provide a Storybook decorator `withStoryWorkspaceFixtures` that
 - **THEN** providers see the seeded state on first render (no post-mount flash from empty to seeded state)
 
 ### Requirement: Shared story fixtures module
-The client SHALL expose `packages/client/src/test/story-fixtures.ts` centralizing reusable mock data builders (messages, sessions, pending controls, projects, diffs) for screen-level stories.
+The client SHALL expose `apps/web/src/test/story-fixtures.ts` centralizing reusable mock data builders (messages, sessions, pending controls, projects, diffs) for screen-level stories.
 
 #### Scenario: Screen stories consume shared fixtures
 - **WHEN** a screen-level story needs mock data

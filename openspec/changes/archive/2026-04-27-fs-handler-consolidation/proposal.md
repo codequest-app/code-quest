@@ -79,7 +79,7 @@ String IDs (`files:dirty` / `git:dirty`) unchanged. Just lookup paths.
 ## Impact
 
 **Modified — server:**
-- `packages/server/src/socket/handlers/fs.ts` (new) — combines explorer + file
+- `apps/server/src/socket/handlers/fs.ts` (new) — combines explorer + file
 - Delete `handlers/explorer.ts` + `handlers/file.ts`
 - `socket/server.ts` — register `fs.create(ctx)` instead of explorer + file
 

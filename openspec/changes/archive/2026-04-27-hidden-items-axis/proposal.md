@@ -24,13 +24,13 @@
 ## Impact
 
 - 新增：
-  - `packages/client/src/features/reset-dismissed/reset-dismissed-feature.ts` + test + story
-  - `packages/client/src/hooks/useHiddenItems.ts`（or inline in usePreferencesStore）
+  - `apps/web/src/features/reset-dismissed/reset-dismissed-feature.ts` + test + story
+  - `apps/web/src/hooks/useHiddenItems.ts`（or inline in usePreferencesStore）
 - 修改：
-  - `packages/client/src/components/ReviewUpsellBanner.tsx`（read/write via hiddenItems）
-  - `packages/client/src/components/OnboardingOverlay.tsx`（同上）
-  - `packages/client/src/stores/usePreferencesStore.ts`（migration v2→v3：把 old flags 合併進 hiddenItems）
-  - `packages/client/src/components/SettingsDialog.tsx`（reset button）
-  - `packages/client/src/components/CommandPalette.tsx`（register feature）
+  - `apps/web/src/components/ReviewUpsellBanner.tsx`（read/write via hiddenItems）
+  - `apps/web/src/components/OnboardingOverlay.tsx`（同上）
+  - `apps/web/src/stores/usePreferencesStore.ts`（migration v2→v3：把 old flags 合併進 hiddenItems）
+  - `apps/web/src/components/SettingsDialog.tsx`（reset button）
+  - `apps/web/src/components/CommandPalette.tsx`（register feature）
 - 測試：vitest + typecheck + test-storybook 全綠；migration unit test
 - 風險：migration 必須 idempotent — 若 user 已 dismiss 某項目、升級後再升級，不能重複 push ID

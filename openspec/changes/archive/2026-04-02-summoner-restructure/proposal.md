@@ -24,7 +24,7 @@ summoner package 的 Claude-specific code（48KB）跟 generic code 混在同一
 
 ## Impact
 
-- `packages/summoner/src/` 所有檔案重新組織
-- `packages/summoner/src/index.ts` barrel export 路徑更新
-- `packages/server/` 和 `packages/client/` import from `@code-quest/summoner` 的 public API 不變（barrel export 保持相容）
+- `apps/summoner/src/` 所有檔案重新組織
+- `apps/summoner/src/index.ts` barrel export 路徑更新
+- `apps/server/` 和 `apps/web/` import from `@code-quest/summoner` 的 public API 不變（barrel export 保持相容）
 - test 檔案跟隨 production code 搬移，import path 更新

@@ -37,7 +37,7 @@ Claude Code extension groups these under a collapsible "Explored" header
 
 ## Impact
 
-- **Code**: `packages/client/src/components/MessageList.tsx` (or helper
+- **Code**: `apps/web/src/components/MessageList.tsx` (or helper
   file used by it), possibly a new `groupConsecutiveTools.ts` utility.
 - **Tests**: pure utility test for the grouping function + component test
   asserting a "Explored" header appears for ≥ 2 consecutive Read and

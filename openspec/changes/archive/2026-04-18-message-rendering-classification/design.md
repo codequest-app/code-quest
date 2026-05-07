@@ -1,6 +1,6 @@
 ## Context
 
-Today `packages/summoner/src/claude/transforms/user.ts` emits a single
+Today `apps/summoner/src/claude/transforms/user.ts` emits a single
 `message:user` shape for every `role=user` CLI event. The client's
 `MessageContent.tsx` has one `case 'text'` that blindly runs `MarkdownContent`.
 Four distinct producers share that path:
@@ -61,7 +61,7 @@ output shows raw syntax.
 
 ### D1. Tag at transform, not at UI
 
-**Choice**: Detect source in `packages/summoner/src/claude/transforms/user.ts`
+**Choice**: Detect source in `apps/summoner/src/claude/transforms/user.ts`
 and emit `source` on `message:user` payload.
 
 **Why**: The detection uses signals available only in raw CLI content
@@ -133,7 +133,7 @@ Keeps the markdown decision tool-local, so other tools fall through unchanged.
 `packages/shared/src/schemas/message.ts` (the user-payload schema): add
 `source: z.enum(['typed', 'skill', 'command', 'reminder']).optional()`.
 
-`packages/client/src/types/ui.ts`: `OptionalMetaMap['text']` extended with
+`apps/web/src/types/ui.ts`: `OptionalMetaMap['text']` extended with
 `source?: 'typed' | 'skill' | 'command' | 'reminder'`.
 
 Absence of the field is treated as `typed` everywhere for forward/backward

@@ -5,7 +5,7 @@
 
 ## 2. WsTransport transformSocket hook
 
-- [x] 2.1 新增 `packages/server/src/socket/__tests__/ws-transport.test.ts` 測試案例 — transformSocket wraps TypedSocket
+- [x] 2.1 新增 `apps/server/src/socket/__tests__/ws-transport.test.ts` 測試案例 — transformSocket wraps TypedSocket
 - [x] 2.2 修改 `packages/shared/src/transport/ws-transport.ts` acceptConnection — 加 transformSocket hook（3 行）
 
 ## 3. resumable middleware
@@ -16,5 +16,5 @@
 ## 4. 接線與 export
 
 - [x] 4.1 修改 `packages/shared/src/index.ts` — export resumable middleware 和 ResumableSocket
-- [x] 4.2 修改 `packages/server/src/bin/server.ts` — browser route 加上 `resumable()` middleware
+- [x] 4.2 修改 `apps/server/src/bin/server.ts` — browser route 加上 `resumable()` middleware
 - [x] 4.3 全部測試通過驗證

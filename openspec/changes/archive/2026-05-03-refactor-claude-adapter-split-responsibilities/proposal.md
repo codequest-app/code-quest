@@ -21,7 +21,7 @@
 
 ## Impact
 
-- 影響檔案：`packages/summoner/src/claude/adapter.ts`（修改）、`claude/transforms/notification.ts`（新增）、`claude/transforms/auth.ts`（新增）、`claude/request-mappings.ts`（新增）
+- 影響檔案：`apps/summoner/src/claude/adapter.ts`（修改）、`claude/transforms/notification.ts`（新增）、`claude/transforms/auth.ts`（新增）、`claude/request-mappings.ts`（新增）
 - `ProviderAdapter` interface 不動
 - 無 breaking change：所有公開 API 行為不變
 - 測試：`adapter-integration.test.ts` 無需修改（行為不變）

@@ -118,5 +118,5 @@ Extend `MetaMap` with known meta shapes for:
 
 ### 9d. Validation
 
-- [x] 9d.1 `grep -rE "meta\.[a-z_]+" packages/client/src | wc -l` — verify typed accesses all compile without cast.
+- [x] 9d.1 `grep -rE "meta\.[a-z_]+" apps/web/src | wc -l` — verify typed accesses all compile without cast.
 - [x] 9d.2 Full test suite: shared 41, summoner 305, server 464, client 773.

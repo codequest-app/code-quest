@@ -24,7 +24,7 @@ export const PlainText: Story = {
 
 export const WithFilePath: Story = {
   args: {
-    content: 'See packages/client/src/App.tsx for the entrypoint.',
+    content: 'See apps/web/src/App.tsx for the entrypoint.',
   },
 };
 

@@ -48,13 +48,13 @@ Explicitly out of scope:
 ## Impact
 
 **Affected code (new):**
-- `packages/client/src/components/TopbarLiveSessions.tsx`
-- `packages/client/src/components/LiveSessionPopover.tsx`
-- `packages/client/src/components/__tests__/TopbarLiveSessions.test.tsx`
-- `packages/client/src/components/__tests__/LiveSessionPopover.test.tsx`
+- `apps/web/src/components/TopbarLiveSessions.tsx`
+- `apps/web/src/components/LiveSessionPopover.tsx`
+- `apps/web/src/components/__tests__/TopbarLiveSessions.test.tsx`
+- `apps/web/src/components/__tests__/LiveSessionPopover.test.tsx`
 
 **Affected code (modified):**
-- `packages/client/src/components/WorkspaceTopbar.tsx` — accept (or render directly) `<TopbarLiveSessions>` between scope switcher and Settings/toggle group.
+- `apps/web/src/components/WorkspaceTopbar.tsx` — accept (or render directly) `<TopbarLiveSessions>` between scope switcher and Settings/toggle group.
 - Existing `useSession` consumer pattern reused (no API change).
 
 **Affected code (possibly modified):**

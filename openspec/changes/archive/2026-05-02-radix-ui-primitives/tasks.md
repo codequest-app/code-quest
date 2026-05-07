@@ -1,7 +1,7 @@
 ## 1. Setup
 
-- [x] 1.1 Install `@radix-ui/react-collapsible` in packages/client
-- [x] 1.2 Install `@radix-ui/react-checkbox` in packages/client
+- [x] 1.1 Install `@radix-ui/react-collapsible` in apps/web
+- [x] 1.2 Install `@radix-ui/react-checkbox` in apps/web
 
 ## 2. CollapsibleBlock → Radix Collapsible
 
@@ -13,7 +13,7 @@
 ## 3. Shared ui/Checkbox Primitive
 
 - [x] 3.1 Write tests for `ui/Checkbox`: renders checked, unchecked, fires onCheckedChange, renders label
-- [x] 3.2 Create `packages/client/src/components/ui/Checkbox.tsx` wrapping `@radix-ui/react-checkbox`
+- [x] 3.2 Create `apps/web/src/components/ui/Checkbox.tsx` wrapping `@radix-ui/react-checkbox`
 
 ## 4. FilterPopover — migrate to ui/Checkbox
 

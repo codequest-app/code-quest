@@ -1,7 +1,7 @@
 ## Tasks
 
 ### 1. Token (Red → Green)
-- [ ] Add `--text-2xs: 0.625rem;` to `@theme` in `packages/client/src/App.css`. Place near other text-related tokens (sort by category).
+- [ ] Add `--text-2xs: 0.625rem;` to `@theme` in `apps/web/src/App.css`. Place near other text-related tokens (sort by category).
 - [ ] Verify Tailwind v4 generates the `text-2xs` utility (manual check: render a div with `text-2xs` and confirm computed `font-size: 10px`).
 
 ### 2. SpecPane chips (TDD)

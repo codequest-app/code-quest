@@ -44,7 +44,7 @@ Same pattern as D3. Replace the `activeIndex` ref with direct `focus()` calls on
 
 ## Migration Plan
 
-1. Install `@radix-ui/react-collapsible` and `@radix-ui/react-checkbox` in `packages/client`
+1. Install `@radix-ui/react-collapsible` and `@radix-ui/react-checkbox` in `apps/web`
 2. Migrate `CollapsibleBlock` (primitives.tsx) — verify all tool-use block consumers compile and render identically
 3. Add `ui/Checkbox` wrapper, migrate `FilterPopover` and `TaskChecklist`
 4. Migrate `ModelPickerPopover` listbox

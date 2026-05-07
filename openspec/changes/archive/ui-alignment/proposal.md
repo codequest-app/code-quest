@@ -35,11 +35,11 @@ cc-office UI 與 extension v2.1.45 在多個元件上有視覺和功能差異，
 
 ## Impact
 
-- `packages/client/src/components/ToolPermissionBanner.tsx` — 主要重構
-- `packages/client/src/components/OptionButton.tsx` — 可能廢棄
-- `packages/client/src/components/PermissionHeader.tsx` — 重構
-- `packages/client/src/components/ElicitationDialog.tsx` — 加 tab navigation
-- `packages/client/src/components/ContentPreviewPanel.tsx` — modal layout
-- `packages/client/src/components/message-blocks/` — IN/OUT grid
-- `packages/client/src/components/PluginsPanel.tsx` — marketplace
+- `apps/web/src/components/ToolPermissionBanner.tsx` — 主要重構
+- `apps/web/src/components/OptionButton.tsx` — 可能廢棄
+- `apps/web/src/components/PermissionHeader.tsx` — 重構
+- `apps/web/src/components/ElicitationDialog.tsx` — 加 tab navigation
+- `apps/web/src/components/ContentPreviewPanel.tsx` — modal layout
+- `apps/web/src/components/message-blocks/` — IN/OUT grid
+- `apps/web/src/components/PluginsPanel.tsx` — marketplace
 - 新增 ContextMenu component

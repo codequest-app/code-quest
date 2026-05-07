@@ -2,14 +2,14 @@
 
 - [ ] 1.1 寫 `formatElapsed.test.ts`：< 1000ms → `"324ms"`（整數 ms）
 - [ ] 1.2 寫 `formatElapsed.test.ts`：≥ 1000ms → `"1.234s"`（三位小數）
-- [ ] 1.3 實作 `packages/client/src/utils/formatElapsed.ts`（Green）
+- [ ] 1.3 實作 `apps/web/src/utils/formatElapsed.ts`（Green）
 
 ## 2. useElapsedTime hook（TDD）
 
 - [ ] 2.1 寫 `useElapsedTime.test.ts`：null startTime 回傳 null
 - [ ] 2.2 寫 `useElapsedTime.test.ts`：有 startTime 回傳 `formatElapsed` 格式字串
 - [ ] 2.3 寫 `useElapsedTime.test.ts`：unmount 時 cancelAnimationFrame
-- [ ] 2.4 實作 `packages/client/src/hooks/useElapsedTime.ts`（rAF，Green）
+- [ ] 2.4 實作 `apps/web/src/hooks/useElapsedTime.ts`（rAF，Green）
 
 ## 3. ChannelState 加 turnStartTime（TDD）
 

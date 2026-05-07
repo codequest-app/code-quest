@@ -19,10 +19,10 @@ The pattern is both noisy and bug-prone — every caller must remember to null-c
 - Implement on `DrizzleSessionStore` by composing the existing `getByChannelId` + `<op>(id, ...)` methods — no new queries required.
 - Keep `getByChannelId` (needed for read paths like `query.ts`, `session-history.ts`).
 - Collapse the 4 handler sites:
-  - `packages/server/src/socket/handlers/session/command.ts:48-49` (`handleDelete`)
-  - `packages/server/src/socket/handlers/session/command.ts:68-69` (`handleRename`)
-  - `packages/server/src/socket/handlers/message.ts:242-244` (`generateTitleIfNeeded`)
-  - `packages/server/src/socket/handlers/session/connect.ts:173-177` (dead-status update on "No conversation found")
+  - `apps/server/src/socket/handlers/session/command.ts:48-49` (`handleDelete`)
+  - `apps/server/src/socket/handlers/session/command.ts:68-69` (`handleRename`)
+  - `apps/server/src/socket/handlers/message.ts:242-244` (`generateTitleIfNeeded`)
+  - `apps/server/src/socket/handlers/session/connect.ts:173-177` (dead-status update on "No conversation found")
 
 ## Capabilities
 

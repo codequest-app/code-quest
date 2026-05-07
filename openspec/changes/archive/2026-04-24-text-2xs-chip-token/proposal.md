@@ -8,7 +8,7 @@ Promote it to a proper token: `--text-2xs: 0.625rem` in `@theme`. Use it for the
 
 ## What Changes
 
-- Add `--text-2xs: 0.625rem;  /* 10px — chip / section-label scale */` to `@theme` in `packages/client/src/App.css`. Tailwind v4 generates the `text-2xs` utility automatically.
+- Add `--text-2xs: 0.625rem;  /* 10px — chip / section-label scale */` to `@theme` in `apps/web/src/App.css`. Tailwind v4 generates the `text-2xs` utility automatically.
 - `SpecPane.tsx`: change `text-xs` → `text-2xs` on three uppercase / chip elements:
   - `Ready` badge
   - `Archive` button (uppercase tracked)

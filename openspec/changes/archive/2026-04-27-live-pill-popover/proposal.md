@@ -26,10 +26,10 @@ Out of scope:
 ## Impact
 
 **New:**
-- `packages/client/src/components/LiveSessionPopover.tsx` + test.
+- `apps/web/src/components/LiveSessionPopover.tsx` + test.
 
 **Modified:**
-- `packages/client/src/components/TopbarLiveSessions.tsx` — add `⋯` per pill + popover state.
+- `apps/web/src/components/TopbarLiveSessions.tsx` — add `⋯` per pill + popover state.
 - Possibly `useSession` / session schema — only if last-message field is missing today.
 
 **Risk:** low. Pure UI on data we already have; no server changes (unless lastMessage isn't broadcast, in which case a tiny addition).

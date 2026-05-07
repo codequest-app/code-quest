@@ -1,6 +1,6 @@
 ## Context
 
-前端測試 172 檔累積多個慣例混雜。本 change 固化六原則，並依原則逐檔 audit + 分類重構。Server 測試（`packages/server`）**不在本次範圍**。
+前端測試 172 檔累積多個慣例混雜。本 change 固化六原則，並依原則逐檔 audit + 分類重構。Server 測試（`apps/server`）**不在本次範圍**。
 
 ## Goals / Non-Goals
 

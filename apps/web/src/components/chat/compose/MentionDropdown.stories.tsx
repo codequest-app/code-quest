@@ -40,7 +40,7 @@ export const FileSearchResults: Story = {
     fileResults: [
       { path: 'src/main.ts', name: 'main.ts', type: 'file' },
       { path: 'src/main.test.ts', name: 'main.test.ts', type: 'file' },
-      { path: 'packages/server/src/main.ts', name: 'main.ts', type: 'file' },
+      { path: 'apps/server/src/main.ts', name: 'main.ts', type: 'file' },
     ],
     searchStatus: 'done',
     selectedIndex: 1,

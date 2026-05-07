@@ -35,7 +35,7 @@
 ## 3. Add unit tests for ChannelSocketRouter
 
 - [x] 3.1 Create
-  `packages/client/src/contexts/channel/__tests__/socket-router.test.ts`.
+  `apps/web/src/contexts/channel/__tests__/socket-router.test.ts`.
 - [x] 3.2 Implement a `fakeAdapter()` helper (~15 lines) exposing
   `on`, `off`, `emit(event, payload)`, `listenerCount(event)`.
 - [x] 3.3 Test: **dedup** — 3 `router.on('X', fn)` registrations

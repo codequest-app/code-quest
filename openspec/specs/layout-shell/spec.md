@@ -79,7 +79,7 @@ The workspace shell SHALL NOT depend on `react-resizable-panels` (or equivalent 
 Per-pane drag-to-resize of the sidebar / right-pane widths is intentionally NOT a current capability; if reintroduced, the implementation must use CSS variables or comparable mechanism that doesn't require unmounting the panes.
 
 #### Scenario: Workspace layout file imports
-- **WHEN** `packages/client/src/components/WorkspaceLayout.tsx` is read
+- **WHEN** `apps/web/src/components/WorkspaceLayout.tsx` is read
 - **THEN** it does not import `Panel`, `PanelGroup`, `PanelResizeHandle`, or `ImperativePanelHandle` from `react-resizable-panels`
 
 ### Requirement: Active project container has min-w-0

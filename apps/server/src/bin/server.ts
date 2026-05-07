@@ -48,7 +48,7 @@ if (!storeConfig.sqliteDatabase && !storeConfig.mysqlDatabase) {
   throw new Error(
     'No database backend configured. Set DATABASE_URL (MySQL) and/or ' +
       'DATABASE_SQLITE_URL (e.g. file:./data/code-quest.db) in .env. ' +
-      'See packages/server/.env.example for a working default.',
+      'See apps/server/.env.example for a working default.',
   );
 }
 

@@ -51,14 +51,14 @@ fake adapter (fixes #3).
 
 ## Impact
 
-- `packages/client/src/contexts/channel/socket-router.ts` —
+- `apps/web/src/contexts/channel/socket-router.ts` —
   + `SubscriptionAdapter` interface, `createSocketAdapter()` factory,
   private `subscribe()` method; `on()` and `register()` become thin
   adapter layers; constructor signature changes
   (`TypedSocket` → `SubscriptionAdapter`)
-- `packages/client/src/contexts/channel/ChannelSocketRouterContext.tsx` —
+- `apps/web/src/contexts/channel/ChannelSocketRouterContext.tsx` —
   calls `createSocketAdapter(socket)` when constructing the router
-- `packages/client/src/contexts/channel/__tests__/socket-router.test.ts` —
+- `apps/web/src/contexts/channel/__tests__/socket-router.test.ts` —
   new file, ~6 unit tests with an inline fake adapter
 - No test changes in existing 1147 tests; all must continue to pass.
 

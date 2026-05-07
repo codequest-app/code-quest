@@ -17,5 +17,5 @@ Streaming delta 過程中，timeline group 持續加入新 node（tool use block
 
 ## Impact
 
-- `packages/client/src/components/chat/conversation/MessageList.tsx`
-- `packages/client/src/components/chat/conversation/__tests__/MessageList.test.tsx`（新增測試）
+- `apps/web/src/components/chat/conversation/MessageList.tsx`
+- `apps/web/src/components/chat/conversation/__tests__/MessageList.test.tsx`（新增測試）

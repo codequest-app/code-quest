@@ -6,7 +6,7 @@ Drift risk is real: an inflight-dedup bug was fixed in one context last month; t
 
 ## What Changes
 
-- Extract a `createCwdQueryStore({ fetch, dirtyEvent, parse })` factory in `packages/client/src/contexts/lib/createCwdQueryStore.ts`.
+- Extract a `createCwdQueryStore({ fetch, dirtyEvent, parse })` factory in `apps/web/src/contexts/lib/createCwdQueryStore.ts`.
 - The factory returns:
   - `useStoreValue(cwd)` — external-store hook (`subscribe` + `getSnapshot`) that triggers the first fetch on mount and returns `{ data, loading, error }`.
   - `refetch(cwd)` — imperative refetch action (deduped against any inflight request).

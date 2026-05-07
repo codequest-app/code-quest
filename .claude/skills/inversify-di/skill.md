@@ -10,7 +10,7 @@ description: >
 
 ## TYPES Registry
 
-**File:** `packages/server/src/types.ts`
+**File:** `apps/server/src/types.ts`
 
 ```typescript
 export const TYPES = {
@@ -27,7 +27,7 @@ export const TYPES = {
 
 ## Container Setup
 
-**File:** `packages/server/src/container.ts` — `createContainer(options)`
+**File:** `apps/server/src/container.ts` — `createContainer(options)`
 
 All bindings are inline (no ContainerModule pattern):
 
@@ -47,7 +47,7 @@ Only `ChatHandler` and `UsageTracker` use `@injectable()` + `@inject()`.
 ## Injectable Services
 
 ```typescript
-// packages/server/src/socket/chat-handler.ts
+// apps/server/src/socket/chat-handler.ts
 @injectable()
 export class ChatHandler implements HandlerContext {
   constructor(
@@ -63,7 +63,7 @@ export class ChatHandler implements HandlerContext {
 
 ## HandlerContext Interface
 
-**File:** `packages/server/src/socket/handler-context.ts`
+**File:** `apps/server/src/socket/handler-context.ts`
 
 Aggregates all injected services. Socket handlers access dependencies through this interface.
 
@@ -73,7 +73,7 @@ Aggregates all injected services. Socket handlers access dependencies through th
 
 ## Testing
 
-**File:** `packages/server/src/test/create-test-container.ts`
+**File:** `apps/server/src/test/create-test-container.ts`
 
 ```typescript
 export function createTestContainer(overrides): Container {
@@ -92,7 +92,7 @@ Key test methods:
 
 ## Adding a New Service
 
-1. Add symbol to `TYPES` in `packages/server/src/types.ts`
+1. Add symbol to `TYPES` in `apps/server/src/types.ts`
 2. If constructor-injectable: add `@injectable()` + `@inject()` decorators
 3. If constant-bound: instantiate and `.bind(TYPES.X).toConstantValue(instance)`
 4. Add to test container if tests need it

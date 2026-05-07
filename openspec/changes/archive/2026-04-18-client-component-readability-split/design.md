@@ -1,7 +1,7 @@
 ## Context
 
 Five small readability fixes surfaced during the post-consolidation
-review of `packages/client/src`. None are bugs; each reduces the
+review of `apps/web/src`. None are bugs; each reduces the
 cognitive cost of reading the surrounding component.
 
 ## Decisions

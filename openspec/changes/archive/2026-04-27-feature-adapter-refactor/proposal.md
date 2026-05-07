@@ -37,11 +37,11 @@
 ## Impact
 
 **新增**（~250 LOC）：
-- `packages/client/src/lib/feature.ts`（擴型別）
-- `packages/client/src/lib/adapters/to-menu-item.tsx`
-- `packages/client/src/lib/adapters/to-palette-command.tsx`
-- `packages/client/src/lib/adapters/to-slash-command.ts`
-- `packages/client/src/lib/adapters/trailing-renderers.tsx`
+- `apps/web/src/lib/feature.ts`（擴型別）
+- `apps/web/src/lib/adapters/to-menu-item.tsx`
+- `apps/web/src/lib/adapters/to-palette-command.tsx`
+- `apps/web/src/lib/adapters/to-slash-command.ts`
+- `apps/web/src/lib/adapters/trailing-renderers.tsx`
 - 上述每個檔對應 test
 
 **修改**（~400 LOC）：

@@ -1,44 +1,44 @@
 ## 1. Fixtures
 
-- [x] 1.1 Capture a real skill-body user event into `packages/summoner/src/__fixtures__/claude/real/user-skill-body.jsonl` (one line from `raw_entries` starting with `Base directory for this skill:`)
-- [x] 1.2 Capture or synthesise a `<system-reminder>` user event into `packages/summoner/src/__fixtures__/claude/synthetic/user-system-reminder.jsonl`
+- [x] 1.1 Capture a real skill-body user event into `apps/summoner/src/__fixtures__/claude/real/user-skill-body.jsonl` (one line from `raw_entries` starting with `Base directory for this skill:`)
+- [x] 1.2 Capture or synthesise a `<system-reminder>` user event into `apps/summoner/src/__fixtures__/claude/synthetic/user-system-reminder.jsonl`
 - [x] 1.3 Ensure an existing typed-user fixture (`user-text.jsonl`) is available for the `source='typed'` baseline; add one if missing
 
 ## 2. Transform (summoner) — TDD
 
-- [x] 2.1 Write failing test in `packages/summoner/src/__tests__/claude/transforms/user.test.ts` asserting skill-body input → payload `source='skill'`
+- [x] 2.1 Write failing test in `apps/summoner/src/__tests__/claude/transforms/user.test.ts` asserting skill-body input → payload `source='skill'`
 - [x] 2.2 Add failing test: system-reminder input → `source='reminder'`
 - [x] 2.3 Add failing test: plain typed input → `source='typed'`
 - [x] 2.4 Add regression test: string `<command-message>` content → transform still returns `null`
-- [x] 2.5 Implement classification in `packages/summoner/src/claude/transforms/user.ts` (single helper `classifyUserSource(blocks)` + `startsWith` checks); run tests green
+- [x] 2.5 Implement classification in `apps/summoner/src/claude/transforms/user.ts` (single helper `classifyUserSource(blocks)` + `startsWith` checks); run tests green
 - [x] 2.6 Thread `source` through `buildMessagePayload` (or next to it) without changing its existing callers' shape
 
 ## 3. Shared schema — TDD
 
 - [x] 3.1 Add failing schema test in `packages/shared` (or adjacent unit test) asserting `source` accepts `'typed'|'skill'|'command'|'reminder'` and is optional
 - [x] 3.2 Extend `packages/shared/src/schemas/message.ts` user payload with `source: z.enum([...]).optional()`; run tests green
-- [x] 3.3 Re-export the type if needed so `packages/client` can consume it
+- [x] 3.3 Re-export the type if needed so `apps/web` can consume it
 
 ## 4. Client types and handler — TDD
 
-- [x] 4.1 Extend `packages/client/src/types/ui.ts` `OptionalMetaMap['text']` with `source?: 'typed'|'skill'|'command'|'reminder'`
-- [x] 4.2 Write failing test(s) in `packages/client/src/contexts/channel/handlers/__tests__/message.test.tsx` (or closest existing test file) asserting `meta.source` is propagated from `message:user` payload to `Message.meta`
+- [x] 4.1 Extend `apps/web/src/types/ui.ts` `OptionalMetaMap['text']` with `source?: 'typed'|'skill'|'command'|'reminder'`
+- [x] 4.2 Write failing test(s) in `apps/web/src/contexts/channel/handlers/__tests__/message.test.tsx` (or closest existing test file) asserting `meta.source` is propagated from `message:user` payload to `Message.meta`
 - [x] 4.3 Update the user-message handler to pass `payload.source` through to `meta.source`; run tests green
 
 ## 5. Client rendering — TDD
 
-- [x] 5.1 Write failing test in `packages/client/src/components/__tests__/ChatMessage.test.tsx`: `role='user', type='text', meta.source='typed', content='1. a 2. b'` → no `<ol>`/`<li>`, no `<strong>`, raw text present
+- [x] 5.1 Write failing test in `apps/web/src/components/__tests__/ChatMessage.test.tsx`: `role='user', type='text', meta.source='typed', content='1. a 2. b'` → no `<ol>`/`<li>`, no `<strong>`, raw text present
 - [x] 5.2 Add failing test: `meta.source='skill'` with `# Heading\n\n**bold**` → `<h1>` and `<strong>bold</strong>` present
 - [x] 5.3 Add failing test: `meta.source='command'` → `renderBody` returns `null` (no DOM for the content area)
 - [x] 5.4 Add failing test: `meta.source='reminder'` → `renderBody` returns `null`
 - [x] 5.5 Add regression test: `role='assistant', type='text'` with markdown → still renders via `MarkdownContent` regardless of `meta.source`
-- [x] 5.6 Implement dispatch in `packages/client/src/components/MessageContent.tsx` (`pickUserTextRenderer(source)` helper); run tests green
+- [x] 5.6 Implement dispatch in `apps/web/src/components/MessageContent.tsx` (`pickUserTextRenderer(source)` helper); run tests green
 
 ## 6. Skill tool body — TDD
 
 - [x] 6.1 Write failing test in `ChatMessage.test.tsx`: `tool_use` with `content='Skill'`, `meta.input.skill='opsx:propose'`, `meta.result.content='Hello **world**\n\n- a\n- b'` → after expand, DOM has `<strong>world</strong>` and two `<li>`
 - [x] 6.2 Write failing test: `tool_use` with `content='Skill'` and no `meta.result` → shows invoked skill id header and "Running…" indicator
-- [x] 6.3 Implement `case 'Skill'` + `SkillToolBody` in `packages/client/src/components/message-blocks/ToolUseBlock.tsx` using `MarkdownContent`; run tests green
+- [x] 6.3 Implement `case 'Skill'` + `SkillToolBody` in `apps/web/src/components/message-blocks/ToolUseBlock.tsx` using `MarkdownContent`; run tests green
 
 ## 7. Copy parity with extension
 
@@ -62,9 +62,9 @@ hint and (b) the "Copy Link" context menu.
 
 ## 8. Regression and polish
 
-- [x] 8.1 Run `pnpm -C packages/summoner test` (TDD suite for transforms)
-- [x] 8.2 Run `pnpm -C packages/client test` (ChatMessage + handler tests + full suite)
-- [x] 8.3 Run `pnpm -C packages/server test` to confirm no payload-schema regressions
+- [x] 8.1 Run `pnpm -C apps/summoner test` (TDD suite for transforms)
+- [x] 8.2 Run `pnpm -C apps/web test` (ChatMessage + handler tests + full suite)
+- [x] 8.3 Run `pnpm -C apps/server test` to confirm no payload-schema regressions
 - [x] 8.4 Run `biome check` on all touched files
 - [x] 8.5 Manually verify in dev: (a) typed "1. 史萊姆 2. DQ 3. 要保留" renders literal, (b) Skill invocation shows rendered markdown body, (c) assistant response with headings/bullets unchanged, (d) no regression on existing tool blocks (Bash/Read/Write), (e) code block copy and Copy Link context menu work
 

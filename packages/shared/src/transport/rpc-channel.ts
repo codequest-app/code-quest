@@ -7,7 +7,7 @@ export interface RpcSocket {
 }
 
 export const RESUME_EVENT = '__resume__';
-const CLIENT_EVENT_SEQ = 0;
+const UNSEQUENCED = 0;
 
 const DEFAULT_REQUEST_TIMEOUT_MS = 30_000;
 
@@ -64,7 +64,7 @@ export class RpcChannel {
 
   emit(event: string, data: unknown): void {
     if (this.closed) return;
-    const env: Envelope = { kind: 'event', seq: CLIENT_EVENT_SEQ, event, data };
+    const env: Envelope = { kind: 'event', seq: UNSEQUENCED, event, data };
     this.socket.send(JSON.stringify(env));
   }
 

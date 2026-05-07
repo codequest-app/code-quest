@@ -24,7 +24,7 @@ When the extension updates, re-extract and diff against that file.
 ## Protocol 只在 3 個檔案
 
 ```
-packages/summoner/src/protocol/
+apps/summoner/src/protocol/
 ├── claude-schemas.ts      ← CLI 送什麼給我們（event type Zod schemas + type registry）
 ├── claude.ts              ← 我們送什麼給 CLI（LaunchOptions + buildArgs + parseLine + format methods）
 └── claude-adapter.ts      ← ProtocolEvent → SocketEvent 純轉換（event type 路由 + control_request dispatch）

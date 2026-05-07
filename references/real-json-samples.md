@@ -1,6 +1,6 @@
 # Real JSON Samples — Protocol Events
 
-> Extracted from `packages/server/data/code-quest.db` (raw_entries table)
+> Extracted from `apps/server/data/code-quest.db` (raw_entries table)
 > One sample per type/subtype. Use as test fixtures and schema validation references.
 > Updated: 2026-04-17
 
@@ -62,7 +62,7 @@
 }
 ```
 
-Source: `packages/summoner/src/__fixtures__/claude/synthetic/system-mirror-error.jsonl`
+Source: `apps/summoner/src/__fixtures__/claude/synthetic/system-mirror-error.jsonl`
 
 ---
 
@@ -81,7 +81,7 @@ Synthetic fixture: `control-channel-enable.jsonl` (to be created when needed).
 ### ultrareview_launch
 
 Not yet in DB (requires ultrareview feature).
-Synthetic fixture: `packages/summoner/src/__fixtures__/claude/synthetic/control-ultrareview-launch.jsonl`
+Synthetic fixture: `apps/summoner/src/__fixtures__/claude/synthetic/control-ultrareview-launch.jsonl`
 
 ---
 

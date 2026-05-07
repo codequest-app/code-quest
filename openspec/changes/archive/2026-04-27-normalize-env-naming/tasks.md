@@ -32,9 +32,9 @@ Config reads the new env names directly. Repo `.env` is updated in this PR. No f
 - [x] Remove `storeConfig.file` assignment from `bin/server.ts`.
 
 ### 5. `.env` / `.env.example`
-- [x] Rewrite `packages/server/.env.example` in the new names, grouped by domain (App / DB / Raw Events / CLI / Explorer / Client), with comments explaining each.
+- [x] Rewrite `apps/server/.env.example` in the new names, grouped by domain (App / DB / Raw Events / CLI / Explorer / Client), with comments explaining each.
 - [x] Include commented `# RAW_EVENTS_PERSIST_DELTAS=false` placeholder (follow-up PR wires it).
-- [x] Migrate local `packages/server/.env` to new names.
+- [x] Migrate local `apps/server/.env` to new names.
 - [x] `DATABASE_URL`, `LOG_LEVEL`, `NODE_ENV`, `VITE_SERVER_URL` — unchanged.
 
 ### 6. Tests

@@ -25,9 +25,9 @@
 
 ## Impact
 
-- `packages/client/src/hooks/useElapsedTime.ts`（新增）
-- `packages/client/src/components/chat/SpinnerVerb.tsx`
-- `packages/client/src/components/chat/conversation/ThinkingBlock.tsx`
-- `packages/client/src/components/chat/tool-use/message-blocks/SystemBlocks.tsx`
-- `packages/client/src/components/chat/conversation/ChatMessage.tsx`
-- `packages/client/src/components/chat/conversation/MessageList.tsx`（可能需調整 result message 傳遞方式）
+- `apps/web/src/hooks/useElapsedTime.ts`（新增）
+- `apps/web/src/components/chat/SpinnerVerb.tsx`
+- `apps/web/src/components/chat/conversation/ThinkingBlock.tsx`
+- `apps/web/src/components/chat/tool-use/message-blocks/SystemBlocks.tsx`
+- `apps/web/src/components/chat/conversation/ChatMessage.tsx`
+- `apps/web/src/components/chat/conversation/MessageList.tsx`（可能需調整 result message 傳遞方式）

@@ -1,6 +1,6 @@
 ## 1. Update schemas (types + DB)
 
-- [x] 1.1 `packages/server/src/services/session-store.ts`: rewrite `sessionRecordSchema` — `id: z.string()` required, `channelId: z.string()` required (both must be set at persist time; SQL column stays nullable to match live MySQL, application-level enforces required). Drop `sessionId`.
+- [x] 1.1 `apps/server/src/services/session-store.ts`: rewrite `sessionRecordSchema` — `id: z.string()` required, `channelId: z.string()` required (both must be set at persist time; SQL column stays nullable to match live MySQL, application-level enforces required). Drop `sessionId`.
 - [x] 1.2 Same file: update `SessionStore` interface. All mutations are **PK-keyed by `id` (sessionId)**. Add `getByChannelId(channelId)` as the bridge lookup. Shape:
   ```ts
   persist(record)
@@ -11,9 +11,9 @@
   updateStatus(id, status)
   delete(id)
   ```
-- [x] 1.3 `packages/server/src/db/schema-columns.ts`: `SESSION_COLUMNS` = `['id', 'channelId', 'parentId', 'provider', 'command', 'args', 'cwd', 'mode', 'role', 'title', 'status', 'createdAt']`
-- [x] 1.4 `packages/server/src/db/schema-sqlite.ts`: `sessions` — `id: text('id').primaryKey()`, `channelId: text('channel_id')` nullable at DB level, `index('idx_sessions_channel_id').on(table.channelId)`; drop `sessionId`
-- [x] 1.5 `packages/server/src/db/schema-mysql.ts`: analogous with `varchar(64)` PK / `varchar(36)` channel, same index
+- [x] 1.3 `apps/server/src/db/schema-columns.ts`: `SESSION_COLUMNS` = `['id', 'channelId', 'parentId', 'provider', 'command', 'args', 'cwd', 'mode', 'role', 'title', 'status', 'createdAt']`
+- [x] 1.4 `apps/server/src/db/schema-sqlite.ts`: `sessions` — `id: text('id').primaryKey()`, `channelId: text('channel_id')` nullable at DB level, `index('idx_sessions_channel_id').on(table.channelId)`; drop `sessionId`
+- [x] 1.5 `apps/server/src/db/schema-mysql.ts`: analogous with `varchar(64)` PK / `varchar(36)` channel, same index
 
 ## 2. Migration 0012 (hand-authored)
 

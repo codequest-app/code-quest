@@ -29,9 +29,9 @@ Splitting into `RAW_EVENTS_WRITE_DELTAS` and `RAW_EVENTS_READ_DELTAS` makes the 
 
 ## Impact
 
-- `packages/server/src/config.ts` — rename field, add new field.
-- `packages/server/src/container.ts` — route `writeDeltas` + `readDeltas` into `buildStores`.
-- `packages/server/src/socket/raw-recorder.ts` — constructor param name change.
-- `packages/server/.env`, `.env.example` — rename + add the new line.
+- `apps/server/src/config.ts` — rename field, add new field.
+- `apps/server/src/container.ts` — route `writeDeltas` + `readDeltas` into `buildStores`.
+- `apps/server/src/socket/raw-recorder.ts` — constructor param name change.
+- `apps/server/.env`, `.env.example` — rename + add the new line.
 - Tests — fixtures / mocks using the old `persistDeltas` name adjust; new assertions covering the four flag combinations.
 - No DB schema change. No migration. No client change.

@@ -37,10 +37,10 @@ Out of scope:
 ## Impact
 
 **New:**
-- `packages/summoner/src/terminal/types.ts`, `local.ts`, `test/fake-terminal-service.ts`.
-- `packages/server/src/socket/handlers/terminal.ts` (already a stub may exist for OpenClaude — extend / replace).
-- `packages/client/src/components/TerminalPanel.tsx`, `TerminalTab.tsx`, `XTermWrapper.tsx`.
-- `packages/client/src/contexts/TerminalContext.tsx` for tab list.
+- `apps/summoner/src/terminal/types.ts`, `local.ts`, `test/fake-terminal-service.ts`.
+- `apps/server/src/socket/handlers/terminal.ts` (already a stub may exist for OpenClaude — extend / replace).
+- `apps/web/src/components/TerminalPanel.tsx`, `TerminalTab.tsx`, `XTermWrapper.tsx`.
+- `apps/web/src/contexts/TerminalContext.tsx` for tab list.
 
 **Modified:**
 - `WorkspaceLayout.tsx` — vertical PanelGroup wrapping the existing horizontal one.

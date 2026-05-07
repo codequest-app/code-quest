@@ -25,11 +25,11 @@
 
 ## Impact
 
-- `packages/server/src/__tests__/chat-handler.test.ts` — 刪除或清空
-- `packages/server/src/__tests__/chat-handler-session.test.ts` — 可能新增未覆蓋的 session tests
-- `packages/server/src/__tests__/chat-handler-settings.test.ts` — 可能新增未覆蓋的 settings tests
-- `packages/server/src/__tests__/chat-handler-control.test.ts` — 可能新增未覆蓋的 control tests
-- `packages/server/src/__tests__/chat-handler-misc.test.ts` — 可能新增未覆蓋的 misc tests
+- `apps/server/src/__tests__/chat-handler.test.ts` — 刪除或清空
+- `apps/server/src/__tests__/chat-handler-session.test.ts` — 可能新增未覆蓋的 session tests
+- `apps/server/src/__tests__/chat-handler-settings.test.ts` — 可能新增未覆蓋的 settings tests
+- `apps/server/src/__tests__/chat-handler-control.test.ts` — 可能新增未覆蓋的 control tests
+- `apps/server/src/__tests__/chat-handler-misc.test.ts` — 可能新增未覆蓋的 misc tests
 - 可能新建：`chat-handler-message.test.ts`（message/streaming pipeline tests）
 - 可能新建：`chat-handler-plan.test.ts`（plan comment tests）
 - 356 server tests baseline，搬移後數量應相同

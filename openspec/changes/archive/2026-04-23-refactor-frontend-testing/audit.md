@@ -15,7 +15,7 @@
 
 ## Columns
 
-- `file` — 相對 `packages/client/src` 路徑
+- `file` — 相對 `apps/web/src` 路徑
 - `category` — 主分類
 - `dup-with` — 跨檔重複的對照檔（如適用）
 - `notes` — 具體問題摘要

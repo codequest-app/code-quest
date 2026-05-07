@@ -2,7 +2,7 @@
 
 ### Requirement: `Message.meta` for text messages SHALL carry `source`
 
-`packages/client/src/types/ui.ts` SHALL extend the optional meta for
+`apps/web/src/types/ui.ts` SHALL extend the optional meta for
 `type: 'text'` messages with
 `source?: 'typed' | 'skill' | 'command' | 'reminder'`. The field MUST remain
 optional so that legacy state (snapshots, persisted channel state) still
@@ -16,7 +16,7 @@ type-checks.
 
 ### Requirement: `renderBody` SHALL dispatch user text by `source`
 
-`packages/client/src/components/MessageContent.tsx`'s `case 'text'` SHALL
+`apps/web/src/components/MessageContent.tsx`'s `case 'text'` SHALL
 select the renderer using a helper that maps `source` (default `typed`) to
 the renderer listed in the `message-rendering` capability.
 
@@ -37,7 +37,7 @@ the renderer listed in the `message-rendering` capability.
 
 ### Requirement: `ToolUseBlock` SHALL render `Skill` output as markdown
 
-`packages/client/src/components/message-blocks/ToolUseBlock.tsx` SHALL add a
+`apps/web/src/components/message-blocks/ToolUseBlock.tsx` SHALL add a
 `case 'Skill'` branch that renders the invoked skill id header and the
 result content through `MarkdownContent`. The branch SHALL coexist with
 existing cases (`Bash`, `Read`, `Write`/`Edit`/`MultiEdit`) and the

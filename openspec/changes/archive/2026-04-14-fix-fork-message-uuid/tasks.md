@@ -9,7 +9,7 @@
 ## 1. Message type carries cliUuid
 
 - [x] 1.1 RED: type-level test or runtime check — `Message` accepts optional `cliUuid: string`. Existing `id` field semantics unchanged.
-- [x] 1.2 GREEN: add `cliUuid?: string` to `MessageBase` in `packages/client/src/types/ui.ts`.
+- [x] 1.2 GREEN: add `cliUuid?: string` to `MessageBase` in `apps/web/src/types/ui.ts`.
 
 ## 2. applyUserContent sets cliUuid (not id)
 

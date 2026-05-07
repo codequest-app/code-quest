@@ -16,7 +16,7 @@ Original assumption (CLI `control_request create_worktree`) was wrong — it's a
 
 ### 1. Project-right-click UX (new entry point)
 
-- Add "Create Worktree…" to `packages/client/src/components/ProjectContextMenu.tsx`
+- Add "Create Worktree…" to `apps/web/src/components/ProjectContextMenu.tsx`
 - Click → inline form (modal or popover) with name input + extension-style validation:
   - Regex `/^[a-zA-Z0-9._-]+$/`
   - Max 64 chars
@@ -87,7 +87,7 @@ Worktree sessions now coexist with main working tree sessions under the same Pro
 Worktree is a standalone logical domain; its logic must not be coupled to any specific UI location (ProjectContextMenu today, CommandMenu / TabBar / Settings tomorrow). Follow the cc-office pattern (SessionProvider, ProjectProvider, ChannelProvider, PluginProvider, TabProvider) — a dedicated Context that owns worktree state + actions.
 
 ```ts
-// packages/client/src/contexts/WorktreeContext.tsx
+// apps/web/src/contexts/WorktreeContext.tsx
 interface WorktreeState {
   capabilities: { worktree: boolean };
   listing: Record<string /* cwd */, WorktreeInfo[]>;  // per-cwd cache

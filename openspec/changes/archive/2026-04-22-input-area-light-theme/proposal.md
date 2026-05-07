@@ -49,10 +49,10 @@
 ## Impact
 
 - 修改：
-  - `packages/client/src/App.css`（刪 chat-input-* token、刪 `.send-btn` + permission-mode focus-within 規則、新增 rgb token、新增 hover-tint utilities）
-  - `packages/client/src/components/ChatInputArea.tsx`
-  - `packages/client/src/components/ComposeToolbar.tsx`（send button data-mode + Tailwind variants）
-  - `packages/client/src/components/ui/IconButton.tsx`
+  - `apps/web/src/App.css`（刪 chat-input-* token、刪 `.send-btn` + permission-mode focus-within 規則、新增 rgb token、新增 hover-tint utilities）
+  - `apps/web/src/components/ChatInputArea.tsx`
+  - `apps/web/src/components/ComposeToolbar.tsx`（send button data-mode + Tailwind variants）
+  - `apps/web/src/components/ui/IconButton.tsx`
   - `PermissionModePicker.tsx` / `AddButton.tsx` / `ReviewUpsellBanner.tsx` / `MentionDropdown.tsx` / `command-menu/CommandMenu.tsx` / `ModelPickerPopover.tsx`（hover tint class 替換）
 - 新增測試：
   - `ChatInputArea.theme.test.tsx`（bg/border/focus-shadow 隨 theme/mode 切換）

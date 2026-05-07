@@ -1,10 +1,10 @@
 ## 1. Relocate resume-route (pure function) from components/ to utils/
 
-- [x] 1.1 Move `packages/client/src/components/resume-route.ts` →
-  `packages/client/src/utils/resume-route.ts`
+- [x] 1.1 Move `apps/web/src/components/resume-route.ts` →
+  `apps/web/src/utils/resume-route.ts`
 - [x] 1.2 Move
-  `packages/client/src/components/__tests__/resume-route.test.ts` →
-  `packages/client/src/utils/__tests__/resume-route.test.ts`
+  `apps/web/src/components/__tests__/resume-route.test.ts` →
+  `apps/web/src/utils/__tests__/resume-route.test.ts`
 - [x] 1.3 Update test's relative import (`../resume-route`) as needed
 - [x] 1.4 Update `ChatPanel.tsx` import path
 - [x] 1.5 Tests pass (1147/1147)

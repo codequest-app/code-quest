@@ -54,7 +54,7 @@ grep -l "sk-" fixture.jsonl  # Check for API key leaks
 ## Destination
 
 ```
-packages/summoner/src/__fixtures__/claude/
+apps/summoner/src/__fixtures__/claude/
 ├── real/<name>.jsonl        # From DB or real CLI
 └── synthetic/<name>.jsonl   # Hand-crafted (mark for future replacement)
 ```

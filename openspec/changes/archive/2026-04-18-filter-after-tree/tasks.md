@@ -1,13 +1,13 @@
 ## 1. filterTree utility (TDD)
 
-- [x] 1.1 Write `packages/client/src/utils/__tests__/filter-tree.test.ts` with:
+- [x] 1.1 Write `apps/web/src/utils/__tests__/filter-tree.test.ts` with:
   - empty input → empty output
   - single visible root → kept
   - single hidden root → dropped
   - mixed roots → only visible kept
   - nested subagent: parent visible, child hidden → child stripped
   - nested subagent: parent hidden → whole subtree dropped
-- [x] 1.2 Implement `packages/client/src/utils/filter-tree.ts` exporting `filterTree(nodes, predicate)` that recursively filters both roots and `node.children`. Run tests green.
+- [x] 1.2 Implement `apps/web/src/utils/filter-tree.ts` exporting `filterTree(nodes, predicate)` that recursively filters both roots and `node.children`. Run tests green.
 
 ## 2. MessageList integration (TDD)
 
@@ -17,7 +17,7 @@
 
 ## 3. Regression and polish
 
-- [x] 3.1 Run `pnpm -C packages/client test` — confirm no existing test regressed
+- [x] 3.1 Run `pnpm -C apps/web test` — confirm no existing test regressed
 - [x] 3.2 Run `biome check` on touched files
 - [x] 3.3 Manually verify in dev: toggle TodoWrite visibility off in the visibility popover and confirm the "Result: Todos have been modified…" block disappears too
 

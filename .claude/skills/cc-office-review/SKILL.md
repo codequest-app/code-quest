@@ -102,7 +102,7 @@ summoner package 開啟了 `isolatedDeclarations: true`，影響：
   - 差 1–2px / 1–2 階 → 就近取內建 utility（`text-xs` / `p-2`）
   - 超出既有範圍 → **先擴 `@theme`，不要直接 arbitrary**
   - 合法 arbitrary：`calc(...)`、引用 CSS variable、刻意 off-grid 且有理由
-- 顏色不寫 hex：查 `packages/client/src/App.css` 的 `--color-*` 語意 token（`accent` / `surface` / `text-muted` / `success` / `danger`…）
+- 顏色不寫 hex：查 `apps/web/src/App.css` 的 `--color-*` 語意 token（`accent` / `surface` / `text-muted` / `success` / `danger`…）
 - 細節流程參考 `tailwind-v4` skill 的「Design flow: token-first」
 
 ## 測試

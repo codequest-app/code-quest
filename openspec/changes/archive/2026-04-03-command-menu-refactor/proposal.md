@@ -18,7 +18,7 @@ CommandMenu.tsx is 705 lines — a god component mixing menu item construction (
 
 ## Impact
 
-- `packages/client/src/components/CommandMenu.tsx` — reduced to orchestrator
-- `packages/client/src/components/command-menu-items.ts` — new: buildMenuItems utility
-- `packages/client/src/components/command-menu-parts.tsx` — new: section/item renderers
+- `apps/web/src/components/CommandMenu.tsx` — reduced to orchestrator
+- `apps/web/src/components/command-menu-items.ts` — new: buildMenuItems utility
+- `apps/web/src/components/command-menu-parts.tsx` — new: section/item renderers
 - No API changes, no behavior changes

@@ -97,7 +97,7 @@ d. **Import 整理**：refactor 後跑 `biome check --write` 處理 organizeImpo
 
 ### 6. Fake files — unified naming and placement
 
-所有測試用 Fake 檔案 MUST 放於 `packages/client/src/test/` 平鋪層級，**不使用 `fakes/` 子目錄**。
+所有測試用 Fake 檔案 MUST 放於 `apps/web/src/test/` 平鋪層級，**不使用 `fakes/` 子目錄**。
 
 - 檔名：`fake-<kebab>.ts[x]`
 - Exported class / function：`Fake<PascalCase>`

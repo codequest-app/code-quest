@@ -1,7 +1,7 @@
 ## ADDED Requirements
 
 ### Requirement: Checkbox primitive added to ui/ directory
-A `ui/Checkbox` component SHALL exist in `packages/client/src/components/ui/Checkbox.tsx`, wrapping `@radix-ui/react-checkbox` with the project's visual style.
+A `ui/Checkbox` component SHALL exist in `apps/web/src/components/ui/Checkbox.tsx`, wrapping `@radix-ui/react-checkbox` with the project's visual style.
 
 #### Scenario: Checkbox renders with label
 - **WHEN** `<Checkbox checked={true} onCheckedChange={fn}>Label</Checkbox>` is rendered

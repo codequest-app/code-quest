@@ -22,7 +22,7 @@ cc-office 的 Account & Usage dialog 和 UsageBar 與 extension (v2.1.45) 在幾
 
 ## Impact
 
-- `packages/client/src/components/UsageBar.tsx` — 變色邏輯、reset time、圓角
-- `packages/client/src/components/AccountUsageDialog.tsx` — manage 連結、unavailableReason
+- `apps/web/src/components/UsageBar.tsx` — 變色邏輯、reset time、圓角
+- `apps/web/src/components/AccountUsageDialog.tsx` — manage 連結、unavailableReason
 - `packages/shared/src/schemas/notification.ts` 或 `settings.ts` — 可能需擴充 UsageQuota type 加 unavailableReason
 - 相關 Storybook stories 和測試需更新

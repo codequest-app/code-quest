@@ -38,7 +38,7 @@ All C→S events use `namespace:action` format. No bare event names.
 
 **Client sends:** `socket.emit('session:launch', { channelId, cwd, ...opts }, callback)`
 
-**Server handler:** `packages/server/src/socket/handlers/session/connect.ts` → `handleLaunch()`
+**Server handler:** `apps/server/src/socket/handlers/session/connect.ts` → `handleLaunch()`
 
 **Server flow:**
 1. `channelManager.create(channelId, { launchOptions, initOptions, cwd })`
@@ -55,7 +55,7 @@ All C→S events use `namespace:action` format. No bare event names.
 
 **Client sends:** `socket.emit('session:join', { channelId }, callback)`
 
-**Server handler:** `packages/server/src/socket/handlers/session/connect.ts` → `handleJoin()`
+**Server handler:** `apps/server/src/socket/handlers/session/connect.ts` → `handleJoin()`
 
 **Server flow:**
 1. Checks if channel exists and is alive
@@ -73,7 +73,7 @@ All C→S events use `namespace:action` format. No bare event names.
 
 **Client sends:** `socket.emit('session:resume', { channelId })`
 
-**Server handler:** `packages/server/src/socket/handlers/session/command.ts` → `handleResume()`
+**Server handler:** `apps/server/src/socket/handlers/session/command.ts` → `handleResume()`
 
 **Server flow:** Broadcasts `session:resume` to ALL sockets (cross-window sync). No callback.
 
@@ -100,7 +100,7 @@ All C→S events use `namespace:action` format. No bare event names.
 
 ### Server channel storage (in-memory)
 
-`packages/server/src/socket/channel.ts` — per channel:
+`apps/server/src/socket/channel.ts` — per channel:
 - Identity: `id`, `sessionId`, `provider`, `cwd`, `exited`, `isProcessing`
 - Config: `sessionConfig { model, permissionMode, effort, thinkingLevel, tools, mcpServers }`
 - Meta: `metaCache { model, tools, permissionMode, slashCommands, fastModeState, mcpServers }`
@@ -116,7 +116,7 @@ All C→S events use `namespace:action` format. No bare event names.
 
 ## Server Handler Pattern
 
-**File:** `packages/server/src/socket/handlers/<domain>-handler.ts`
+**File:** `apps/server/src/socket/handlers/<domain>-handler.ts`
 
 ```typescript
 export function register(socket: TypedSocket, ctx: HandlerContext) {
@@ -128,7 +128,7 @@ export function register(socket: TypedSocket, ctx: HandlerContext) {
 }
 ```
 
-**Registration** in `packages/server/src/socket/chat-handler.ts`:
+**Registration** in `apps/server/src/socket/chat-handler.ts`:
 ```typescript
 handleConnection(socket: TypedSocket) {
   registerSessionHandlers(socket, this);
@@ -138,7 +138,7 @@ handleConnection(socket: TypedSocket) {
 }
 ```
 
-**HandlerContext** (`packages/server/src/socket/handler-context.ts`) provides DI access:
+**HandlerContext** (`apps/server/src/socket/handler-context.ts`) provides DI access:
 `runnerFactory`, `channelManager`, `sessionStore`, `rawEventStore`, `settingsStore`, `usageTracker`, `io`
 
 ## Zod Validation
@@ -161,7 +161,7 @@ Both used by `TypedSocket = Socket<ServerToClientEvents, ClientToServerEvents>`.
 
 ## Client Handler Pattern
 
-**File:** `packages/client/src/contexts/socket/handlers/<domain>.ts`
+**File:** `apps/web/src/contexts/socket/handlers/<domain>.ts`
 
 ```typescript
 export function createMessageHandlers(deps: HandlerDeps): Record<string, EventHandler> {
@@ -174,7 +174,7 @@ export function createMessageHandlers(deps: HandlerDeps): Record<string, EventHa
 
 Combined in `handlers/index.ts`, attached in `SocketContext.tsx`.
 
-**Action hooks** (`packages/client/src/hooks/use*Actions.ts`):
+**Action hooks** (`apps/web/src/hooks/use*Actions.ts`):
 ```typescript
 socket.emit('list_sessions_request', {}, (response) => { /* callback */ });
 ```

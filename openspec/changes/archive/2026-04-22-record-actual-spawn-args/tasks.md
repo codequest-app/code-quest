@@ -1,7 +1,7 @@
 ## Tasks
 
 ### 1. Red — summoner runner tests
-- [x] `packages/summoner/src/__tests__/runner.test.ts` (or
+- [x] `apps/summoner/src/__tests__/runner.test.ts` (or
       `claude/process-runner.test.ts` — use the existing file):
   - `runner.launchArgs` matches `adapter.buildArgs(opts)` after
     construction, is readonly (type-level).
@@ -11,7 +11,7 @@
   - Non-init ClientMessages do not gain an `args` field.
 
 ### 2. Green — ProcessRunner
-- [x] `packages/summoner/src/runner.ts`:
+- [x] `apps/summoner/src/runner.ts`:
   - Change `private readonly launchArgs` → `public readonly launchArgs`.
   - In `_processLine`, after `transform`, if a `ClientMessage.name`
     is `'session:init'`, spread augment its `payload` with
@@ -24,7 +24,7 @@
   - If any test snapshots break (schema fixture diff), update them.
 
 ### 4. Red — server session-record test
-- [x] `packages/server/src/__tests__/settings.test.ts` or a dedicated
+- [x] `apps/server/src/__tests__/settings.test.ts` or a dedicated
       `session-record.test.ts`:
   - After a `session:launch` with a known `launchOptions`, the
     persisted `sessions.args` (read via `sessionStore.getById`)
@@ -33,13 +33,13 @@
   - Two launches with different opts produce different stored args.
 
 ### 5. Green — server wiring
-- [x] `packages/server/src/socket/handlers/session/connect.ts`:
+- [x] `apps/server/src/socket/handlers/session/connect.ts`:
   - `onSessionInit` reads `args` from the parsed `session:init`
     payload (via `sessionInitEventSchema`) and writes it to DB.
   - Fallback: if `args` missing, write `[]` and log a warning.
-- [x] `packages/server/src/socket/channel-manager.ts`: remove
+- [x] `apps/server/src/socket/channel-manager.ts`: remove
       `runnerArgs` getter (verify no other consumers).
-- [x] `packages/server/src/container.ts`: remove `args:
+- [x] `apps/server/src/container.ts`: remove `args:
       adapter.buildArgs()` from `runnerFactory`. Also remove from
       the `RunnerFactory` interface in `types.ts`.
 

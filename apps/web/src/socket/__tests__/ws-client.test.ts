@@ -7,7 +7,7 @@ import { WsClient } from '../ws-client.ts';
  * Unit tests for WsClient — drives a synthetic MockWebSocket so the focus
  * stays on protocol behaviour (reconnect, outbox, request-response, resume).
  * End-to-end tests against the real ws server live in
- * packages/server/src/socket/__tests__/ws-transport.test.ts and a future
+ * apps/server/src/socket/__tests__/ws-transport.test.ts and a future
  * Group 10 integration drill.
  */
 describe('WsClient', () => {

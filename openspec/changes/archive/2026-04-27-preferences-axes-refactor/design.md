@@ -1,6 +1,6 @@
 ## Context
 
-`packages/client` 目前只有一套寫死的 Dark+ 色票（`App.css` 的 `@theme`）與單一 `WorkspaceLayout`。`usePreferencesStore` 已存在（zustand + persist），但只裝了 onboarding/review dismiss 兩個 flag。Storybook 10 已接好，60/82 components 與 2/6 features 有 stories，無 test-runner。Playwright 已安裝於 repo。
+`apps/web` 目前只有一套寫死的 Dark+ 色票（`App.css` 的 `@theme`）與單一 `WorkspaceLayout`。`usePreferencesStore` 已存在（zustand + persist），但只裝了 onboarding/review dismiss 兩個 flag。Storybook 10 已接好，60/82 components 與 2/6 features 有 stories，無 test-runner。Playwright 已安裝於 repo。
 
 本變更是「多軸偏好系統」的第一步，重點是**不動視覺**把基礎打好。實際 UX（light theme palette、B 版面）留給後續 change。
 

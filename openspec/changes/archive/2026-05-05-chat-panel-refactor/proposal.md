@@ -23,8 +23,8 @@
 
 ## Impact
 
-- `packages/client/src/components/chat/ChatPanel.tsx` — 重寫為 compound layout
-- `packages/client/src/components/chat/ChatSession.tsx` — 新增，承接 business logic
-- `packages/client/src/components/workspace/TabContainer.tsx` — `TabContent` 改用 `ChatSession`
-- `packages/client/src/components/chat/__tests__/ChatPanel.test.tsx` — 改為 layout 測試
-- `packages/client/src/components/chat/__tests__/ChatSession.test.tsx` — 新增，behavioral 測試
+- `apps/web/src/components/chat/ChatPanel.tsx` — 重寫為 compound layout
+- `apps/web/src/components/chat/ChatSession.tsx` — 新增，承接 business logic
+- `apps/web/src/components/workspace/TabContainer.tsx` — `TabContent` 改用 `ChatSession`
+- `apps/web/src/components/chat/__tests__/ChatPanel.test.tsx` — 改為 layout 測試
+- `apps/web/src/components/chat/__tests__/ChatSession.test.tsx` — 新增，behavioral 測試

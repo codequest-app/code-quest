@@ -1,6 +1,6 @@
 ---
 name: env-config
-description: Environment variable access conventions. All env access goes through centralized config modules (packages/server/src/config.ts, packages/client/src/config.ts). Use when reading process.env, adding new env vars, or modifying config files.
+description: Environment variable access conventions. All env access goes through centralized config modules (apps/server/src/config.ts, apps/web/src/config.ts). Use when reading process.env, adding new env vars, or modifying config files.
 ---
 
 # Environment Variable Configuration
@@ -11,10 +11,10 @@ All env access MUST go through centralized config modules — never read `proces
 
 | Package | Config file | Access method |
 |---------|------------|---------------|
-| server | `packages/server/src/config.ts` | `process.env` with defaults |
-| client | `packages/client/src/config.ts` | `import.meta.env` (Vite) |
+| server | `apps/server/src/config.ts` | `process.env` with defaults |
+| client | `apps/web/src/config.ts` | `import.meta.env` (Vite) |
 
-## Server Config (`packages/server/src/config.ts`)
+## Server Config (`apps/server/src/config.ts`)
 
 ```ts
 export const config = {
@@ -35,7 +35,7 @@ export const config = {
 "dev": "tsx watch --env-file=.env src/bin/server.ts"
 ```
 
-## Client Config (`packages/client/src/config.ts`)
+## Client Config (`apps/web/src/config.ts`)
 
 ```ts
 export const config = {
@@ -49,10 +49,10 @@ Vite auto-loads `.env` files. Only `VITE_` prefixed vars are exposed to client.
 
 | File | Location |
 |------|----------|
-| Server | `packages/server/.env` |
-| Server example | `packages/server/.env.example` |
-| Client | `packages/client/.env` |
-| Client example | `packages/client/.env.example` |
+| Server | `apps/server/.env` |
+| Server example | `apps/server/.env.example` |
+| Client | `apps/web/.env` |
+| Client example | `apps/web/.env.example` |
 
 ## Adding a New Env Var
 
@@ -66,5 +66,5 @@ Vite auto-loads `.env` files. Only `VITE_` prefixed vars are exposed to client.
 
 - `parseRawStoreDrivers()` parses comma-separated driver list (e.g., `'sqlite,mysql,file'`)
 - `allowDangerouslySkipPermissions` defaults to `true` (only `'false'` disables it)
-- Dev proxy configured in `packages/client/vite.config.ts` using `process.env.PORT`
-- Test: `packages/server/src/__tests__/config.test.ts` (covers `parseRawStoreDrivers`)
+- Dev proxy configured in `apps/web/vite.config.ts` using `process.env.PORT`
+- Test: `apps/server/src/__tests__/config.test.ts` (covers `parseRawStoreDrivers`)

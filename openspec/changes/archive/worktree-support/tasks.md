@@ -1,6 +1,6 @@
 ## 1. WorktreeService
 
-- [x] 1.1 Create `packages/server/src/services/worktree-service.ts` with name validation (validateWorktreeName)
+- [x] 1.1 Create `apps/server/src/services/worktree-service.ts` with name validation (validateWorktreeName)
 - [x] 1.2 Implement `createWorktree(repoRoot, name?)` — full git worktree creation logic (mkdir, prune, branch -D, worktree add)
 - [x] 1.3 Implement `listWorktrees(repoRoot)` — parse `git worktree list --porcelain`
 - [x] 1.4 Implement `deleteWorktree(repoRoot, name)` — `git worktree remove` + `git branch -D`
@@ -16,7 +16,7 @@
 
 ## 3. Server socket handlers
 
-- [x] 3.1 Create `packages/server/src/socket/handlers/worktree.ts` — handle worktree:create, worktree:list, worktree:delete
+- [x] 3.1 Create `apps/server/src/socket/handlers/worktree.ts` — handle worktree:create, worktree:list, worktree:delete
 - [x] 3.2 Register handlers in handler setup
 - [x] 3.3 Write handler tests
 

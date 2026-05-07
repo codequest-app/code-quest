@@ -1,7 +1,7 @@
 ## Tasks
 
 ### 1. Red — build-args tests
-- [x] `packages/summoner/src/__tests__/claude/build-args.test.ts`:
+- [x] `apps/summoner/src/__tests__/claude/build-args.test.ts`:
   - `thinking='adaptive' + thinkingDisplay='summarized'` → args contain both flags
   - `thinking='adaptive' + thinkingDisplay='omitted'` → flag is `omitted`
   - `thinking='disabled' + thinkingDisplay='summarized'` → no `--thinking-display`
@@ -9,27 +9,27 @@
   - `thinking='adaptive'` alone → no `--thinking-display`
 
 ### 2. Green — LaunchOptions + buildArgs
-- [x] `packages/summoner/src/claude/launch-options.ts`: add
+- [x] `apps/summoner/src/claude/launch-options.ts`: add
       `thinkingDisplay: z.enum(['summarized', 'omitted']).optional()` to the schema.
-- [x] `packages/summoner/src/claude/protocol.ts#buildArgs`: after the
+- [x] `apps/summoner/src/claude/protocol.ts#buildArgs`: after the
       `--thinking <mode>` push, emit `--thinking-display` when:
       `o.thinkingDisplay != null && typeof o.thinking === 'string' && o.thinking !== 'disabled'`.
 
 ### 3. Env + config default
-- [x] `packages/server/src/config.ts`: add
+- [x] `apps/server/src/config.ts`: add
       `thinkingDisplay: 'summarized' | 'omitted'` (default `'summarized'`),
       parsed from `CLI_THINKING_DISPLAY` env var. Matches the existing
       `CLI_*` env namespace used for other Claude CLI knobs.
-- [x] `packages/server/.env.example` + local `.env`: document the new var
+- [x] `apps/server/.env.example` + local `.env`: document the new var
       (commented, defaults stated).
-- [x] `packages/server/src/__tests__/config.test.ts`: cases for default,
+- [x] `apps/server/src/__tests__/config.test.ts`: cases for default,
       explicit `summarized` / `omitted`, invalid value falls back to default.
 
 ### 4. Server wiring
-- [x] `packages/server/src/socket/channel.ts` (or the launch-options
+- [x] `apps/server/src/socket/channel.ts` (or the launch-options
       assembly site): thread `config.thinkingDisplay` (env default) into
       `LaunchOptions.thinkingDisplay`, overridable by per-session settings.
-- [x] `packages/server/src/socket/handlers/settings.ts`: extend the
+- [x] `apps/server/src/socket/handlers/settings.ts`: extend the
       `settings:set_thinking_level` handler to accept and persist
       `thinkingDisplay`. When the per-session setting is unset, fall
       back to `config.thinkingDisplay`.
@@ -45,7 +45,7 @@
       `summarized`.
 
 ### 5. Red → Green — settings handler tests
-- [x] `packages/server/src/__tests__/settings.test.ts` `chat:set_thinking_level`
+- [x] `apps/server/src/__tests__/settings.test.ts` `chat:set_thinking_level`
       block: add cases for:
       - client sending `thinkingDisplay=omitted` → persisted + forwarded on
         next launch

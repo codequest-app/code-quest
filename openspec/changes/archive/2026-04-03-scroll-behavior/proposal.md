@@ -22,6 +22,6 @@ MessageList auto-scroll has three issues that degrade UX during streaming:
 
 ## Impact
 
-- `packages/client/src/components/MessageList.tsx` — primary change target
-- `packages/client/src/components/__tests__/ScrollToBottom.test.tsx` — existing scroll tests
+- `apps/web/src/components/MessageList.tsx` — primary change target
+- `apps/web/src/components/__tests__/ScrollToBottom.test.tsx` — existing scroll tests
 - No API/server changes

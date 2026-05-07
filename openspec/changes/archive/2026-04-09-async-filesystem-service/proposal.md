@@ -21,9 +21,9 @@ FilesystemService 的三個方法都用 sync API（readdirSync、readFileSync、
 
 ## Impact
 
-- `packages/summoner/src/filesystem/types.ts` — interface 改 async
-- `packages/summoner/src/filesystem/local.ts` — 實作改 async API
-- `packages/summoner/src/test/fake-filesystem-service.ts` — fake 改 async
-- `packages/server/src/socket/handlers/explorer.ts` — await
-- `packages/server/src/socket/handlers/file.ts` — await
+- `apps/summoner/src/filesystem/types.ts` — interface 改 async
+- `apps/summoner/src/filesystem/local.ts` — 實作改 async API
+- `apps/summoner/src/test/fake-filesystem-service.ts` — fake 改 async
+- `apps/server/src/socket/handlers/explorer.ts` — await
+- `apps/server/src/socket/handlers/file.ts` — await
 - 所有相關測試需配合 async 調整

@@ -44,7 +44,7 @@
 
 ### Requirement: CSS variables driven by data-attributes
 
-`packages/client/src/App.css` SHALL 以 `:root[data-theme="..."]` / `:root[data-font="..."]` / `:root[data-density="..."]` selector 定義 CSS 變數。`data-theme="light"` 必須提供對比度滿足 WCAG AA 的 palette（前景 / 背景對比 ≥ 4.5:1 for normal text）。`data-density="compact"` 必須覆寫 Tailwind `--spacing` base。
+`apps/web/src/App.css` SHALL 以 `:root[data-theme="..."]` / `:root[data-font="..."]` / `:root[data-density="..."]` selector 定義 CSS 變數。`data-theme="light"` 必須提供對比度滿足 WCAG AA 的 palette（前景 / 背景對比 ≥ 4.5:1 for normal text）。`data-density="compact"` 必須覆寫 Tailwind `--spacing` base。
 
 #### Scenario: Light palette contrast
 

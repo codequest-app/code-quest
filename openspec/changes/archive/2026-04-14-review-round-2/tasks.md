@@ -35,7 +35,7 @@
 ## 5. Validation pass
 
 - [x] 5.1 `server/drizzle-mysql.config.ts` + `drizzle-sqlite.config.ts`: check `package.json` scripts — if `db:*` scripts reference them, keep; else delete. Referenced by `db:generate:sqlite`/`db:generate:mysql`/`db:studio:sqlite`/`db:studio:mysql` — KEPT.
-- [x] 5.2 `server/package.json socket.io-client` devDep: `grep -r "socket.io-client" packages/server/src` — used by `src/test/setup.ts` vi.mock — KEPT.
+- [x] 5.2 `server/package.json socket.io-client` devDep: `grep -r "socket.io-client" apps/server/src` — used by `src/test/setup.ts` vi.mock — KEPT.
 - [x] 5.3 `pnpm -r tsc --noEmit` clean.
 - [x] 5.4 Full test suite green: shared 41, summoner 305, server 463 (pre-existing 464 count note inaccurate — consolidation of two `message:result` subscribers into one, no test removed), client 773.
 - [x] 5.5 `openspec validate review-round-2` passes.

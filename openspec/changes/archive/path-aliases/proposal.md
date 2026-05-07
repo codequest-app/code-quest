@@ -23,9 +23,9 @@
 
 ## Impact
 
-- `packages/client/tsconfig.json` + `vite.config.ts` — 加 path alias
-- `packages/server/tsconfig.json` — 加 path alias
-- `packages/client/src/` — ~32 檔案 import path 替換
-- `packages/server/src/` — ~8 檔案 import path 替換
+- `apps/web/tsconfig.json` + `vite.config.ts` — 加 path alias
+- `apps/server/tsconfig.json` — 加 path alias
+- `apps/web/src/` — ~32 檔案 import path 替換
+- `apps/server/src/` — ~8 檔案 import path 替換
 - `packages/*/package.json` — vitest 版本統一
-- `packages/client/tsconfig.json` — target ES2021 → ES2022
+- `apps/web/tsconfig.json` — target ES2021 → ES2022

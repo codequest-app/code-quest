@@ -1,6 +1,6 @@
 ## Context
 
-`handleCreate` in `packages/server/src/socket/handlers/worktree.ts` currently runs three I/O steps with interleaved error paths:
+`handleCreate` in `apps/server/src/socket/handlers/worktree.ts` currently runs three I/O steps with interleaved error paths:
 
 1. `gitService.getProjectRoot(cwd)` (guard).
 2. `gitService.createWorktree(projectRoot, name)` inside one `try`.

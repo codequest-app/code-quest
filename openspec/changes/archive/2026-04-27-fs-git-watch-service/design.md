@@ -34,7 +34,7 @@ Alternatives rejected:
 - `node:fs.watch` / `fs.watchFile` — native API, platform-inconsistent, no recursive watch on Linux, no debouncing. We'd reimplement chokidar.
 - `sane` / `watchman` — Watchman requires a daemon install; `sane` is maintenance-mode.
 
-`chokidar` (~70 KB w/ deps) handles platform quirks, symlinks, recursion, and is the de-facto standard. Installed in `packages/summoner` (the package owning FS abstractions) — keeps dependency scope narrow.
+`chokidar` (~70 KB w/ deps) handles platform quirks, symlinks, recursion, and is the de-facto standard. Installed in `apps/summoner` (the package owning FS abstractions) — keeps dependency scope narrow.
 
 ### 2. Service location — Summoner, not Server
 

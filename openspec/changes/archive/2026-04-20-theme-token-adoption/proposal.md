@@ -42,9 +42,9 @@
 
 ## Impact
 
-- `packages/client/src/App.css`：新增 ~7 個 token × 2 theme = ~14 行；Tailwind `@theme` 類別擴充
-- `packages/client/src/components/CommandPalette.tsx`：~15 處 inline style 改用 token/utility
-- `packages/client/src/components/palette/PaletteMessageList.tsx`：~8 處
+- `apps/web/src/App.css`：新增 ~7 個 token × 2 theme = ~14 行；Tailwind `@theme` 類別擴充
+- `apps/web/src/components/CommandPalette.tsx`：~15 處 inline style 改用 token/utility
+- `apps/web/src/components/palette/PaletteMessageList.tsx`：~8 處
 - `tools/dump-theme-variants.mjs`：加 `--with-floating` mode
 - `tools/lint-hardcoded-colors.mjs`：新增
 - Storybook：~5 個 Light variant stories

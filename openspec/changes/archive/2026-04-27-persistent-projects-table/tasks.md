@@ -10,7 +10,7 @@ TDD 順序：每個小步先寫 test（red） → 最少 code 過關（green） 
 ## Phase 1 — FilesystemService.exists / isDirectory
 
 ### Test first
-- [x] Added tests in `packages/summoner/src/__tests__/local-filesystem-service.test.ts`
+- [x] Added tests in `apps/summoner/src/__tests__/local-filesystem-service.test.ts`
   - [x] `exists` returns true for existing dir / file
   - [x] `exists` returns false for non-existent path (ENOENT)
   - [x] `exists` returns false for path under non-existent parent
@@ -25,19 +25,19 @@ TDD 順序：每個小步先寫 test（red） → 最少 code 過關（green） 
 ## Phase 2 — ProjectStore service
 
 ### Test first
-- [x] `packages/server/src/__tests__/drizzle-project-store.test.ts` (18 tests)
+- [x] `apps/server/src/__tests__/drizzle-project-store.test.ts` (18 tests)
   - [x] All scenarios listed above pass
 
 ### Implement
-- [x] Create `packages/server/src/services/project-store.ts` with `ProjectStore` interface + `DrizzleProjectStore` impl
+- [x] Create `apps/server/src/services/project-store.ts` with `ProjectStore` interface + `DrizzleProjectStore` impl
 - [x] Constructor takes `db` + `projects` table column abstraction
 - [x] JSDoc on interface methods explaining sync rules
 
 ## Phase 3 — DB schema + migration
 
 ### Schema
-- [x] Add `projects` table to `packages/server/src/db/schema-sqlite.ts`
-- [x] Add `projects` table to `packages/server/src/db/schema-mysql.ts`
+- [x] Add `projects` table to `apps/server/src/db/schema-sqlite.ts`
+- [x] Add `projects` table to `apps/server/src/db/schema-mysql.ts`
 - [x] Add unique index on `path`, index on `(pinned, lastOpenedAt)`
 - [x] Add `PROJECT_COLUMNS` to `schema-columns.ts` for compile-time consistency check
 
@@ -55,7 +55,7 @@ TDD 順序：每個小步先寫 test（red） → 最少 code 過關（green） 
 ## Phase 4 — projects socket handler
 
 ### Test first
-- [x] `packages/server/src/__tests__/projects.test.ts` (13 tests pass)
+- [x] `apps/server/src/__tests__/projects.test.ts` (13 tests pass)
   - [x] `projects:list` returns empty initially / returns added projects
   - [x] `projects:add` with valid dir → inserts + emits + returns project
   - [x] `projects:add` rejects non-existent path
@@ -71,7 +71,7 @@ TDD 順序：每個小步先寫 test（red） → 最少 code 過關（green） 
   - [x] `projects:remove` rejects when active sessions exist (projects.test.ts "Remove blocked by active session")
 
 ### Implement
-- [x] Create `packages/server/src/socket/handlers/projects.ts`
+- [x] Create `apps/server/src/socket/handlers/projects.ts`
 - [x] Inject ProjectStore + FilesystemService + SessionStore (for active session check)
 - [x] Path canonicalization helper (resolve `~`, `path.resolve`)
 - [x] Add ProjectStore to `HandlerContext` + TYPES + container bindings
@@ -87,7 +87,7 @@ Keeps `SessionStore` and `ProjectStore` as pure persistence; cross-store concern
 lives in one explicit place.
 
 ### Implement
-- [x] Create `packages/server/src/services/project-auto-upserter.ts`
+- [x] Create `apps/server/src/services/project-auto-upserter.ts`
 - [x] Bind to TYPES.ProjectAutoUpserter in container.ts
 - [x] Add to HandlerContext type
 - [x] Inject into SocketServer + pass via context
@@ -109,7 +109,7 @@ lives in one explicit place.
 ## Phase 7 — Client ProjectContext refactor
 
 ### Test first → green
-- [x] `packages/client/src/contexts/__tests__/ProjectContext.test.tsx` (12 tests pass)
+- [x] `apps/web/src/contexts/__tests__/ProjectContext.test.tsx` (12 tests pass)
   - [x] Initial mount: empty projects after `projects:list` response
   - [x] addProject(valid path) succeeds, list updated, set active
   - [x] addProject does not duplicate (server upsert handles)
@@ -139,9 +139,9 @@ lives in one explicit place.
 
 ## Phase 9 — Existing tests must pass (regression check)
 
-- [x] `packages/client` — 1343 tests pass (170 files)
-- [x] `packages/server` — 573 tests pass (50 files)
-- [x] `packages/summoner` — 373 tests pass
+- [x] `apps/web` — 1343 tests pass (170 files)
+- [x] `apps/server` — 573 tests pass (50 files)
+- [x] `apps/summoner` — 373 tests pass
 - [x] `packages/shared` — typecheck passes
 - [x] `pnpm exec tsc --noEmit` clean for client + server
 - [x] No biome errors
@@ -160,7 +160,7 @@ lives in one explicit place.
 
 ## Phase 11 — Documentation
 
-- [x] Update `packages/server/src/services/project-store.ts` JSDoc with sync rules
+- [x] Update `apps/server/src/services/project-store.ts` JSDoc with sync rules
 - [x] Update `packages/shared/src/projects/schemas.ts` with EVENTS contract comments
 - [x] If `docs/protocol.md` enumerates events, add `projects:*` events
 - [x] Update OpenSpec spec.md if any new requirements emerged during impl

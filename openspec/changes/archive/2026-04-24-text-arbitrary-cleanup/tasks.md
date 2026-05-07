@@ -1,7 +1,7 @@
 ## Tasks
 
 ### 1. Guard test (Red)
-- [ ] Add a single grep-style assertion test (`utils/__tests__/no-arbitrary-text.test.ts`) that walks `packages/client/src/components/*.tsx`, scans for `text-\[1[01]px\]`, and fails listing any matches. Run → confirms 27 matches across 16 files.
+- [ ] Add a single grep-style assertion test (`utils/__tests__/no-arbitrary-text.test.ts`) that walks `apps/web/src/components/*.tsx`, scans for `text-\[1[01]px\]`, and fails listing any matches. Run → confirms 27 matches across 16 files.
 
 ### 2. Bulk replace (Green)
 - [ ] `sed`-style replace `text-[10px]` → `text-xs` and `text-[11px]` → `text-xs` across the 16 component files.

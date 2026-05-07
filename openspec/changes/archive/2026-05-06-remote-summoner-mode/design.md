@@ -38,15 +38,15 @@
 
 與 browser 的 Socket.IO endpoint 分開，避免混用。summoner 連入時帶 `Authorization: Bearer <token>`，server 驗證後記錄這條連線為 "the summoner"。
 
-**決策 4：Remote 實作放在 `packages/server/src/remote/`**
+**決策 4：Remote 實作放在 `apps/server/src/remote/`**
 
 - `RemoteProcessProvider`：實作 `ProcessProvider`，把 spawn/stdin/stdout 透過 WS RPC 轉發
 - `RemoteFilesystemService`：實作 `FilesystemService`，read/list 透過 WS RPC
 - `RemoteGitService`：實作 `GitService`，git 操作透過 WS RPC
 
-**決策 5：remote daemon 放在 `packages/summoner/src/daemon.ts`**
+**決策 5：remote daemon 放在 `apps/summoner/src/daemon.ts`**
 
-不新增獨立 package，daemon 是 summoner package 的一個入口點。執行方式：`node packages/summoner/dist/daemon.js --server wss://... --token <token>`
+不新增獨立 package，daemon 是 summoner package 的一個入口點。執行方式：`node apps/summoner/dist/daemon.js --server wss://... --token <token>`
 
 ## Risks / Trade-offs
 
@@ -63,4 +63,4 @@
 ## Open Questions
 
 - remote daemon 的 binary 要怎麼分發？npm package？直接 `npx`？（MVP 先假設用戶自己從 repo build）
-- WS protocol 的 message 定義要放在 `packages/shared` 還是 `packages/server`？（建議 shared，因為 daemon 和 server 雙方都要 import）
+- WS protocol 的 message 定義要放在 `packages/shared` 還是 `apps/server`？（建議 shared，因為 daemon 和 server 雙方都要 import）

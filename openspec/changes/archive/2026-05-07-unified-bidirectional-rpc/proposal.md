@@ -25,7 +25,7 @@ The root cause: WsTransport mixes transport concerns (upgrade, auth, heartbeat, 
 ## Impact
 
 - **packages/shared**: New `RpcChannel` class, Envelope schema unchanged (already supports bidirectional request/response)
-- **packages/server**: WsTransport → WsServer; SocketIoTransport → socketIoAdapter; Remote services switch from Connection.request() to RpcChannel.request(); upgrade-handler and Connection class removed
-- **packages/summoner**: daemon uses RpcChannel directly — Agent registers handlers via `rpcChannel.onRequest()`
-- **packages/client**: Minimal — may switch from custom WS wrapper to RpcChannel client-side
+- **apps/server**: WsTransport → WsServer; SocketIoTransport → socketIoAdapter; Remote services switch from Connection.request() to RpcChannel.request(); upgrade-handler and Connection class removed
+- **apps/summoner**: daemon uses RpcChannel directly — Agent registers handlers via `rpcChannel.onRequest()`
+- **apps/web**: Minimal — may switch from custom WS wrapper to RpcChannel client-side
 - **Tests**: ~15 test files need updated for new transport API

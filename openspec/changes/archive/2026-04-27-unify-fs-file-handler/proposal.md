@@ -54,22 +54,22 @@ The `open_file` "Path traversal not allowed" failure on out-of-cwd absolute path
 ## Impact
 
 **Modified:**
-- `packages/client/src/contexts/TabContext.tsx` — `TabMeta` adds `launchOnMount: boolean`; `createNewTab` sets it true; sync `addTab` passes `s.cwd` and leaves flag false
-- `packages/client/src/components/TabContainer.tsx` — forwards `launchOnMount` from tab meta to `<ChannelProvider>`
-- `packages/client/src/contexts/channel/ChannelContext.tsx` — wrap children in new `ChannelMetaProvider`
-- `packages/client/src/contexts/channel/ChannelMessagesContext.tsx` — drop `channelId` arg to `createFileActions`
-- `packages/client/src/contexts/channel/handlers/file.ts` — `searchFiles` uses `fs:search`
-- `packages/client/src/contexts/channel/handlers/streaming.ts` — `fetchFileContentIfNeeded` uses `fs:read`
-- `packages/server/src/socket/server.ts` — drop `file.create(ctx)` registration
+- `apps/web/src/contexts/TabContext.tsx` — `TabMeta` adds `launchOnMount: boolean`; `createNewTab` sets it true; sync `addTab` passes `s.cwd` and leaves flag false
+- `apps/web/src/components/TabContainer.tsx` — forwards `launchOnMount` from tab meta to `<ChannelProvider>`
+- `apps/web/src/contexts/channel/ChannelContext.tsx` — wrap children in new `ChannelMetaProvider`
+- `apps/web/src/contexts/channel/ChannelMessagesContext.tsx` — drop `channelId` arg to `createFileActions`
+- `apps/web/src/contexts/channel/handlers/file.ts` — `searchFiles` uses `fs:search`
+- `apps/web/src/contexts/channel/handlers/streaming.ts` — `fetchFileContentIfNeeded` uses `fs:read`
+- `apps/server/src/socket/server.ts` — drop `file.create(ctx)` registration
 - `packages/shared/src/socket-events.ts` — drop `'file:read'` / `'file:list'` event names
 - `packages/shared/src/schemas/index.ts` — drop file schema re-exports
 
 **New:**
-- `packages/client/src/contexts/channel/ChannelMetaContext.tsx` — `{channelId, cwd}` provider + `useChannelMeta()` hook
+- `apps/web/src/contexts/channel/ChannelMetaContext.tsx` — `{channelId, cwd}` provider + `useChannelMeta()` hook
 
 **Deleted:**
-- `packages/server/src/socket/handlers/file.ts`
-- `packages/server/src/socket/handlers/__tests__/file.test.ts` (covered by fs handler tests)
+- `apps/server/src/socket/handlers/file.ts`
+- `apps/server/src/socket/handlers/__tests__/file.test.ts` (covered by fs handler tests)
 - `packages/shared/src/schemas/file.ts`
 
 **Tests:**

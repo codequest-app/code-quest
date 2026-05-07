@@ -10,6 +10,6 @@
 
 ## Impact
 
-- `packages/client/src/contexts/channel/ChannelControlContext.tsx`
-- `packages/client/src/contexts/channel/ChannelMessagesContext.tsx`
-- `packages/client/src/contexts/__tests__/session-closed.test.tsx`（現有測試保持 expect 不變）
+- `apps/web/src/contexts/channel/ChannelControlContext.tsx`
+- `apps/web/src/contexts/channel/ChannelMessagesContext.tsx`
+- `apps/web/src/contexts/__tests__/session-closed.test.tsx`（現有測試保持 expect 不變）

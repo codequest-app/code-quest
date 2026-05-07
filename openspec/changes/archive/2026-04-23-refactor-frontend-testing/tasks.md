@@ -7,7 +7,7 @@
 - [x] 0.3 `.claude/skills/vitest-testing/SKILL.md` 標題加 `(server)` clarifier；description 明示適用 server 測試
 - [x] 0.4 搬檔：`src/test/fakes/speech-recognition.ts` → `src/test/fake-speech-recognition.ts`；更新 2 處 import（`ChatInputArea.test.tsx` / `SpeechInputContainer.test.tsx`）
 - [x] 0.5 刪除空目錄 `src/test/fakes/`
-- [x] 0.6 `packages/client/vite.config.ts` `include` 陣列移除 `*.integration.test.{ts,tsx}` glob
+- [x] 0.6 `apps/web/vite.config.ts` `include` 陣列移除 `*.integration.test.{ts,tsx}` glob
 - [x] 0.7 跑 `pnpm vitest run` 確認 0.1-0.6 後全綠
 
 ## 1. Phase 1 — Audit（不動碼，產出 audit.md）

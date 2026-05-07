@@ -19,7 +19,7 @@ ChannelProvider 的 `initialState` prop 只被 Storybook stories 使用，用來
 
 ## Impact
 
-- `packages/client/src/components/*.stories.tsx` — 所有用 initialState 的 stories
-- `packages/client/src/contexts/channel/ChannelContext.tsx`
-- `packages/client/src/contexts/channel/ChannelConfigContext.tsx`
-- `packages/client/src/types/chat.ts`
+- `apps/web/src/components/*.stories.tsx` — 所有用 initialState 的 stories
+- `apps/web/src/contexts/channel/ChannelContext.tsx`
+- `apps/web/src/contexts/channel/ChannelConfigContext.tsx`
+- `apps/web/src/types/chat.ts`

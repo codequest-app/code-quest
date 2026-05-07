@@ -7,7 +7,7 @@ Claude CLI 2.1.45 exposes two thinking-related flags:
 --thinking-display <value>  summarized | omitted
 ```
 
-cc-office's `buildArgs` in `packages/summoner/src/claude/protocol.ts:27-33` only
+cc-office's `buildArgs` in `apps/summoner/src/claude/protocol.ts:27-33` only
 maps the first. The second defaults on the CLI side to `omitted`, so model
 output arrives with `"thinking": ""` + signature. The UI renders that as an
 empty panel. Verified directly against the CLI's raw JSONL

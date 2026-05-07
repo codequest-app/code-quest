@@ -33,10 +33,10 @@ This aligns with the `file:./data.db` convention used by Drizzle/Prisma/SQLAlche
 
 ## Impact
 
-- `packages/server/src/config.ts` — env schema + loadConfig shape.
-- `packages/server/src/container.ts` — StoreConfig interface, buildStores logic, boot-time DB handle creation.
-- `packages/server/src/bin/server.ts` — construct StoreConfig from new env shape, surface fail-fast error.
-- `packages/server/src/scripts/migrate-sqlite.ts`, `migrate-mysql.ts` — read the new config fields, error out if required URL missing.
-- `packages/server/.env` and `.env.example` — rewrite to new shape.
+- `apps/server/src/config.ts` — env schema + loadConfig shape.
+- `apps/server/src/container.ts` — StoreConfig interface, buildStores logic, boot-time DB handle creation.
+- `apps/server/src/bin/server.ts` — construct StoreConfig from new env shape, surface fail-fast error.
+- `apps/server/src/scripts/migrate-sqlite.ts`, `migrate-mysql.ts` — read the new config fields, error out if required URL missing.
+- `apps/server/.env` and `.env.example` — rewrite to new shape.
 - Tests: `config.test.ts` covers URL-presence + fail-fast; any existing fixture using `rawEvents.drivers` / `rawEvents.sqlitePath` updates to `database.url` / `database.sqliteUrl`.
 - No DB schema change. No client change. No protocol change.

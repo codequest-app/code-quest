@@ -17,15 +17,15 @@ This is verified empirically — `--resume-session-at` accepts the JSONL `uuid` 
 
 ## What Changes
 
-Client (`packages/client/src/types/ui.ts`):
+Client (`apps/web/src/types/ui.ts`):
 
 - `MessageBase` SHALL grow a new optional field `cliUuid?: string`. It SHALL be set if and only if the CLI/server has assigned a JSONL-canonical uuid to this message. `id` retains its existing semantics (React key, dedup anchor, locally assigned).
 
-Client (`packages/client/src/contexts/channel/handlers/message.ts`):
+Client (`apps/web/src/contexts/channel/handlers/message.ts`):
 
 - `applyUserContent` SHALL set `cliUuid` (NOT `id`) from the incoming `p.uuid`. The dedup branch (last-message-content match) SHALL set `cliUuid` on the matched message; the new-message branch SHALL set `cliUuid` on the newly pushed message. `id` SHALL never be mutated post-creation.
 
-Client (`packages/client/src/components/RewindDialog.tsx`):
+Client (`apps/web/src/components/RewindDialog.tsx`):
 
 - `getRewindableMessages` SHALL filter to messages with non-empty `cliUuid`. Messages without a `cliUuid` (echo not yet received, or echo missed) SHALL NOT appear in the picker.
 - `onConfirm` SHALL pass `selected.message.cliUuid` (NOT `id`) as the `messageId` argument.
@@ -43,6 +43,6 @@ No server / shared schema changes.
 ## Impact
 
 - Affected specs: `client` (Message identity model + fork picker eligibility).
-- Affected code: `packages/client/src/types/ui.ts`, `packages/client/src/contexts/channel/handlers/message.ts`, `packages/client/src/components/RewindDialog.tsx`, plus tests for each.
+- Affected code: `apps/web/src/types/ui.ts`, `apps/web/src/contexts/channel/handlers/message.ts`, `apps/web/src/components/RewindDialog.tsx`, plus tests for each.
 - Risk: low — purely additive field; `id` semantics unchanged; fork picker becomes stricter (better UX than silent CLI failure).
 - Rollout: direct merge after TDD green.

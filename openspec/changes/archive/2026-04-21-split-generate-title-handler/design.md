@@ -1,6 +1,6 @@
 ## Context
 
-Current `generateTitleIfNeeded` in `packages/server/src/socket/handlers/message.ts:266`:
+Current `generateTitleIfNeeded` in `apps/server/src/socket/handlers/message.ts:266`:
 
 ```ts
 async function generateTitleIfNeeded(channelId, ch) {

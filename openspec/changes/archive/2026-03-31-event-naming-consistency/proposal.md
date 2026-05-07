@@ -23,8 +23,8 @@ Socket event 命名有 4 種風格混用：`namespace:action`（55 個）、`ver
 ## Impact
 
 - `packages/shared/src/socket-events.ts` — `ClientToServerEvents` + `ServerToClientEvents` event name 重新命名
-- `packages/server/src/socket/handlers/*.ts` — 所有 `socket.on()` event name
-- `packages/client/src/contexts/channel/*.tsx` — 所有 `socket.emit()` / `socket.on()` event name
-- `packages/client/src/socket/rpc.ts` — rpc 呼叫的 event name
-- `packages/server/src/__tests__/*.test.ts` — FakeClaude `send()` event name
-- `packages/client/src/__tests__/*.test.tsx` — client test event name
+- `apps/server/src/socket/handlers/*.ts` — 所有 `socket.on()` event name
+- `apps/web/src/contexts/channel/*.tsx` — 所有 `socket.emit()` / `socket.on()` event name
+- `apps/web/src/socket/rpc.ts` — rpc 呼叫的 event name
+- `apps/server/src/__tests__/*.test.ts` — FakeClaude `send()` event name
+- `apps/web/src/__tests__/*.test.tsx` — client test event name

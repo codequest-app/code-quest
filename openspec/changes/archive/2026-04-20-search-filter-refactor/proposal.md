@@ -23,12 +23,12 @@ SearchBar 的 type filter 用平面 checkbox list 呈現 21 個 type，語意反
 
 ## Impact
 
-- `packages/client/src/components/SearchBar.tsx` — 移除舊 typeFilter props，改為 filterPanel/filterCount
-- `packages/client/src/components/FilterPopover.tsx` — 新增
-- `packages/client/src/components/RawEventPanel.tsx` — search/filter 區塊替換
-- `packages/client/src/components/ChatPanel.tsx` — typeFilter 改為 Set\<MessageType\>，傳入 FilterPopover
-- `packages/client/src/components/MessageList.tsx` — filter 邏輯從 blacklist 改 whitelist
-- `packages/client/src/components/__tests__/SearchBar.test.tsx` — 更新
-- `packages/client/src/components/__tests__/RawEventPanel.test.tsx` — 更新
-- `packages/client/src/components/__tests__/MessageList.test.tsx` — 更新
-- `packages/client/src/components/__tests__/FilterPopover.test.tsx` — 新增
+- `apps/web/src/components/SearchBar.tsx` — 移除舊 typeFilter props，改為 filterPanel/filterCount
+- `apps/web/src/components/FilterPopover.tsx` — 新增
+- `apps/web/src/components/RawEventPanel.tsx` — search/filter 區塊替換
+- `apps/web/src/components/ChatPanel.tsx` — typeFilter 改為 Set\<MessageType\>，傳入 FilterPopover
+- `apps/web/src/components/MessageList.tsx` — filter 邏輯從 blacklist 改 whitelist
+- `apps/web/src/components/__tests__/SearchBar.test.tsx` — 更新
+- `apps/web/src/components/__tests__/RawEventPanel.test.tsx` — 更新
+- `apps/web/src/components/__tests__/MessageList.test.tsx` — 更新
+- `apps/web/src/components/__tests__/FilterPopover.test.tsx` — 新增

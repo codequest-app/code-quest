@@ -106,7 +106,7 @@ This avoids complex conditional-collapse-state-preservation across breakpoint ch
 
 ### 6. `useActiveCwd` placement — `src/hooks/`
 
-**Decision:** new file `packages/client/src/hooks/useActiveCwd.ts`.
+**Decision:** new file `apps/web/src/hooks/useActiveCwd.ts`.
 
 Implementation is one-liner:
 ```ts

@@ -26,7 +26,7 @@
 
 - `src/test/fakes/speech-recognition.ts` → `src/test/fake-speech-recognition.ts`；更新 2 個 import
 - 移除 `src/test/fakes/` 空目錄
-- `packages/client/vite.config.ts` `include` 移除 `*.integration.test.{ts,tsx}` glob
+- `apps/web/vite.config.ts` `include` 移除 `*.integration.test.{ts,tsx}` glob
 - Skill 交叉引用更新：`testing-best-practices` 精簡、`vitest-testing` 加 "(server)" clarifier
 
 ### Audit + Refactor（Phase 1 + 2）
@@ -51,7 +51,7 @@
   - `.claude/skills/frontend-testing/SKILL.md`（主）
   - `.claude/skills/testing-best-practices/SKILL.md`（精簡、交叉引用）
   - `.claude/skills/vitest-testing/SKILL.md`（標題加 server clarifier）
-  - `packages/client/vite.config.ts`（glob 移除）
+  - `apps/web/vite.config.ts`（glob 移除）
   - Phase 2 中被分類為 small-tweak / fake-replace / consumer-merge / structural 的 test 檔
 - 搬檔：
   - `src/test/fakes/speech-recognition.ts` → `src/test/fake-speech-recognition.ts`

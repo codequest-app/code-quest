@@ -6,21 +6,21 @@
 - [ ] Add `openspecToggleTaskPayload` + `openspecToggleTaskResult` schemas.
 - [ ] Register three new event names in `EVENTS.openspec` and `ClientToServerEvents`.
 
-### 2. Summoner layer — openspec CLI wrappers (TDD in `packages/summoner`)
+### 2. Summoner layer — openspec CLI wrappers (TDD in `apps/summoner`)
 - [ ] `LocalOpenspecService.changeNew(cwd, name)` — spawns `openspec change new <name>`, maps non-zero exit → `{ error: stderr }`, success → `{ ok: true }`.
 - [ ] `LocalOpenspecService.sync(cwd)` — spawns `openspec sync`.
 - [ ] `LocalOpenspecService.toggleTask(cwd, changeName, lineIndex)` — reads `<cwd>/openspec/changes/<changeName>/tasks.md`, flips the checkbox on the given 0-indexed line, writes back. Validates line matches `/^(\s*)- \[( |x)\] /`.
 - [ ] `FakeOpenspecService` counterparts with injectable error / spy arrays.
 
-### 3. Server handlers (TDD in `packages/server`)
+### 3. Server handlers (TDD in `apps/server`)
 - [ ] `openspec.ts` handler: register `openspec:changeNew`, `openspec:sync`, `openspec:toggleTask`. Path validation: `cwd` ∈ explorerRoots, slug matches `/^[a-z0-9-]+$/`.
 - [ ] On success for `changeNew` / `toggleTask`, emit `openspec:dirty { cwd }` so clients refresh.
 - [ ] Tests via FakeSummoner: happy path, invalid slug, cwd-not-allowed, CLI error, line-index-not-a-task-line.
 
-### 4. Client context (TDD in `packages/client/src/contexts`)
+### 4. Client context (TDD in `apps/web/src/contexts`)
 - [ ] `OpenspecContext.useOpenspecActions()` exposes `changeNew(cwd, name)`, `sync(cwd)`, `toggleTask(cwd, changeName, lineIndex)`. Each round-trips via `rpc(socket, ...)` + schema parse.
 
-### 5. SpecPane visual parity (TDD in `packages/client/src/components`)
+### 5. SpecPane visual parity (TDD in `apps/web/src/components`)
 - [ ] Change row: prepend `📋` span; wrap `{done}/{total}` in pill element with `border-border`, monospace, small padding.
 - [ ] Change row: when `tasks.done === tasks.total && tasks.total > 0`, render a `Ready` badge (success-tone classes).
 - [ ] Spec row: prepend `▸` glyph.

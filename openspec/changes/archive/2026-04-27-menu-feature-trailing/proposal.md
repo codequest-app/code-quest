@@ -20,7 +20,7 @@
 
 ## Impact
 
-- `packages/client/src/lib/feature.ts` — MenuItemFeature 加 trailing
-- `packages/client/src/features/` — 新增三個 feature 檔案
-- `packages/client/src/components/command-menu-items.tsx` — 移除 9 個 params
-- `packages/client/src/components/CommandMenu.tsx` — localFeatures 加三個 feature
+- `apps/web/src/lib/feature.ts` — MenuItemFeature 加 trailing
+- `apps/web/src/features/` — 新增三個 feature 檔案
+- `apps/web/src/components/command-menu-items.tsx` — 移除 9 個 params
+- `apps/web/src/components/CommandMenu.tsx` — localFeatures 加三個 feature

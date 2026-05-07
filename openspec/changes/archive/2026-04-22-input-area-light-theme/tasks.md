@@ -91,7 +91,7 @@
 ## 10. Simplify 回饋後續修正（TDD）
 
 ### 10a. `PermissionMode` union type
-- [x] 10a.1 在 `packages/shared/src/...` 或 `packages/client/src/types/` 新增 `export type PermissionMode = 'normal' | 'plan' | 'acceptEdits' | 'bypassPermissions' | 'auto'`；同時更新 zod schema 由 `z.string().optional()` → `z.enum([...])`。先寫 unit test 斷言 type / schema 接受五個值、拒絕其他 string → 紅
+- [x] 10a.1 在 `packages/shared/src/...` 或 `apps/web/src/types/` 新增 `export type PermissionMode = 'normal' | 'plan' | 'acceptEdits' | 'bypassPermissions' | 'auto'`；同時更新 zod schema 由 `z.string().optional()` → `z.enum([...])`。先寫 unit test 斷言 type / schema 接受五個值、拒絕其他 string → 紅
 - [x] 10a.2 把 `ChannelConfigContext` / `ComposeToolbar` / `PermissionModePicker` / `SendButton` / `ChatInputArea` 的 `mode: string` 全改為 `PermissionMode`
 - [x] 10a.3 10a.1 轉綠；typecheck clean
 

@@ -6,7 +6,7 @@ TDD：每個 phase 先寫 test → red → 最少 code 過關 → refactor。
 
 ### Tests first — contract function（real / fake 共用）
 
-- [x] 新檔 `packages/summoner/src/git/__tests__/git-service.contract.ts`
+- [x] 新檔 `apps/summoner/src/git/__tests__/git-service.contract.ts`
 - [x] 抽 `gitServiceContract(name, setup)` 函式，包含：
   - [x] `initRepo`: non-git → `{ branch: 'main' }` + `.git` 存在 + log 有 1 commit
   - [x] `initRepo`: 已是 repo → throws `AlreadyRepoError`
@@ -16,7 +16,7 @@ TDD：每個 phase 先寫 test → red → 最少 code 過關 → refactor。
 ### Phase 0.1 — LocalGitService.initRepo + listWorktrees on non-git
 
 - [x] `local-git-service.test.ts` 用 tmpdir 跑 contract（real）
-- [x] 新增 `NotARepoError` / `AlreadyRepoError` 到 `packages/summoner/src/git/errors.ts`
+- [x] 新增 `NotARepoError` / `AlreadyRepoError` 到 `apps/summoner/src/git/errors.ts`
 - [x] `LocalGitService.initRepo`：`git init -b main` + `git commit --allow-empty -m "Initial commit"`
 - [x] `LocalGitService.listWorktrees`：`getRepoRoot` 為 null → throw `NotARepoError`
 - [x] `parseWorktreeList`：包含 main worktree（從原本只回 `.claude/worktrees/*` 擴大）

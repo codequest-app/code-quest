@@ -22,6 +22,6 @@ Claude CLI 已支援 `side_question` control protocol，可在不中斷主對話
 ## Impact
 
 - `packages/shared`：新增 RPC 型別
-- `packages/server`：新增 channel RPC handler
-- `packages/client/src/contexts/channel`：新增 `askSideQuestion` action 及對應 RPC 呼叫
-- `packages/client/src/components`：新增 `SideQuestionDialog`，修改 `ChatPanel` 加入 overlay 邏輯，修改 slash command 清單加入 `/btw`
+- `apps/server`：新增 channel RPC handler
+- `apps/web/src/contexts/channel`：新增 `askSideQuestion` action 及對應 RPC 呼叫
+- `apps/web/src/components`：新增 `SideQuestionDialog`，修改 `ChatPanel` 加入 overlay 邏輯，修改 slash command 清單加入 `/btw`

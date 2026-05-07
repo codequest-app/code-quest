@@ -1,6 +1,6 @@
 ## Why
 
-`generateTitleIfNeeded` in `packages/server/src/socket/handlers/message.ts` conflates three concerns — requesting a title from the CLI, persisting it to `sessionStore`, and broadcasting the new session state — inside a single function with inline error handling. The persistence call is a fire-and-forget `.catch()`, making it easy to miss that a title can appear in the UI before (or without) landing in the DB. Splitting the concerns makes the side-effects explicit and individually testable.
+`generateTitleIfNeeded` in `apps/server/src/socket/handlers/message.ts` conflates three concerns — requesting a title from the CLI, persisting it to `sessionStore`, and broadcasting the new session state — inside a single function with inline error handling. The persistence call is a fire-and-forget `.catch()`, making it easy to miss that a title can appear in the UI before (or without) landing in the DB. Splitting the concerns makes the side-effects explicit and individually testable.
 
 ## What Changes
 
@@ -24,6 +24,6 @@ None.
 
 ## Impact
 
-- Affected file: `packages/server/src/socket/handlers/message.ts`.
-- Tests: `packages/server/src/__tests__/message.test.ts` (and any other test exercising title generation) must stay green without `expect` modification.
+- Affected file: `apps/server/src/socket/handlers/message.ts`.
+- Tests: `apps/server/src/__tests__/message.test.ts` (and any other test exercising title generation) must stay green without `expect` modification.
 - No client / shared / summoner changes.

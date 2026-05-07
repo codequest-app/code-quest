@@ -45,7 +45,7 @@ Permission-mode 相關的視覺樣式（send button 背景、ChatInputArea focus
 
 #### Scenario: App.css carries no permission-mode selector
 
-- **WHEN** 讀取 `packages/client/src/App.css` 內容
+- **WHEN** 讀取 `apps/web/src/App.css` 內容
 - **THEN** 不得包含 `.send-btn` class 規則
 - **AND** 不得包含 `[data-permission-mode="..."]:focus-within` selector
 - **AND** 不得包含寫死的 rgb 值對應 accent / button / text（如 `rgba(217, 119, 87, 0.2)`、`rgba(0, 127, 212, 0.2)`、`rgba(204, 204, 204, 0.1)`）

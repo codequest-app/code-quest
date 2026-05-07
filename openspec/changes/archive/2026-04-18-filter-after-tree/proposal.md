@@ -25,7 +25,7 @@ predicate `_8770` evaluates tool_use + tool_result together
   ```
   messages → buildMessageTree → filterTree → searchFilter → render
   ```
-- Add `packages/client/src/utils/filter-tree.ts` exporting a pure
+- Add `apps/web/src/utils/filter-tree.ts` exporting a pure
   `filterTree(nodes, predicate)` that keeps a node iff the predicate
   returns true for `node.message`, otherwise drops the whole subtree.
   Subagent `children` are filtered recursively with the same predicate.
@@ -47,8 +47,8 @@ predicate `_8770` evaluates tool_use + tool_result together
 
 ## Impact
 
-- **Code**: `packages/client/src/components/MessageList.tsx`,
-  new `packages/client/src/utils/filter-tree.ts`.
+- **Code**: `apps/web/src/components/MessageList.tsx`,
+  new `apps/web/src/utils/filter-tree.ts`.
 - **Tests**: pure utility tests for `filterTree`; component test asserting
   a hidden-tool_use TodoWrite also removes its "Result" companion (regression
   for the observed bug).

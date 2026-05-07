@@ -22,9 +22,9 @@ _None — this is a tooling migration, not a feature change._
 
 ## Impact
 
-- `packages/client/vitest.config.ts` — environment 設定
-- `packages/client/src/test/setup.ts` — 移除不再需要的 polyfill
-- `packages/client/src/test/fake-match-media.ts` — 可能可移除或簡化
-- `packages/client/src/test/fake-raf.ts` — 評估是否仍需要
-- `packages/client/src/components/ui/__tests__/EffortSwitch.test.tsx` — 修正 2 個斷言
-- `packages/client/package.json` — dependency 變更
+- `apps/web/vitest.config.ts` — environment 設定
+- `apps/web/src/test/setup.ts` — 移除不再需要的 polyfill
+- `apps/web/src/test/fake-match-media.ts` — 可能可移除或簡化
+- `apps/web/src/test/fake-raf.ts` — 評估是否仍需要
+- `apps/web/src/components/ui/__tests__/EffortSwitch.test.tsx` — 修正 2 個斷言
+- `apps/web/package.json` — dependency 變更

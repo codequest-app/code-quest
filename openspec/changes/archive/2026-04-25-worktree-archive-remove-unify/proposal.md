@@ -1,6 +1,6 @@
 ## Why
 
-`packages/client/src/contexts/GitContext.tsx` exposes both `archive(projectCwd, name, opts)` and `remove(cwd, name)` actions — two names for the same `EVENTS.git.worktree.remove` RPC. They diverge in two subtle ways:
+`apps/web/src/contexts/GitContext.tsx` exposes both `archive(projectCwd, name, opts)` and `remove(cwd, name)` actions — two names for the same `EVENTS.git.worktree.remove` RPC. They diverge in two subtle ways:
 
 1. **Options forwarding.** `archive` accepts `{ skipBranchDelete, force }` and forwards them; `remove` hardcodes `force: true` and never deletes the branch.
 2. **Local cache update.** `remove` updates the in-memory `listing` cache after success; `archive` does not, so any UI bound to listing goes stale until the next refetch.

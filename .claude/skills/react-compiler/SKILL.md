@@ -176,7 +176,7 @@ pnpm --filter client add -D @babel/core @babel/preset-typescript
 ### Probe script
 
 ```js
-// probe.mjs — 放在 packages/client/
+// probe.mjs — 放在 apps/web/
 import { transformAsync } from '@babel/core';
 import { readFileSync } from 'node:fs';
 
@@ -197,7 +197,7 @@ console.log(result.code);
 ### 使用
 
 ```bash
-cd packages/client
+cd apps/web
 node probe.mjs path/to/file.tsx
 ```
 

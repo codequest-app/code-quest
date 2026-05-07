@@ -84,7 +84,7 @@ cc-office 目前版面假設桌機固定視窗，三欄結構：ActivityBar（40
 
 ### useBreakpoint hook
 ```typescript
-// packages/client/src/hooks/useBreakpoint.ts
+// apps/web/src/hooks/useBreakpoint.ts
 export function useBreakpoint() {
   // 回傳 'mobile' | 'tablet' | 'desktop'
   // 基於 window.matchMedia + resize event
@@ -93,7 +93,7 @@ export function useBreakpoint() {
 
 ### MobileNav
 ```
-packages/client/src/components/MobileNav.tsx
+apps/web/src/components/MobileNav.tsx
 ```
 - 固定在底部，高度 56px
 - 3–4 個 icon button：Chat（目前對話）、Sessions（歷史）、Sidebar（drawer toggle）

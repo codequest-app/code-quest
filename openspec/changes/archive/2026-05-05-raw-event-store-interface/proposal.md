@@ -10,6 +10,6 @@
 
 ## Impact
 
-- `packages/server/src/services/raw-event-service.ts`
-- `packages/server/src/services/composite-raw-event-store.ts`
-- `packages/server/src/services/drizzle-raw-event-store.ts`（實作新介面方法）
+- `apps/server/src/services/raw-event-service.ts`
+- `apps/server/src/services/composite-raw-event-store.ts`
+- `apps/server/src/services/drizzle-raw-event-store.ts`（實作新介面方法）

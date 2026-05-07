@@ -40,12 +40,12 @@
 
 ## Impact
 
-- `packages/client/src/components/CommandPalette.tsx` — 移除 per-tab props (`onJumpTo` / `onToggleRawPanel` / `rawPanelActive`)，改用 context 取得；features 依 active chat 是否存在動態 filter
-- `packages/client/src/contexts/CommandPaletteContext.tsx`（新）— `usePaletteOpen()` / `openPalette()` / `closePalette()`；mount 在 `WorkspaceLayout`
-- `packages/client/src/components/ChatPanel.tsx` — 拔掉 `commandPaletteOpen` state；`mod+k` hotkey 改呼 context.openPalette()；`onOpenCommandPalette` prop 改傳 context callback；CommandPalette JSX 移除
-- `packages/client/src/components/WorkspaceLayout.tsx` — mount `CommandPaletteProvider` + 一個 `<CommandPalette/>`；hotkey 在 workspace level 註冊
-- `packages/client/src/components/WorkspaceTopbar.tsx` — 加 `⌕` 按鈕觸發 openPalette
-- `packages/client/src/features/` — 新增全域 features：`switch-project`、`add-project`、`switch-worktree`
+- `apps/web/src/components/CommandPalette.tsx` — 移除 per-tab props (`onJumpTo` / `onToggleRawPanel` / `rawPanelActive`)，改用 context 取得；features 依 active chat 是否存在動態 filter
+- `apps/web/src/contexts/CommandPaletteContext.tsx`（新）— `usePaletteOpen()` / `openPalette()` / `closePalette()`；mount 在 `WorkspaceLayout`
+- `apps/web/src/components/ChatPanel.tsx` — 拔掉 `commandPaletteOpen` state；`mod+k` hotkey 改呼 context.openPalette()；`onOpenCommandPalette` prop 改傳 context callback；CommandPalette JSX 移除
+- `apps/web/src/components/WorkspaceLayout.tsx` — mount `CommandPaletteProvider` + 一個 `<CommandPalette/>`；hotkey 在 workspace level 註冊
+- `apps/web/src/components/WorkspaceTopbar.tsx` — 加 `⌕` 按鈕觸發 openPalette
+- `apps/web/src/features/` — 新增全域 features：`switch-project`、`add-project`、`switch-worktree`
 - 新 hook：`useActiveChatContext()` — soft 回傳 channel id / messages（無 active 時 null），讓 palette 內部判斷哪些 features 顯示
 - 既有 `CommandPalette.test.tsx` / `CommandPaletteAllTab.test.tsx` 部分要重寫（不再 prop-driven）
 - 不影響 server / shared / summoner package

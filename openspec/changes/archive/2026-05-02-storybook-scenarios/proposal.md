@@ -41,7 +41,7 @@ After Batch 1, extract patterns into a Storybook skill for subsequent batches.
 
 ## Scope
 
-- New `packages/client/src/scenarios/` directory
+- New `apps/web/src/scenarios/` directory
 - Expand `test/story-fixtures.ts` with scenario factories
 - Move 3 existing scenario stories from ChatPanel.stories.tsx
 - No changes to existing component stories

@@ -1,6 +1,6 @@
 ## Context
 
-`Channel` is a server-internal class in `packages/server/src/socket/channel.ts` that wraps a spawned CLI process and its socket membership. Its identifier is currently exposed as `id: string`, but every consumer in the server reads it into a `channelId` variable or payload field (16 usages across 9 files, plus 1 test). TypeScript will surface every broken access at compile time, so the risk is low; the main concern is keeping the refactor disciplined and test-driven per project rules.
+`Channel` is a server-internal class in `apps/server/src/socket/channel.ts` that wraps a spawned CLI process and its socket membership. Its identifier is currently exposed as `id: string`, but every consumer in the server reads it into a `channelId` variable or payload field (16 usages across 9 files, plus 1 test). TypeScript will surface every broken access at compile time, so the risk is low; the main concern is keeping the refactor disciplined and test-driven per project rules.
 
 ## Goals / Non-Goals
 
@@ -21,11 +21,11 @@ A getter alias (`get id()`) would avoid touching call sites but leaves two names
 *Alternative considered*: dual-export with deprecation comment → rejected, unnecessary for an internal class.
 
 **Decision 2 — TDD order: fix test helper first.**
-`packages/server/src/__tests__/channel-emitter.test.ts` has `fakeChannel(id = 'ch-1'): Channel { return { id } as unknown as Channel; }`. Update this (and any expectation it drives) *before* the class rename, run the suite to see it fail against the old class, then rename the class + usages to make it green. Per project rule: never modify `expect` — only the helper shape changes here.
+`apps/server/src/__tests__/channel-emitter.test.ts` has `fakeChannel(id = 'ch-1'): Channel { return { id } as unknown as Channel; }`. Update this (and any expectation it drives) *before* the class rename, run the suite to see it fail against the old class, then rename the class + usages to make it green. Per project rule: never modify `expect` — only the helper shape changes here.
 *Alternative considered*: rename class first, fix tests last → rejected, violates TDD guidance in `feedback_tdd_refactoring.md`.
 
 **Decision 3 — Use an automated refactor, verify by hand.**
-Use IDE/TS rename-symbol (or a scripted find-replace scoped to `packages/server/src/**`) for mechanical safety, then visually diff the 9 files against the blast-radius inventory before committing.
+Use IDE/TS rename-symbol (or a scripted find-replace scoped to `apps/server/src/**`) for mechanical safety, then visually diff the 9 files against the blast-radius inventory before committing.
 
 ## Risks / Trade-offs
 

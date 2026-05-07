@@ -63,11 +63,11 @@ Add a commented `# RAW_EVENTS_PERSIST_DELTAS=false` to `.env.example` pointing a
 
 ## Impact
 
-- `packages/server/src/config.ts` — all env reads, type renames.
-- `packages/server/src/bin/server.ts` — `config.rawStore` reader sites.
-- `packages/server/src/container.ts` — `FileSettingsStore` decoupling from raw store; identifier renames.
-- `packages/server/src/services/drizzle-raw-store.ts` → `drizzle-raw-event-store.ts` (rename + class rename).
-- `packages/server/src/services/composite-raw-store.ts` → `composite-raw-event-store.ts` (rename + class rename).
-- `packages/server/.env`, `packages/server/.env.example` — full rewrite in new naming.
+- `apps/server/src/config.ts` — all env reads, type renames.
+- `apps/server/src/bin/server.ts` — `config.rawStore` reader sites.
+- `apps/server/src/container.ts` — `FileSettingsStore` decoupling from raw store; identifier renames.
+- `apps/server/src/services/drizzle-raw-store.ts` → `drizzle-raw-event-store.ts` (rename + class rename).
+- `apps/server/src/services/composite-raw-store.ts` → `composite-raw-event-store.ts` (rename + class rename).
+- `apps/server/.env`, `apps/server/.env.example` — full rewrite in new naming.
 - Tests — any fixture referencing `RAW_STORE`, `SYSTEM_PROMPT`, `AUTO_MODE`, `ALLOW_DANGEROUSLY_SKIP_PERMISSIONS`, `FILE_EXPLORER_ROOTS`, `PORT`, or the renamed classes / types.
 - No DB schema change, no client change (Vite envs untouched), no protocol change.

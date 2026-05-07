@@ -1,6 +1,6 @@
 ## Why
 
-`text-arbitrary-cleanup` cleared `text-[10px]` / `text-[11px]`. A wider grep finds **8 more arbitrary values** in `packages/client/src/components/` that violate token-first — and every single one has a Tailwind built-in equivalent. **No new token needs to be added.**
+`text-arbitrary-cleanup` cleared `text-[10px]` / `text-[11px]`. A wider grep finds **8 more arbitrary values** in `apps/web/src/components/` that violate token-first — and every single one has a Tailwind built-in equivalent. **No new token needs to be added.**
 
 ## What Changes
 

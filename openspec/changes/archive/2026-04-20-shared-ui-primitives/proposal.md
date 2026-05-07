@@ -1,6 +1,6 @@
 ## Why
 
-兩輪 component-library 盤點顯示 `packages/client/src/components/` 有大量重複 JSX/className。其中：
+兩輪 component-library 盤點顯示 `apps/web/src/components/` 有大量重複 JSX/className。其中：
 - `bg-accent text-white` 這組 primary button 樣式跨 **22 個檔案**出現 32 次
 - `bg-black/20 rounded px-2 py-1 border` 這組 input chrome 在 **5+ 處**被 inline 重複
 - CommandPalette / FilterPopover / SearchBar **三處完全相同的放大鏡 SVG + input** 各自複製

@@ -3,7 +3,7 @@
 ### useElapsedTime hook
 
 ```ts
-// packages/client/src/hooks/useElapsedTime.ts
+// apps/web/src/hooks/useElapsedTime.ts
 function useElapsedTime(startTime: number | null): string | null
 ```
 

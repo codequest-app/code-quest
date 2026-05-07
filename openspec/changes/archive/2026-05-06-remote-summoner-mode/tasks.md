@@ -5,24 +5,24 @@
 
 ## 2. Server — config & container
 
-- [x] 2.1 在 `packages/server/src/config.ts` 新增 `REMOTE_MODE`（`'local' | 'remote'`，預設 `'local'`）及 `REMOTE_TOKEN` 的讀取與 validation
-- [x] 2.2 在 `packages/server/src/container.ts` 根據 `config.remoteMode` 切換 DI binding（local → 現有實作，remote → remote 實作）
+- [x] 2.1 在 `apps/server/src/config.ts` 新增 `REMOTE_MODE`（`'local' | 'remote'`，預設 `'local'`）及 `REMOTE_TOKEN` 的讀取與 validation
+- [x] 2.2 在 `apps/server/src/container.ts` 根據 `config.remoteMode` 切換 DI binding（local → 現有實作，remote → remote 實作）
 
 ## 3. Server — summoner WS endpoint
 
-- [x] 3.1 新增 `packages/server/src/remote/connection.ts`：管理單一 remote daemon WS 連線的生命週期（connect、disconnect、send RPC、receive notification）
-- [x] 3.2 在 `packages/server/src/bin/server.ts` 的 remote 模式下，掛載 `/summoner` WS upgrade handler，驗證 Bearer token，並初始化 `Connection`
+- [x] 3.1 新增 `apps/server/src/remote/connection.ts`：管理單一 remote daemon WS 連線的生命週期（connect、disconnect、send RPC、receive notification）
+- [x] 3.2 在 `apps/server/src/bin/server.ts` 的 remote 模式下，掛載 `/summoner` WS upgrade handler，驗證 Bearer token，並初始化 `Connection`
 
 ## 4. Server — remote service implementations
 
-- [x] 4.1 新增 `packages/server/src/remote/remote-process-provider.ts`：實作 `ProcessProvider`，spawn/stdin/stdout 透過 `Connection` RPC
-- [x] 4.2 新增 `packages/server/src/remote/remote-filesystem-service.ts`：實作 `FilesystemService`，read/list 透過 RPC
-- [x] 4.3 新增 `packages/server/src/remote/remote-git-service.ts`：實作 `GitService`，status/log 透過 RPC
+- [x] 4.1 新增 `apps/server/src/remote/remote-process-provider.ts`：實作 `ProcessProvider`，spawn/stdin/stdout 透過 `Connection` RPC
+- [x] 4.2 新增 `apps/server/src/remote/remote-filesystem-service.ts`：實作 `FilesystemService`，read/list 透過 RPC
+- [x] 4.3 新增 `apps/server/src/remote/remote-git-service.ts`：實作 `GitService`，status/log 透過 RPC
 
 ## 5. Summoner daemon
 
-- [x] 5.1 新增 `packages/summoner/src/daemon.ts`：parse `--server` / `--token` CLI args，建立 WS 連線到 server 的 `/summoner` endpoint；連線斷開時 process.exit(1)（reconnect 留待後續版本）
-- [x] 5.2 新增 `packages/summoner/src/daemon/summoner-agent.ts`：接收 server 的 JSON-RPC requests，dispatch 到 `ChildProcessProvider`、`LocalFilesystemService`、`LocalGitService`，回傳 responses 及 notifications
+- [x] 5.1 新增 `apps/summoner/src/daemon.ts`：parse `--server` / `--token` CLI args，建立 WS 連線到 server 的 `/summoner` endpoint；連線斷開時 process.exit(1)（reconnect 留待後續版本）
+- [x] 5.2 新增 `apps/summoner/src/daemon/summoner-agent.ts`：接收 server 的 JSON-RPC requests，dispatch 到 `ChildProcessProvider`、`LocalFilesystemService`、`LocalGitService`，回傳 responses 及 notifications
 
 ## 6. 驗證
 

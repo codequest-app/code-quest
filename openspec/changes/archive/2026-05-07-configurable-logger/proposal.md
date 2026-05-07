@@ -22,8 +22,8 @@ Server 的 logger 直接讀 `process.env.LOG_LEVEL`，不走 `config.ts`；summo
 
 - `packages/shared/src/node.ts` — 新增 `Logger` interface + `parseLogConfig` export
 - `packages/shared/src/transport/ws-transport.ts` — `WsTransportLogger` → `Logger`
-- `packages/server/src/config.ts` — `AppConfig` 加 `log` 欄位
-- `packages/server/src/logger.ts` — 改用 `parseLogConfig`
-- `packages/summoner/src/config.ts` — `RemoteConfig` 加 `log` 欄位
-- `packages/summoner/src/logger.ts` — 新增
-- `packages/server/.env.example` / `packages/summoner/.env.example` — 加文件
+- `apps/server/src/config.ts` — `AppConfig` 加 `log` 欄位
+- `apps/server/src/logger.ts` — 改用 `parseLogConfig`
+- `apps/summoner/src/config.ts` — `RemoteConfig` 加 `log` 欄位
+- `apps/summoner/src/logger.ts` — 新增
+- `apps/server/.env.example` / `apps/summoner/.env.example` — 加文件

@@ -28,9 +28,9 @@ Visual: TopBar becomes `[hamburger? | TopScopeSwitcher | ────── | Se
 ## Impact
 
 **Affected code:**
-- `packages/client/src/components/WorkspaceLayout.tsx` — drop `<ActivityBar>` render, drop `activePanel` state (or simplify), add Settings button to topbar, add tablet hamburger to topbar.
-- `packages/client/src/components/ActivityBar.tsx` + `.stories.tsx` + `__tests__/ActivityBar.test.tsx` — **delete** (no other consumers).
-- `packages/client/src/components/__tests__/WorkspaceLayoutRWD.test.tsx` — update assertions that currently verify ActivityBar presence.
+- `apps/web/src/components/WorkspaceLayout.tsx` — drop `<ActivityBar>` render, drop `activePanel` state (or simplify), add Settings button to topbar, add tablet hamburger to topbar.
+- `apps/web/src/components/ActivityBar.tsx` + `.stories.tsx` + `__tests__/ActivityBar.test.tsx` — **delete** (no other consumers).
+- `apps/web/src/components/__tests__/WorkspaceLayoutRWD.test.tsx` — update assertions that currently verify ActivityBar presence.
 - `openspec/specs/layout-shell/spec.md` — rewrite the Desktop/Tablet sections.
 - `openspec/specs/workspace-topbar/spec.md` — **new** capability spec (the outer workspace topbar was previously untracked; this change formalises it).
 

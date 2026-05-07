@@ -27,7 +27,7 @@ The fix is trivial and symmetric with the other stores: create `CompositeSetting
 
 ## Impact
 
-- `packages/server/src/services/composite-settings-store.ts` (new).
-- `packages/server/src/container.ts` — one-line change at `settingsStore` construction.
-- `packages/server/src/__tests__/composite-settings-store.test.ts` (new).
+- `apps/server/src/services/composite-settings-store.ts` (new).
+- `apps/server/src/container.ts` — one-line change at `settingsStore` construction.
+- `apps/server/src/__tests__/composite-settings-store.test.ts` (new).
 - No DB migration, no env change, no schema change.

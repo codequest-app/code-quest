@@ -126,7 +126,7 @@ CLI_AUTO_MODE=true
 # ...
 ```
 
-Onboarding: `cp packages/server/.env.example packages/server/.env && pnpm db:migrate && pnpm dev`. Works out of the box because the template supplies both backends (use what you want — dual-write, mysql only by commenting the sqlite line, etc.).
+Onboarding: `cp apps/server/.env.example apps/server/.env && pnpm db:migrate && pnpm dev`. Works out of the box because the template supplies both backends (use what you want — dual-write, mysql only by commenting the sqlite line, etc.).
 
 ### Decision 6: Fail-fast with pointer to fix
 
@@ -135,20 +135,20 @@ Error message is actionable:
 ```
 No database backend configured. Set DATABASE_URL (MySQL) and/or
 DATABASE_SQLITE_URL (e.g. file:./data/code-quest.db) in .env.
-See packages/server/.env.example for a working default.
+See apps/server/.env.example for a working default.
 ```
 
 Solving your own error should never require searching docs.
 
 ## Risks / Trade-offs
 
-- **[Risk]** Existing dev machines with old `.env` containing `RAW_EVENTS_*` will fail to boot after upgrade. **Mitigation**: documented migration (one-time paste into `.env`); commit updates `packages/server/.env` on this dev machine in the same PR.
+- **[Risk]** Existing dev machines with old `.env` containing `RAW_EVENTS_*` will fail to boot after upgrade. **Mitigation**: documented migration (one-time paste into `.env`); commit updates `apps/server/.env` on this dev machine in the same PR.
 - **[Risk]** "Boot fails if DB not configured" is stricter than before (old default silently used SQLite). **Mitigation**: that strictness is the goal; the new error message tells users exactly what to do.
 - **[Risk]** Loose parser means `./data.db` and `file:./data.db` both work — someone might think they're different things. **Mitigation**: `.env.example` shows `file:` canonically; docs call this out.
 
 ## Migration Plan
 
-1. Update `packages/server/.env` on dev machines (new variable names).
+1. Update `apps/server/.env` on dev machines (new variable names).
 2. Ship `.env.example` as canonical template.
 3. Old env names are not read — any leftover `RAW_EVENTS_DRIVERS` is silently ignored (user sees boot fail because no URL set → fixed by env update).
 4. Follow-up `normalize-env-naming` change can be archived after this lands; it was the stepping stone.

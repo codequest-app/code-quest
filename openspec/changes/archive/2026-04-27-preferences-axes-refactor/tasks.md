@@ -1,8 +1,8 @@
 ## 1. Phase 0 — Storybook baseline 前置
 
-- [x] 1.1 跑 `pnpm -C packages/client build-storybook` 確認現有 60 個 stories build 通過
+- [x] 1.1 跑 `pnpm -C apps/web build-storybook` 確認現有 60 個 stories build 通過
 - [x] 1.2 修掉 build 失敗或明顯壞掉的既有 stories（擴 `withStoryApp`/`withStoryChannel` providers、修 9 個 broken play functions）
-- [x] 1.3 安裝 `@storybook/test-runner` 並於 `packages/client/package.json` 加 `test-storybook` / `test-storybook:ci` scripts
+- [x] 1.3 安裝 `@storybook/test-runner` 並於 `apps/web/package.json` 加 `test-storybook` / `test-storybook:ci` scripts
 - [x] 1.4 `.storybook/test-runner.ts` 設定 clipboard permission；a11y 以 `preview.ts` `a11y: { test: 'todo' }` 非 block（visual snapshot 延後至 baseline commit）
 - [x] 1.5 `test-storybook:ci` 70/70 suites、284/284 tests 全綠
 
@@ -66,7 +66,7 @@
 
 ## 8. Phase 1 — 驗證
 
-- [x] 8.1 `pnpm -C packages/client test` 全綠（154 files / 1193 tests）
+- [x] 8.1 `pnpm -C apps/web test` 全綠（154 files / 1193 tests）
 - [x] 8.1 vitest：154 files / 1193 tests 全綠
 - [x] 8.2 typecheck：clean
 - [x] 8.3 lint：新改動無新增 error（App.css 與 SideQuestionDialog 的 pre-existing debt 不屬本 change）

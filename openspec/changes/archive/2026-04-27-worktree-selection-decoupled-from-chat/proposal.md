@@ -54,12 +54,12 @@ sends the right `cwd` when launching, which is what this change fixes.
 ## Impact
 
 **Modified:**
-- `packages/client/src/contexts/NavigationContext.tsx` — add selection state + action
-- `packages/client/src/contexts/TabContext.tsx` — add `selectedCwd` prop + use in createNewTab
-- `packages/client/src/components/WorktreeChildList.tsx` — row click → selection only
-- `packages/client/src/components/WorktreeRow.tsx` — `active` semantic stays the same; consumer just feeds different value
-- `packages/client/src/components/WorkspaceLayout.tsx` — wire selection to TabProvider
-- `packages/client/src/hooks/useActiveCwd.ts` — new priority chain
+- `apps/web/src/contexts/NavigationContext.tsx` — add selection state + action
+- `apps/web/src/contexts/TabContext.tsx` — add `selectedCwd` prop + use in createNewTab
+- `apps/web/src/components/WorktreeChildList.tsx` — row click → selection only
+- `apps/web/src/components/WorktreeRow.tsx` — `active` semantic stays the same; consumer just feeds different value
+- `apps/web/src/components/WorkspaceLayout.tsx` — wire selection to TabProvider
+- `apps/web/src/hooks/useActiveCwd.ts` — new priority chain
 
 **Tests:**
 - Update WorktreeChildList tests: row click → assert no tab created, assert selection set

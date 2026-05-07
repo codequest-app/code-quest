@@ -2,7 +2,7 @@
 
 The full-prod review ran 5 parallel Explore agents across 425 files and produced a structured list of findings. Most findings are local (one file, one function) and the codebase is already in good shape — no `as any` in prod, no empty catch, React Compiler used correctly, barrel files clean. The work is distributed across four packages with different testing harnesses (server uses vitest + FakeSummoner, client uses vitest + RTL + FakeSummoner, summoner uses vitest + FakeProcessProvider, shared uses pure vitest).
 
-The only non-trivial finding is `Channel` class in `packages/server/src/socket/channel.ts` carrying too many concerns (control request tracking, notification tracking, processing state, runner wiring, MCP timeouts). Everything else is extraction or renaming.
+The only non-trivial finding is `Channel` class in `apps/server/src/socket/channel.ts` carrying too many concerns (control request tracking, notification tracking, processing state, runner wiring, MCP timeouts). Everything else is extraction or renaming.
 
 ## Goals / Non-Goals
 

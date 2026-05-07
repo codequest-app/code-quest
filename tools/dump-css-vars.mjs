@@ -1,8 +1,8 @@
 #!/usr/bin/env node
 // Dump CSS custom properties & font metrics from <html> for regression diff.
 // Usage:
-//   pnpm -C packages/client build-storybook --quiet
-//   npx http-server packages/client/storybook-static -p 6107 --silent &
+//   pnpm -C apps/web build-storybook --quiet
+//   npx http-server apps/web/storybook-static -p 6107 --silent &
 //   node tools/dump-css-vars.mjs > tools/snapshots/css-vars.json
 import { chromium } from 'playwright';
 

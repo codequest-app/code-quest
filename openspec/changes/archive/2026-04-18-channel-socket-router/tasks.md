@@ -2,13 +2,13 @@
 
 - [x] 1.1 Add `ChannelSocketRouter` class with `register` / `on` / `dispose`
   and per-event listener dedup
-  (`packages/client/src/contexts/channel/socket-router.ts`)
+  (`apps/web/src/contexts/channel/socket-router.ts`)
 - [x] 1.2 Add `router.on(event, fn, { guard })` with `guard: true` default
 
 ## 2. React wiring
 
 - [x] 2.1 Add `ChannelSocketRouterContext` + `ChannelSocketRouterProvider`
-  (`packages/client/src/contexts/channel/ChannelSocketRouterContext.tsx`)
+  (`apps/web/src/contexts/channel/ChannelSocketRouterContext.tsx`)
 - [x] 2.2 Insert provider in `ChannelContext.tsx` between
   `ChannelIdProvider` and the channel context tree so all four channel
   contexts share one router

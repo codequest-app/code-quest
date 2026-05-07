@@ -26,10 +26,10 @@ FilesPane 無法瀏覽隱藏資料夾（如 `.env`、`.claude`），導致使用
 
 ## Impact
 
-- `packages/summoner/src/filesystem/local.ts` — readBrowseEntries 過濾邏輯
-- `packages/summoner/src/git/commands.ts` — diff 命令邏輯
-- `packages/summoner/src/git/types.ts` — GitService interface
-- `packages/server/src/socket/handlers/git.ts` — git.diff handler
+- `apps/summoner/src/filesystem/local.ts` — readBrowseEntries 過濾邏輯
+- `apps/summoner/src/git/commands.ts` — diff 命令邏輯
+- `apps/summoner/src/git/types.ts` — GitService interface
+- `apps/server/src/socket/handlers/git.ts` — git.diff handler
 - `packages/shared/src/socket-events.ts` — fs:browse / git.diff payload 型別
-- `packages/client/src/components/files/FilesPane.tsx` — showHidden toggle
-- `packages/client/src/components/git/GitPane.tsx` — openDiff 呼叫方式
+- `apps/web/src/components/files/FilesPane.tsx` — showHidden toggle
+- `apps/web/src/components/git/GitPane.tsx` — openDiff 呼叫方式

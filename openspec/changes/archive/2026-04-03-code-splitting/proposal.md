@@ -18,8 +18,8 @@ Client bundle is 1,494 KB (gzip 495 KB) in a single chunk with zero code splitti
 
 ## Impact
 
-- `packages/client/src/components/ComposeToolbar.tsx` — lazy load dialogs (ManageMcpDialog, AccountUsageDialog, PluginsPanel, AuthDialog, ModelPickerPanel)
-- `packages/client/src/components/ChatMessage.tsx` or MessageContent — lazy load DiffViewer
-- `packages/client/src/components/WorkspaceLayout.tsx` or ChatPanel — lazy load CommandMenu
+- `apps/web/src/components/ComposeToolbar.tsx` — lazy load dialogs (ManageMcpDialog, AccountUsageDialog, PluginsPanel, AuthDialog, ModelPickerPanel)
+- `apps/web/src/components/ChatMessage.tsx` or MessageContent — lazy load DiffViewer
+- `apps/web/src/components/WorkspaceLayout.tsx` or ChatPanel — lazy load CommandMenu
 - No API/server changes
 - No breaking changes to component APIs

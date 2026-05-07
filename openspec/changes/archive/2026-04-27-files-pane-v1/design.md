@@ -71,7 +71,7 @@ Otherwise plain text. No deep language detection (Shiki / Monaco are heavy — f
 
 ### 6. Query layer
 
-Reuse **`useQuery`-style hook** already in the codebase (`packages/client/src/features/...`), or (if simpler) a small `useExplorerBrowse(cwd)` hook that wraps the socket emit. The existing `FileTree`'s `asyncDataLoaderFeature` already has an async loader; we inject a loader that calls `explorer:browse`.
+Reuse **`useQuery`-style hook** already in the codebase (`apps/web/src/features/...`), or (if simpler) a small `useExplorerBrowse(cwd)` hook that wraps the socket emit. The existing `FileTree`'s `asyncDataLoaderFeature` already has an async loader; we inject a loader that calls `explorer:browse`.
 
 ### 7. Empty state rendering
 

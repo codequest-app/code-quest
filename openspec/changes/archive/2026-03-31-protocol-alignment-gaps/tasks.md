@@ -164,7 +164,7 @@
 - [x] 測試重構：`AuthDialog.test.tsx` 刪除未使用的 `renderAuthWithSession`
 - [x] 測試重構：`ChannelProvider.test.tsx` — socket.emit → UI 觸發 /usage dialog
 - [x] 測試重構：`ComposeToolbar.test.tsx` — socket.emit → renderWithWorkspace + UI 觸發 /usage dialog
-- [x] 零 `as never` + 零 `claude.socket.emit` in client（packages/client/src）
+- [x] 零 `as never` + 零 `claude.socket.emit` in client（apps/web/src）
 - [x] 986 tests pass
 
 ### Group 14：Server `as never` cleanup — 用已定義 interface 取代型別斷言

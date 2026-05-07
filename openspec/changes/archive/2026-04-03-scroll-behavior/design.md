@@ -59,5 +59,5 @@ function scrollToEnd(behavior: 'smooth' | 'instant') {
 
 | File | Change |
 |------|--------|
-| `packages/client/src/components/MessageList.tsx` | Refactor scroll logic |
-| `packages/client/src/components/__tests__/ScrollToBottom.test.tsx` | Update existing tests |
+| `apps/web/src/components/MessageList.tsx` | Refactor scroll logic |
+| `apps/web/src/components/__tests__/ScrollToBottom.test.tsx` | Update existing tests |

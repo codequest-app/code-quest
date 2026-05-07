@@ -3,7 +3,7 @@
 `files-git-right-pane-shell` gives us a right-column `RightPane` with three empty tabs. This change fills the **Files** tab so users can browse the current worktree, open file previews, and mention files in chat — the functionality F.html prescribes for the right column's Files scope.
 
 We already have most of the plumbing:
-- `packages/client/src/components/FileTree.tsx` — headless-tree based tree UI, currently wired only for the file-mention feature.
+- `apps/web/src/components/FileTree.tsx` — headless-tree based tree UI, currently wired only for the file-mention feature.
 - `explorer:browse` / `file:list` / `file:read` socket events on the server.
 - `useActiveCwd` hook (from the shell change).
 
@@ -38,14 +38,14 @@ Explicitly out of scope:
 ## Impact
 
 **Affected code (new):**
-- `packages/client/src/components/FilesPane.tsx`
-- `packages/client/src/components/FilePreviewModal.tsx`
-- `packages/client/src/components/__tests__/FilesPane.test.tsx`
-- `packages/client/src/components/__tests__/FilePreviewModal.test.tsx`
+- `apps/web/src/components/FilesPane.tsx`
+- `apps/web/src/components/FilePreviewModal.tsx`
+- `apps/web/src/components/__tests__/FilesPane.test.tsx`
+- `apps/web/src/components/__tests__/FilePreviewModal.test.tsx`
 
 **Affected code (modified):**
-- `packages/client/src/components/FileTree.tsx` — add optional `onActivate` prop; existing callers unaffected.
-- `packages/client/src/components/RightPane.tsx` (from shell change) — render `<FilesPane cwd={cwd} />` inside the Files tab body.
+- `apps/web/src/components/FileTree.tsx` — add optional `onActivate` prop; existing callers unaffected.
+- `apps/web/src/components/RightPane.tsx` (from shell change) — render `<FilesPane cwd={cwd} />` inside the Files tab body.
 - Relevant existing FileTree tests — confirm no regression; add one new case for `onActivate`.
 
 **Dependencies on other changes:**

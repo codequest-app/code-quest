@@ -21,10 +21,10 @@ _(none — this is a reorganization of existing UI, not a new capability)_
 
 ## Impact
 
-- `packages/client/src/components/TabBar.tsx` — TabInfo type change, status dot mapping
-- `packages/client/src/components/HeaderBar.tsx` — remove status dot + label
-- `packages/client/src/contexts/TabContext.tsx` — TabMeta.tabStatus → SessionStatus
-- `packages/client/src/contexts/channel/ChannelMessagesContext.tsx` — onChange passes SessionStatus
-- `packages/client/src/types/chat.ts` — ChannelChangeUpdate type
-- `packages/client/src/components/WorkspaceLayout.tsx` — wire new status type
+- `apps/web/src/components/TabBar.tsx` — TabInfo type change, status dot mapping
+- `apps/web/src/components/HeaderBar.tsx` — remove status dot + label
+- `apps/web/src/contexts/TabContext.tsx` — TabMeta.tabStatus → SessionStatus
+- `apps/web/src/contexts/channel/ChannelMessagesContext.tsx` — onChange passes SessionStatus
+- `apps/web/src/types/chat.ts` — ChannelChangeUpdate type
+- `apps/web/src/components/WorkspaceLayout.tsx` — wire new status type
 - Tests and stories for above components

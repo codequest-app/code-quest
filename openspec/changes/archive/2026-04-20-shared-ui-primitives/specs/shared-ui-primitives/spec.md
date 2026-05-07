@@ -2,7 +2,7 @@
 
 ### Requirement: Button primitive covers all button variants in the codebase
 
-Every rendered `<button>` in `packages/client/src/components/` SHALL either use `ui/Button` or be a trivially-styled icon button. Any new button primitive variant SHALL be added to `ui/Button` rather than inlined.
+Every rendered `<button>` in `apps/web/src/components/` SHALL either use `ui/Button` or be a trivially-styled icon button. Any new button primitive variant SHALL be added to `ui/Button` rather than inlined.
 
 #### Scenario: Primary dialog button
 - **WHEN** a dialog needs a primary action button

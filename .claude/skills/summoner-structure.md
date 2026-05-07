@@ -23,7 +23,7 @@ pnpm --filter @code-quest/summoner start --server <url> --token <token>
 ## Directory Structure
 
 ```
-packages/summoner/src/
+apps/summoner/src/
 ├── main.ts                      # entry point — creates WsTransport, connection loop, Agent
 ├── config.ts                    # CLI args + env var parsing (server, token, fsRoots)
 ├── index.ts                     # barrel export (public API for server-side imports)

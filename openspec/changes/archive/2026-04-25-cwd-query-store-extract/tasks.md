@@ -2,7 +2,7 @@
 
 ### 1. Create the factory
 
-- [x] Add `packages/client/src/contexts/lib/createCwdQueryStore.ts` exporting `createCwdQueryStore<TRaw, TData>({ fetch, dirtyEvent, parse, getCwdFromDirtyPayload })`.
+- [x] Add `apps/web/src/contexts/lib/createCwdQueryStore.ts` exporting `createCwdQueryStore<TRaw, TData>({ fetch, dirtyEvent, parse, getCwdFromDirtyPayload })`.
 - [x] Implement the per-cwd cache map, inflight-request dedup, and TopicEmitter subscription pattern in one place.
 - [x] Subscribe to `dirtyEvent` internally; on event, invalidate the matching cwd entry and refetch if any subscriber is mounted.
 - [x] Return `{ useStoreValue, refetch, clear }`.

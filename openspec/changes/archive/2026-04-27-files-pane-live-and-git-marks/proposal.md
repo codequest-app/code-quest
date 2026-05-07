@@ -32,12 +32,12 @@ F.html mockup shows `📄 README.md  [M]` style — file nodes carry a git statu
 ## Impact
 
 **Modified:**
-- `packages/server/src/services/fs-git-dirty-broadcaster.ts` — add socket subscription API
-- `packages/server/src/socket/handlers/explorer.ts` — add watch / unwatch handlers + disconnect cleanup
+- `apps/server/src/services/fs-git-dirty-broadcaster.ts` — add socket subscription API
+- `apps/server/src/socket/handlers/explorer.ts` — add watch / unwatch handlers + disconnect cleanup
 - `packages/shared/src/socket-events.ts` + schemas — new event payloads
-- `packages/client/src/components/FilesPane.tsx` — mount-time watch, gitMarks composition
-- `packages/client/src/components/GitPane.tsx` — mount-time watch (drop reliance on channel-driven watch)
-- `packages/client/src/components/FileTree.tsx` — gitMarks prop + render
+- `apps/web/src/components/FilesPane.tsx` — mount-time watch, gitMarks composition
+- `apps/web/src/components/GitPane.tsx` — mount-time watch (drop reliance on channel-driven watch)
+- `apps/web/src/components/FileTree.tsx` — gitMarks prop + render
 
 **Tests:**
 - FsGitDirtyBroadcaster: socket subscribe/unsubscribe; refcount with mixed channel+socket; cleanup on disconnect

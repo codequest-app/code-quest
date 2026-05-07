@@ -23,14 +23,14 @@ description: >
 
 ```
 ┌──────────────────────────────────────────┐
-│  Client (packages/client)                │  ← React + Vite
+│  Client (apps/web)                │  ← React + Vite
 │  - ChatPanel / Permission UI             │
 │  - SessionContext / ChannelProvider      │
 │  - Storybook stories, Tailwind v4 tokens │
 └──────────────────┬───────────────────────┘
                    │ WebSocket /ws
 ┌──────────────────▼───────────────────────┐
-│  Server (packages/server)                │  ← Node + Inversify
+│  Server (apps/server)                │  ← Node + Inversify
 │  - WsTransport + middleware pipeline     │
 │  - socket handlers, ChannelManager       │
 │  - SessionStore (Drizzle / SQLite)       │
@@ -38,7 +38,7 @@ description: >
 └──────────────────┬───────────────────────┘
                    │ WebSocket /summoner (RPC)
 ┌──────────────────▼───────────────────────┐
-│  Summoner (packages/summoner)            │  ← 獨立 process，本地端執行
+│  Summoner (apps/summoner)            │  ← 獨立 process，本地端執行
 │  - Agent: 接收 server RPC 指令           │
 │  - ChildProcessProvider (spawn CLI)      │
 │  - LocalFilesystemService / LocalGitService │

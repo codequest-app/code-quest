@@ -26,11 +26,11 @@
 
 ## Impact
 
-- `packages/client/src/components/chat/ChatSession.tsx` — 刪除
-- `packages/client/src/components/chat/ChatPanel.tsx` — 不變（已是 compound component）
-- `packages/client/src/components/workspace/TabContainer.tsx` — TabContent 大幅重寫
-- `packages/client/src/components/workspace/WorkspaceLayout.tsx` — 移除 rightOpen / DrawerAside(right)
-- `packages/client/src/components/workspace/WorkspaceTopbar.tsx` — 移除 onToggleRight
-- `packages/client/src/components/chat/conversation/MessageList.tsx` — 加入 registerJumpTo
-- `packages/client/src/components/chat/compose/ChatInputArea.tsx` — 加入 `/` hotkey
-- 新增 `packages/client/src/components/chat/ChannelOverlays.tsx`
+- `apps/web/src/components/chat/ChatSession.tsx` — 刪除
+- `apps/web/src/components/chat/ChatPanel.tsx` — 不變（已是 compound component）
+- `apps/web/src/components/workspace/TabContainer.tsx` — TabContent 大幅重寫
+- `apps/web/src/components/workspace/WorkspaceLayout.tsx` — 移除 rightOpen / DrawerAside(right)
+- `apps/web/src/components/workspace/WorkspaceTopbar.tsx` — 移除 onToggleRight
+- `apps/web/src/components/chat/conversation/MessageList.tsx` — 加入 registerJumpTo
+- `apps/web/src/components/chat/compose/ChatInputArea.tsx` — 加入 `/` hotkey
+- 新增 `apps/web/src/components/chat/ChannelOverlays.tsx`

@@ -68,9 +68,9 @@ git:push({cwd})
 ## Impact
 
 **Modified — server:**
-- `packages/server/src/socket/handlers/git.ts` — absorbs all worktree ops; renames internal handlers to match new event names
-- `packages/server/src/socket/handlers/worktree.ts` — **deleted** (or kept as alias layer for one release; see Migration)
-- `packages/server/src/socket/server.ts` — drops `worktree.create(ctx)` registration
+- `apps/server/src/socket/handlers/git.ts` — absorbs all worktree ops; renames internal handlers to match new event names
+- `apps/server/src/socket/handlers/worktree.ts` — **deleted** (or kept as alias layer for one release; see Migration)
+- `apps/server/src/socket/server.ts` — drops `worktree.create(ctx)` registration
 
 **Modified — shared:**
 - `packages/shared/src/schemas/git.ts` — payload schemas for all consolidated events
@@ -78,11 +78,11 @@ git:push({cwd})
 - `packages/shared/src/socket-events.ts` — `EVENTS.git.*` map gains nested `worktree` namespace; `EVENTS.worktree.*` removed
 
 **Modified — client:**
-- `packages/client/src/contexts/WorktreeContext.tsx` — actions call new event names
-- `packages/client/src/hooks/useGitStatus.ts` — `EVENTS.git.statusByCwd` → `EVENTS.git.status`
-- `packages/client/src/components/GitPane.tsx` — same renames
-- `packages/client/src/components/WorktreeRow.tsx` (consumers of dirty count) — switch from `worktree:status` to `git:statusSummary`
-- `packages/client/src/components/BranchPopover.tsx` (or its callers) — `worktree:listBranches` → `git:branches`, `worktree:checkout` → `git:checkout`
+- `apps/web/src/contexts/WorktreeContext.tsx` — actions call new event names
+- `apps/web/src/hooks/useGitStatus.ts` — `EVENTS.git.statusByCwd` → `EVENTS.git.status`
+- `apps/web/src/components/GitPane.tsx` — same renames
+- `apps/web/src/components/WorktreeRow.tsx` (consumers of dirty count) — switch from `worktree:status` to `git:statusSummary`
+- `apps/web/src/components/BranchPopover.tsx` (or its callers) — `worktree:listBranches` → `git:branches`, `worktree:checkout` → `git:checkout`
 
 **Test impact:** all client + server tests touching event names need rename. ~30-40 test cases mechanical edits. Behavior tests stay valid.
 

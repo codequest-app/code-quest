@@ -26,9 +26,9 @@
 
 - `packages/shared/src/schemas/message-payloads.ts` — remove `source` from schemas
 - `packages/shared/src/schemas/message.ts` — remove `UserSource` type and `TextMeta.source`
-- `packages/summoner/src/claude/transforms/user.ts` — remove `source` derivation
-- `packages/client/src/contexts/channel/handlers/message.ts` — remove `source` propagation, add `fromInput` in `sendMessage`
-- `packages/client/src/utils/message.ts` — remove `source` from `messagesFromUserBlock`
-- `packages/client/src/components/chat/compose/ComposeInput.tsx` — update ArrowUp filter
-- `packages/client/src/components/chat/conversation/MessageContent.tsx` — remove source-based branching
-- `packages/client/src/components/chat/conversation/ChatMessage.tsx` — remove `preserveWhitespace` source check
+- `apps/summoner/src/claude/transforms/user.ts` — remove `source` derivation
+- `apps/web/src/contexts/channel/handlers/message.ts` — remove `source` propagation, add `fromInput` in `sendMessage`
+- `apps/web/src/utils/message.ts` — remove `source` from `messagesFromUserBlock`
+- `apps/web/src/components/chat/compose/ComposeInput.tsx` — update ArrowUp filter
+- `apps/web/src/components/chat/conversation/MessageContent.tsx` — remove source-based branching
+- `apps/web/src/components/chat/conversation/ChatMessage.tsx` — remove `preserveWhitespace` source check

@@ -5,18 +5,18 @@ TBD - created by archiving change refactor-frontend-testing. Update Purpose afte
 ## Requirements
 ### Requirement: Frontend tests use Testing Library style and a single file-name convention
 
-前端 (`packages/client`) 測試 MUST 以 React Testing Library 的「使用者視角」風格撰寫；檔名 MUST 為 `*.test.ts` 或 `*.test.tsx`，**不得**引入 `*.integration.test.*` 等變體。測試環境 MUST 使用 `happy-dom`（取代 jsdom）。
+前端 (`apps/web`) 測試 MUST 以 React Testing Library 的「使用者視角」風格撰寫；檔名 MUST 為 `*.test.ts` 或 `*.test.tsx`，**不得**引入 `*.integration.test.*` 等變體。測試環境 MUST 使用 `happy-dom`（取代 jsdom）。
 
 #### Scenario: single file-name suffix
 
 - **WHEN** 新增或重命名前端測試檔
 - **THEN** 檔名僅允許 `*.test.ts` / `*.test.tsx`
-- **AND** `packages/client/vitest.config.ts` `include` 只保留 `src/**/*.test.{ts,tsx}` 一條 glob
+- **AND** `apps/web/vitest.config.ts` `include` 只保留 `src/**/*.test.{ts,tsx}` 一條 glob
 
 #### Scenario: test environment is happy-dom
 
 - **WHEN** 執行 client package 的測試
-- **THEN** `packages/client/vitest.config.ts` 的 `environment` MUST 為 `happy-dom`
+- **THEN** `apps/web/vitest.config.ts` 的 `environment` MUST 為 `happy-dom`
 - **AND** `jsdom` 不存在於 client package 的 devDependencies
 
 #### Scenario: test renders meaningful user tree
@@ -78,7 +78,7 @@ TBD - created by archiving change refactor-frontend-testing. Update Purpose afte
 #### Scenario: fake components live in src/test/
 
 - **WHEN** 新增一個 Fake Component
-- **THEN** 檔案位於 `packages/client/src/test/fake-<kebab>.tsx`
+- **THEN** 檔案位於 `apps/web/src/test/fake-<kebab>.tsx`
 - **AND** 匯出名稱為 `Fake<PascalCase>`
 
 ### Requirement: Tests live at the smallest meaningful render root
@@ -113,7 +113,7 @@ TBD - created by archiving change refactor-frontend-testing. Update Purpose afte
 
 ### Requirement: Fake test files follow a single naming and placement rule
 
-所有測試用 Fake 檔案（browser API fakes、component fakes、network fakes、time fakes）MUST 放在 `packages/client/src/test/` 平鋪層級，命名格式 `fake-<kebab>.ts[x]`。
+所有測試用 Fake 檔案（browser API fakes、component fakes、network fakes、time fakes）MUST 放在 `apps/web/src/test/` 平鋪層級，命名格式 `fake-<kebab>.ts[x]`。
 
 #### Scenario: fake file naming
 
@@ -124,7 +124,7 @@ TBD - created by archiving change refactor-frontend-testing. Update Purpose afte
 
 #### Scenario: no nested fake subdirectory
 
-- **WHEN** audit `packages/client/src/test/`
+- **WHEN** audit `apps/web/src/test/`
 - **THEN** 不存在 `fakes/` 子目錄
 - **AND** 所有 `fake-*.ts[x]` 位於同一層級
 

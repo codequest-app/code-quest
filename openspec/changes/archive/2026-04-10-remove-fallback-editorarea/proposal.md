@@ -23,6 +23,6 @@
 
 ## Impact
 
-- `packages/client/src/components/WorkspaceLayout.tsx` — 移除 fallback
-- `packages/client/src/App.tsx` — 移除外層 TabProvider
+- `apps/web/src/components/WorkspaceLayout.tsx` — 移除 fallback
+- `apps/web/src/App.tsx` — 移除外層 TabProvider
 - 相關測試需更新（`renderWithWorkspace` 等）

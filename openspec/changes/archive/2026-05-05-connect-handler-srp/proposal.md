@@ -1,6 +1,6 @@
 ## Why
 
-`packages/server/src/socket/handlers/session/connect.ts` 的多個函式混合了 orchestration 與 detail：
+`apps/server/src/socket/handlers/session/connect.ts` 的多個函式混合了 orchestration 與 detail：
 
 - `applyInitResponseAndBroadcast`：parse + persist（settingsStore）+ 多個 broadcast，命名只說 "apply + broadcast" 但同時做持久化
 - `finalizeAndNotify`：7 個步驟全在一個函式，orchestration 與 detail 無法分辨
@@ -16,5 +16,5 @@
 
 ## Impact
 
-- `packages/server/src/socket/handlers/session/connect.ts`
-- `packages/server/src/__tests__/session-connect.test.ts`（expect 不變）
+- `apps/server/src/socket/handlers/session/connect.ts`
+- `apps/server/src/__tests__/session-connect.test.ts`（expect 不變）

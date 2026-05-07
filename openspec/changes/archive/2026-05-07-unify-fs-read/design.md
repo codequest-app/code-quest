@@ -53,7 +53,7 @@ The split was introduced ad-hoc when PDF support was added. Callers must know in
 ## Migration Plan
 
 1. Update `@code-quest/shared`: merge schemas, update `EVENTS`
-2. Update `packages/summoner`: merge filesystem interface + implementations
-3. Update `packages/server`: merge handlers
-4. Update `packages/client`: update `FilePreviewModal` to use unified response
+2. Update `apps/summoner`: merge filesystem interface + implementations
+3. Update `apps/server`: merge handlers
+4. Update `apps/web`: update `FilePreviewModal` to use unified response
 5. No external clients to migrate (internal socket protocol only)
