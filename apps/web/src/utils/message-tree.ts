@@ -29,14 +29,14 @@ export function buildMessageTree(messages: Message[]): MessageNode[] {
 function mergeToolResult(message: Message, toolUseNodes: Map<string, MessageNode>): boolean {
   if (message.type !== 'tool_result') return false;
   const parent = toolUseNodes.get(message.meta.toolId);
-  if (!parent) return false;
+  if (!parent || parent.message.type !== 'tool_use') return false;
   parent.message = {
     ...parent.message,
     meta: {
       ...parent.message.meta,
       result: { content: message.content, is_error: message.meta.is_error },
     },
-  } as Message;
+  };
   return true;
 }
 
