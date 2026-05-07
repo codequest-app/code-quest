@@ -1,7 +1,7 @@
 import type { ModelInfo } from '@code-quest/shared';
 import { useEffect, useRef } from 'react';
 import { cn } from '@/utils/cn';
-import { getModelDisplayInfo, getModelInfoDisplayName, shortModelName } from '@/utils/model-utils';
+import { getModelDisplayInfo, getModelInfoDisplayName } from '@/utils/model-utils';
 
 const optionButtonClass = (isSelected: boolean) =>
   cn(
@@ -135,9 +135,4 @@ export function ModelPickerPopover({
       })}
     </div>
   );
-}
-
-export function currentModelLabel(model: string | null, availableModels: ModelInfo[] = []): string {
-  if (!model) return 'Model';
-  return shortModelName(model, availableModels);
 }

@@ -27,7 +27,7 @@ function fakeRpc(): RemoteRpcWithEvents & { fireDisconnect: () => void } {
 describe('ReconnectableRpc', () => {
   it('rejects when no rpc connected', async () => {
     const rpc = new ReconnectableRpc();
-    await expect(rpc.request('test', {})).rejects.toThrow('No remote daemon connected');
+    await expect(rpc.request('test', {})).rejects.toThrow('No remote summoner connected');
   });
 
   it('forwards request after replace', async () => {
@@ -45,7 +45,7 @@ describe('ReconnectableRpc', () => {
     rpc.replace(inner);
 
     inner.fireDisconnect();
-    await expect(rpc.request('test', {})).rejects.toThrow('No remote daemon connected');
+    await expect(rpc.request('test', {})).rejects.toThrow('No remote summoner connected');
   });
 
   it('reconnect with new rpc works after disconnect', async () => {
