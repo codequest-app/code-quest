@@ -289,48 +289,32 @@ export function CommandPalette(): React.ReactNode {
         />
 
         <div className="overflow-y-auto flex-1">
-          {activeTab === 'messages' ? (
-            <>
-              <PaletteMessageList
-                messages={visibleMessages}
-                query={query}
-                activeIdx={messageActiveIdx}
-                onActiveChange={setActiveIdx}
-                onJumpTo={handleJumpTo}
-                onClose={closePalette}
-                listRef={listRef}
-                sourceLabels={sourceLabels}
-              />
-              {messageResults.length === 0 && <PaletteEmpty query={query} />}
-            </>
-          ) : (
-            <>
-              {activeTab === 'all' && (
-                <PaletteMessageList
-                  messages={visibleMessages}
-                  query={query}
-                  activeIdx={messageActiveIdx}
-                  onActiveChange={setActiveIdx}
-                  onJumpTo={handleJumpTo}
-                  onClose={closePalette}
-                  showHeader
-                  listRef={listRef}
-                  sourceLabels={sourceLabels}
-                />
-              )}
-              <PaletteCommandList
-                features={featuresInActiveTab}
-                query={query}
-                activeId={activeFeatureId}
-                onActiveChange={(id) => {
-                  const idx = filteredFeatures.findIndex((f) => f.id === id);
-                  if (idx >= 0) setActiveIdx(messageCount + idx);
-                }}
-              />
-              {q && !hasFeatureMatch && messageResults.length === 0 && (
-                <PaletteEmpty query={query} />
-              )}
-            </>
+          {showMessages && (
+            <PaletteMessageList
+              messages={visibleMessages}
+              query={query}
+              activeIdx={messageActiveIdx}
+              onActiveChange={setActiveIdx}
+              onJumpTo={handleJumpTo}
+              onClose={closePalette}
+              showHeader={activeTab === 'all'}
+              listRef={listRef}
+              sourceLabels={sourceLabels}
+            />
+          )}
+          {isPaletteTab(activeTab) && (
+            <PaletteCommandList
+              features={featuresInActiveTab}
+              query={query}
+              activeId={activeFeatureId}
+              onActiveChange={(id) => {
+                const idx = filteredFeatures.findIndex((f) => f.id === id);
+                if (idx >= 0) setActiveIdx(messageCount + idx);
+              }}
+            />
+          )}
+          {messageResults.length === 0 && (activeTab === 'messages' || (q && !hasFeatureMatch)) && (
+            <PaletteEmpty query={query} />
           )}
         </div>
 
