@@ -121,13 +121,13 @@ export function useSpeechToText(): {
   };
 
   return {
-    isListening: isListening,
-    interimTranscript: interimTranscript,
-    finalTranscript: finalTranscript,
-    resetTranscript: resetTranscript,
-    toggleListening: toggleListening,
-    start: start,
-    stop: stop,
-    isSupported: isSupported,
+    isListening,
+    interimTranscript,
+    finalTranscript,
+    resetTranscript,
+    toggleListening,
+    start,
+    stop,
+    isSupported,
   };
 }

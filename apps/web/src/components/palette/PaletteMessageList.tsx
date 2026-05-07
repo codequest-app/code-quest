@@ -8,6 +8,17 @@ import {
   paletteMessageResults,
 } from './palette-message-results.ts';
 
+const BG_OPACITY = '18'; // ~9%
+const BORDER_OPACITY = '40'; // ~25%
+
+function badgeStyle(color: string): React.CSSProperties {
+  return {
+    color,
+    background: `${color}${BG_OPACITY}`,
+    border: `1px solid ${color}${BORDER_OPACITY}`,
+  };
+}
+
 interface PaletteMessageListProps {
   messages: Message[];
   query: string;
@@ -80,11 +91,7 @@ export function PaletteMessageList({
               >
                 <span
                   className="text-2xs font-mono font-bold tracking-wider uppercase rounded-sm px-1.5 py-0.5 shrink-0 mt-px whitespace-nowrap min-w-26 text-center"
-                  style={{
-                    color,
-                    background: `${color}18`,
-                    border: `1px solid ${color}40`,
-                  }}
+                  style={badgeStyle(color)}
                 >
                   {label}
                 </span>
