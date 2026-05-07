@@ -51,6 +51,7 @@ export class WsClient {
   private explicitlyClosed = false;
   private lifecycle?: LifecycleListener;
   private currentId = '';
+  private visibilityHandler?: () => void;
   private readonly opts: Required<WsClientOptions>;
   private readonly url: string;
 
@@ -79,9 +80,11 @@ export class WsClient {
     this.explicitlyClosed = true;
     if (this.reconnectTimer) clearTimeout(this.reconnectTimer);
     if (this.pingTimer) clearInterval(this.pingTimer);
+    if (this.visibilityHandler) {
+      document.removeEventListener('visibilitychange', this.visibilityHandler);
+      this.visibilityHandler = undefined;
+    }
     if (this.ws && this.ws.readyState !== this.ws.CLOSED) this.ws.close(1000);
-    // Pending request promises are still in the `pending` map; without this
-    // they would hang forever once the user has explicitly given up.
     for (const p of this.pending.values()) p.reject(new Error('disconnected'));
     this.pending.clear();
   }
@@ -226,7 +229,7 @@ export class WsClient {
    */
   private bindVisibilityChange(): void {
     if (typeof document === 'undefined') return;
-    document.addEventListener('visibilitychange', () => {
+    this.visibilityHandler = () => {
       if (document.visibilityState !== 'visible') return;
       if (this.isOpen() || this.explicitlyClosed) return;
       if (!this.reconnectTimer) return;
@@ -234,7 +237,8 @@ export class WsClient {
       this.reconnectTimer = undefined;
       this.backoffMs = this.opts.initialBackoffMs;
       this.openSocket();
-    });
+    };
+    document.addEventListener('visibilitychange', this.visibilityHandler);
   }
 
   private startPingTimer(): void {
