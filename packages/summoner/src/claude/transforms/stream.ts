@@ -1,5 +1,5 @@
+import type { ClientMessage } from '@code-quest/shared';
 import type { z } from 'zod';
-import type { ClientMessage } from '../../types.ts';
 import type { streamEventSchema } from '../schemas.ts';
 
 type StreamMessage = z.infer<typeof streamEventSchema>;

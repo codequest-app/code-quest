@@ -1,6 +1,6 @@
+import type { ClientMessage } from '@code-quest/shared';
 import { modelUsageEntrySchema } from '@code-quest/shared';
 import { z } from 'zod';
-import type { ClientMessage } from '../../types.ts';
 import type { resultSchema } from '../schemas.ts';
 
 type ResultMessage = z.infer<typeof resultSchema>;

@@ -1,7 +1,7 @@
 import type { SpawnOptions } from 'node:child_process';
+import type { ProcessHandle, ProcessProvider, ProcessRunResult } from '@code-quest/shared';
 import type { z } from 'zod';
 import type { controlRequestSchema, userSchema } from '../claude/schemas.ts';
-import type { ProcessHandle, ProcessProvider, ProcessRunResult } from '../types.ts';
 
 /** Type map for messages tests inspect via `received(type)`. Each is a CLI
  *  stdin message the server sends to the runner. */

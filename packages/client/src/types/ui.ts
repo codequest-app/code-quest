@@ -9,8 +9,6 @@ import type {
   ToolUseMeta,
 } from '@code-quest/shared';
 
-export type { ResultMeta, ToolResultMeta, ToolUseMeta } from '@code-quest/shared';
-
 export type SessionStatus =
   | 'disconnected'
   | 'idle'

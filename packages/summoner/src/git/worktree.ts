@@ -1,11 +1,11 @@
 import { mkdir } from 'node:fs/promises';
 import { join, resolve } from 'node:path';
+import type { CreateWorktreeOptions } from '@code-quest/shared';
 import { validateBranchName, validateWorktreeName, type WorktreeInfo } from '@code-quest/shared';
 import { logger } from '../logger.ts';
 import type { GitCommands } from './commands.ts';
 import { NotARepoError } from './errors.ts';
 import { createGit, rawGit } from './git-runner.ts';
-import type { CreateWorktreeOptions } from './types.ts';
 
 const WORKTREE_PATH_RE = /[/\\]\.claude[/\\]worktrees[/\\]([^/\\]+)$/;
 const WORKTREE_BRANCH_PREFIX = 'worktree-';

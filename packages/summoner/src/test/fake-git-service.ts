@@ -1,11 +1,12 @@
 import type {
+  CreateWorktreeOptions,
   GitDiffResult,
   GitLogResult,
+  GitService,
   GitStatusResult,
   WorktreeInfo,
 } from '@code-quest/shared';
 import { AlreadyRepoError, NotARepoError } from '../git/errors.ts';
-import type { CreateWorktreeOptions, GitService } from '../git/types.ts';
 
 export class FakeGitService implements GitService {
   readonly capabilities = { worktree: true } as const;

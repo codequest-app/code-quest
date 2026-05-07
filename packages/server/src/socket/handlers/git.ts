@@ -19,10 +19,10 @@ import {
   worktreeStatusPayloadSchema,
 } from '@code-quest/shared';
 import type { SocketCallback, TypedSocket } from '@code-quest/shared/node';
+import { errMsg } from '@code-quest/shared/node';
 import { AlreadyRepoError, NotARepoError } from '@code-quest/summoner';
 import { logger } from '../../logger.ts';
 import type { HandlerContext } from '../../types.ts';
-import { errMsg } from '../utils/helpers.ts';
 import { err, ok } from '../utils/rpc.ts';
 
 const NOT_A_REPO = 'not_a_repo';

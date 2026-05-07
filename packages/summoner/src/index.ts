@@ -1,3 +1,12 @@
+export type {
+  CreateWorktreeOptions,
+  GitService,
+  InitializeOptions,
+  ProcessHandle,
+  ProcessProvider,
+  ProcessRunResult,
+  ResolvedControlResponse,
+} from '@code-quest/shared';
 export { ClaudeAdapter } from './claude/adapter.ts';
 export type { LaunchOptions } from './claude/launch-options.ts';
 export type { PluginCliRunResult, PluginCliService } from './claude/plugin-cli.ts';
@@ -11,21 +20,11 @@ export type { FilesystemService } from './filesystem/types.ts';
 export { LocalWatchService } from './fs-watch/local.ts';
 export type { Unsubscribe, WatchCallback, WatchEvent, WatchService } from './fs-watch/types.ts';
 export { AlreadyRepoError, NotARepoError } from './git/errors.ts';
-export { detectWorktree, LocalGitService } from './git/local.ts';
-export type { CreateWorktreeOptions, GitService } from './git/types.ts';
+export { LocalGitService } from './git/local.ts';
+export { detectWorktree } from './git/worktree.ts';
 export { LocalOpenspecService } from './openspec/local.ts';
 export type { OpenspecService } from './openspec/types.ts';
 export { ProcessRunner } from './runner.ts';
 export { ChildProcessProvider } from './transports/child-process.ts';
-export type {
-  AdapterOutput,
-  InitializeOptions,
-  ParseResult,
-  ProcessHandle,
-  ProcessProvider,
-  ProcessRunResult,
-  ProviderAdapter,
-  RawEvent,
-  ResolvedControlResponse,
-} from './types.ts';
+export type { AdapterOutput, ParseResult, ProviderAdapter, RawEvent } from './types.ts';
 export { rawEventSchema } from './types.ts';

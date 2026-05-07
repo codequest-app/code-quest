@@ -1,15 +1,13 @@
 import type {
+  CreateWorktreeOptions,
   GitDiffResult,
   GitLogResult,
+  GitService,
   GitStatusResult,
   WorktreeInfo,
 } from '@code-quest/shared';
 import { GitCommands } from './commands.ts';
-import type { CreateWorktreeOptions, GitService } from './types.ts';
 import { GitWorktreeOps } from './worktree.ts';
-
-// Re-exports preserved for the package public API (summoner/src/index.ts).
-export { detectWorktree } from './worktree.ts';
 
 /** Local git backend. Composed of `GitCommands` (plain git CLI) and
  *  `GitWorktreeOps` (worktree CRUD + path conventions). The facade

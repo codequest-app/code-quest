@@ -1,5 +1,5 @@
+import type { ToolResultMeta } from '@code-quest/shared';
 import { CheckIcon } from '@heroicons/react/24/solid';
-import type { ToolResultMeta } from '@/types/ui';
 import { ContentRenderer } from './ContentRenderer.tsx';
 import { CollapsibleBlock } from './primitives.tsx';
 

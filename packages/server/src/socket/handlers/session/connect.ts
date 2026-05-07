@@ -15,13 +15,14 @@ import {
   sessionResumePayloadSchema,
 } from '@code-quest/shared';
 import type { SocketCallback, TypedSocket } from '@code-quest/shared/node';
+import { errMsg } from '@code-quest/shared/node';
 import { config } from '../../../config.ts';
 import { logger } from '../../../logger.ts';
 import type { HandlerContext } from '../../../types.ts';
 import type { Channel } from '../../channel.ts';
 import { BROADCAST_CHANNEL_ID, withChannel } from '../../channel-emitter.ts';
 import { DEFAULT_THINKING_TOKENS } from '../../schemas.ts';
-import { errMsg, pickDefined } from '../../utils/helpers.ts';
+import { pickDefined } from '../../utils/helpers.ts';
 import { resolveProjectRoot } from '../../utils/project-root.ts';
 import { err, ok } from '../../utils/rpc.ts';
 

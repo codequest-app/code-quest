@@ -8,10 +8,10 @@ import type {
   OpenspecReadResult,
   OpenspecSpecSummary,
   OpenspecToggleTaskResult,
+  ProcessProvider,
 } from '@code-quest/shared';
 import { z } from 'zod';
 import type { FilesystemService } from '../filesystem/types.ts';
-import type { ProcessProvider } from '../types.ts';
 import { errorCode } from '../utils.ts';
 import type { OpenspecArchiveOptions, OpenspecService } from './types.ts';
 

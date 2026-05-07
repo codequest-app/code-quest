@@ -1,12 +1,7 @@
 import { EventEmitter } from 'node:events';
+import type { ClientMessage, ProcessHandle, ProcessProvider } from '@code-quest/shared';
 import { logger } from './logger.ts';
-import type {
-  ClientMessage,
-  ParseResult,
-  ProcessHandle,
-  ProcessProvider,
-  ProviderAdapter,
-} from './types.ts';
+import type { ParseResult, ProviderAdapter } from './types.ts';
 import { isRecord } from './utils.ts';
 
 const INHERITED_ENV_KEYS_TO_REMOVE = ['CLAUDECODE', 'CLAUDE_CODE_ENTRYPOINT'] as const;

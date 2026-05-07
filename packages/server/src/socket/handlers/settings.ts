@@ -14,13 +14,14 @@ import {
   settingsUpdatedPayloadSchema,
 } from '@code-quest/shared';
 import type { SocketCallback, TypedSocket } from '@code-quest/shared/node';
+import { errMsg } from '@code-quest/shared/node';
 import type { z } from 'zod';
 import { logger } from '../../logger.ts';
 import type { HandlerContext } from '../../types.ts';
 import type { Channel } from '../channel.ts';
 import { BROADCAST_CHANNEL_ID, withChannel, withError } from '../channel-emitter.ts';
 import { DEFAULT_THINKING_TOKENS } from '../schemas.ts';
-import { errMsg, pickDefined } from '../utils/helpers.ts';
+import { pickDefined } from '../utils/helpers.ts';
 import { err, ok } from '../utils/rpc.ts';
 
 export const SETTINGS_STATE_KEYS = [

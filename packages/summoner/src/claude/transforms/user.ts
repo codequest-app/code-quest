@@ -1,6 +1,5 @@
-import type { ContentBlock } from '@code-quest/shared';
+import type { ClientMessage, ContentBlock } from '@code-quest/shared';
 import type { z } from 'zod';
-import type { ClientMessage } from '../../types.ts';
 import { asString } from '../../utils.ts';
 import type { userSchema } from '../schemas.ts';
 import { buildMessagePayload } from './helpers.ts';

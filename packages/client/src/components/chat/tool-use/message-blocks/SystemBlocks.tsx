@@ -1,5 +1,6 @@
+import type { ResultMeta } from '@code-quest/shared';
 import { MarkdownContent } from '@/components/chat/renderers/MarkdownContent';
-import type { DocumentMeta, ImageMeta, RateLimitMeta, ResultMeta } from '@/types/ui';
+import type { DocumentMeta, ImageMeta, RateLimitMeta } from '@/types/ui';
 import { cn } from '@/utils/cn';
 import { AlertBanner } from './AlertBanner.tsx';
 import { renderIcon } from './message-type-icons.tsx';

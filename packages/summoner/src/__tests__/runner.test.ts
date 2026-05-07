@@ -1,8 +1,8 @@
+import type { ClientMessage } from '@code-quest/shared';
 import { describe, expect, it } from 'vitest';
 import { ClaudeAdapter } from '../claude/adapter.ts';
 import { ProcessRunner } from '../runner.ts';
 import { FakeProcessProvider, segments as s } from '../test/index.ts';
-import type { ClientMessage } from '../types.ts';
 
 function createRunner() {
   const provider = new FakeProcessProvider();

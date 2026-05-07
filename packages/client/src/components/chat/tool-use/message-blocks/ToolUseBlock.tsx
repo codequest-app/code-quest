@@ -1,4 +1,4 @@
-import type { TokenUsage } from '@code-quest/shared';
+import type { TokenUsage, ToolUseMeta } from '@code-quest/shared';
 import {
   CommandLineIcon,
   CpuChipIcon,
@@ -11,7 +11,6 @@ import {
 } from '@heroicons/react/24/outline';
 import { CodeBlock } from '@/components/chat/renderers/CodeBlock';
 import { MarkdownContent } from '@/components/chat/renderers/MarkdownContent';
-import type { ToolUseMeta } from '@/types/ui';
 import { cn } from '@/utils/cn';
 import { langFromPath } from '@/utils/lang-from-path';
 import { AGENT_TOOLS, getToolHeaderInfo, isMcpTool } from '@/utils/tool-utils';

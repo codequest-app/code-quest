@@ -1,14 +1,9 @@
 import type {
   ClientMessage,
-  InitializeOptions,
   ProviderClientConfig,
   ResolvedControlResponse,
 } from '@code-quest/shared';
 import { z } from 'zod';
-
-// Re-export from shared — canonical definitions live in @code-quest/shared
-export type { ProcessHandle, ProcessProvider, ProcessRunResult } from '@code-quest/shared';
-export type { ClientMessage, InitializeOptions, ResolvedControlResponse };
 
 // --- Raw entry for recording ---
 
