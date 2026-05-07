@@ -51,7 +51,7 @@ describe('AppInitContext', () => {
   it('SessionProvider receives sessions via subscribeInit (no duplicate app:init)', async () => {
     function Probe() {
       const { sessions } = useSession();
-      return <span data-testid="count">{sessions.length}</span>;
+      return <span>{sessions.length}</span>;
     }
 
     const summoner = await renderInAppInit(

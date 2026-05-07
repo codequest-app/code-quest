@@ -5,12 +5,12 @@ import { CollapsibleBlock } from '../message-blocks/primitives.tsx';
 
 describe('CollapsibleBlock', () => {
   it('accepts a ReactNode icon (SVG element)', () => {
-    const { container } = render(
-      <CollapsibleBlock icon={<svg data-testid="custom-icon" />} label="Test">
+    render(
+      <CollapsibleBlock icon={<svg role="img" aria-label="custom icon" />} label="Test">
         <span>content</span>
       </CollapsibleBlock>,
     );
-    expect(container.querySelector('[data-testid="custom-icon"]')).toBeInTheDocument();
+    expect(screen.getByRole('img', { name: 'custom icon' })).toBeInTheDocument();
   });
 
   it('hides children by default', () => {

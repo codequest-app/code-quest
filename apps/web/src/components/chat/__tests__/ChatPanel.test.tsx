@@ -66,11 +66,11 @@ describe('ChatPanel layout (compound component)', () => {
     render(
       <ChatPanel>
         <ChatPanel.Body>
-          <div data-testid="body-child">body content</div>
+          <div>body content</div>
         </ChatPanel.Body>
       </ChatPanel>,
     );
-    const bodyChild = screen.getByTestId('body-child');
+    const bodyChild = screen.getByText('body content');
     // Parent should be the chat column (relative flex-col), not an intermediate wrapper
     const chatColumn = bodyChild.parentElement;
     expect(chatColumn?.className).toMatch(/relative/);

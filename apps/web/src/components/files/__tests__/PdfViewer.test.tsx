@@ -16,10 +16,10 @@ vi.mock('react-pdf', () => ({
     useEffect(() => {
       onLoadSuccess?.({ numPages: 3 });
     }, [onLoadSuccess]);
-    return <div data-testid="pdf-document">{children}</div>;
+    return <section aria-label="PDF document">{children}</section>;
   },
   Page: ({ pageNumber }: { pageNumber: number }) => (
-    <div data-testid="pdf-page">page-{pageNumber}</div>
+    <section aria-label="pdf-page">page-{pageNumber}</section>
   ),
   pdfjs: { GlobalWorkerOptions: { workerSrc: '' } },
 }));
@@ -36,7 +36,7 @@ describe('PdfViewer', () => {
 
   it('renders the first page and page counter on load', () => {
     render(<PdfViewer data={base64Data} />);
-    expect(screen.getByTestId('pdf-page')).toHaveTextContent('page-1');
+    expect(screen.getByLabelText('pdf-page')).toHaveTextContent('page-1');
     expect(screen.getAllByText('1 / 3')[0]).toBeInTheDocument();
   });
 
@@ -53,7 +53,7 @@ describe('PdfViewer', () => {
   it('advances to page 2 when next is clicked', async () => {
     render(<PdfViewer data={base64Data} />);
     await userEvent.click(next());
-    expect(screen.getByTestId('pdf-page')).toHaveTextContent('page-2');
+    expect(screen.getByLabelText('pdf-page')).toHaveTextContent('page-2');
     expect(screen.getAllByText('2 / 3')[0]).toBeInTheDocument();
   });
 
@@ -68,7 +68,7 @@ describe('PdfViewer', () => {
     render(<PdfViewer data={base64Data} />);
     await userEvent.click(next());
     await userEvent.click(prev());
-    expect(screen.getByTestId('pdf-page')).toHaveTextContent('page-1');
+    expect(screen.getByLabelText('pdf-page')).toHaveTextContent('page-1');
     expect(screen.getAllByText('1 / 3')[0]).toBeInTheDocument();
   });
 
@@ -114,7 +114,7 @@ describe('PdfViewer', () => {
   describe('drag to pan', () => {
     it('cursor changes to grabbing while dragging', async () => {
       render(<PdfViewer data={base64Data} />);
-      const viewport = screen.getByTestId('pdf-viewport');
+      const viewport = screen.getByRole('region', { name: 'PDF viewport' });
       expect(viewport).toHaveStyle({ cursor: 'grab' });
       await nativeMouseDown(viewport, { clientX: 100, clientY: 100 });
       expect(viewport).toHaveStyle({ cursor: 'grabbing' });
@@ -124,7 +124,7 @@ describe('PdfViewer', () => {
 
     it('scrolls the viewport when dragged', async () => {
       render(<PdfViewer data={base64Data} />);
-      const viewport = screen.getByTestId('pdf-viewport');
+      const viewport = screen.getByRole('region', { name: 'PDF viewport' });
       Object.defineProperty(viewport, 'scrollLeft', { writable: true, value: 0 });
       Object.defineProperty(viewport, 'scrollTop', { writable: true, value: 0 });
       await nativeMouseDown(viewport, { clientX: 200, clientY: 150 });
@@ -135,7 +135,7 @@ describe('PdfViewer', () => {
 
     it('stops scrolling after mouseup', async () => {
       render(<PdfViewer data={base64Data} />);
-      const viewport = screen.getByTestId('pdf-viewport');
+      const viewport = screen.getByRole('region', { name: 'PDF viewport' });
       Object.defineProperty(viewport, 'scrollLeft', { writable: true, value: 0 });
       Object.defineProperty(viewport, 'scrollTop', { writable: true, value: 0 });
       await nativeMouseDown(viewport, { clientX: 200, clientY: 150 });
@@ -161,35 +161,35 @@ describe('PdfViewer', () => {
 
     it('zooms in when Ctrl+wheel scrolls up', async () => {
       render(<PdfViewer data={base64Data} />);
-      const viewport = screen.getByTestId('pdf-viewport');
+      const viewport = screen.getByRole('region', { name: 'PDF viewport' });
       await wheel(viewport, { ctrlKey: true, deltaY: -100 });
       expect(screen.getAllByText('125%')[0]).toBeInTheDocument();
     });
 
     it('zooms out when Ctrl+wheel scrolls down', async () => {
       render(<PdfViewer data={base64Data} />);
-      const viewport = screen.getByTestId('pdf-viewport');
+      const viewport = screen.getByRole('region', { name: 'PDF viewport' });
       await wheel(viewport, { ctrlKey: true, deltaY: 100 });
       expect(screen.getAllByText('75%')[0]).toBeInTheDocument();
     });
 
     it('does not zoom without Ctrl key', async () => {
       render(<PdfViewer data={base64Data} />);
-      const viewport = screen.getByTestId('pdf-viewport');
+      const viewport = screen.getByRole('region', { name: 'PDF viewport' });
       await wheel(viewport, { ctrlKey: false, deltaY: -100 });
       expect(screen.getAllByText('100%')[0]).toBeInTheDocument();
     });
 
     it('does not exceed max scale via Ctrl+wheel', async () => {
       render(<PdfViewer data={base64Data} />);
-      const viewport = screen.getByTestId('pdf-viewport');
+      const viewport = screen.getByRole('region', { name: 'PDF viewport' });
       for (let i = 0; i < 10; i++) await wheel(viewport, { ctrlKey: true, deltaY: -100 });
       expect(screen.getAllByText('200%')[0]).toBeInTheDocument();
     });
 
     it('does not go below min scale via Ctrl+wheel', async () => {
       render(<PdfViewer data={base64Data} />);
-      const viewport = screen.getByTestId('pdf-viewport');
+      const viewport = screen.getByRole('region', { name: 'PDF viewport' });
       for (let i = 0; i < 10; i++) await wheel(viewport, { ctrlKey: true, deltaY: 100 });
       expect(screen.getAllByText('25%')[0]).toBeInTheDocument();
     });

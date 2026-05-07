@@ -4,7 +4,7 @@ import type { ReactNode } from 'react';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 
 vi.mock('../PdfViewer.tsx', () => ({
-  PdfViewer: ({ data }: { data: string }) => <div data-testid="pdf-viewer">pdf:{data}</div>,
+  PdfViewer: ({ data }: { data: string }) => <div>pdf:{data}</div>,
 }));
 
 import { createFakeSummoner } from '@/test/fake-summoner';
@@ -97,7 +97,7 @@ describe('FilePreviewModal', () => {
       render(<FilePreviewModal path="/repo/doc.pdf" onClose={vi.fn()} onMention={vi.fn()} />, {
         wrapper: Wrapper,
       });
-      expect(await screen.findByTestId('pdf-viewer')).toBeInTheDocument();
+      expect(await screen.findByText(/^pdf:/)).toBeInTheDocument();
     });
 
     it('Mention works when viewing a PDF', async () => {
@@ -108,7 +108,7 @@ describe('FilePreviewModal', () => {
       render(<FilePreviewModal path="/repo/doc.pdf" onClose={vi.fn()} onMention={onMention} />, {
         wrapper: Wrapper,
       });
-      await screen.findByTestId('pdf-viewer');
+      await screen.findByText(/^pdf:/);
       await user.click(screen.getByRole('button', { name: /mention/i }));
       expect(onMention).toHaveBeenCalledWith('/repo/doc.pdf');
     });

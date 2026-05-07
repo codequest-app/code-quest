@@ -151,9 +151,9 @@ export function PdfViewer({
   return (
     <div className={cn('flex flex-col gap-2 min-h-0', className)}>
       <Controls {...{ page, numPages, scale, onPrev, onNext, onZoomOut, onZoomIn }} />
-      <div
+      <section
         ref={viewportRef}
-        data-testid="pdf-viewport"
+        aria-label="PDF viewport"
         className="overflow-auto flex-1 min-h-0 select-none"
       >
         <Document
@@ -163,7 +163,7 @@ export function PdfViewer({
         >
           <Page pageNumber={page} width={baseWidth * scale} />
         </Document>
-      </div>
+      </section>
       <Controls {...{ page, numPages, scale, onPrev, onNext, onZoomOut, onZoomIn }} />
     </div>
   );
