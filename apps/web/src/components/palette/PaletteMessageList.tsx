@@ -2,11 +2,6 @@ import type { Message } from '@/types/ui';
 import { cn } from '@/utils/cn';
 import { highlight, messagePreview, typeColor, typeLabel } from '@/utils/message-preview';
 import { SectionHeader } from '../ui/SectionHeader.tsx';
-import {
-  PALETTE_RECENT_COUNT,
-  PALETTE_SEARCH_LIMIT,
-  paletteMessageResults,
-} from './palette-message-results.ts';
 
 const BG_OPACITY = '18'; // ~9%
 const BORDER_OPACITY = '40'; // ~25%
@@ -20,37 +15,28 @@ function badgeStyle(color: string): React.CSSProperties {
 }
 
 interface PaletteMessageListProps {
-  messages: Message[];
+  results: Message[];
   query: string;
   activeIdx: number;
   onActiveChange: (idx: number) => void;
   onJumpTo: (id: string) => void;
   onClose: () => void;
   showHeader?: boolean;
-  recentCount?: number;
-  searchLimit?: number;
   listRef?: React.RefObject<HTMLDivElement | null>;
   sourceLabels?: Map<string, string>;
 }
 
 export function PaletteMessageList({
-  messages,
+  results,
   query,
   activeIdx,
   onActiveChange,
   onJumpTo,
   onClose,
   showHeader = false,
-  recentCount = PALETTE_RECENT_COUNT,
-  searchLimit = PALETTE_SEARCH_LIMIT,
   listRef,
   sourceLabels,
 }: PaletteMessageListProps): React.ReactNode {
-  const results = paletteMessageResults(messages, query, {
-    recentCount,
-    searchLimit,
-    sourceLabels,
-  });
   if (results.length === 0) return null;
 
   return (

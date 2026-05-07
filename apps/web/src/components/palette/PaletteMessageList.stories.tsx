@@ -3,6 +3,7 @@ import { fn } from 'storybook/test';
 import { withThemePreset } from '@/test/story-decorator';
 import type { Message } from '@/types/ui';
 import { PaletteMessageList } from './PaletteMessageList.tsx';
+import { paletteMessageResults } from './palette-message-results.ts';
 
 const baseMessages: Message[] = [
   { id: '1', role: 'user', timestamp: 1000, type: 'text', content: 'Fix the login bug' },
@@ -59,26 +60,26 @@ export default meta;
 type Story = StoryObj<typeof meta>;
 
 export const Empty: Story = {
-  args: { messages: [], query: '' },
+  args: { results: [], query: '' },
 };
 
 export const Recent: Story = {
-  args: { messages: baseMessages, query: '' },
+  args: { results: baseMessages, query: '' },
 };
 
 export const WithSearch: Story = {
-  args: { messages: baseMessages, query: 'login' },
+  args: { results: paletteMessageResults(baseMessages, 'login'), query: 'login' },
 };
 
 export const Active: Story = {
-  args: { messages: baseMessages, query: '', activeIdx: 2 },
+  args: { results: baseMessages, query: '', activeIdx: 2 },
 };
 
 export const WithSectionHeader: Story = {
-  args: { messages: baseMessages, query: '', showHeader: true },
+  args: { results: baseMessages, query: '', showHeader: true },
 };
 
 export const Light: Story = {
-  args: { messages: baseMessages, query: 'login', activeIdx: 0 },
+  args: { results: paletteMessageResults(baseMessages, 'login'), query: 'login', activeIdx: 0 },
   decorators: [withThemePreset({ theme: 'light' })],
 };

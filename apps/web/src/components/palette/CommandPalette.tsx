@@ -291,7 +291,7 @@ export function CommandPalette(): React.ReactNode {
         <div className="overflow-y-auto flex-1">
           {showMessages && (
             <PaletteMessageList
-              messages={visibleMessages}
+              results={messageResults}
               query={query}
               activeIdx={messageActiveIdx}
               onActiveChange={setActiveIdx}

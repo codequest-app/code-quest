@@ -3,6 +3,7 @@ import userEvent from '@testing-library/user-event';
 import { describe, expect, it, vi } from 'vitest';
 import type { Message } from '@/types/ui';
 import { PaletteMessageList } from '../PaletteMessageList.tsx';
+import { paletteMessageResults } from '../palette-message-results.ts';
 
 const msg = (id: string, content: string): Message => ({
   id,
@@ -12,16 +13,31 @@ const msg = (id: string, content: string): Message => ({
   content,
 });
 
-function renderList(props: Partial<React.ComponentProps<typeof PaletteMessageList>> = {}) {
+function renderList(
+  props: Partial<React.ComponentProps<typeof PaletteMessageList>> & {
+    messages?: Message[];
+    recentCount?: number;
+    searchLimit?: number;
+  } = {},
+) {
+  const { messages = [], recentCount, searchLimit, ...rest } = props;
+  const query = rest.query ?? '';
+  const results =
+    rest.results ??
+    paletteMessageResults(messages, query, {
+      recentCount,
+      searchLimit,
+      sourceLabels: rest.sourceLabels,
+    });
   const defaults = {
-    messages: [] as Message[],
-    query: '',
+    results,
+    query,
     activeIdx: 0,
     onActiveChange: vi.fn(),
     onJumpTo: vi.fn(),
     onClose: vi.fn(),
   };
-  return render(<PaletteMessageList {...defaults} {...props} />);
+  return render(<PaletteMessageList {...defaults} {...rest} />);
 }
 
 describe('PaletteMessageList', () => {

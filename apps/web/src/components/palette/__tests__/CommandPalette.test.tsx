@@ -307,6 +307,27 @@ describe('CommandPalette — source labels', () => {
 
     expect(screen.queryByLabelText('source-header')).toBeNull();
   });
+
+  it('multi-channel results use simple recency, not bucket grouping', async () => {
+    const msgs = Array.from({ length: 12 }, (_, i) => fakeMessage(`m${i}`, `msg ${i}`));
+    useMessageRegistryStore.getState().register('ch-a', {
+      projectCwd: '/projects/alpha',
+      messages: msgs.slice(0, 6),
+    });
+    useMessageRegistryStore.getState().register('ch-b', {
+      projectCwd: '/projects/beta',
+      messages: msgs.slice(6),
+    });
+
+    await renderPalette();
+    await userEvent.click(screen.getByRole('tab', { name: /messages/i }));
+
+    const buttons = screen
+      .getAllByRole('button')
+      .filter((b) => b.closest('[data-active]') !== null || b.textContent?.startsWith('msg'));
+    expect(buttons.length).toBeGreaterThan(0);
+    expect(buttons.length).toBeLessThanOrEqual(8);
+  });
 });
 
 describe('CommandPalette — keyboard navigation', () => {
