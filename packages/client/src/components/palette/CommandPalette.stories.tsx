@@ -1,6 +1,6 @@
 import type { Meta, StoryObj } from '@storybook/react-vite';
 import { useEffect } from 'react';
-import { CommandPaletteProvider, useCommandPalette } from '@/contexts/CommandPaletteContext';
+import { CommandPaletteProvider, useCommandPaletteActions } from '@/contexts/CommandPaletteContext';
 import { useMessageRegistryStore } from '@/stores/useMessageRegistryStore';
 import { withStoryChannel, withThemePreset } from '@/test/story-decorator';
 import type { Message } from '@/types/ui';
@@ -32,7 +32,7 @@ const messages: Message[] = [
 ];
 
 function AutoOpen({ tab }: { tab?: string }) {
-  const { openPalette } = useCommandPalette();
+  const { openPalette } = useCommandPaletteActions();
   useEffect(() => {
     openPalette(tab ? { tab } : undefined);
   }, [openPalette, tab]);

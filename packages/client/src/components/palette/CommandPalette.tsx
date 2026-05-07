@@ -1,5 +1,5 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
-import { useCommandPalette } from '@/contexts/CommandPaletteContext';
+import { useCommandPaletteActions, useCommandPaletteState } from '@/contexts/CommandPaletteContext';
 import { defaultEnabledTypes } from '@/contexts/channel/MessageVisibilityContext';
 import { useProjectActions, useProjectState } from '@/contexts/ProjectContext';
 import { createColorThemeFeature } from '@/features/color-theme/color-theme-feature';
@@ -34,7 +34,8 @@ type TabId = (typeof TABS)[number]['id'];
 const isPaletteTab = (t: TabId): t is PaletteTab => t !== 'messages';
 
 export function CommandPalette(): React.ReactNode {
-  const { open, defaultTab, closePalette, jumpTo, paletteActions } = useCommandPalette();
+  const { open, defaultTab, paletteActions } = useCommandPaletteState();
+  const { closePalette, jumpTo } = useCommandPaletteActions();
   const channels = useMessageRegistryStore((s) => s.channels);
   const visibilityTypes = useMessageVisibilityStore((s) => s.enabledTypes);
   const { projects, activeProjectCwd } = useProjectState();

@@ -2,7 +2,7 @@ import { FolderOpenIcon } from '@heroicons/react/24/outline';
 import { useCallback, useEffect, useMemo, useState } from 'react';
 import { useHotkeys } from 'react-hotkeys-hook';
 import { toast } from 'sonner';
-import { CommandPaletteProvider, useCommandPalette } from '@/contexts/CommandPaletteContext';
+import { CommandPaletteProvider, useCommandPaletteActions } from '@/contexts/CommandPaletteContext';
 import { useNavigationState } from '@/contexts/NavigationContext';
 import { useProjectActions, useProjectState } from '@/contexts/ProjectContext';
 import { useSession } from '@/contexts/SessionContext';
@@ -56,7 +56,7 @@ function formatAddProjectError(error: string, path: string | undefined, cwd: str
 }
 
 function WorkspaceLayoutInner() {
-  const { openPalette, registerActions } = useCommandPalette();
+  const { openPalette, registerActions } = useCommandPaletteActions();
   useHotkeys('mod+k', () => openPalette(), NO_FORM);
   const [dialogOpen, setDialogOpen] = useState(false);
   const [settingsOpen, setSettingsOpen] = useState(false);

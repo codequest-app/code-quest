@@ -168,17 +168,114 @@ export { parseModels, toEffort };
 
 // ── Emit actions (send) ──
 
-export function createConfigActions(ctx: {
+interface ConfigActionCtx {
   socket: TypedSocket;
   channelId: string;
   setState?: (updater: (prev: ConfigState) => ConfigState) => void;
   addSystemMessage?: (type: string, content: string) => void;
-}): {
+}
+
+function createMcpActions(socket: TypedSocket, channelId: string) {
+  function mcpStatus(): Promise<ControlResponse> {
+    return rpc(socket, EVENTS.mcp.servers, { channelId });
+  }
+
+  function mcpToggle(serverName: string, enabled: boolean): Promise<ControlResponse> {
+    return rpc(socket, EVENTS.mcp.toggle, { channelId, serverName, enabled });
+  }
+
+  function mcpReconnect(serverName: string): Promise<ControlResponse> {
+    return rpc(socket, EVENTS.mcp.reconnect, { channelId, serverName });
+  }
+
+  function mcpSetServers(servers: Record<string, unknown>): Promise<ControlResponse> {
+    return rpc(socket, EVENTS.mcp.set_servers, { channelId, servers });
+  }
+
+  function mcpMessage(
+    serverName: string,
+    message: Record<string, unknown>,
+  ): Promise<ControlResponse> {
+    return rpc(socket, EVENTS.mcp.message, { channelId, serverName, message });
+  }
+
+  async function mcpListTools(serverName: string): Promise<unknown[]> {
+    const result = await rpc(socket, EVENTS.mcp.message, {
+      channelId,
+      serverName,
+      message: { jsonrpc: '2.0', method: 'tools/list', params: {}, id: Date.now() },
+    });
+    if (
+      result.success &&
+      result.response &&
+      typeof result.response === 'object' &&
+      'tools' in result.response &&
+      Array.isArray(result.response.tools)
+    ) {
+      return result.response.tools;
+    }
+    return [];
+  }
+
+  function mcpAuthenticate(serverName: string): Promise<RpcResult<{ authUrl?: string }>> {
+    return rpc(socket, EVENTS.mcp.authenticate, { channelId, serverName });
+  }
+
+  function mcpOAuthCallback(serverName: string, callbackUrl: string): Promise<Ack> {
+    return rpc(socket, EVENTS.mcp.oauth_callback, { channelId, serverName, callbackUrl });
+  }
+
+  function mcpClearAuth(serverName: string): Promise<Ack> {
+    return rpc(socket, EVENTS.mcp.clear_auth, { channelId, serverName });
+  }
+
+  function ensureChromeMcpEnabled(): Promise<ControlResponse> {
+    return rpc(socket, EVENTS.mcp.ensure_chrome, { channelId });
+  }
+
+  function disableChromeMcp(): Promise<ControlResponse> {
+    return rpc(socket, EVENTS.mcp.disable_chrome, { channelId });
+  }
+
+  function enableJupyterMcp(): Promise<ControlResponse> {
+    return rpc(socket, EVENTS.mcp.enable_jupyter, { channelId });
+  }
+
+  function disableJupyterMcp(): Promise<ControlResponse> {
+    return rpc(socket, EVENTS.mcp.disable_jupyter, { channelId });
+  }
+
+  function askDebuggerHelp(): Promise<
+    RpcResult<{ response: { type: 'ask_debugger_help_response' } }>
+  > {
+    return rpc(socket, EVENTS.mcp.ask_debugger, { channelId });
+  }
+
+  return {
+    mcpStatus,
+    mcpToggle,
+    mcpReconnect,
+    mcpSetServers,
+    mcpMessage,
+    mcpListTools,
+    mcpAuthenticate,
+    mcpOAuthCallback,
+    mcpClearAuth,
+    ensureChromeMcpEnabled,
+    disableChromeMcp,
+    enableJupyterMcp,
+    disableJupyterMcp,
+    askDebuggerHelp,
+  };
+}
+
+export function createConfigActions(ctx: ConfigActionCtx): {
   setModel: (model: string) => void;
   setPermissionMode: (mode: string) => void;
   setThinkingLevel: (thinkingLevel: string) => void;
   setFastMode: (enabled: boolean) => void;
   setEffort: (effort: string) => Promise<Ack>;
+  requestUsageUpdate: () => void;
   mcpStatus: () => Promise<ControlResponse>;
   mcpToggle: (serverName: string, enabled: boolean) => Promise<ControlResponse>;
   mcpReconnect: (serverName: string) => Promise<ControlResponse>;
@@ -193,7 +290,6 @@ export function createConfigActions(ctx: {
   enableJupyterMcp: () => Promise<ControlResponse>;
   disableJupyterMcp: () => Promise<ControlResponse>;
   askDebuggerHelp: () => Promise<RpcResult<{ response: { type: 'ask_debugger_help_response' } }>>;
-  requestUsageUpdate: () => void;
 } {
   const emit = (event: string, payload: Record<string, unknown>, ...rest: unknown[]) =>
     channelEmit(ctx.socket, ctx.channelId, event, payload, ...rest);
@@ -226,109 +322,17 @@ export function createConfigActions(ctx: {
     });
   }
 
-  function mcpStatus(): Promise<ControlResponse> {
-    return rpc(ctx.socket, EVENTS.mcp.servers, { channelId: ctx.channelId });
-  }
-
-  function mcpToggle(serverName: string, enabled: boolean): Promise<ControlResponse> {
-    return rpc(ctx.socket, EVENTS.mcp.toggle, { channelId: ctx.channelId, serverName, enabled });
-  }
-
-  function mcpReconnect(serverName: string): Promise<ControlResponse> {
-    return rpc(ctx.socket, EVENTS.mcp.reconnect, { channelId: ctx.channelId, serverName });
-  }
-
-  function mcpSetServers(servers: Record<string, unknown>): Promise<ControlResponse> {
-    return rpc(ctx.socket, EVENTS.mcp.set_servers, { channelId: ctx.channelId, servers });
-  }
-
-  function mcpMessage(
-    serverName: string,
-    message: Record<string, unknown>,
-  ): Promise<ControlResponse> {
-    return rpc(ctx.socket, EVENTS.mcp.message, { channelId: ctx.channelId, serverName, message });
-  }
-
-  async function mcpListTools(serverName: string): Promise<unknown[]> {
-    const result = await rpc(ctx.socket, EVENTS.mcp.message, {
-      channelId: ctx.channelId,
-      serverName,
-      message: { jsonrpc: '2.0', method: 'tools/list', params: {}, id: Date.now() },
-    });
-    if (
-      result.success &&
-      result.response &&
-      typeof result.response === 'object' &&
-      'tools' in result.response &&
-      Array.isArray(result.response.tools)
-    ) {
-      return result.response.tools;
-    }
-    return [];
-  }
-
-  function mcpAuthenticate(serverName: string): Promise<RpcResult<{ authUrl?: string }>> {
-    return rpc(ctx.socket, EVENTS.mcp.authenticate, { channelId: ctx.channelId, serverName });
-  }
-
-  function mcpOAuthCallback(serverName: string, callbackUrl: string): Promise<Ack> {
-    return rpc(ctx.socket, EVENTS.mcp.oauth_callback, {
-      channelId: ctx.channelId,
-      serverName,
-      callbackUrl,
-    });
-  }
-
-  function mcpClearAuth(serverName: string): Promise<Ack> {
-    return rpc(ctx.socket, EVENTS.mcp.clear_auth, { channelId: ctx.channelId, serverName });
-  }
-
-  function ensureChromeMcpEnabled(): Promise<ControlResponse> {
-    return rpc(ctx.socket, EVENTS.mcp.ensure_chrome, { channelId: ctx.channelId });
-  }
-
-  function disableChromeMcp(): Promise<ControlResponse> {
-    return rpc(ctx.socket, EVENTS.mcp.disable_chrome, { channelId: ctx.channelId });
-  }
-
-  function enableJupyterMcp(): Promise<ControlResponse> {
-    return rpc(ctx.socket, EVENTS.mcp.enable_jupyter, { channelId: ctx.channelId });
-  }
-
-  function disableJupyterMcp(): Promise<ControlResponse> {
-    return rpc(ctx.socket, EVENTS.mcp.disable_jupyter, { channelId: ctx.channelId });
-  }
-
-  function askDebuggerHelp(): Promise<
-    RpcResult<{ response: { type: 'ask_debugger_help_response' } }>
-  > {
-    return rpc(ctx.socket, EVENTS.mcp.ask_debugger, { channelId: ctx.channelId });
-  }
-
   function requestUsageUpdate(): void {
     ctx.socket.emit(EVENTS.settings.refresh_usage, { channelId: ctx.channelId });
   }
 
   return {
-    setModel: setModel,
-    setPermissionMode: setPermissionMode,
-    setThinkingLevel: setThinkingLevel,
-    setFastMode: setFastMode,
-    setEffort: setEffort,
-    mcpStatus: mcpStatus,
-    mcpToggle: mcpToggle,
-    mcpReconnect: mcpReconnect,
-    mcpSetServers: mcpSetServers,
-    mcpMessage: mcpMessage,
-    mcpListTools: mcpListTools,
-    mcpAuthenticate: mcpAuthenticate,
-    mcpOAuthCallback: mcpOAuthCallback,
-    mcpClearAuth: mcpClearAuth,
-    ensureChromeMcpEnabled: ensureChromeMcpEnabled,
-    disableChromeMcp: disableChromeMcp,
-    enableJupyterMcp: enableJupyterMcp,
-    disableJupyterMcp: disableJupyterMcp,
-    askDebuggerHelp: askDebuggerHelp,
-    requestUsageUpdate: requestUsageUpdate,
+    setModel,
+    setPermissionMode,
+    setThinkingLevel,
+    setFastMode,
+    setEffort,
+    requestUsageUpdate,
+    ...createMcpActions(ctx.socket, ctx.channelId),
   };
 }

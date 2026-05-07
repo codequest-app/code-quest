@@ -7,7 +7,6 @@ import { Dialog, DialogClose, DialogContent } from '../ui/Dialog.tsx';
 import { XIcon } from '../ui/Icons.tsx';
 import { InlineAction } from '../ui/InlineAction.tsx';
 
-// ── mo0: scope group ordering (po0) ─────────────────────────────────────────
 const SCOPE_ORDER = ['project', 'local', 'user', 'claudeai', 'managed', 'enterprise'];
 
 const DEFAULT_SCOPE_LABELS: Record<string, string> = {
@@ -77,21 +76,210 @@ const statusIcon = (status: string): string => STATUS_CONFIG[status]?.icon ?? '?
 const statusLabel = (status: string): string => STATUS_CONFIG[status]?.label ?? status;
 const statusBadgeCls = (status: string): string => STATUS_CONFIG[status]?.badge ?? DEFAULT_BADGE;
 
-// ── So0: plain status badge (no icon, raw status string) ────────────────────
-function PlainStatusBadge({ status }: { status: string }) {
+function StatusBadge({ status, rich = false }: { status: string; rich?: boolean }) {
   return (
     <span className={cn('shrink-0 rounded px-2 py-1 text-xs font-medium', statusBadgeCls(status))}>
-      {status}
+      {rich ? `${statusIcon(status)} ${statusLabel(status)}` : status}
     </span>
   );
 }
 
-// ── mo0: icon + label badge ───────────────────────────────────────────────────
-function RichStatusBadge({ status }: { status: string }) {
+function McpReadOnlyList({ servers }: { servers: McpServerInfo[] }) {
   return (
-    <span className={cn('shrink-0 rounded px-2 py-1 text-xs font-medium', statusBadgeCls(status))}>
-      {statusIcon(status)} {statusLabel(status)}
-    </span>
+    <>
+      {servers.length === 0 ? (
+        <p className="text-xs text-text-muted py-4 text-center">No running MCP servers.</p>
+      ) : (
+        <ul className="my-2">
+          {servers.map((s) => (
+            <li
+              key={s.name}
+              className={cn(
+                'flex items-center justify-between gap-3 bg-bg-secondary border border-border rounded p-3 mb-2 last:mb-0',
+                s.status === 'disabled' && 'opacity-60',
+              )}
+            >
+              <span className="font-mono text-xs font-medium text-text truncate">{s.name}</span>
+              <StatusBadge status={s.status} />
+            </li>
+          ))}
+        </ul>
+      )}
+      <div className="text-xs text-text-muted mt-4">
+        You can use the{' '}
+        <code className="font-mono bg-bg-secondary px-1 rounded">claude mcp add</code> command-line
+        tool to configure system-wide or private servers.
+        <br />
+        <a
+          href="https://code.claude.com/docs/en/mcp"
+          target="_blank"
+          rel="noreferrer"
+          className="text-text-muted hover:underline"
+        >
+          Learn more
+        </a>
+      </div>
+    </>
+  );
+}
+
+function McpGroupedList({
+  groups,
+  mcpScopes,
+  onSelect,
+}: {
+  groups: Array<[string, McpServerInfo[]]>;
+  mcpScopes?: ProviderClientConfig['mcpScopes'];
+  onSelect: (name: string) => void;
+}) {
+  return (
+    <>
+      {groups.length === 0 ? (
+        <p className="text-xs text-text-muted py-4 text-center">No MCP servers configured.</p>
+      ) : (
+        <div className="my-2">
+          {groups.map(([scope, group]) => (
+            <div key={scope}>
+              <div className="text-xs font-semibold text-text-muted pb-1 pt-2 first:pt-0">
+                {scopeLabel(scope, mcpScopes)} ({group.length})
+              </div>
+              {group.map((s) => (
+                <button
+                  type="button"
+                  key={s.name}
+                  onClick={() => onSelect(s.name)}
+                  className={cn(
+                    'w-full flex items-center justify-between gap-3 bg-bg-secondary border border-border rounded p-3 mb-2 last:mb-0 cursor-pointer hover:bg-bg-secondary/60',
+                    s.status === 'disabled' && 'opacity-60',
+                  )}
+                >
+                  <span className="font-mono text-xs font-medium text-text truncate">{s.name}</span>
+                  <StatusBadge status={s.status} rich />
+                </button>
+              ))}
+            </div>
+          ))}
+        </div>
+      )}
+      <div className="border-t border-border mt-4 pt-4">
+        <a
+          href="https://code.claude.com/docs/en/mcp"
+          target="_blank"
+          rel="noreferrer"
+          className="text-xs text-text-muted hover:underline"
+        >
+          Learn more about MCP
+        </a>
+      </div>
+    </>
+  );
+}
+
+type PendingAction = { server: string; action: string } | null;
+
+type Feedback = { msg: string; ok: boolean };
+
+function McpDetailView({
+  detail,
+  pending,
+  feedback,
+  onReconnect,
+  onToggle,
+  onAuthenticate,
+  onClearAuth,
+  act,
+}: {
+  detail: McpServerInfo;
+  pending: PendingAction;
+  feedback: Feedback | null;
+  onReconnect?: (name: string) => Promise<void>;
+  onToggle?: (name: string, enabled: boolean) => Promise<void>;
+  onAuthenticate?: (name: string) => Promise<RpcResult<{ authUrl?: string }>>;
+  onClearAuth?: (name: string) => Promise<Ack>;
+  act: (action: string, fn: () => Promise<Feedback | void>) => void;
+}) {
+  return (
+    <div className="space-y-3">
+      <div className="flex items-center justify-between bg-bg-secondary border border-border rounded p-3">
+        <span className="font-mono text-xs font-medium text-text">{detail.name}</span>
+        <StatusBadge status={detail.status} rich />
+      </div>
+
+      {feedback && (
+        <p className={cn('text-xs', feedback.ok ? 'text-success' : 'text-danger')}>
+          {feedback.msg}
+        </p>
+      )}
+
+      <div className="flex flex-wrap gap-2">
+        {onReconnect &&
+          (detail.status === 'connected' ||
+            detail.status === 'failed' ||
+            detail.status === 'error') && (
+            <Button
+              variant="secondary"
+              size="xs"
+              disabled={!!pending}
+              onClick={() => act('reconnect', () => onReconnect(detail.name))}
+            >
+              {pending?.action === 'reconnect' ? 'Reconnecting…' : 'Reconnect'}
+            </Button>
+          )}
+
+        {onToggle && detail.status !== 'disabled' ? (
+          <Button
+            variant="secondary"
+            size="xs"
+            disabled={!!pending}
+            onClick={() => act('disable', () => onToggle(detail.name, false))}
+          >
+            {pending?.action === 'disable' ? 'Disabling…' : 'Disable'}
+          </Button>
+        ) : onToggle ? (
+          <Button
+            size="xs"
+            disabled={!!pending}
+            onClick={() => act('enable', () => onToggle(detail.name, true))}
+          >
+            {pending?.action === 'enable' ? 'Enabling…' : 'Enable'}
+          </Button>
+        ) : null}
+
+        {onAuthenticate && (detail.status === 'needs-auth' || detail.status === 'failed') && (
+          <Button
+            size="xs"
+            disabled={!!pending}
+            onClick={() =>
+              act('authenticate', async () => {
+                const res = await onAuthenticate(detail.name);
+                if (!res.ok) return { msg: res.error, ok: false };
+                if (res.data.authUrl) return { msg: `Open: ${res.data.authUrl}`, ok: true };
+              })
+            }
+          >
+            {pending?.action === 'authenticate' ? 'Authenticating…' : 'Authenticate'}
+          </Button>
+        )}
+
+        {onClearAuth && detail.status === 'connected' && (
+          <Button
+            variant="secondary"
+            size="xs"
+            className="text-danger"
+            disabled={!!pending}
+            onClick={() =>
+              act('clearAuth', async () => {
+                const res = await onClearAuth(detail.name);
+                if (!res.ok) return { msg: res.error, ok: false };
+                return { msg: 'Auth cleared', ok: true };
+              })
+            }
+          >
+            {pending?.action === 'clearAuth' ? 'Clearing…' : 'Clear Auth'}
+          </Button>
+        )}
+      </div>
+    </div>
   );
 }
 
@@ -99,15 +287,12 @@ interface ManageMcpDialogProps {
   open: boolean;
   onClose: () => void;
   servers: McpServerInfo[];
-  // Management callbacks — omit for read-only (So0) mode
   onReconnect?: (name: string) => Promise<void>;
   onToggle?: (name: string, enabled: boolean) => Promise<void>;
   onAuthenticate?: (name: string) => Promise<RpcResult<{ authUrl?: string }>>;
   onClearAuth?: (name: string) => Promise<Ack>;
   onRefresh?: () => void;
 }
-
-type PendingAction = { server: string; action: string } | null;
 
 export function ManageMcpDialog({
   open,
@@ -130,11 +315,12 @@ export function ManageMcpDialog({
   const groups = groupByScope(servers, mcpScopes);
   const detail = selectedServer ? servers.find((s) => s.name === selectedServer) : null;
 
-  const act = async (action: string, fn: () => Promise<void>) => {
+  const act = async (action: string, fn: () => Promise<Feedback | void>) => {
     setFeedback(null);
     setPending({ server: selectedServer ?? '', action });
     try {
-      await fn();
+      const result = await fn();
+      if (result) setFeedback(result);
       onRefresh?.();
     } catch (e) {
       console.error(e);
@@ -150,6 +336,11 @@ export function ManageMcpDialog({
     onClose();
   };
 
+  const handleSelect = (name: string) => {
+    setFeedback(null);
+    setSelectedServer(name);
+  };
+
   return (
     <Dialog
       open={open}
@@ -158,7 +349,6 @@ export function ManageMcpDialog({
       }}
     >
       <DialogContent title="Manage MCP Servers" className="w-96" hideTitle={true}>
-        {/* Header */}
         <div className="flex items-center justify-between mb-4">
           <span className="text-sm font-semibold text-text">
             {detail ? (
@@ -184,180 +374,23 @@ export function ManageMcpDialog({
           </DialogClose>
         </div>
 
-        {/* ── So0 mode: read-only flat list ─────────────────────────────── */}
-        {!isManageable && !detail && (
-          <>
-            {servers.length === 0 ? (
-              <p className="text-xs text-text-muted py-4 text-center">No running MCP servers.</p>
-            ) : (
-              <ul className="my-2">
-                {servers.map((s) => (
-                  <li
-                    key={s.name}
-                    className={cn(
-                      'flex items-center justify-between gap-3 bg-bg-secondary border border-border rounded p-3 mb-2 last:mb-0',
-                      s.status === 'disabled' && 'opacity-60',
-                    )}
-                  >
-                    <span className="font-mono text-xs font-medium text-text truncate">
-                      {s.name}
-                    </span>
-                    <PlainStatusBadge status={s.status} />
-                  </li>
-                ))}
-              </ul>
-            )}
-            {/* So0 footer */}
-            <div className="text-xs text-text-muted mt-4">
-              You can use the{' '}
-              <code className="font-mono bg-bg-secondary px-1 rounded">claude mcp add</code>{' '}
-              command-line tool to configure system-wide or private servers.
-              <br />
-              <a
-                href="https://code.claude.com/docs/en/mcp"
-                target="_blank"
-                rel="noreferrer"
-                className="text-text-muted hover:underline"
-              >
-                Learn more
-              </a>
-            </div>
-          </>
-        )}
+        {!isManageable && !detail && <McpReadOnlyList servers={servers} />}
 
-        {/* ── mo0 mode: grouped list ────────────────────────────────────── */}
         {isManageable && !detail && (
-          <>
-            {servers.length === 0 ? (
-              <p className="text-xs text-text-muted py-4 text-center">No MCP servers configured.</p>
-            ) : (
-              <div className="my-2">
-                {groups.map(([scope, group]) => (
-                  <div key={scope}>
-                    <div className="text-xs font-semibold text-text-muted pb-1 pt-2 first:pt-0">
-                      {scopeLabel(scope, mcpScopes)} ({group.length})
-                    </div>
-                    {group.map((s) => (
-                      <button
-                        type="button"
-                        key={s.name}
-                        onClick={() => {
-                          setFeedback(null);
-                          setSelectedServer(s.name);
-                        }}
-                        className={cn(
-                          'w-full flex items-center justify-between gap-3 bg-bg-secondary border border-border rounded p-3 mb-2 last:mb-0 cursor-pointer hover:bg-bg-secondary/60',
-                          s.status === 'disabled' && 'opacity-60',
-                        )}
-                      >
-                        <span className="font-mono text-xs font-medium text-text truncate">
-                          {s.name}
-                        </span>
-                        <RichStatusBadge status={s.status} />
-                      </button>
-                    ))}
-                  </div>
-                ))}
-              </div>
-            )}
-            {/* mo0 footer */}
-            <div className="border-t border-border mt-4 pt-4">
-              <a
-                href="https://code.claude.com/docs/en/mcp"
-                target="_blank"
-                rel="noreferrer"
-                className="text-xs text-text-muted hover:underline"
-              >
-                Learn more about MCP
-              </a>
-            </div>
-          </>
+          <McpGroupedList groups={groups} mcpScopes={mcpScopes} onSelect={handleSelect} />
         )}
 
-        {/* ── mo0 detail view ──────────────────────────────────────────── */}
         {detail && isManageable && (
-          <div className="space-y-3">
-            <div className="flex items-center justify-between bg-bg-secondary border border-border rounded p-3">
-              <span className="font-mono text-xs font-medium text-text">{detail.name}</span>
-              <RichStatusBadge status={detail.status} />
-            </div>
-
-            {feedback && (
-              <p className={cn('text-xs', feedback.ok ? 'text-success' : 'text-danger')}>
-                {feedback.msg}
-              </p>
-            )}
-
-            <div className="flex flex-wrap gap-2">
-              {onReconnect &&
-                (detail.status === 'connected' ||
-                  detail.status === 'failed' ||
-                  detail.status === 'error') && (
-                  <Button
-                    variant="secondary"
-                    size="xs"
-                    disabled={!!pending}
-                    onClick={() => act('reconnect', () => onReconnect(detail.name))}
-                  >
-                    {pending?.action === 'reconnect' ? 'Reconnecting…' : 'Reconnect'}
-                  </Button>
-                )}
-
-              {onToggle && detail.status !== 'disabled' ? (
-                <Button
-                  variant="secondary"
-                  size="xs"
-                  disabled={!!pending}
-                  onClick={() => act('disable', () => onToggle(detail.name, false))}
-                >
-                  {pending?.action === 'disable' ? 'Disabling…' : 'Disable'}
-                </Button>
-              ) : onToggle ? (
-                <Button
-                  size="xs"
-                  disabled={!!pending}
-                  onClick={() => act('enable', () => onToggle(detail.name, true))}
-                >
-                  {pending?.action === 'enable' ? 'Enabling…' : 'Enable'}
-                </Button>
-              ) : null}
-
-              {onAuthenticate && (detail.status === 'needs-auth' || detail.status === 'failed') && (
-                <Button
-                  size="xs"
-                  disabled={!!pending}
-                  onClick={() =>
-                    act('authenticate', async () => {
-                      const res = await onAuthenticate(detail.name);
-                      if (!res.ok) setFeedback({ msg: res.error, ok: false });
-                      else if (res.data.authUrl)
-                        setFeedback({ msg: `Open: ${res.data.authUrl}`, ok: true });
-                    })
-                  }
-                >
-                  {pending?.action === 'authenticate' ? 'Authenticating…' : 'Authenticate'}
-                </Button>
-              )}
-
-              {onClearAuth && detail.status === 'connected' && (
-                <Button
-                  variant="secondary"
-                  size="xs"
-                  className="text-danger"
-                  disabled={!!pending}
-                  onClick={() =>
-                    act('clearAuth', async () => {
-                      const res = await onClearAuth(detail.name);
-                      if (!res.ok) setFeedback({ msg: res.error, ok: false });
-                      else setFeedback({ msg: 'Auth cleared', ok: true });
-                    })
-                  }
-                >
-                  {pending?.action === 'clearAuth' ? 'Clearing…' : 'Clear Auth'}
-                </Button>
-              )}
-            </div>
-          </div>
+          <McpDetailView
+            detail={detail}
+            pending={pending}
+            feedback={feedback}
+            onReconnect={onReconnect}
+            onToggle={onToggle}
+            onAuthenticate={onAuthenticate}
+            onClearAuth={onClearAuth}
+            act={act}
+          />
         )}
       </DialogContent>
     </Dialog>

@@ -92,37 +92,47 @@ interface ComposeState {
   attachedFiles: File[];
 }
 
-function createComposeActions(
-  stateRef: { current: ComposeState },
-  setState: Dispatch<SetStateAction<ComposeState>>,
-  sendMessage: (text: string) => void,
-  requestFocusRef: { current: ((pos?: number) => void) | null },
-  mentionTriggerRef: { current: ((value: string, pos: number) => void) | null },
-  registry: FeatureRegistry,
-) {
-  const get = () => stateRef.current;
+function insertAtMentionSite(
+  text: string,
+  pos: number,
+  slashToken: ReturnType<typeof getSlashQuery>,
+): string {
+  return slashToken
+    ? `${text.slice(0, slashToken.start)}@${text.slice(slashToken.end)}`
+    : `${text.slice(0, pos)}@${text.slice(pos)}`;
+}
 
-  const submit = () => {
-    const { value: v, attachedFiles: files } = get();
-    const trimmed = v.trim();
-    if (!trimmed) return;
-    if (files.length === 0) {
-      setState((prev) => ({ ...prev, value: '', slashOpen: false }));
-      sendMessage(trimmed);
-      return;
-    }
-    // Encode first, then clear + send together — clearing before encoding
-    // would lose the user's text if a file fails to read.
-    void Promise.all(
-      files.map(async (f) => {
-        const data = await toBase64(f);
-        return `[Attachment: ${f.name}]\n${data}`;
-      }),
-    ).then((parts) => {
-      sendMessage(`${trimmed}\n\n${parts.join('\n\n')}`);
-      setState((prev) => ({ ...prev, value: '', slashOpen: false, attachedFiles: [] }));
-    });
+function applyMentionFile(prev: ComposeState): ComposeState {
+  const token = getSlashQuery(prev.value, prev.cursorPos);
+  if (token) {
+    return {
+      ...prev,
+      value: insertAtMentionSite(prev.value, prev.cursorPos, token),
+      slashOpen: false,
+      mentionOpen: true,
+    };
+  }
+  if (getMentionQuery(prev.value, prev.cursorPos) !== null) {
+    return { ...prev, slashOpen: false, mentionOpen: true };
+  }
+  return {
+    ...prev,
+    value: insertAtMentionSite(prev.value, prev.cursorPos, null),
+    mentionOpen: true,
   };
+}
+
+interface ComposeActionCtx {
+  stateRef: { current: ComposeState };
+  setState: Dispatch<SetStateAction<ComposeState>>;
+  sendMessage: (text: string) => void;
+  requestFocusRef: { current: ((pos?: number) => void) | null };
+  mentionTriggerRef: { current: ((value: string, pos: number) => void) | null };
+  registry: FeatureRegistry;
+}
+
+function createSlashActions(ctx: ComposeActionCtx, get: () => ComposeState) {
+  const { setState, sendMessage, requestFocusRef, registry } = ctx;
 
   const clearSlashToken = () => {
     setState((prev) => {
@@ -131,79 +141,6 @@ function createComposeActions(
       const newValue = prev.value.slice(0, token.start) + prev.value.slice(token.end);
       return { ...prev, value: newValue.trimEnd() === '' ? '' : newValue, slashOpen: false };
     });
-  };
-
-  const closeSlash = clearSlashToken;
-
-  const dismissSlash = () => {
-    setState((prev) => ({ ...prev, slashOpen: false }));
-  };
-
-  const openMention = () => setState((prev) => ({ ...prev, mentionOpen: true }));
-  const closeMention = () => setState((prev) => ({ ...prev, mentionOpen: false }));
-
-  const insertAtMentionSite = (
-    text: string,
-    pos: number,
-    slashToken: ReturnType<typeof getSlashQuery>,
-  ): string =>
-    slashToken
-      ? `${text.slice(0, slashToken.start)}@${text.slice(slashToken.end)}`
-      : `${text.slice(0, pos)}@${text.slice(pos)}`;
-
-  const mentionFile = () => {
-    const snap = get();
-    const snapToken = getSlashQuery(snap.value, snap.cursorPos);
-    const cursorInsideMention = !snapToken && getMentionQuery(snap.value, snap.cursorPos) !== null;
-
-    if (cursorInsideMention) {
-      requestFocusRef.current?.(snap.cursorPos);
-      mentionTriggerRef.current?.(snap.value, snap.cursorPos);
-      setState((prev) => ({ ...prev, mentionOpen: true }));
-      return;
-    }
-
-    const focusAt = snapToken ? snapToken.start + 1 : snap.cursorPos + 1;
-    const triggeredValue = insertAtMentionSite(snap.value, snap.cursorPos, snapToken);
-    setState((prev) => {
-      const token = getSlashQuery(prev.value, prev.cursorPos);
-      if (token) {
-        return {
-          ...prev,
-          value: insertAtMentionSite(prev.value, prev.cursorPos, token),
-          slashOpen: false,
-          mentionOpen: true,
-        };
-      }
-      if (getMentionQuery(prev.value, prev.cursorPos) !== null) {
-        return { ...prev, slashOpen: false, mentionOpen: true };
-      }
-      return {
-        ...prev,
-        value: insertAtMentionSite(prev.value, prev.cursorPos, null),
-        mentionOpen: true,
-      };
-    });
-    requestFocusRef.current?.(focusAt);
-    mentionTriggerRef.current?.(triggeredValue, focusAt);
-  };
-
-  registry.register(createMentionFileFeature({ mentionFile }));
-
-  const focusTextarea = () => requestFocusRef.current?.();
-
-  const updateValue = (newValue: string, newCursorPos?: number) => {
-    const pos = newCursorPos ?? newValue.length;
-    setState((prev) => ({
-      ...prev,
-      value: newValue,
-      cursorPos: pos,
-      slashOpen: getSlashQuery(newValue, pos) !== null,
-    }));
-  };
-
-  const setCursorPos = (pos: number) => {
-    setState((prev) => ({ ...prev, cursorPos: pos }));
   };
 
   const insertSlashCommand = (text: string) => {
@@ -232,28 +169,93 @@ function createComposeActions(
     }
   };
 
-  const addAttachments = (files: File[]) =>
-    setState((prev) => ({ ...prev, attachedFiles: [...prev.attachedFiles, ...files] }));
-  const removeAttachment = (index: number) =>
+  return {
+    closeSlash: clearSlashToken,
+    dismissSlash: () => setState((prev) => ({ ...prev, slashOpen: false })),
+    insertSlashCommand,
+    executeSlashCommand,
+  };
+}
+
+function createMentionActions(ctx: ComposeActionCtx, get: () => ComposeState) {
+  const { setState, requestFocusRef, mentionTriggerRef, registry } = ctx;
+
+  const mentionFile = () => {
+    const snap = get();
+    const snapToken = getSlashQuery(snap.value, snap.cursorPos);
+    const cursorInsideMention = !snapToken && getMentionQuery(snap.value, snap.cursorPos) !== null;
+
+    if (cursorInsideMention) {
+      requestFocusRef.current?.(snap.cursorPos);
+      mentionTriggerRef.current?.(snap.value, snap.cursorPos);
+      setState((prev) => ({ ...prev, mentionOpen: true }));
+      return;
+    }
+
+    const focusAt = snapToken ? snapToken.start + 1 : snap.cursorPos + 1;
+    const triggeredValue = insertAtMentionSite(snap.value, snap.cursorPos, snapToken);
+    setState(applyMentionFile);
+    requestFocusRef.current?.(focusAt);
+    mentionTriggerRef.current?.(triggeredValue, focusAt);
+  };
+
+  registry.register(createMentionFileFeature({ mentionFile }));
+
+  return {
+    openMention: () => setState((prev) => ({ ...prev, mentionOpen: true })),
+    closeMention: () => setState((prev) => ({ ...prev, mentionOpen: false })),
+    mentionFile,
+  };
+}
+
+function createComposeActions(ctx: ComposeActionCtx) {
+  const { stateRef, setState, sendMessage, requestFocusRef } = ctx;
+  const get = (): ComposeState => stateRef.current;
+
+  const submit = () => {
+    const { value: v, attachedFiles: files } = get();
+    const trimmed = v.trim();
+    if (!trimmed) return;
+    if (files.length === 0) {
+      setState((prev) => ({ ...prev, value: '', slashOpen: false }));
+      sendMessage(trimmed);
+      return;
+    }
+    void Promise.all(
+      files.map(async (f) => {
+        const data = await toBase64(f);
+        return `[Attachment: ${f.name}]\n${data}`;
+      }),
+    ).then((parts) => {
+      sendMessage(`${trimmed}\n\n${parts.join('\n\n')}`);
+      setState((prev) => ({ ...prev, value: '', slashOpen: false, attachedFiles: [] }));
+    });
+  };
+
+  const updateValue = (newValue: string, newCursorPos?: number) => {
+    const pos = newCursorPos ?? newValue.length;
     setState((prev) => ({
       ...prev,
-      attachedFiles: prev.attachedFiles.filter((_, i) => i !== index),
+      value: newValue,
+      cursorPos: pos,
+      slashOpen: getSlashQuery(newValue, pos) !== null,
     }));
+  };
 
   return {
     submit,
-    closeSlash,
-    dismissSlash,
-    openMention,
-    closeMention,
-    mentionFile,
-    focusTextarea,
+    focusTextarea: () => requestFocusRef.current?.(),
     updateValue,
-    setCursorPos,
-    insertSlashCommand,
-    executeSlashCommand,
-    addAttachments,
-    removeAttachment,
+    setCursorPos: (pos: number) => setState((prev) => ({ ...prev, cursorPos: pos })),
+    addAttachments: (files: File[]) =>
+      setState((prev) => ({ ...prev, attachedFiles: [...prev.attachedFiles, ...files] })),
+    removeAttachment: (index: number) =>
+      setState((prev) => ({
+        ...prev,
+        attachedFiles: prev.attachedFiles.filter((_, i) => i !== index),
+      })),
+    ...createSlashActions(ctx, get),
+    ...createMentionActions(ctx, get),
   };
 }
 
@@ -296,14 +298,14 @@ export function ChannelComposeProvider({ children }: { children: ReactNode }): R
   const mentionTriggerRef = useRef<((value: string, pos: number) => void) | null>(null);
 
   const [actionsValue] = useState<ComposeActionsValue>(() => {
-    const block = createComposeActions(
+    const block = createComposeActions({
       stateRef,
       setState,
       sendMessage,
       requestFocusRef,
       mentionTriggerRef,
       registry,
-    );
+    });
     return {
       ...block,
       registerFocus: (fn: (pos?: number) => void) => {

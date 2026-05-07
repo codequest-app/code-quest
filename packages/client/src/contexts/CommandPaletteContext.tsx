@@ -5,19 +5,25 @@ interface PaletteActions {
   onOpenSettings?: () => void;
 }
 
-interface CommandPaletteState {
+interface CommandPaletteStateValue {
   open: boolean;
   defaultTab?: string;
+  paletteActions: PaletteActions;
+}
+
+interface CommandPaletteActionsValue {
   openPalette(opts?: { tab?: string }): void;
   closePalette(): void;
   registerJumpTo(channelId: string, fn: (messageId: string) => void): void;
   unregisterJumpTo(channelId: string): void;
   jumpTo(channelId: string, messageId: string): void;
-  paletteActions: PaletteActions;
   registerActions(actions: PaletteActions): void;
 }
 
-const CommandPaletteContext = createContext<CommandPaletteState | null>(null);
+type CommandPaletteState = CommandPaletteStateValue & CommandPaletteActionsValue;
+
+const CommandPaletteStateContext = createContext<CommandPaletteStateValue | null>(null);
+const CommandPaletteActionsContext = createContext<CommandPaletteActionsValue | null>(null);
 
 export function CommandPaletteProvider({ children }: { children: ReactNode }): React.JSX.Element {
   const [open, setOpen] = useState(false);
@@ -50,27 +56,41 @@ export function CommandPaletteProvider({ children }: { children: ReactNode }): R
     setPaletteActions(actions);
   }, []);
 
+  const [actionsValue] = useState<CommandPaletteActionsValue>(() => ({
+    openPalette,
+    closePalette,
+    registerJumpTo,
+    unregisterJumpTo,
+    jumpTo,
+    registerActions,
+  }));
+
   return (
-    <CommandPaletteContext.Provider
-      value={{
-        open,
-        defaultTab,
-        openPalette,
-        closePalette,
-        registerJumpTo,
-        unregisterJumpTo,
-        jumpTo,
-        paletteActions,
-        registerActions,
-      }}
-    >
-      {children}
-    </CommandPaletteContext.Provider>
+    <CommandPaletteActionsContext.Provider value={actionsValue}>
+      <CommandPaletteStateContext.Provider value={{ open, defaultTab, paletteActions }}>
+        {children}
+      </CommandPaletteStateContext.Provider>
+    </CommandPaletteActionsContext.Provider>
   );
 }
 
 export function useCommandPalette(): CommandPaletteState {
-  const ctx = useContext(CommandPaletteContext);
-  if (!ctx) throw new Error('useCommandPalette must be used within CommandPaletteProvider');
-  return ctx;
+  const state = useContext(CommandPaletteStateContext);
+  const actions = useContext(CommandPaletteActionsContext);
+  if (!state || !actions)
+    throw new Error('useCommandPalette must be used within CommandPaletteProvider');
+  return { ...state, ...actions };
+}
+
+export function useCommandPaletteState(): CommandPaletteStateValue {
+  const state = useContext(CommandPaletteStateContext);
+  if (!state) throw new Error('useCommandPaletteState must be used within CommandPaletteProvider');
+  return state;
+}
+
+export function useCommandPaletteActions(): CommandPaletteActionsValue {
+  const actions = useContext(CommandPaletteActionsContext);
+  if (!actions)
+    throw new Error('useCommandPaletteActions must be used within CommandPaletteProvider');
+  return actions;
 }
