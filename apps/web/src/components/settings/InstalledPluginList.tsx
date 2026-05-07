@@ -122,103 +122,23 @@ export function InstalledPluginList({
         <>
           <SectionHeader>Available</SectionHeader>
           <ul className="list-none m-0 p-0">
-            {filteredAvailable.map((plugin) => {
-              const marketplace = marketplaces.find((m) => m.name === plugin.marketplaceName);
-              const isOfficial =
-                marketplace?.config.source.source === 'github' &&
-                marketplace.config.source.repo === 'anthropics/claude-plugins-official';
-              const isSelected = selectedForInstall === plugin.pluginId;
-              const isInstalling = installing === plugin.pluginId;
-              return (
-                <li
-                  key={plugin.pluginId}
-                  className="bg-surface border border-border rounded-md mb-2 p-3"
-                >
-                  <div className="flex items-start justify-between gap-2">
-                    <div className="flex-1 min-w-0">
-                      <div className="flex items-center gap-2 mb-0.5">
-                        <span className="text-text font-medium text-sm">{plugin.name}</span>
-                        {plugin.installCount != null && plugin.installCount > 0 && (
-                          <span className="text-text-muted text-xs">
-                            {formatInstallCount(plugin.installCount)}
-                          </span>
-                        )}
-                      </div>
-                      {plugin.description && (
-                        <p className="text-text-muted text-xs m-0 mb-1">{plugin.description}</p>
-                      )}
-                      <div className="flex items-center gap-1.5 text-xs text-text-muted">
-                        <span>from {plugin.marketplaceName}</span>
-                        {isOfficial && (
-                          <span
-                            title={`Official ${providerConfig?.brand.name ?? 'Claude'} Code marketplace`}
-                            className="text-button"
-                          >
-                            ✓
-                          </span>
-                        )}
-                      </div>
-                    </div>
-                    {!isSelected && (
-                      <Button
-                        variant="info"
-                        size="sm"
-                        disabled={isInstalling}
-                        className="shrink-0"
-                        onClick={() => setSelectedForInstall(plugin.pluginId)}
-                      >
-                        {isInstalling ? 'Installing…' : 'Install'}
-                      </Button>
-                    )}
-                  </div>
-
-                  {isSelected && (
-                    <div className="mt-2 border-t border-border pt-2">
-                      <p className="text-xs text-text-muted mb-2">
-                        Make sure you trust a plugin before installing.{' '}
-                        {providerConfig?.brand.company ?? 'Anthropic'} does not control what MCP
-                        servers, files, or other software are included in plugins.
-                      </p>
-                      {(
-                        [
-                          {
-                            scope: 'user' as const,
-                            label: 'Install for you',
-                            desc: 'Available in all your projects',
-                          },
-                          {
-                            scope: 'project' as const,
-                            label: 'Install for this project',
-                            desc: 'Shared with all collaborators',
-                          },
-                          {
-                            scope: 'local' as const,
-                            label: 'Install locally',
-                            desc: 'Only for you, only in this repo',
-                          },
-                        ] as const
-                      ).map(({ scope, label, desc }) => (
-                        <button
-                          key={scope}
-                          type="button"
-                          onClick={() => {
-                            setSelectedForInstall(null);
-                            onInstall(plugin.pluginId, scope);
-                          }}
-                          className="w-full text-left px-2.5 py-2 rounded border border-border mb-1 hover:bg-bg transition-colors"
-                        >
-                          <div className="text-sm font-medium text-text">{label}</div>
-                          <div className="text-xs text-text-muted">{desc}</div>
-                        </button>
-                      ))}
-                      <InlineAction className="mt-1" onClick={() => setSelectedForInstall(null)}>
-                        Cancel
-                      </InlineAction>
-                    </div>
-                  )}
-                </li>
-              );
-            })}
+            {filteredAvailable.map((plugin) => (
+              <AvailablePluginCard
+                key={plugin.pluginId}
+                plugin={plugin}
+                marketplaces={marketplaces}
+                brandName={providerConfig?.brand.name ?? 'Claude'}
+                brandCompany={providerConfig?.brand.company ?? 'Anthropic'}
+                isSelected={selectedForInstall === plugin.pluginId}
+                isInstalling={installing === plugin.pluginId}
+                onSelect={() => setSelectedForInstall(plugin.pluginId)}
+                onCancel={() => setSelectedForInstall(null)}
+                onInstall={(scope) => {
+                  setSelectedForInstall(null);
+                  onInstall(plugin.pluginId, scope);
+                }}
+              />
+            ))}
           </ul>
         </>
       )}
@@ -227,5 +147,103 @@ export function InstalledPluginList({
         <p className="text-center text-text-muted/60 py-8 text-sm">No plugins found.</p>
       )}
     </>
+  );
+}
+
+const INSTALL_SCOPES = [
+  { scope: 'user' as const, label: 'Install for you', desc: 'Available in all your projects' },
+  {
+    scope: 'project' as const,
+    label: 'Install for this project',
+    desc: 'Shared with all collaborators',
+  },
+  { scope: 'local' as const, label: 'Install locally', desc: 'Only for you, only in this repo' },
+];
+
+function AvailablePluginCard({
+  plugin,
+  marketplaces,
+  brandName,
+  brandCompany,
+  isSelected,
+  isInstalling,
+  onSelect,
+  onCancel,
+  onInstall,
+}: {
+  plugin: AvailablePlugin;
+  marketplaces: MarketplaceInfo[];
+  brandName: string;
+  brandCompany: string;
+  isSelected: boolean;
+  isInstalling: boolean;
+  onSelect: () => void;
+  onCancel: () => void;
+  onInstall: (scope: 'user' | 'project' | 'local') => void;
+}): React.JSX.Element {
+  const marketplace = marketplaces.find((m) => m.name === plugin.marketplaceName);
+  const isOfficial =
+    marketplace?.config.source.source === 'github' &&
+    marketplace.config.source.repo === 'anthropics/claude-plugins-official';
+
+  return (
+    <li className="bg-surface border border-border rounded-md mb-2 p-3">
+      <div className="flex items-start justify-between gap-2">
+        <div className="flex-1 min-w-0">
+          <div className="flex items-center gap-2 mb-0.5">
+            <span className="text-text font-medium text-sm">{plugin.name}</span>
+            {plugin.installCount != null && plugin.installCount > 0 && (
+              <span className="text-text-muted text-xs">
+                {formatInstallCount(plugin.installCount)}
+              </span>
+            )}
+          </div>
+          {plugin.description && (
+            <p className="text-text-muted text-xs m-0 mb-1">{plugin.description}</p>
+          )}
+          <div className="flex items-center gap-1.5 text-xs text-text-muted">
+            <span>from {plugin.marketplaceName}</span>
+            {isOfficial && (
+              <span title={`Official ${brandName} Code marketplace`} className="text-button">
+                ✓
+              </span>
+            )}
+          </div>
+        </div>
+        {!isSelected && (
+          <Button
+            variant="info"
+            size="sm"
+            disabled={isInstalling}
+            className="shrink-0"
+            onClick={onSelect}
+          >
+            {isInstalling ? 'Installing…' : 'Install'}
+          </Button>
+        )}
+      </div>
+      {isSelected && (
+        <div className="mt-2 border-t border-border pt-2">
+          <p className="text-xs text-text-muted mb-2">
+            Make sure you trust a plugin before installing. {brandCompany} does not control what MCP
+            servers, files, or other software are included in plugins.
+          </p>
+          {INSTALL_SCOPES.map(({ scope, label, desc }) => (
+            <button
+              key={scope}
+              type="button"
+              onClick={() => onInstall(scope)}
+              className="w-full text-left px-2.5 py-2 rounded border border-border mb-1 hover:bg-bg transition-colors"
+            >
+              <div className="text-sm font-medium text-text">{label}</div>
+              <div className="text-xs text-text-muted">{desc}</div>
+            </button>
+          ))}
+          <InlineAction className="mt-1" onClick={onCancel}>
+            Cancel
+          </InlineAction>
+        </div>
+      )}
+    </li>
   );
 }

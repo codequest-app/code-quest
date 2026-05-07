@@ -44,10 +44,9 @@ export function ProjectCard({
   /** When provided and > 0, renders a `{n}wt` meta badge next to the name. */
   worktreeCount?: number;
 }): React.JSX.Element {
-  const [resumeOpen, setResumeOpen] = useState(false);
-  const [worktreeDialogOpen, setWorktreeDialogOpen] = useState(false);
-  const [renameOpen, setRenameOpen] = useState(false);
-  const [removeOpen, setRemoveOpen] = useState(false);
+  type Dialog = 'resume' | 'worktree' | 'rename' | 'remove' | null;
+  const [openDialog, setOpenDialog] = useState<Dialog>(null);
+  const closeDialog = () => setOpenDialog(null);
 
   const actions = useContext(ProjectActionsContext);
   const navActions = useContext(NavigationActionsContext);
@@ -62,10 +61,10 @@ export function ProjectCard({
   };
 
   const menuCallbacks: ProjectMenuCallbacks = {
-    onSelectResume: () => setResumeOpen(true),
-    onSelectCreateWorktree: () => setWorktreeDialogOpen(true),
-    onSelectRename: actions && cwd ? () => setRenameOpen(true) : undefined,
-    onSelectRemove: actions && cwd ? () => setRemoveOpen(true) : undefined,
+    onSelectResume: () => setOpenDialog('resume'),
+    onSelectCreateWorktree: () => setOpenDialog('worktree'),
+    onSelectRename: actions && cwd ? () => setOpenDialog('rename') : undefined,
+    onSelectRemove: actions && cwd ? () => setOpenDialog('remove') : undefined,
     onSelectInitRepo: onSelectInitRepo,
   };
 
@@ -84,7 +83,10 @@ export function ProjectCard({
 
   return (
     <>
-      <Popover.Root open={resumeOpen} onOpenChange={setResumeOpen}>
+      <Popover.Root
+        open={openDialog === 'resume'}
+        onOpenChange={(v) => setOpenDialog(v ? 'resume' : null)}
+      >
         <ProjectContextMenu disabled={!cwd} {...menuCallbacks}>
           <Popover.Anchor asChild>
             <div
@@ -148,40 +150,32 @@ export function ProjectCard({
             </div>
           </Popover.Anchor>
         </ProjectContextMenu>
-        {cwd && resumeOpen && (
-          <SessionHistoryPopover
-            cwd={cwd}
-            onClose={() => setResumeOpen(false)}
-            onResumed={handleResumed}
-          />
+        {cwd && openDialog === 'resume' && (
+          <SessionHistoryPopover cwd={cwd} onClose={closeDialog} onResumed={handleResumed} />
         )}
       </Popover.Root>
-      {cwd && worktreeDialogOpen && (
-        <CreateWorktreeDialog
-          open={worktreeDialogOpen}
-          cwd={cwd}
-          onClose={() => setWorktreeDialogOpen(false)}
-        />
+      {cwd && openDialog === 'worktree' && (
+        <CreateWorktreeDialog open cwd={cwd} onClose={closeDialog} />
       )}
       {actions && cwd && (
         <RenameProjectDialog
-          open={renameOpen}
+          open={openDialog === 'rename'}
           currentName={label}
           onRename={(newName) => {
             actions.renameProject(cwd, newName);
           }}
-          onClose={() => setRenameOpen(false)}
+          onClose={closeDialog}
         />
       )}
       {actions && cwd && (
         <RemoveProjectConfirmDialog
-          open={removeOpen}
+          open={openDialog === 'remove'}
           projectName={label}
           activeSessionCount={activeSessionCount}
           onConfirm={() => {
             actions.removeProject(cwd);
           }}
-          onClose={() => setRemoveOpen(false)}
+          onClose={closeDialog}
         />
       )}
     </>
