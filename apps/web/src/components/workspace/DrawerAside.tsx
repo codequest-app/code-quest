@@ -1,4 +1,6 @@
 import type { ReactNode } from 'react';
+import { IconButton } from '@/components/ui/IconButton';
+import { XIcon } from '@/components/ui/Icons';
 import { cn } from '@/utils/cn';
 
 interface DrawerAsideProps {
@@ -9,6 +11,9 @@ interface DrawerAsideProps {
   /** Tailwind class for docked-mode (lg+) column width, e.g. `'lg:w-65'`. */
   dockedWidthClass: string;
   label: string;
+  /** Label for the close button's aria-label (e.g. "sidebar"). Only shown on mobile. */
+  closeLabel?: string;
+  onClose?: () => void;
   children: ReactNode;
 }
 
@@ -21,6 +26,8 @@ export function DrawerAside({
   mobileWidthClass,
   dockedWidthClass,
   label,
+  closeLabel,
+  onClose,
   children,
 }: DrawerAsideProps): React.JSX.Element {
   const isLeft = side === 'left';
@@ -39,6 +46,13 @@ export function DrawerAside({
         !open && 'lg:w-0 lg:overflow-hidden',
       )}
     >
+      {onClose && (
+        <div className="flex justify-end p-2 lg:hidden">
+          <IconButton aria-label={`close ${closeLabel ?? label}`} onClick={onClose}>
+            <XIcon className="w-5 h-5" />
+          </IconButton>
+        </div>
+      )}
       <div className="h-full overflow-auto">{children}</div>
     </aside>
   );

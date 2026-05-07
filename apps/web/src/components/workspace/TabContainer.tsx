@@ -9,6 +9,7 @@ import { useNavigationActions } from '@/contexts/NavigationContext';
 import { useProjectState } from '@/contexts/ProjectContext';
 import { useSession } from '@/contexts/SessionContext';
 import { type TabMeta, useTabActions, useTabState } from '@/contexts/TabContext';
+import { useBreakpoint } from '@/hooks/useBreakpoint';
 import { basename } from '@/utils/basename';
 import { cn } from '@/utils/cn';
 import { ChatView } from '../chat/ChatView.tsx';
@@ -77,7 +78,8 @@ export const TabContainer: React.FC<{ projectCwd: string }> = memo(function TabC
   const { listing } = useGitState();
   const { setActiveCwd } = useNavigationActions();
   const { activeProjectCwd } = useProjectState();
-  const [rightOpen, setRightOpen] = useState(true);
+  const { isDesktop } = useBreakpoint();
+  const [rightOpen, setRightOpen] = useState(() => isDesktop);
   const toggleRight = useCallback(() => setRightOpen((v) => !v), []);
 
   const isThisActive = projectCwd === activeProjectCwd;
