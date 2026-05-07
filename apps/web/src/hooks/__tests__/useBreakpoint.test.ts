@@ -47,34 +47,28 @@ describe('useBreakpoint', () => {
   afterEach(() => vi.restoreAllMocks());
 
   describe('initial value', () => {
-    it('returns "desktop" when width >= 1024px', () => {
+    it('returns desktop at width >= 1024px', () => {
       mockMatchMedia(1440);
       const { result } = renderHook(() => useBreakpoint());
-      expect(result.current).toBe('desktop');
+      expect(result.current).toMatchObject({ isDesktop: true, isTablet: false, isMobile: false });
     });
 
-    it('returns "desktop" at exactly 1024px', () => {
+    it('returns desktop at exactly 1024px', () => {
       mockMatchMedia(1024);
       const { result } = renderHook(() => useBreakpoint());
-      expect(result.current).toBe('desktop');
+      expect(result.current).toMatchObject({ isDesktop: true, isTablet: false, isMobile: false });
     });
 
-    it('returns "tablet" when 768px <= width < 1024px', () => {
+    it('returns tablet at 768px <= width < 1024px', () => {
       mockMatchMedia(768);
       const { result } = renderHook(() => useBreakpoint());
-      expect(result.current).toBe('tablet');
+      expect(result.current).toMatchObject({ isDesktop: false, isTablet: true, isMobile: false });
     });
 
-    it('returns "tablet" at exactly 768px', () => {
-      mockMatchMedia(768);
-      const { result } = renderHook(() => useBreakpoint());
-      expect(result.current).toBe('tablet');
-    });
-
-    it('returns "mobile" when width < 768px', () => {
+    it('returns mobile at width < 768px', () => {
       mockMatchMedia(767);
       const { result } = renderHook(() => useBreakpoint());
-      expect(result.current).toBe('mobile');
+      expect(result.current).toMatchObject({ isDesktop: false, isTablet: false, isMobile: true });
     });
   });
 
@@ -82,28 +76,28 @@ describe('useBreakpoint', () => {
     it('updates from desktop to tablet when width drops below 1024px', () => {
       const { triggerChange } = mockMatchMedia(1440);
       const { result } = renderHook(() => useBreakpoint());
-      expect(result.current).toBe('desktop');
+      expect(result.current.isDesktop).toBe(true);
 
       act(() => triggerChange(800));
-      expect(result.current).toBe('tablet');
+      expect(result.current).toMatchObject({ isDesktop: false, isTablet: true, isMobile: false });
     });
 
     it('updates from tablet to mobile when width drops below 768px', () => {
       const { triggerChange } = mockMatchMedia(800);
       const { result } = renderHook(() => useBreakpoint());
-      expect(result.current).toBe('tablet');
+      expect(result.current.isTablet).toBe(true);
 
       act(() => triggerChange(375));
-      expect(result.current).toBe('mobile');
+      expect(result.current).toMatchObject({ isDesktop: false, isTablet: false, isMobile: true });
     });
 
     it('updates from mobile to desktop when width grows to 1024px+', () => {
       const { triggerChange } = mockMatchMedia(375);
       const { result } = renderHook(() => useBreakpoint());
-      expect(result.current).toBe('mobile');
+      expect(result.current.isMobile).toBe(true);
 
       act(() => triggerChange(1280));
-      expect(result.current).toBe('desktop');
+      expect(result.current).toMatchObject({ isDesktop: true, isTablet: false, isMobile: false });
     });
   });
 });

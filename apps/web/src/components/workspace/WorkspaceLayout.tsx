@@ -70,9 +70,8 @@ function WorkspaceLayoutInner() {
   const { projects, activeProjectCwd } = useProjectState();
   const { sessions, sessionsMap } = useSession();
   const { addProject, setActiveProject } = useProjectActions();
-  const breakpoint = useBreakpoint();
-  const isMobile = breakpoint === 'mobile';
-  const [leftOpen, setLeftOpen] = useState(true);
+  const { isMobile, isDesktop } = useBreakpoint();
+  const [leftOpen, setLeftOpen] = useState(() => isDesktop);
 
   const handleAddProject = useCallback(
     async (cwd: string) => {
@@ -140,13 +139,15 @@ function WorkspaceLayoutInner() {
               mobileWidthClass="w-[min(85vw,320px)]"
               dockedWidthClass="lg:w-65"
               label="sidebar-panel"
+              closeLabel="sidebar"
+              onClose={() => setLeftOpen(false)}
             >
               <ProjectTree
                 projects={projects}
                 activeProjectCwd={activeProjectCwd}
                 onSelectProject={(cwd) => {
                   setActiveProject(cwd);
-                  if (breakpoint !== 'desktop') setLeftOpen(false);
+                  if (!isDesktop) setLeftOpen(false);
                 }}
                 onAdd={() => setDialogOpen(true)}
               />

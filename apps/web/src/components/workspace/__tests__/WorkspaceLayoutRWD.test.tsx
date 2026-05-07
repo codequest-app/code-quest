@@ -61,32 +61,46 @@ describe('WorkspaceLayout — Tablet (768–1023px)', () => {
     expect(screen.queryByRole('complementary', { name: 'activity-bar' })).toBeNull();
   });
 
-  it('sidebar element exists in DOM and starts open', async () => {
+  it('sidebar element exists in DOM and starts closed', async () => {
     await setupWithProject(800);
     expect(sidebar()).toBeInTheDocument();
-    expect(sidebar()).toHaveAttribute('data-open');
+    expect(sidebar()).not.toHaveAttribute('data-open');
   });
 
-  it('right pane starts visible on tablet', async () => {
+  it('right pane starts hidden on tablet', async () => {
     await setupWithProject(800);
-    expect(rightPaneBody()).toBeInTheDocument();
+    expect(rightPaneBody()).toBeNull();
   });
 
-  it('Toggle sidebar closes the sidebar drawer', async () => {
+  it('Toggle sidebar opens then closes the sidebar drawer', async () => {
     const { user } = await setupWithProject(800);
+    await user.click(screen.getByRole('button', { name: /toggle sidebar/i }));
+    expect(sidebar()).toHaveAttribute('data-open');
     await user.click(screen.getByRole('button', { name: /toggle sidebar/i }));
     expect(sidebar()).not.toHaveAttribute('data-open');
   });
 
-  it('Toggle right pane hides the right pane', async () => {
+  it('Toggle right pane shows then hides the right pane', async () => {
     const { user } = await setupWithProject(800);
+    await user.click(screen.getByRole('button', { name: /toggle right pane/i }));
+    expect(rightPaneBody()).toBeInTheDocument();
     await user.click(screen.getByRole('button', { name: /toggle right pane/i }));
     expect(rightPaneBody()).not.toBeInTheDocument();
   });
 
-  it('clicking backdrop closes the sidebar drawer', async () => {
+  it('clicking backdrop closes the sidebar drawer after opening', async () => {
     const { user } = await setupWithProject(800);
+    await user.click(screen.getByRole('button', { name: /toggle sidebar/i }));
+    expect(sidebar()).toHaveAttribute('data-open');
     await user.click(screen.getByRole('button', { name: /dismiss sidebar/i }));
+    expect(sidebar()).not.toHaveAttribute('data-open');
+  });
+
+  it('sidebar has a close button that closes the drawer', async () => {
+    const { user } = await setupWithProject(800);
+    await user.click(screen.getByRole('button', { name: /toggle sidebar/i }));
+    expect(sidebar()).toHaveAttribute('data-open');
+    await user.click(screen.getByRole('button', { name: /close sidebar/i }));
     expect(sidebar()).not.toHaveAttribute('data-open');
   });
 
@@ -103,20 +117,24 @@ describe('WorkspaceLayout — Mobile (<768px)', () => {
     expect(screen.queryByRole('complementary', { name: 'activity-bar' })).toBeNull();
   });
 
-  it('sidebar starts open and right pane starts visible', async () => {
+  it('sidebar starts closed and right pane starts hidden', async () => {
     await setupWithProject(375);
-    expect(sidebar()).toHaveAttribute('data-open');
-    expect(rightPaneBody()).toBeInTheDocument();
+    expect(sidebar()).not.toHaveAttribute('data-open');
+    expect(rightPaneBody()).toBeNull();
   });
 
-  it('Toggle sidebar closes drawer on mobile', async () => {
+  it('Toggle sidebar opens then closes drawer on mobile', async () => {
     const { user } = await setupWithProject(375);
+    await user.click(screen.getByRole('button', { name: /toggle sidebar/i }));
+    expect(sidebar()).toHaveAttribute('data-open');
     await user.click(screen.getByRole('button', { name: /toggle sidebar/i }));
     expect(sidebar()).not.toHaveAttribute('data-open');
   });
 
-  it('Toggle right pane hides right pane on mobile', async () => {
+  it('Toggle right pane shows then hides right pane on mobile', async () => {
     const { user } = await setupWithProject(375);
+    await user.click(screen.getByRole('button', { name: /toggle right pane/i }));
+    expect(rightPaneBody()).toBeInTheDocument();
     await user.click(screen.getByRole('button', { name: /toggle right pane/i }));
     expect(rightPaneBody()).not.toBeInTheDocument();
   });
