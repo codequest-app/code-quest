@@ -1,3 +1,4 @@
+import type { SocketCallback, TypedSocket } from '@code-quest/shared';
 import {
   controlAuthenticateResponseSchema,
   EVENTS,
@@ -6,7 +7,7 @@ import {
 } from '@code-quest/shared';
 import type { HandlerContext } from '../../types.ts';
 import type { Channel } from '../channel.ts';
-import type { SocketCallback, TypedSocket } from '../types.ts';
+import { BROADCAST_CHANNEL_ID } from '../channel-emitter.ts';
 import { errMsg } from '../utils/helpers.ts';
 import { err, ok } from '../utils/rpc.ts';
 import { claudeState, setAuthState } from './state.ts';
@@ -43,7 +44,7 @@ export function create({
       const authData = controlAuthenticateResponseSchema.parse(controlResp.response);
       if (authData.manualUrl || authData.automaticUrl) {
         socket?.emit(EVENTS.notification.auth_url, {
-          channelId: '',
+          channelId: BROADCAST_CHANNEL_ID,
           url: authData.automaticUrl ?? authData.manualUrl ?? '',
           method: 'browser',
         });

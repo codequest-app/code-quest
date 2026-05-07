@@ -1,5 +1,5 @@
 import { resolve } from 'node:path';
-import type { ProviderClientConfig } from '@code-quest/shared';
+import type { ProviderClientConfig, TypedSocket } from '@code-quest/shared';
 import {
   type ControlResponse,
   EVENTS,
@@ -13,7 +13,6 @@ import { Channel, type ChannelHooks } from './channel.ts';
 import type { ChannelEmitter } from './channel-emitter.ts';
 import { type DirtyBroadcasters, subscribeDirtyForSocket } from './dirty-subscriber.ts';
 import type { RawRecorder } from './raw-recorder.ts';
-import type { TypedSocket } from './types.ts';
 import { pickDefined } from './utils/helpers.ts';
 
 function releaseUnsubs(unsubs: Unsubscribe[]): void {

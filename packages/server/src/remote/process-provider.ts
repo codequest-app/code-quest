@@ -1,9 +1,9 @@
 import type { SpawnOptions } from 'node:child_process';
 import type { ProcessHandle, ProcessProvider, ProcessRunResult } from '@code-quest/shared';
-import { REMOTE_METHODS } from '@code-quest/shared';
+import { processExitEventSchema, processLineEventSchema, REMOTE_METHODS } from '@code-quest/shared';
 import { v4 as uuidv4 } from 'uuid';
 import { logger } from '../logger.ts';
-import type { Connection } from './connection.ts';
+import type { RemoteRpcWithEvents } from './types.ts';
 
 const DONE_RESULT: IteratorReturnResult<undefined> = { value: undefined, done: true };
 
@@ -11,34 +11,32 @@ class LineStream implements AsyncIterable<string> {
   readonly stderrLines: string[] = [];
   readonly exitCode: Promise<number | null>;
   private resolveExitCode!: (code: number | null) => void;
-  private readonly removeNotification: () => void;
+  private readonly unsubscribers: Array<() => void> = [];
 
-  constructor(conn: Connection, sessionId: string, signal: AbortSignal) {
+  constructor(rpc: RemoteRpcWithEvents, sessionId: string, signal: AbortSignal) {
     this.exitCode = new Promise<number | null>((r) => {
       this.resolveExitCode = r;
     });
-    this.removeNotification = conn.onNotification((n) => {
-      if (n.method === REMOTE_METHODS.process.stdout) {
-        if (n.params.sessionId === sessionId) {
-          this.enqueue(n.params.line);
-        }
-      } else if (n.method === REMOTE_METHODS.process.stderr) {
-        if (n.params.sessionId === sessionId) {
-          this.stderrLines.push(n.params.line);
-        }
-      } else if (n.method === REMOTE_METHODS.process.exit) {
-        if (n.params.sessionId === sessionId) {
-          this.finish(n.params.code);
-        }
-      }
-    });
+
+    this.unsubscribers.push(
+      rpc.on(REMOTE_METHODS.process.stdout, (data) => {
+        const parsed = processLineEventSchema.safeParse(data);
+        if (parsed.success && parsed.data.sessionId === sessionId) this.enqueue(parsed.data.line);
+      }),
+      rpc.on(REMOTE_METHODS.process.stderr, (data) => {
+        const parsed = processLineEventSchema.safeParse(data);
+        if (parsed.success && parsed.data.sessionId === sessionId)
+          this.stderrLines.push(parsed.data.line);
+      }),
+      rpc.on(REMOTE_METHODS.process.exit, (data) => {
+        const parsed = processExitEventSchema.safeParse(data);
+        if (parsed.success && parsed.data.sessionId === sessionId) this.finish(parsed.data.code);
+      }),
+    );
 
     const onAbort = () => this.finish(null);
     signal.addEventListener('abort', onAbort);
-    this.cleanup = () => {
-      this.removeNotification();
-      signal.removeEventListener('abort', onAbort);
-    };
+    this.unsubscribers.push(() => signal.removeEventListener('abort', onAbort));
 
     if (signal.aborted) this.finish(null);
   }
@@ -46,7 +44,6 @@ class LineStream implements AsyncIterable<string> {
   private queue: string[] = [];
   private done = false;
   private resolve: (() => void) | null = null;
-  private cleanup: () => void;
 
   private enqueue(line: string): void {
     this.queue.push(line);
@@ -61,6 +58,11 @@ class LineStream implements AsyncIterable<string> {
     this.resolve = null;
   }
 
+  private cleanup(): void {
+    for (const unsub of this.unsubscribers) unsub();
+    this.unsubscribers.length = 0;
+  }
+
   [Symbol.asyncIterator](): AsyncIterator<string> {
     return {
       next: async () => {
@@ -70,7 +72,8 @@ class LineStream implements AsyncIterable<string> {
           });
         }
         if (this.queue.length > 0) {
-          return { value: this.queue.shift() as string, done: false };
+          const value = this.queue.shift() ?? '';
+          return { value, done: false };
         }
         this.cleanup();
         return DONE_RESULT;
@@ -86,29 +89,27 @@ class LineStream implements AsyncIterable<string> {
 }
 
 export class RemoteProcessProvider implements ProcessProvider {
-  private readonly connection: Connection;
+  private readonly rpc: RemoteRpcWithEvents;
 
-  constructor(connection: Connection) {
-    this.connection = connection;
+  constructor(rpc: RemoteRpcWithEvents) {
+    this.rpc = rpc;
   }
 
   spawn(command: string, args: string[], options?: SpawnOptions): ProcessHandle {
-    const { sessionId, controller, conn } = this.initSession();
-    const stream = new LineStream(conn, sessionId, controller.signal);
+    const { sessionId, controller, stream } = this.startProcess(command, args, options);
 
-    this.fireSpawn(sessionId, command, args, options, controller);
-
+    const rpc = this.rpc;
     return {
       lines: stream,
       signal: controller.signal,
       send(raw: string): void {
-        conn.request(REMOTE_METHODS.process.stdin, { sessionId, data: raw }).catch((e) => {
+        rpc.request(REMOTE_METHODS.process.stdin, { sessionId, data: raw }).catch((e) => {
           logger.warn({ err: e, sessionId }, 'process/stdin failed');
         });
       },
       abort(): void {
         controller.abort();
-        conn.request(REMOTE_METHODS.process.kill, { sessionId }).catch((e) => {
+        rpc.request(REMOTE_METHODS.process.kill, { sessionId }).catch((e) => {
           logger.warn({ err: e, sessionId }, 'process/kill failed');
         });
       },
@@ -120,10 +121,7 @@ export class RemoteProcessProvider implements ProcessProvider {
     args: string[],
     options?: SpawnOptions,
   ): Promise<ProcessRunResult> {
-    const { sessionId, controller, conn } = this.initSession();
-    const stream = new LineStream(conn, sessionId, controller.signal);
-
-    this.fireSpawn(sessionId, command, args, options, controller);
+    const { stream } = this.startProcess(command, args, options);
 
     const collected: string[] = [];
     for await (const line of stream) {
@@ -133,15 +131,16 @@ export class RemoteProcessProvider implements ProcessProvider {
     return { exitCode: code, stdout: collected.join('\n'), stderr: stream.stderrLines.join('\n') };
   }
 
-  private initSession() {
-    if (!this.connection.isOpen) {
-      throw new Error('No remote daemon connected');
-    }
-    return {
-      sessionId: uuidv4(),
-      controller: new AbortController(),
-      conn: this.connection,
-    };
+  private startProcess(
+    command: string,
+    args: string[],
+    options?: SpawnOptions,
+  ): { sessionId: string; controller: AbortController; stream: LineStream } {
+    const sessionId = uuidv4();
+    const controller = new AbortController();
+    const stream = new LineStream(this.rpc, sessionId, controller.signal);
+    this.fireSpawn(sessionId, command, args, options, controller);
+    return { sessionId, controller, stream };
   }
 
   private fireSpawn(
@@ -151,13 +150,17 @@ export class RemoteProcessProvider implements ProcessProvider {
     options: SpawnOptions | undefined,
     controller: AbortController,
   ): void {
-    this.connection
+    this.rpc
       .request<{ ok: true }>(REMOTE_METHODS.process.spawn, {
         sessionId,
         command,
         args,
         cwd: options?.cwd?.toString(),
-        env: options?.env as Record<string, string> | undefined,
+        env: options?.env
+          ? Object.fromEntries(
+              Object.entries(options.env).filter((e): e is [string, string] => e[1] != null),
+            )
+          : undefined,
       })
       .catch((e) => {
         logger.warn({ err: e, sessionId }, 'process/spawn failed');

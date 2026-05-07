@@ -1,6 +1,7 @@
 import { createServer, type Server as HttpServer } from 'node:http';
 import type { AddressInfo } from 'node:net';
-import { Agent } from '@code-quest/summoner/daemon';
+import { RpcChannel, type RpcChannelSocket } from '@code-quest/shared';
+import { Agent } from '@code-quest/summoner/connection';
 import {
   FakeFilesystemService,
   FakeGitService,
@@ -8,13 +9,17 @@ import {
 } from '@code-quest/summoner/test';
 import { afterEach, beforeEach, describe, expect, it } from 'vitest';
 import { WebSocket, WebSocketServer } from 'ws';
-import { Connection } from '../remote/connection.ts';
 import { RemoteProcessProvider } from '../remote/process-provider.ts';
 
-/**
- * Full integration: Agent on server side, RemoteProcessProvider on client side.
- * Tests that the two ends communicate correctly over a real WebSocket.
- */
+function wrapWs(ws: WebSocket): RpcChannelSocket {
+  return {
+    send: (data: string) => ws.send(data),
+    onMessage: (fn: (data: string) => void) =>
+      ws.on('message', (raw: Buffer) => fn(raw.toString())),
+    onClose: (fn: () => void) => ws.on('close', fn),
+  };
+}
+
 function makeSetup() {
   let httpServer: HttpServer;
   let wss: WebSocketServer;
@@ -27,20 +32,25 @@ function makeSetup() {
 
     httpServer.on('upgrade', (req, socket, head) => {
       wss.handleUpgrade(req, socket, head, (ws) => {
-        new Agent(ws, agentProcessProvider, new FakeFilesystemService(), new FakeGitService());
+        new Agent(
+          new RpcChannel(wrapWs(ws)),
+          agentProcessProvider,
+          new FakeFilesystemService(),
+          new FakeGitService(),
+        );
       });
     });
 
     await new Promise<void>((r) => httpServer.listen(0, r));
 
     const { port } = httpServer.address() as AddressInfo;
-    const daemonWs = new WebSocket(`ws://127.0.0.1:${port}`);
-    await new Promise<void>((r) => daemonWs.once('open', r));
+    const clientWs = new WebSocket(`ws://127.0.0.1:${port}`);
+    await new Promise<void>((r) => clientWs.once('open', r));
 
-    const conn = new Connection(daemonWs);
-    const remoteProvider = new RemoteProcessProvider(conn);
+    const rpc = new RpcChannel(wrapWs(clientWs));
+    const remoteProvider = new RemoteProcessProvider(rpc);
 
-    return { agentProcessProvider, conn, remoteProvider, daemonWs };
+    return { agentProcessProvider, rpc, remoteProvider, clientWs };
   }
 
   async function teardown() {
@@ -60,14 +70,13 @@ describe('RemoteProcessProvider', () => {
   });
 
   afterEach(async () => {
-    ctx.daemonWs.close();
+    ctx.clientWs.close();
     await teardown();
   });
 
   it('streams stdout lines from the remote process', async () => {
     const handle = ctx.remoteProvider.spawn('echo', ['hello']);
 
-    // wait for agent to receive spawn
     await new Promise<void>((r) => setTimeout(r, 20));
 
     ctx.agentProcessProvider.latest.emit('line-a');
@@ -141,7 +150,6 @@ describe('RemoteProcessProvider', () => {
 
   it('lines iterator terminates when aborted before iteration begins', async () => {
     const handle = ctx.remoteProvider.spawn('sleep', ['999']);
-    // Abort immediately, before calling for-await
     handle.abort();
     await new Promise<void>((r) => setTimeout(r, 20));
 
@@ -152,8 +160,9 @@ describe('RemoteProcessProvider', () => {
     expect(lines).toEqual([]);
   });
 
-  it('throws when connection is closed', () => {
-    ctx.conn.close();
-    expect(() => ctx.remoteProvider.spawn('echo', [])).toThrow('No remote daemon connected');
+  it('spawn request fails gracefully when rpc channel is closed', async () => {
+    ctx.rpc.close();
+    const result = await ctx.remoteProvider.runOnce('echo', []);
+    expect(result.exitCode).toBeNull();
   });
 });

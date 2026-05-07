@@ -12,9 +12,11 @@
     "test:watch": "vitest"
   },
   "dependencies": {
+    "ws": "^8.20.0",
     "zod": "^4.3.6"
   },
   "devDependencies": {
+    "@types/ws": "^8.18.1",
     "knip": "^6.11.0",
     "typescript": "6.0.3",
     "vitest": "^3.2.4"

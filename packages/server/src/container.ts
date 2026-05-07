@@ -21,10 +21,10 @@ import { Container } from 'inversify';
 import { config } from './config.ts';
 import type { MysqlDatabase } from './db/mysql-client.ts';
 import { createDatabase, type DrizzleDatabase } from './db/sqlite-client.ts';
-import type { Connection } from './remote/connection.ts';
 import { RemoteFilesystemService } from './remote/filesystem-service.ts';
 import { RemoteGitService } from './remote/git-service.ts';
 import { RemoteProcessProvider } from './remote/process-provider.ts';
+import type { ReconnectableRpc } from './remote/reconnectable-rpc.ts';
 import { CompositeProjectStore } from './services/composite-project-store.ts';
 import { CompositeRawDeltaStore } from './services/composite-raw-delta-store.ts';
 import { CompositeRawEventStore } from './services/composite-raw-event-store.ts';
@@ -64,18 +64,19 @@ export interface ContainerOptions {
   watchService?: WatchService;
   historyBatchSize?: number;
   autoMode?: boolean;
-  remoteConnection?: Connection;
+  remoteRpc?: ReconnectableRpc;
   fsRoots?: string[];
   rawEvents?: { writeDeltas?: boolean; readDeltas?: boolean };
 }
 
 export function createContainer(options: ContainerOptions): Container {
   const container = new Container();
+  const remoteRpc = options.remoteRpc;
 
-  if (options.remoteConnection) {
+  if (remoteRpc) {
     container
       .bind<ProcessProvider>(TYPES.ProcessProvider)
-      .toConstantValue(new RemoteProcessProvider(options.remoteConnection));
+      .toConstantValue(new RemoteProcessProvider(remoteRpc));
   } else if (options.processProvider) {
     container.bind<ProcessProvider>(TYPES.ProcessProvider).toConstantValue(options.processProvider);
   }
@@ -182,15 +183,21 @@ export function createContainer(options: ContainerOptions): Container {
   container.bind<boolean>(TYPES.AutoMode).toConstantValue(autoMode);
   container.bind<UsageTracker>(TYPES.UsageTracker).to(UsageTracker).inSingletonScope();
   container.bind<SocketServer>(TYPES.SocketServer).to(SocketServer).inSingletonScope();
-  if (options.remoteConnection) {
-    container
-      .bind(TYPES.FilesystemService)
-      .toConstantValue(new RemoteFilesystemService(options.remoteConnection));
-    container
-      .bind<GitService>(TYPES.GitService)
-      .toConstantValue(new RemoteGitService(options.remoteConnection));
+  bindServices(container, remoteRpc, options.fsRoots ?? [], watchService);
+
+  return container;
+}
+
+function bindServices(
+  container: Container,
+  remoteRpc: ReconnectableRpc | undefined,
+  fsRoots: string[],
+  watchService: WatchService,
+): void {
+  if (remoteRpc) {
+    container.bind(TYPES.FilesystemService).toConstantValue(new RemoteFilesystemService(remoteRpc));
+    container.bind<GitService>(TYPES.GitService).toConstantValue(new RemoteGitService(remoteRpc));
   } else {
-    const fsRoots = options.fsRoots ?? [];
     container
       .bind(TYPES.FilesystemService)
       .toConstantValue(
@@ -215,8 +222,6 @@ export function createContainer(options: ContainerOptions): Container {
         openspecProcess,
       ),
     );
-
-  return container;
 }
 
 function pickOrComposite<T>(stores: T[], makeComposite: (stores: T[]) => T): T {

@@ -1,5 +1,6 @@
 import { homedir } from 'node:os';
 import { resolve } from 'node:path';
+import type { SocketCallback, TypedSocket } from '@code-quest/shared';
 import {
   EVENTS,
   errMsg,
@@ -15,7 +16,6 @@ import {
 import type { FilesystemService } from '@code-quest/summoner';
 import { logger } from '../../logger.ts';
 import type { HandlerContext } from '../../types.ts';
-import type { SocketCallback, TypedSocket } from '../types.ts';
 
 function canonicalize(path: string): string {
   if (path.startsWith('~')) return resolve(homedir(), path.slice(1).replace(/^\/+/, ''));

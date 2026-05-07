@@ -1,8 +1,9 @@
+import type { SocketCallback, TypedSocket } from '@code-quest/shared';
 import { EVENTS } from '@code-quest/shared';
 import { logger } from '../../logger.ts';
 import type { HandlerContext } from '../../types.ts';
 import type { Channel } from '../channel.ts';
-import type { SocketCallback, TypedSocket } from '../types.ts';
+import { SETTINGS_STATE_KEYS } from './settings.ts';
 
 export function create({
   channelManager,
@@ -25,12 +26,7 @@ export function create({
     }));
     let settings: Record<string, unknown> = {};
     try {
-      settings = await settingsStore.getMany(channelManager.provider, [
-        'model',
-        'permissionMode',
-        'thinkingLevel',
-        'effortLevel',
-      ]);
+      settings = await settingsStore.getMany(channelManager.provider, [...SETTINGS_STATE_KEYS]);
     } catch (err) {
       logger.debug({ err }, 'Settings table may not exist yet');
     }

@@ -1,3 +1,4 @@
+import type { SocketCallback, TypedSocket } from '@code-quest/shared';
 import {
   channelIdPayloadSchema,
   EVENTS,
@@ -15,7 +16,6 @@ import type { HandlerContext } from '../../types.ts';
 import type { Channel } from '../channel.ts';
 import { withChannel, withError } from '../channel-emitter.ts';
 import { jsonRpcError, MCP_MESSAGE_TIMEOUT } from '../schemas.ts';
-import type { SocketCallback, TypedSocket } from '../types.ts';
 import { errMsg } from '../utils/helpers.ts';
 import { err, ok } from '../utils/rpc.ts';
 

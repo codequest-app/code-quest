@@ -1,9 +1,10 @@
+import type { SocketCallback, TypedSocket } from '@code-quest/shared';
 import { channelIdPayloadSchema, EVENTS } from '@code-quest/shared';
+import { logger } from '../../logger.ts';
 import type { HandlerContext } from '../../types.ts';
 import type { Channel } from '../channel.ts';
-import type { ChannelEmitter } from '../channel-emitter.ts';
+import { BROADCAST_CHANNEL_ID, type ChannelEmitter } from '../channel-emitter.ts';
 import type { ChannelManager } from '../channel-manager.ts';
-import type { SocketCallback, TypedSocket } from '../types.ts';
 import { errMsg } from '../utils/helpers.ts';
 import { claudeState, type McpStateKey, type McpStateMap, setMcpState } from './state.ts';
 
@@ -42,7 +43,7 @@ function createMcpHandler(
       if (action.connectingState) {
         setMcpState(action.stateKey, action.connectingState);
         emitter.broadcastAll(EVENTS.settings.update, {
-          channelId: '',
+          channelId: BROADCAST_CHANNEL_ID,
           [action.stateKey]: action.connectingState,
         });
       }
@@ -51,19 +52,20 @@ function createMcpHandler(
 
       setMcpState(action.stateKey, action.successState);
       emitter.broadcastAll(EVENTS.settings.update, {
-        channelId: '',
+        channelId: BROADCAST_CHANNEL_ID,
         [action.stateKey]: action.successState,
       });
       callback?.({ success: true, response: { ...action.successResponse, ...extra } });
-    } catch (err) {
+    } catch (e) {
+      logger.warn({ err: e, action: action.errorLabel }, 'mcp action failed');
       if (action.errorState) {
         setMcpState(action.stateKey, action.errorState);
         emitter.broadcastAll(EVENTS.settings.update, {
-          channelId: '',
+          channelId: BROADCAST_CHANNEL_ID,
           [action.stateKey]: action.errorState,
         });
       }
-      callback?.({ success: false, error: errMsg(err, action.errorLabel) });
+      callback?.({ success: false, error: errMsg(e, action.errorLabel) });
     }
   };
 }

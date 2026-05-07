@@ -1,9 +1,9 @@
+import type { TypedSocket } from '@code-quest/shared';
 import { ClaudeAdapter, ProcessRunner } from '@code-quest/summoner';
 import { createFakeSocket, FakeProcessProvider } from '@code-quest/summoner/test';
 import { describe, expect, it, vi } from 'vitest';
 import { Channel } from '../socket/channel.ts';
 import { ChannelEmitter } from '../socket/channel-emitter.ts';
-import type { TypedSocket } from '../socket/types.ts';
 
 /**
  * Contract tests proving that ChannelEmitter operates against the local

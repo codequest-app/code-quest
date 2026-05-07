@@ -2,9 +2,6 @@ import '@testing-library/jest-dom/vitest';
 import { createFakeSocket } from '@code-quest/summoner/test';
 import { cleanup } from '@testing-library/react';
 import { afterEach, beforeEach, vi } from 'vitest';
-import failOnConsole from 'vitest-fail-on-console';
-
-failOnConsole();
 
 // Tests run on the socket.io transport path so the existing
 // vi.mock('socket.io-client') below stays the single source of fake sockets.

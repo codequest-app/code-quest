@@ -1,3 +1,4 @@
+import type { SocketCallback, TypedSocket } from '@code-quest/shared';
 import {
   addMarketplacePayloadSchema,
   availablePluginSchema,
@@ -15,12 +16,10 @@ import {
 } from '@code-quest/shared';
 import type { PluginCliService } from '@code-quest/summoner';
 import { z } from 'zod';
-
 import { logger } from '../../logger.ts';
 import type { HandlerContext } from '../../types.ts';
 import type { Channel } from '../channel.ts';
 import { withChannel, withError } from '../channel-emitter.ts';
-import type { SocketCallback, TypedSocket } from '../types.ts';
 import { errMsg } from '../utils/helpers.ts';
 import { claudeState, clearPluginCache, updatePluginCache } from './state.ts';
 

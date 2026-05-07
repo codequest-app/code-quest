@@ -2,6 +2,19 @@ import 'reflect-metadata';
 import { existsSync } from 'node:fs';
 import { createServer } from 'node:http';
 import { join } from 'node:path';
+import {
+  auth,
+  bearerAuth,
+  errMsg,
+  heartbeat,
+  NullAuthenticator,
+  RpcChannel,
+  type RpcChannelSocket,
+  resumable,
+  type TransportHandle,
+  WsTransport,
+  wsAdapter,
+} from '@code-quest/shared';
 import { ChildProcessProvider } from '@code-quest/summoner';
 import cors from 'cors';
 import express, { type NextFunction, type Request, type Response } from 'express';
@@ -11,14 +24,14 @@ import { createContainer, type StoreConfig } from '../container.ts';
 import { createMysqlDatabase } from '../db/mysql-client.ts';
 import { createDatabase } from '../db/sqlite-client.ts';
 import { logger } from '../logger.ts';
-import { createUpgradeHandler } from '../remote/upgrade-handler.ts';
-import { NullAuthenticator } from '../socket/authenticator.ts';
+import { ReconnectableRpc } from '../remote/reconnectable-rpc.ts';
 import type { ChannelEmitter } from '../socket/channel-emitter.ts';
 import type { SocketServer } from '../socket/server.ts';
-import { SocketIoTransport } from '../socket/socket-io-transport.ts';
-import type { TransportHandle } from '../socket/transport.ts';
-import { WsTransport } from '../socket/ws-transport.ts';
+import { SocketIoTransport } from '../transport/socket-io-transport.ts';
 import { TYPES } from '../types.ts';
+
+const WS_PATH = '/ws';
+const SUMMONER_PATH = '/summoner';
 
 const storeConfig: StoreConfig = {};
 
@@ -65,8 +78,18 @@ const handles: TransportHandle[] = [];
 if (config.transport.socketio) {
   handles.push(new SocketIoTransport({ authenticator, cors: { origin: '*' } }).attach(httpServer));
 }
+
+const wsTransport = new WsTransport(wsAdapter(), logger);
 if (config.transport.ws) {
-  handles.push(new WsTransport({ authenticator, path: '/ws' }).attach(httpServer));
+  wsTransport.route(
+    WS_PATH,
+    [
+      auth(authenticator),
+      heartbeat({ pingIntervalMs: 25_000, idleTimeoutMs: 60_000 }),
+      resumable(),
+    ],
+    () => {},
+  );
 }
 
 function registerTransports(socketSrv: SocketServer): void {
@@ -86,33 +109,44 @@ if (config.remoteMode === 'local') {
     fsRoots: config.fsRoots,
     rawEvents: config.rawEvents,
   });
+  handles.push(wsTransport.attach(httpServer));
   registerTransports(container.get<SocketServer>(TYPES.SocketServer));
 }
 
 if (config.remoteMode === 'remote') {
-  createUpgradeHandler({
-    token: requireRemoteToken(),
-    onConnect: (conn) => {
-      if (!container) {
-        container = createContainer({
-          remoteConnection: conn,
-          storeConfig,
-          rawEvents: config.rawEvents,
-        });
-        registerTransports(container.get<SocketServer>(TYPES.SocketServer));
-        logger.info('container initialized with remote daemon');
-      }
+  container = setupRemoteMode();
+}
 
-      container
-        .get<ChannelEmitter>(TYPES.ChannelEventRouter)
-        .broadcastAll('remote:status', { connected: true });
+function setupRemoteMode() {
+  const remoteToken = requireRemoteToken();
+  const reconnectableRpc = new ReconnectableRpc();
+
+  const c = createContainer({
+    remoteRpc: reconnectableRpc,
+    storeConfig,
+    rawEvents: config.rawEvents,
+  });
+
+  wsTransport.route(
+    SUMMONER_PATH,
+    [bearerAuth(remoteToken), heartbeat({ pingIntervalMs: 30_000, idleTimeoutMs: 60_000 })],
+    (_socket, ctx) => {
+      const rpc = new RpcChannel(ctx.socket as RpcChannelSocket);
+      reconnectableRpc.replace(rpc);
+      broadcastRemoteStatus(c, true);
+
+      rpc.on('disconnect', () => broadcastRemoteStatus(c, false));
     },
-    onDisconnect: () => {
-      container
-        ?.get<ChannelEmitter>(TYPES.ChannelEventRouter)
-        .broadcastAll('remote:status', { connected: false });
-    },
-  }).attach(httpServer);
+  );
+
+  handles.push(wsTransport.attach(httpServer));
+  registerTransports(c.get<SocketServer>(TYPES.SocketServer));
+  return c;
+}
+
+function broadcastRemoteStatus(c: ReturnType<typeof createContainer>, connected: boolean) {
+  logger.info(connected ? 'remote daemon connected' : 'remote daemon disconnected');
+  c.get<ChannelEmitter>(TYPES.ChannelEventRouter).broadcastAll('remote:status', { connected });
 }
 
 const HEALTH_PATH = '/health';
@@ -136,7 +170,7 @@ if (existsSync(clientDist)) {
 app.use((err: unknown, _req: Request, res: Response, _next: NextFunction) => {
   const status =
     err instanceof Error && 'status' in err && typeof err.status === 'number' ? err.status : 500;
-  const message = err instanceof Error ? err.message : 'Internal Server Error';
+  const message = errMsg(err, 'Internal Server Error');
   if (status >= 500) logger.error({ err, status }, 'Unhandled request error');
   res.status(status).json({ error: message });
 });

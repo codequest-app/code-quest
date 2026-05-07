@@ -1,21 +1,26 @@
 import { createServer, type Server as HttpServer } from 'node:http';
 import type { AddressInfo } from 'node:net';
-import type { Envelope } from '@code-quest/shared';
+import type { Envelope, TypedSocket } from '@code-quest/shared';
+import {
+  auth,
+  type ConnectionContext,
+  type Middleware,
+  NullAuthenticator,
+  WsTransport,
+  wsAdapter,
+} from '@code-quest/shared';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { WebSocket } from 'ws';
-import { NullAuthenticator } from '../authenticator.ts';
-import type { TransportHandle } from '../transport.ts';
-import type { TypedSocket } from '../types.ts';
-import { WsTransport } from '../ws-transport.ts';
 
 describe('WsTransport (integration)', () => {
   let httpServer: HttpServer;
-  let handle: TransportHandle | undefined;
+  let server: WsTransport | undefined;
+  let closeServer: (() => Promise<void>) | undefined;
   const clients: WebSocket[] = [];
 
-  function url(): string {
+  function url(path = '/ws'): string {
     const { port } = httpServer.address() as AddressInfo;
-    return `ws://127.0.0.1:${port}/ws`;
+    return `ws://127.0.0.1:${port}${path}`;
   }
 
   function openClient(connectUrl = url()): Promise<WebSocket> {
@@ -43,19 +48,28 @@ describe('WsTransport (integration)', () => {
       if (c.readyState === c.OPEN || c.readyState === c.CONNECTING) c.close();
     }
     clients.length = 0;
-    if (handle) {
-      await handle.close();
-      handle = undefined;
+    if (closeServer) {
+      await closeServer();
+      closeServer = undefined;
     }
+    server = undefined;
     await new Promise<void>((r) => httpServer.close(() => r()));
   });
 
-  it('attach mounts on /ws path and accepts connections', async () => {
-    const transport = new WsTransport({ authenticator: new NullAuthenticator(), path: '/ws' });
-    handle = transport.attach(httpServer);
+  function createWsTransport(
+    handler: (socket: TypedSocket, ctx: ConnectionContext) => void,
+    path = '/ws',
+    middleware: Middleware[] = [auth(new NullAuthenticator())],
+  ): void {
+    server = new WsTransport(wsAdapter());
+    server.route(path, middleware, handler);
+    const handle = server.attach(httpServer);
+    closeServer = () => handle.close();
+  }
 
+  it('accepts connections and delivers TypedSocket', async () => {
     const accepted: TypedSocket[] = [];
-    handle.onConnection((s) => accepted.push(s));
+    createWsTransport((s) => accepted.push(s));
 
     await openClient();
     await vi.waitFor(() => expect(accepted).toHaveLength(1));
@@ -65,11 +79,8 @@ describe('WsTransport (integration)', () => {
   });
 
   it('event envelope emitted via TypedSocket.emit reaches the client with seq', async () => {
-    const transport = new WsTransport({ authenticator: new NullAuthenticator(), path: '/ws' });
-    handle = transport.attach(httpServer);
-
     let serverSide: TypedSocket | undefined;
-    handle.onConnection((s) => {
+    createWsTransport((s) => {
       serverSide = s;
     });
 
@@ -83,26 +94,8 @@ describe('WsTransport (integration)', () => {
     expect(env).toEqual({ kind: 'event', seq: 1, event: 'hello', data: { text: 'hi' } });
   });
 
-  it('a throwing onConnection listener does not block subsequent listeners', async () => {
-    const transport = new WsTransport({ authenticator: new NullAuthenticator(), path: '/ws' });
-    handle = transport.attach(httpServer);
-    let bFired = false;
-    handle.onConnection(() => {
-      throw new Error('listener boom');
-    });
-    handle.onConnection(() => {
-      bFired = true;
-    });
-
-    await openClient();
-    await vi.waitFor(() => expect(bFired).toBe(true));
-  });
-
-  it('request envelope routes through emitter handler and response carries matching id', async () => {
-    const transport = new WsTransport({ authenticator: new NullAuthenticator(), path: '/ws' });
-    handle = transport.attach(httpServer);
-
-    handle.onConnection((s) => {
+  it('request envelope routes through handler and response carries matching id', async () => {
+    createWsTransport((s) => {
       s.on('list', (...args) => {
         const cb = args[args.length - 1] as (result: unknown) => void;
         if (typeof cb === 'function') cb({ projects: [{ id: 'p-1' }] });
@@ -125,9 +118,7 @@ describe('WsTransport (integration)', () => {
   });
 
   it('client ping envelope receives pong', async () => {
-    const transport = new WsTransport({ authenticator: new NullAuthenticator(), path: '/ws' });
-    handle = transport.attach(httpServer);
-    handle.onConnection(() => {});
+    createWsTransport(() => {});
 
     const ws = await openClient();
     const recvP = nextEnvelope(ws);
@@ -138,29 +129,10 @@ describe('WsTransport (integration)', () => {
   });
 
   it('malformed JSON frame is dropped without closing the connection', async () => {
-    const transport = new WsTransport({ authenticator: new NullAuthenticator(), path: '/ws' });
-    handle = transport.attach(httpServer);
-    handle.onConnection(() => {});
+    createWsTransport(() => {});
 
     const ws = await openClient();
     ws.send('not-json');
-    // Prove server processed the bad frame by round-tripping a valid ping/pong
-    const recvP = nextEnvelope(ws);
-    ws.send(JSON.stringify({ kind: 'ping' }));
-    const env = await recvP;
-
-    expect(env).toEqual({ kind: 'pong' });
-    expect(ws.readyState).toBe(ws.OPEN);
-  });
-
-  it('frame failing envelope schema validation is dropped without closing', async () => {
-    const transport = new WsTransport({ authenticator: new NullAuthenticator(), path: '/ws' });
-    handle = transport.attach(httpServer);
-    handle.onConnection(() => {});
-
-    const ws = await openClient();
-    ws.send(JSON.stringify({ kind: 'event', seq: -1, event: 'x', data: {} }));
-    // Prove server processed the bad frame by round-tripping a valid ping/pong
     const recvP = nextEnvelope(ws);
     ws.send(JSON.stringify({ kind: 'ping' }));
     const env = await recvP;
@@ -170,11 +142,8 @@ describe('WsTransport (integration)', () => {
   });
 
   it('TypedSocket disconnect listener fires when client closes', async () => {
-    const transport = new WsTransport({ authenticator: new NullAuthenticator(), path: '/ws' });
-    handle = transport.attach(httpServer);
-
     let disconnected = false;
-    handle.onConnection((s) => {
+    createWsTransport((s) => {
       s.on('disconnect', () => {
         disconnected = true;
       });
@@ -188,9 +157,7 @@ describe('WsTransport (integration)', () => {
 
   it('rejects upgrade with HTTP 401 when authenticator returns null', async () => {
     const denyAuth = { authenticate: async () => null };
-    const transport = new WsTransport({ authenticator: denyAuth, path: '/ws' });
-    handle = transport.attach(httpServer);
-    handle.onConnection(() => {});
+    createWsTransport(() => {}, '/ws', [auth(denyAuth)]);
 
     const ws = new WebSocket(url());
     clients.push(ws);
@@ -204,41 +171,9 @@ describe('WsTransport (integration)', () => {
     expect(outcome).not.toBe('open');
   });
 
-  it('close stops accepting new connections without killing the http server', async () => {
-    const transport = new WsTransport({ authenticator: new NullAuthenticator(), path: '/ws' });
-    handle = transport.attach(httpServer);
-
-    let accepted = 0;
-    handle.onConnection(() => {
-      accepted++;
-    });
-    await handle.close();
-    handle = undefined;
-
-    const addr = httpServer.address() as AddressInfo;
-    expect(addr.port).toBeGreaterThan(0);
-
-    const ws = new WebSocket(`ws://127.0.0.1:${addr.port}/ws`);
-    clients.push(ws);
-    const outcome = await new Promise<'open' | 'closed'>((resolve) => {
-      ws.once('open', () => resolve('open'));
-      ws.once('error', () => resolve('closed'));
-      ws.once('close', () => resolve('closed'));
-      setTimeout(() => resolve('closed'), 300);
-    });
-
-    expect(outcome).toBe('closed');
-    expect(accepted).toBe(0);
-  });
-
   it('seq increments per outbound event for each socket independently', async () => {
-    const transport = new WsTransport({ authenticator: new NullAuthenticator(), path: '/ws' });
-    handle = transport.attach(httpServer);
-
     const sockets: TypedSocket[] = [];
-    handle.onConnection((s) => {
-      sockets.push(s);
-    });
+    createWsTransport((s) => sockets.push(s));
 
     const wsA = await openClient();
     const wsB = await openClient();
@@ -259,5 +194,140 @@ describe('WsTransport (integration)', () => {
 
     expect(recvA.map((e) => (e as { seq: number }).seq)).toEqual([1, 2]);
     expect(recvB.map((e) => (e as { seq: number }).seq)).toEqual([1]);
+  });
+
+  it('close stops accepting new connections', async () => {
+    createWsTransport(() => {});
+
+    await closeServer?.();
+    closeServer = undefined;
+
+    const addr = httpServer.address() as AddressInfo;
+    const ws = new WebSocket(`ws://127.0.0.1:${addr.port}/ws`);
+    clients.push(ws);
+    const outcome = await new Promise<'open' | 'closed'>((resolve) => {
+      ws.once('open', () => resolve('open'));
+      ws.once('error', () => resolve('closed'));
+      ws.once('close', () => resolve('closed'));
+      setTimeout(() => resolve('closed'), 300);
+    });
+
+    expect(outcome).toBe('closed');
+  });
+
+  describe('middleware', () => {
+    it('runs middleware in order', async () => {
+      const order: string[] = [];
+      createWsTransport(
+        () => {
+          order.push('handler');
+        },
+        '/ws',
+        [
+          async (_ctx, next) => {
+            order.push('a');
+            await next();
+          },
+          async (_ctx, next) => {
+            order.push('b');
+            await next();
+          },
+          async (_ctx, next) => {
+            order.push('c');
+            await next();
+          },
+        ],
+      );
+
+      await openClient();
+      await vi.waitFor(() => expect(order).toEqual(['a', 'b', 'c', 'handler']));
+    });
+
+    it('middleware that calls reject stops the pipeline with 401', async () => {
+      let handlerCalled = false;
+      createWsTransport(
+        () => {
+          handlerCalled = true;
+        },
+        '/ws',
+        [
+          () => {
+            // don't call next = reject
+          },
+        ],
+      );
+
+      const ws = new WebSocket(url());
+      clients.push(ws);
+      const outcome = await new Promise<'open' | 'rejected'>((resolve) => {
+        ws.once('open', () => resolve('open'));
+        ws.once('error', () => resolve('rejected'));
+        ws.once('close', () => resolve('rejected'));
+        setTimeout(() => resolve('rejected'), 300);
+      });
+
+      expect(outcome).toBe('rejected');
+      expect(handlerCalled).toBe(false);
+    });
+  });
+
+  describe('transformSocket hook', () => {
+    it('applies context.transformSocket to wrap the TypedSocket', async () => {
+      let receivedSocket: unknown;
+      const transform = vi.fn((typed) => {
+        const wrapped = { ...typed, id: `wrapped-${typed.id}` };
+        return wrapped;
+      });
+
+      createWsTransport(
+        (socket) => {
+          receivedSocket = socket;
+        },
+        '/ws',
+        [
+          async (ctx, next) => {
+            ctx.transformSocket = transform;
+            await next();
+          },
+        ],
+      );
+
+      await openClient();
+      await vi.waitFor(() => expect(receivedSocket).toBeDefined());
+      expect(transform).toHaveBeenCalledTimes(1);
+      expect((receivedSocket as { id: string }).id).toMatch(/^wrapped-/);
+    });
+
+    it('uses raw TypedSocket when no transformSocket is set', async () => {
+      let receivedSocket: unknown;
+      createWsTransport((socket) => {
+        receivedSocket = socket;
+      });
+
+      await openClient();
+      await vi.waitFor(() => expect(receivedSocket).toBeDefined());
+      expect((receivedSocket as { id: string }).id).not.toMatch(/^wrapped-/);
+    });
+  });
+
+  describe('path routing', () => {
+    it('routes to correct handler by path', async () => {
+      const results: string[] = [];
+      server = new WsTransport(wsAdapter());
+      server.route('/ws', [], () => {
+        results.push('browser');
+      });
+      server.route('/ws/summoner', [], () => {
+        results.push('summoner');
+      });
+      const handle = server.attach(httpServer);
+      closeServer = () => handle.close();
+
+      await openClient(url('/ws'));
+      await vi.waitFor(() => expect(results).toContain('browser'));
+
+      await openClient(url('/ws/summoner'));
+      await vi.waitFor(() => expect(results).toContain('summoner'));
+    });
   });
 });

@@ -1,3 +1,4 @@
+import type { SocketCallback, TypedSocket } from '@code-quest/shared';
 import {
   EVENTS,
   openspecArchivePayloadSchema,
@@ -6,97 +7,79 @@ import {
   openspecReadPayloadSchema,
   openspecToggleTaskPayloadSchema,
 } from '@code-quest/shared';
+import type { ZodType } from 'zod';
 import { logger } from '../../logger.ts';
 import type { HandlerContext } from '../../types.ts';
-import type { SocketCallback, TypedSocket } from '../types.ts';
+
+type EmitterHandler = (
+  ch: unknown,
+  payload: unknown,
+  socket?: TypedSocket,
+  callback?: SocketCallback,
+) => Promise<void>;
+
+function createHandler<T>(
+  schema: ZodType<T>,
+  fn: (parsed: T) => Promise<Record<string, unknown>>,
+  errorLabel: string,
+): EmitterHandler {
+  return async (_ch, payload, _socket, callback) => {
+    try {
+      const parsed = schema.parse(payload);
+      callback?.(await fn(parsed));
+    } catch (err) {
+      logger.warn({ err }, `${errorLabel} failed`);
+      callback?.({ error: `${errorLabel} failed` });
+    }
+  };
+}
 
 export function create({
   emitter,
   openspecService,
 }: Pick<HandlerContext, 'emitter' | 'openspecService'>): void {
-  async function handleList(
-    _ch: unknown,
-    payload: unknown,
-    _socket?: TypedSocket,
-    callback?: SocketCallback,
-  ): Promise<void> {
-    try {
-      const { cwd } = openspecListPayloadSchema.parse(payload);
+  emitter.on(
+    EVENTS.openspec.list,
+    createHandler(
+      openspecListPayloadSchema,
+      ({ cwd }) => openspecService.list(cwd),
+      'openspec:list',
+    ),
+  );
 
-      callback?.(await openspecService.list(cwd));
-    } catch (err) {
-      logger.warn({ err }, 'openspec:list failed');
-      callback?.({ error: 'List failed' });
-    }
-  }
+  emitter.on(
+    EVENTS.openspec.read,
+    createHandler(
+      openspecReadPayloadSchema,
+      ({ cwd, kind, name, artifact }) => openspecService.read(cwd, kind, name, artifact),
+      'openspec:read',
+    ),
+  );
 
-  async function handleRead(
-    _ch: unknown,
-    payload: unknown,
-    _socket?: TypedSocket,
-    callback?: SocketCallback,
-  ): Promise<void> {
-    try {
-      const { cwd, kind, name, artifact } = openspecReadPayloadSchema.parse(payload);
+  emitter.on(
+    EVENTS.openspec.changeNew,
+    createHandler(
+      openspecChangeNewPayloadSchema,
+      ({ cwd, name }) => openspecService.changeNew(cwd, name),
+      'openspec:changeNew',
+    ),
+  );
 
-      callback?.(await openspecService.read(cwd, kind, name, artifact));
-    } catch (err) {
-      logger.warn({ err }, 'openspec:read failed');
-      callback?.({ error: 'Read failed' });
-    }
-  }
+  emitter.on(
+    EVENTS.openspec.archive,
+    createHandler(
+      openspecArchivePayloadSchema,
+      ({ cwd, name, skipSpecs }) => openspecService.archive(cwd, name, { skipSpecs }),
+      'openspec:archive',
+    ),
+  );
 
-  async function handleChangeNew(
-    _ch: unknown,
-    payload: unknown,
-    _socket?: TypedSocket,
-    callback?: SocketCallback,
-  ): Promise<void> {
-    try {
-      const { cwd, name } = openspecChangeNewPayloadSchema.parse(payload);
-
-      callback?.(await openspecService.changeNew(cwd, name));
-    } catch (err) {
-      logger.warn({ err }, 'openspec:changeNew failed');
-      callback?.({ error: 'Create failed' });
-    }
-  }
-
-  async function handleArchive(
-    _ch: unknown,
-    payload: unknown,
-    _socket?: TypedSocket,
-    callback?: SocketCallback,
-  ): Promise<void> {
-    try {
-      const { cwd, name, skipSpecs } = openspecArchivePayloadSchema.parse(payload);
-
-      callback?.(await openspecService.archive(cwd, name, { skipSpecs }));
-    } catch (err) {
-      logger.warn({ err }, 'openspec:archive failed');
-      callback?.({ error: 'Archive failed' });
-    }
-  }
-
-  async function handleToggleTask(
-    _ch: unknown,
-    payload: unknown,
-    _socket?: TypedSocket,
-    callback?: SocketCallback,
-  ): Promise<void> {
-    try {
-      const { cwd, name, lineIndex } = openspecToggleTaskPayloadSchema.parse(payload);
-
-      callback?.(await openspecService.toggleTask(cwd, name, lineIndex));
-    } catch (err) {
-      logger.warn({ err }, 'openspec:toggleTask failed');
-      callback?.({ error: 'Toggle failed' });
-    }
-  }
-
-  emitter.on(EVENTS.openspec.list, handleList);
-  emitter.on(EVENTS.openspec.read, handleRead);
-  emitter.on(EVENTS.openspec.changeNew, handleChangeNew);
-  emitter.on(EVENTS.openspec.archive, handleArchive);
-  emitter.on(EVENTS.openspec.toggleTask, handleToggleTask);
+  emitter.on(
+    EVENTS.openspec.toggleTask,
+    createHandler(
+      openspecToggleTaskPayloadSchema,
+      ({ cwd, name, lineIndex }) => openspecService.toggleTask(cwd, name, lineIndex),
+      'openspec:toggleTask',
+    ),
+  );
 }

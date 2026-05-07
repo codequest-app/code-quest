@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { EnvelopeSchema } from '../envelope.ts';
+import { EnvelopeSchema, parseEnvelope } from '../envelope.ts';
 
 describe('EnvelopeSchema', () => {
   describe('round-trip parse for each kind', () => {
@@ -94,5 +94,33 @@ describe('EnvelopeSchema', () => {
     it('rejects negative lastSeq', () => {
       expect(EnvelopeSchema.safeParse({ kind: 'resume', lastSeq: -1 }).success).toBe(false);
     });
+  });
+});
+
+describe('parseEnvelope', () => {
+  it('parses valid JSON envelope', () => {
+    const raw = JSON.stringify({ kind: 'ping' });
+    expect(parseEnvelope(raw)).toEqual({ kind: 'ping' });
+  });
+
+  it('returns null for invalid JSON', () => {
+    expect(parseEnvelope('not-json')).toBeNull();
+  });
+
+  it('returns null for non-object JSON', () => {
+    expect(parseEnvelope('"hello"')).toBeNull();
+  });
+
+  it('returns null for object without kind', () => {
+    expect(parseEnvelope('{"event":"foo"}')).toBeNull();
+  });
+
+  it('returns null for unknown kind', () => {
+    expect(parseEnvelope('{"kind":"unknown"}')).toBeNull();
+  });
+
+  it('parses event envelope', () => {
+    const env = { kind: 'event', seq: 1, event: 'test', data: { x: 1 } };
+    expect(parseEnvelope(JSON.stringify(env))).toEqual(env);
   });
 });

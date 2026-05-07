@@ -1,8 +1,6 @@
 import type { IncomingMessage } from 'node:http';
+import type { Authenticator, Transport, TransportHandle, TypedSocket } from '@code-quest/shared';
 import { describe, expect, it, vi } from 'vitest';
-import type { Authenticator } from '../authenticator.ts';
-import type { Transport, TransportHandle } from '../transport.ts';
-import type { TypedSocket } from '../types.ts';
 
 /**
  * Contract tests for the Transport interface. Any concrete Transport

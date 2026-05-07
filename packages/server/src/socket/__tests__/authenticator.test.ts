@@ -1,6 +1,6 @@
 import type { IncomingMessage } from 'node:http';
+import { type Authenticator, NullAuthenticator } from '@code-quest/shared';
 import { describe, expect, it } from 'vitest';
-import { type Authenticator, NullAuthenticator } from '../authenticator.ts';
 
 function fakeReq(headers: Record<string, string> = {}): IncomingMessage {
   return { headers } as IncomingMessage;
