@@ -1,3 +1,4 @@
+import type { SocketCallback, TypedSocket } from '@code-quest/shared';
 import {
   ERROR_CODES,
   EVENTS,
@@ -9,7 +10,6 @@ import { z } from 'zod';
 import { logger } from '../../../logger.ts';
 import type { HandlerContext } from '../../../types.ts';
 import type { Channel } from '../../channel.ts';
-import type { SocketCallback, TypedSocket } from '../../types.ts';
 import { errMsg } from '../../utils/helpers.ts';
 import { err, ok } from '../../utils/rpc.ts';
 

@@ -1,3 +1,4 @@
+import type { SocketCallback, TypedSocket } from '@code-quest/shared';
 import {
   createWorktreePayloadSchema,
   EVENTS,
@@ -21,9 +22,10 @@ import {
 import { AlreadyRepoError, NotARepoError } from '@code-quest/summoner';
 import { logger } from '../../logger.ts';
 import type { HandlerContext } from '../../types.ts';
-import type { SocketCallback, TypedSocket } from '../types.ts';
 import { errMsg } from '../utils/helpers.ts';
 import { err, ok } from '../utils/rpc.ts';
+
+const NOT_A_REPO = 'not_a_repo';
 
 export function create({
   emitter,
@@ -80,13 +82,13 @@ export function create({
     try {
       const projectRoot = await gitService.getProjectRoot(parsed.data.cwd);
       if (!projectRoot) {
-        callback?.(err('not_a_repo'));
+        callback?.(err(NOT_A_REPO));
         return;
       }
       callback?.(ok({ branches: await gitService.listBranches(projectRoot) }));
     } catch (e) {
       if (e instanceof NotARepoError) {
-        callback?.(err('not_a_repo'));
+        callback?.(err(NOT_A_REPO));
         return;
       }
       callback?.(err(errMsg(e, 'Failed to list branches')));
@@ -108,7 +110,7 @@ export function create({
     try {
       const projectRoot = await gitService.getProjectRoot(cwd);
       if (!projectRoot) {
-        callback?.(err('not_a_repo'));
+        callback?.(err(NOT_A_REPO));
         return;
       }
       await gitService.checkout(cwd, branch);
@@ -306,13 +308,13 @@ export function create({
     try {
       const projectRoot = await gitService.getProjectRoot(parsed.data.cwd);
       if (!projectRoot) {
-        callback?.(err('not_a_repo'));
+        callback?.(err(NOT_A_REPO));
         return;
       }
       callback?.(ok({ worktrees: await gitService.listWorktrees(projectRoot) }));
     } catch (e) {
       if (e instanceof NotARepoError) {
-        callback?.(err('not_a_repo'));
+        callback?.(err(NOT_A_REPO));
         return;
       }
       callback?.(err(errMsg(e, 'Failed to list worktrees')));

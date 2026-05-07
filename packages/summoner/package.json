@@ -7,12 +7,12 @@
   "exports": {
     ".": "./src/index.ts",
     "./browser": "./src/browser.ts",
-    "./daemon": "./src/daemon/agent.ts",
+    "./connection": "./src/connection/agent.ts",
     "./test": "./src/test/index.ts",
     "./test-browser": "./src/test/index-browser.ts"
   },
   "scripts": {
-    "dev": "tsx --env-file=.env src/daemon.ts",
+    "dev": "tsx --env-file=.env src/main.ts",
     "test": "vitest run",
     "lint": "biome check src"
   },

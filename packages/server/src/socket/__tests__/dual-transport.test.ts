@@ -1,13 +1,11 @@
 import { createServer, type Server as HttpServer } from 'node:http';
 import type { AddressInfo } from 'node:net';
+import type { TransportHandle, TypedSocket } from '@code-quest/shared';
+import { auth, NullAuthenticator, WsTransport, wsAdapter } from '@code-quest/shared';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { WebSocket } from 'ws';
-import { NullAuthenticator } from '../authenticator.ts';
+import { SocketIoTransport } from '../../transport/socket-io-transport.ts';
 import { ChannelEmitter } from '../channel-emitter.ts';
-import { SocketIoTransport } from '../socket-io-transport.ts';
-import type { TransportHandle } from '../transport.ts';
-import type { TypedSocket } from '../types.ts';
-import { WsTransport } from '../ws-transport.ts';
 
 vi.unmock('socket.io-client');
 const { io: ioClient } =
@@ -16,8 +14,7 @@ const { io: ioClient } =
 /**
  * Verifies the multi-transport coexistence story: a single ChannelEmitter
  * receives connections from BOTH SocketIoTransport and WsTransport when both
- * are attached to the same http.Server. Handlers do not know (and cannot tell)
- * which transport carries any given socket.
+ * are attached to the same http.Server.
  */
 describe('Dual transport coexistence', () => {
   let httpServer: HttpServer;
@@ -30,8 +27,6 @@ describe('Dual transport coexistence', () => {
   }
 
   beforeEach(async () => {
-    // Default request handler: anything not claimed by a transport upgrade
-    // returns 404. Mirrors how express would behave behind these transports.
     httpServer = createServer((_req, res) => {
       res.statusCode = 404;
       res.end();
@@ -57,7 +52,8 @@ describe('Dual transport coexistence', () => {
     const accepted: TypedSocket[] = [];
 
     const sioTransport = new SocketIoTransport({ authenticator: new NullAuthenticator() });
-    const wsTransport = new WsTransport({ authenticator: new NullAuthenticator(), path: '/ws' });
+    const wsTransport = new WsTransport(wsAdapter());
+    wsTransport.route('/ws', [auth(new NullAuthenticator())], () => {});
 
     const sioHandle = sioTransport.attach(httpServer);
     const wsHandle = wsTransport.attach(httpServer);
@@ -79,10 +75,7 @@ describe('Dual transport coexistence', () => {
     const wsClient = new WebSocket(`ws://127.0.0.1:${port()}/ws`);
     wsClients.push(wsClient);
     await new Promise<void>((r) => wsClient.once('open', () => r()));
-    await new Promise<void>((r) => setTimeout(r, 30));
-
-    expect(accepted).toHaveLength(2);
-    // Broadcasting from emitter reaches both clients regardless of transport.
+    await vi.waitFor(() => expect(accepted).toHaveLength(2));
     const sioRecv = new Promise<void>((resolve) => {
       sioClient.on('system:msg', () => resolve());
     });
@@ -98,13 +91,10 @@ describe('Dual transport coexistence', () => {
   });
 
   it('ws-only mode: /socket.io path receives no transport response', async () => {
-    // Only attach WsTransport on /ws; nothing claims /socket.io on the http server.
-    const wsTransport = new WsTransport({ authenticator: new NullAuthenticator(), path: '/ws' });
+    const wsTransport = new WsTransport(wsAdapter());
+    wsTransport.route('/ws', [auth(new NullAuthenticator())], () => {});
     handles.push(wsTransport.attach(httpServer));
 
-    // Directly probe the path: socket.io's transport polling endpoint is a
-    // GET /socket.io/?EIO=4&transport=polling. Without any transport mounted,
-    // Node's default http.Server returns 404.
     const status = await new Promise<number>((resolve, reject) => {
       const req = require('node:http').request(
         {

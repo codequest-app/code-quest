@@ -12,97 +12,135 @@ import type {
   GitStatusResult,
   WorktreeInfo,
 } from '@code-quest/shared';
-import { REMOTE_METHODS } from '@code-quest/shared';
-import type { Connection } from './connection.ts';
+import {
+  fsMutationResultSchema,
+  gitAddResultSchema,
+  gitBranchListSchema,
+  gitBranchResultSchema,
+  gitCommitResultSchema,
+  gitDiffResultSchema,
+  gitDiscardFileResultSchema,
+  gitFetchResultSchema,
+  gitLogResultSchema,
+  gitNullableRootSchema,
+  gitPullResultSchema,
+  gitPushResultSchema,
+  gitStatusResultSchema,
+  gitWorktreeListSchema,
+  REMOTE_METHODS,
+  worktreeInfoSchema,
+} from '@code-quest/shared';
+import type { RemoteRpc } from './types.ts';
 
 export class RemoteGitService implements GitService {
   readonly capabilities = { worktree: true };
-  private readonly connection: Connection;
+  private readonly rpc: RemoteRpc;
 
-  constructor(connection: Connection) {
-    this.connection = connection;
+  constructor(rpc: RemoteRpc) {
+    this.rpc = rpc;
   }
 
-  status(cwd: string): Promise<GitStatusResult> {
-    return this.connection.request(REMOTE_METHODS.git.status, { cwd });
+  async status(cwd: string): Promise<GitStatusResult> {
+    const raw = await this.rpc.request(REMOTE_METHODS.git.status, { cwd });
+    return gitStatusResultSchema.parse(raw);
   }
 
-  checkout(cwd: string, branch: string): Promise<void> {
-    return this.connection.request(REMOTE_METHODS.git.checkout, { cwd, branch });
+  async checkout(cwd: string, branch: string): Promise<void> {
+    await this.rpc.request(REMOTE_METHODS.git.checkout, { cwd, branch });
   }
 
-  log(cwd: string, limit?: number): Promise<GitLogResult> {
-    return this.connection.request(REMOTE_METHODS.git.log, { cwd, limit });
+  async log(cwd: string, limit?: number): Promise<GitLogResult> {
+    const raw = await this.rpc.request(REMOTE_METHODS.git.log, { cwd, limit });
+    return gitLogResultSchema.parse(raw);
   }
 
-  diff(cwd: string, filePath?: string, status?: string): Promise<GitDiffResult> {
-    return this.connection.request(REMOTE_METHODS.git.diff, { cwd, filePath, status });
+  async diff(cwd: string, filePath?: string, status?: string): Promise<GitDiffResult> {
+    const raw = await this.rpc.request(REMOTE_METHODS.git.diff, { cwd, filePath, status });
+    return gitDiffResultSchema.parse(raw);
   }
 
-  add(cwd: string, paths?: string[]): Promise<GitAddResult> {
-    return this.connection.request(REMOTE_METHODS.git.add, { cwd, paths });
+  async add(cwd: string, paths?: string[]): Promise<GitAddResult> {
+    const raw = await this.rpc.request(REMOTE_METHODS.git.add, { cwd, paths });
+    return gitAddResultSchema.parse(raw);
   }
 
-  commit(cwd: string, message: string): Promise<GitCommitResult> {
-    return this.connection.request(REMOTE_METHODS.git.commit, { cwd, message });
+  async commit(cwd: string, message: string): Promise<GitCommitResult> {
+    const raw = await this.rpc.request(REMOTE_METHODS.git.commit, { cwd, message });
+    return gitCommitResultSchema.parse(raw);
   }
 
-  push(cwd: string): Promise<GitPushResult> {
-    return this.connection.request(REMOTE_METHODS.git.push, { cwd });
+  async push(cwd: string): Promise<GitPushResult> {
+    const raw = await this.rpc.request(REMOTE_METHODS.git.push, { cwd });
+    return gitPushResultSchema.parse(raw);
   }
 
-  fetch(cwd: string): Promise<GitFetchResult> {
-    return this.connection.request(REMOTE_METHODS.git.fetch, { cwd });
+  async fetch(cwd: string): Promise<GitFetchResult> {
+    const raw = await this.rpc.request(REMOTE_METHODS.git.fetch, { cwd });
+    return gitFetchResultSchema.parse(raw);
   }
 
-  pull(cwd: string): Promise<GitPullResult> {
-    return this.connection.request(REMOTE_METHODS.git.pull, { cwd });
+  async pull(cwd: string): Promise<GitPullResult> {
+    const raw = await this.rpc.request(REMOTE_METHODS.git.pull, { cwd });
+    return gitPullResultSchema.parse(raw);
   }
 
-  discardFile(cwd: string, file: string): Promise<GitDiscardFileResult> {
-    return this.connection.request(REMOTE_METHODS.git.discardFile, { cwd, file });
+  async discardFile(cwd: string, file: string): Promise<GitDiscardFileResult> {
+    const raw = await this.rpc.request(REMOTE_METHODS.git.discardFile, { cwd, file });
+    return gitDiscardFileResultSchema.parse(raw);
   }
 
-  getRepoRoot(cwd: string): Promise<string | null> {
-    return this.connection.request(REMOTE_METHODS.git.getRepoRoot, { cwd });
+  async getRepoRoot(cwd: string): Promise<string | null> {
+    const raw = await this.rpc.request(REMOTE_METHODS.git.getRepoRoot, { cwd });
+    return gitNullableRootSchema.parse(raw);
   }
 
-  getProjectRoot(cwd: string): Promise<string | null> {
-    return this.connection.request(REMOTE_METHODS.git.getProjectRoot, { cwd });
+  async getProjectRoot(cwd: string): Promise<string | null> {
+    const raw = await this.rpc.request(REMOTE_METHODS.git.getProjectRoot, { cwd });
+    return gitNullableRootSchema.parse(raw);
   }
 
-  initRepo(cwd: string): Promise<{ branch: string }> {
-    return this.connection.request(REMOTE_METHODS.git.initRepo, { cwd });
+  async initRepo(cwd: string): Promise<{ branch: string }> {
+    const raw = await this.rpc.request(REMOTE_METHODS.git.initRepo, { cwd });
+    return gitBranchResultSchema.parse(raw);
   }
 
-  listBranches(repoRoot: string): Promise<string[]> {
-    return this.connection.request(REMOTE_METHODS.git.listBranches, { repoRoot });
+  async listBranches(repoRoot: string): Promise<string[]> {
+    const raw = await this.rpc.request(REMOTE_METHODS.git.listBranches, { repoRoot });
+    return gitBranchListSchema.parse(raw);
   }
 
-  createWorktree(repoRoot: string, opts?: CreateWorktreeOptions): Promise<WorktreeInfo> {
-    return this.connection.request(REMOTE_METHODS.git.createWorktree, { repoRoot, opts });
+  async createWorktree(repoRoot: string, opts?: CreateWorktreeOptions): Promise<WorktreeInfo> {
+    const raw = await this.rpc.request(REMOTE_METHODS.git.createWorktree, { repoRoot, opts });
+    return worktreeInfoSchema.parse(raw);
   }
 
-  listWorktrees(repoRoot: string): Promise<WorktreeInfo[]> {
-    return this.connection.request(REMOTE_METHODS.git.listWorktrees, { repoRoot });
+  async listWorktrees(repoRoot: string): Promise<WorktreeInfo[]> {
+    const raw = await this.rpc.request(REMOTE_METHODS.git.listWorktrees, { repoRoot });
+    return gitWorktreeListSchema.parse(raw);
   }
 
-  deleteWorktree(repoRoot: string, name: string): Promise<void> {
-    return this.connection.request(REMOTE_METHODS.git.deleteWorktree, { repoRoot, name });
+  async deleteWorktree(repoRoot: string, name: string): Promise<void> {
+    await this.rpc.request(REMOTE_METHODS.git.deleteWorktree, { repoRoot, name });
   }
 
-  renameWorktree(worktreeCwd: string, newBranchName: string): Promise<{ branch: string }> {
-    return this.connection.request(REMOTE_METHODS.git.renameWorktree, {
+  async renameWorktree(worktreeCwd: string, newBranchName: string): Promise<{ branch: string }> {
+    const raw = await this.rpc.request(REMOTE_METHODS.git.renameWorktree, {
       worktreeCwd,
       newBranchName,
     });
+    return gitBranchResultSchema.parse(raw);
   }
 
-  archiveWorktree(
+  async archiveWorktree(
     repoRoot: string,
     name: string,
     opts?: { force?: boolean },
   ): Promise<{ ok: true } | { error: string }> {
-    return this.connection.request(REMOTE_METHODS.git.archiveWorktree, { repoRoot, name, opts });
+    const raw = await this.rpc.request(REMOTE_METHODS.git.archiveWorktree, {
+      repoRoot,
+      name,
+      opts,
+    });
+    return fsMutationResultSchema.parse(raw);
   }
 }

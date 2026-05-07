@@ -65,3 +65,17 @@ export const EnvelopeSchema: z.ZodDiscriminatedUnion<
 ]);
 
 export type Envelope = z.infer<typeof EnvelopeSchema>;
+
+export const PONG_JSON = '{"kind":"pong"}';
+
+export function parseEnvelope(raw: string): Envelope | null {
+  let parsed: unknown;
+  try {
+    parsed = JSON.parse(raw);
+  } catch {
+    return null;
+  }
+  if (typeof parsed !== 'object' || parsed === null || !('kind' in parsed)) return null;
+  const result = EnvelopeSchema.safeParse(parsed);
+  return result.success ? result.data : null;
+}

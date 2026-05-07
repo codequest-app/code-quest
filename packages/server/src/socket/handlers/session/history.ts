@@ -1,3 +1,4 @@
+import type { TypedSocket } from '@code-quest/shared';
 import {
   type ClientMessage,
   contentBlockSchema,
@@ -12,7 +13,6 @@ import type { SessionPreview } from '../../../services/raw-event-store.ts';
 import type { SessionStore } from '../../../services/session-store.ts';
 import type { Channel } from '../../channel.ts';
 import { typedJsonObjectSchema, userMessageInputSchema } from '../../schemas.ts';
-import type { TypedSocket } from '../../types.ts';
 
 type RawEventDirection = RawEvent['direction'];
 

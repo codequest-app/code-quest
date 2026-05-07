@@ -1,3 +1,4 @@
+import type { SocketCallback, TypedSocket } from '@code-quest/shared';
 import {
   EVENTS,
   fsBrowsePayloadSchema,
@@ -12,11 +13,33 @@ import {
   fsWatchPayloadSchema,
 } from '@code-quest/shared';
 import type { Unsubscribe } from '@code-quest/summoner';
+import type { ZodType } from 'zod';
 import { logger } from '../../logger.ts';
 import type { HandlerContext } from '../../types.ts';
 import { subscribeDirtyForSocket } from '../dirty-subscriber.ts';
-import type { SocketCallback, TypedSocket } from '../types.ts';
+import { errMsg } from '../utils/helpers.ts';
 import { ok } from '../utils/rpc.ts';
+
+function createFsHandler<T>(
+  schema: ZodType<T>,
+  fn: (parsed: T) => Promise<Record<string, unknown>>,
+  errorLabel: string,
+  errorFallback?: Record<string, unknown>,
+) {
+  return async (
+    _ch: unknown,
+    payload: unknown,
+    _socket?: TypedSocket,
+    callback?: SocketCallback,
+  ): Promise<void> => {
+    try {
+      callback?.(await fn(schema.parse(payload)));
+    } catch (err) {
+      logger.warn({ err }, `${errorLabel} failed`);
+      callback?.(errorFallback ?? { error: errMsg(err) });
+    }
+  };
+}
 
 export function create({
   emitter,
@@ -34,52 +57,60 @@ export function create({
 >): void {
   const subsBySocket = new Map<string, Map<string, Unsubscribe[]>>();
 
-  async function handleBrowse(
-    _ch: unknown,
-    payload: unknown,
-    _socket?: TypedSocket,
-    callback?: SocketCallback,
-  ): Promise<void> {
-    try {
-      const { path, showHidden } = fsBrowsePayloadSchema.parse(payload);
-      const { directories, files } = await fs.browseEntries(path, { showHidden });
-      callback?.({ directories, files });
-    } catch (err) {
-      logger.warn({ err }, 'fs:browse failed');
-      callback?.({ error: err instanceof Error ? err.message : String(err) });
-    }
-  }
+  const handleBrowse = createFsHandler(
+    fsBrowsePayloadSchema,
+    async ({ path, showHidden }) => fs.browseEntries(path, { showHidden }),
+    'fs:browse',
+  );
 
-  async function handleRead(
-    _ch: unknown,
-    payload: unknown,
-    _socket?: TypedSocket,
-    callback?: SocketCallback,
-  ): Promise<void> {
-    try {
-      const { path } = fsReadPayloadSchema.parse(payload);
-      callback?.(await fs.readFileAbsolute(path));
-    } catch (err) {
-      logger.warn({ err }, 'fs:read failed');
-      callback?.({ error: 'Read failed' });
-    }
-  }
+  const handleRead = createFsHandler(
+    fsReadPayloadSchema,
+    async ({ path }) => fs.readFileAbsolute(path),
+    'fs:read',
+    { error: 'Read failed' },
+  );
 
-  async function handleSearch(
-    _ch: unknown,
-    payload: unknown,
-    _socket?: TypedSocket,
-    callback?: SocketCallback,
-  ): Promise<void> {
-    try {
-      const { cwd, pattern } = fsSearchPayloadSchema.parse(payload);
-      const files = await fs.listFiles(cwd, pattern);
-      callback?.(ok({ files }));
-    } catch (err) {
-      logger.warn({ err }, 'fs:search failed');
-      callback?.(ok({ files: [] }));
-    }
-  }
+  const handleSearch = createFsHandler(
+    fsSearchPayloadSchema,
+    async ({ cwd, pattern }) => ok({ files: await fs.listFiles(cwd, pattern) }),
+    'fs:search',
+    ok({ files: [] }),
+  );
+
+  const handleCreate = createFsHandler(
+    fsCreatePayloadSchema,
+    async ({ path, kind }) => fs.create(path, kind),
+    'fs:create',
+    { error: 'Create failed' },
+  );
+
+  const handleDelete = createFsHandler(
+    fsDeletePayloadSchema,
+    async ({ path }) => fs.delete(path),
+    'fs:delete',
+    { error: 'Delete failed' },
+  );
+
+  const handleRename = createFsHandler(
+    fsRenamePayloadSchema,
+    async ({ from, to }) => fs.rename(from, to),
+    'fs:rename',
+    { error: 'Rename failed' },
+  );
+
+  const handleCopy = createFsHandler(
+    fsCopyPayloadSchema,
+    async ({ from, to }) => fs.copy(from, to),
+    'fs:copy',
+    { error: 'Copy failed' },
+  );
+
+  const handleMove = createFsHandler(
+    fsMovePayloadSchema,
+    async ({ from, to }) => fs.move(from, to),
+    'fs:move',
+    { error: 'Move failed' },
+  );
 
   function handleWatch(
     _ch: unknown,
@@ -119,81 +150,6 @@ export function create({
     } catch (err) {
       logger.warn({ err }, 'fs:watch failed');
       callback?.({});
-    }
-  }
-
-  async function handleCreate(
-    _ch: unknown,
-    payload: unknown,
-    _socket?: TypedSocket,
-    callback?: SocketCallback,
-  ): Promise<void> {
-    try {
-      const { path, kind } = fsCreatePayloadSchema.parse(payload);
-      callback?.(await fs.create(path, kind));
-    } catch (err) {
-      logger.warn({ err }, 'fs:create failed');
-      callback?.({ error: 'Create failed' });
-    }
-  }
-
-  async function handleDelete(
-    _ch: unknown,
-    payload: unknown,
-    _socket?: TypedSocket,
-    callback?: SocketCallback,
-  ): Promise<void> {
-    try {
-      const { path } = fsDeletePayloadSchema.parse(payload);
-      callback?.(await fs.delete(path));
-    } catch (err) {
-      logger.warn({ err }, 'fs:delete failed');
-      callback?.({ error: 'Delete failed' });
-    }
-  }
-
-  async function handleRename(
-    _ch: unknown,
-    payload: unknown,
-    _socket?: TypedSocket,
-    callback?: SocketCallback,
-  ): Promise<void> {
-    try {
-      const { from, to } = fsRenamePayloadSchema.parse(payload);
-      callback?.(await fs.rename(from, to));
-    } catch (err) {
-      logger.warn({ err }, 'fs:rename failed');
-      callback?.({ error: 'Rename failed' });
-    }
-  }
-
-  async function handleCopy(
-    _ch: unknown,
-    payload: unknown,
-    _socket?: TypedSocket,
-    callback?: SocketCallback,
-  ): Promise<void> {
-    try {
-      const { from, to } = fsCopyPayloadSchema.parse(payload);
-      callback?.(await fs.copy(from, to));
-    } catch (err) {
-      logger.warn({ err }, 'fs:copy failed');
-      callback?.({ error: 'Copy failed' });
-    }
-  }
-
-  async function handleMove(
-    _ch: unknown,
-    payload: unknown,
-    _socket?: TypedSocket,
-    callback?: SocketCallback,
-  ): Promise<void> {
-    try {
-      const { from, to } = fsMovePayloadSchema.parse(payload);
-      callback?.(await fs.move(from, to));
-    } catch (err) {
-      logger.warn({ err }, 'fs:move failed');
-      callback?.({ error: 'Move failed' });
     }
   }
 

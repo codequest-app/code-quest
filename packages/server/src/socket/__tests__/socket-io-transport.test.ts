@@ -1,10 +1,9 @@
 import { createServer, type Server as HttpServer } from 'node:http';
 import type { AddressInfo } from 'node:net';
+import type { TransportHandle, TypedSocket } from '@code-quest/shared';
+import { NullAuthenticator } from '@code-quest/shared';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
-import { NullAuthenticator } from '../authenticator.ts';
-import { SocketIoTransport } from '../socket-io-transport.ts';
-import type { TransportHandle } from '../transport.ts';
-import type { TypedSocket } from '../types.ts';
+import { SocketIoTransport } from '../../transport/socket-io-transport.ts';
 
 // This is an integration test with real socket.io-client. Bypass the global
 // vi.mock('socket.io-client') from src/test/setup.ts.

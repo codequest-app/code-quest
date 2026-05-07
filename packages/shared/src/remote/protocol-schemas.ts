@@ -1,5 +1,6 @@
 import { z } from 'zod';
 import { fsEntryTypeSchema } from '../schemas/fs.ts';
+import { worktreeInfoSchema } from '../schemas/worktree.ts';
 
 // ── Process ──
 
@@ -18,6 +19,16 @@ export const processStdinParamsSchema = z.object({
 
 export const processKillParamsSchema = z.object({
   sessionId: z.string(),
+});
+
+export const processLineEventSchema = z.object({
+  sessionId: z.string(),
+  line: z.string(),
+});
+
+export const processExitEventSchema = z.object({
+  sessionId: z.string(),
+  code: z.number().nullable(),
 });
 
 // ── Filesystem ──
@@ -79,6 +90,55 @@ export const fsIsDirectoryParamsSchema = z.object({
 export const fsStatKindParamsSchema = z.object({
   path: z.string(),
 });
+
+// ── Filesystem responses ──
+
+const directoryEntrySchema = z.object({ name: z.string(), path: z.string() });
+
+export const fsBrowseDirectoriesResponseSchema = z.object({
+  entries: z.array(directoryEntrySchema),
+});
+
+export const fsBrowseEntriesResponseSchema = z.object({
+  directories: z.array(directoryEntrySchema),
+  files: z.array(directoryEntrySchema),
+});
+
+const fileResultSchema = z.object({
+  path: z.string(),
+  name: z.string(),
+  type: fsEntryTypeSchema,
+});
+
+export const fsListResponseSchema = z.object({
+  files: z.array(fileResultSchema),
+});
+
+export const fsExistsResponseSchema = z.object({ exists: z.boolean() });
+export const fsIsDirectoryResponseSchema = z.object({ isDirectory: z.boolean() });
+export const fsStatKindResponseSchema = z.object({
+  kind: fsEntryTypeSchema.nullable(),
+});
+
+export const fsReadFileAbsoluteResponseSchema = z.union([
+  z.object({ content: z.string(), contentType: z.string(), encoding: z.enum(['utf-8', 'base64']) }),
+  z.object({ error: z.string() }),
+]);
+
+export const fsReadFileResponseSchema = z.union([
+  z.object({ content: z.string() }),
+  z.object({ error: z.string() }),
+]);
+
+// ── Git responses ──
+
+export const gitNullableRootSchema = z.string().nullable();
+
+export const gitBranchResultSchema = z.object({ branch: z.string() });
+
+export const gitBranchListSchema = z.array(z.string());
+
+export const gitWorktreeListSchema = z.array(worktreeInfoSchema);
 
 // ── Git ──
 

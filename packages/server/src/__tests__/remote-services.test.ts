@@ -1,6 +1,7 @@
 import { createServer, type Server as HttpServer } from 'node:http';
 import type { AddressInfo } from 'node:net';
-import { Agent } from '@code-quest/summoner/daemon';
+import { RpcChannel, type RpcChannelSocket } from '@code-quest/shared';
+import { Agent } from '@code-quest/summoner/connection';
 import {
   FakeFilesystemService,
   FakeGitService,
@@ -8,9 +9,17 @@ import {
 } from '@code-quest/summoner/test';
 import { afterEach, beforeEach, describe, expect, it } from 'vitest';
 import { WebSocket, WebSocketServer } from 'ws';
-import { Connection } from '../remote/connection.ts';
 import { RemoteFilesystemService } from '../remote/filesystem-service.ts';
 import { RemoteGitService } from '../remote/git-service.ts';
+
+function wrapWs(ws: WebSocket): RpcChannelSocket {
+  return {
+    send: (data: string) => ws.send(data),
+    onMessage: (fn: (data: string) => void) =>
+      ws.on('message', (raw: Buffer) => fn(raw.toString())),
+    onClose: (fn: () => void) => ws.on('close', fn),
+  };
+}
 
 function makeSetup() {
   let httpServer: HttpServer;
@@ -25,21 +34,21 @@ function makeSetup() {
 
     httpServer.on('upgrade', (req, socket, head) => {
       wss.handleUpgrade(req, socket, head, (ws) => {
-        new Agent(ws, new FakeProcessProvider(), filesystem, git);
+        new Agent(new RpcChannel(wrapWs(ws)), new FakeProcessProvider(), filesystem, git);
       });
     });
 
     await new Promise<void>((r) => httpServer.listen(0, r));
 
     const { port } = httpServer.address() as AddressInfo;
-    const daemonWs = new WebSocket(`ws://127.0.0.1:${port}`);
-    await new Promise<void>((r) => daemonWs.once('open', r));
+    const clientWs = new WebSocket(`ws://127.0.0.1:${port}`);
+    await new Promise<void>((r) => clientWs.once('open', r));
 
-    const conn = new Connection(daemonWs);
-    const fsService = new RemoteFilesystemService(conn);
-    const gitService = new RemoteGitService(conn);
+    const rpc = new RpcChannel(wrapWs(clientWs));
+    const fsService = new RemoteFilesystemService(rpc);
+    const gitService = new RemoteGitService(rpc);
 
-    return { filesystem, git, conn, fsService, gitService, daemonWs };
+    return { filesystem, git, rpc, fsService, gitService, clientWs };
   }
 
   async function teardown() {
@@ -60,7 +69,7 @@ describe('RemoteFilesystemService', () => {
     ctx = await setup();
   });
   afterEach(async () => {
-    ctx.daemonWs.close();
+    ctx.clientWs.close();
     await teardown();
   });
 
@@ -186,8 +195,8 @@ describe('RemoteFilesystemService', () => {
   });
 
   it('rejects when connection is closed', async () => {
-    ctx.conn.close();
-    await expect(ctx.fsService.browseDirectories()).rejects.toThrow('No remote daemon connected');
+    ctx.rpc.close();
+    await expect(ctx.fsService.browseDirectories()).rejects.toThrow('RpcChannel closed');
   });
 });
 
@@ -201,7 +210,7 @@ describe('RemoteGitService', () => {
     ctx = await setup();
   });
   afterEach(async () => {
-    ctx.daemonWs.close();
+    ctx.clientWs.close();
     await teardown();
   });
 
@@ -317,7 +326,7 @@ describe('RemoteGitService', () => {
   });
 
   it('rejects when connection is closed', async () => {
-    ctx.conn.close();
-    await expect(ctx.gitService.status('/repo')).rejects.toThrow('No remote daemon connected');
+    ctx.rpc.close();
+    await expect(ctx.gitService.status('/repo')).rejects.toThrow('RpcChannel closed');
   });
 });

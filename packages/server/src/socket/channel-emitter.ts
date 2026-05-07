@@ -1,7 +1,9 @@
+import type { SocketCallback, TypedSocket } from '@code-quest/shared';
 import { ERROR_CODES, EVENTS, isRecord } from '@code-quest/shared';
 import { logger } from '../logger.ts';
 import type { Channel } from './channel.ts';
-import type { SocketCallback, TypedSocket } from './types.ts';
+
+export const BROADCAST_CHANNEL_ID = '' as const;
 
 /** Unified handler signature for all events (runner + client). */
 type EmitterHandler = (

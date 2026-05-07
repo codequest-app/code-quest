@@ -1,3 +1,4 @@
+import type { TransportHandle } from '@code-quest/shared';
 import type {
   DiffFileService,
   FilesystemService,
@@ -16,7 +17,6 @@ import type { UsageTracker } from '../services/usage-tracker.ts';
 import { type HandlerContext, TYPES } from '../types.ts';
 import type { ChannelEmitter } from './channel-emitter.ts';
 import type { ChannelManager } from './channel-manager.ts';
-
 import * as claudeAuth from './claude/auth.ts';
 import * as claudeMcpServers from './claude/mcp-servers.ts';
 import * as claudePlugin from './claude/plugin.ts';
@@ -39,7 +39,6 @@ import * as settings from './handlers/settings.ts';
 import * as speech from './handlers/speech.ts';
 import * as terminal from './handlers/terminal.ts';
 import * as usage from './handlers/usage.ts';
-import type { TransportHandle } from './transport.ts';
 
 @injectable()
 export class SocketServer {
@@ -137,14 +136,15 @@ export class SocketServer {
     if (this.handlersWired) return;
     this.handlersWired = true;
 
-    const cm = this.channelManager;
-    const em = this.emitter;
-    const planHandler = plan.create({ emitter: em });
+    const ctx = this.buildHandlerContext();
+    this.registerAllHandlers(ctx);
+  }
 
-    const ctx: HandlerContext = {
+  private buildHandlerContext(): HandlerContext {
+    return {
       autoMode: this.autoMode,
-      emitter: em,
-      channelManager: cm,
+      emitter: this.emitter,
+      channelManager: this.channelManager,
       sessionStore: this.sessionStore,
       projectStore: this.projectStore,
       projectAutoUpserter: this.projectAutoUpserter,
@@ -157,13 +157,14 @@ export class SocketServer {
       openspecService: this.openspecService,
       pluginCli: this.pluginCli,
       diffFileService: this.diffFileService,
-      planHandler,
+      planHandler: plan.create({ emitter: this.emitter }),
       fsDirtyBroadcaster: this.fsDirtyBroadcaster,
       gitDirtyBroadcaster: this.gitDirtyBroadcaster,
       openspecDirtyBroadcaster: this.openspecDirtyBroadcaster,
     };
+  }
 
-    // Handlers that only use emitter.on (no register needed)
+  private registerAllHandlers(ctx: HandlerContext): void {
     usage.create(ctx);
     autoRespond.create(ctx);
     permission.create(ctx);
@@ -173,19 +174,16 @@ export class SocketServer {
     fs.create(ctx);
     openspec.create(ctx);
     projects.create(ctx);
-
     settings.create(ctx);
     git.create(ctx);
-
     message.create(ctx);
-
     app.create(ctx);
     sessionConnect.create(ctx);
     sessionCommand.create(ctx);
     sessionFork.create(ctx);
     sessionQuery.create(ctx);
 
-    if (cm.provider === 'claude') {
+    if (this.channelManager.provider === 'claude') {
       claudeAuth.create(ctx);
       claudeMcpServers.create(ctx);
       claudePlugin.create(ctx);

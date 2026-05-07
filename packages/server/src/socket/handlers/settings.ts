@@ -1,3 +1,4 @@
+import type { SocketCallback, TypedSocket } from '@code-quest/shared';
 import {
   contextUsageDataSchema,
   EVENTS,
@@ -17,11 +18,17 @@ import type { z } from 'zod';
 import { logger } from '../../logger.ts';
 import type { HandlerContext } from '../../types.ts';
 import type { Channel } from '../channel.ts';
-import { withChannel, withError } from '../channel-emitter.ts';
+import { BROADCAST_CHANNEL_ID, withChannel, withError } from '../channel-emitter.ts';
 import { DEFAULT_THINKING_TOKENS } from '../schemas.ts';
-import type { SocketCallback, TypedSocket } from '../types.ts';
 import { errMsg, pickDefined } from '../utils/helpers.ts';
 import { err, ok } from '../utils/rpc.ts';
+
+export const SETTINGS_STATE_KEYS = [
+  'model',
+  'permissionMode',
+  'thinkingLevel',
+  'effortLevel',
+] as const;
 
 export function create({
   autoMode,
@@ -44,7 +51,7 @@ export function create({
           if (!parsed.data.supportsAutoMode) return [m];
           return [{ ...parsed.data, supportsAutoMode: false }];
         });
-    emitter.broadcastAll(EVENTS.app.models, { channelId: '', models });
+    emitter.broadcastAll(EVENTS.app.models, { channelId: BROADCAST_CHANNEL_ID, models });
   }
   type SettingHandler<T> = {
     schema: { parse(p: unknown): T };
@@ -163,12 +170,7 @@ export function create({
   ): Promise<void> {
     try {
       const state: Record<string, unknown> = {
-        ...(await settingsStore.getMany(ch.provider, [
-          'model',
-          'permissionMode',
-          'thinkingLevel',
-          'effortLevel',
-        ])),
+        ...(await settingsStore.getMany(ch.provider, [...SETTINGS_STATE_KEYS])),
       };
       callback?.(ok({ state }));
     } catch (e) {
@@ -199,7 +201,7 @@ export function create({
     }
 
     socket.emit(EVENTS.settings.usage, {
-      channelId: '',
+      channelId: BROADCAST_CHANNEL_ID,
       usage: usageData,
       ...(contextUsage ? { contextUsage } : {}),
     });

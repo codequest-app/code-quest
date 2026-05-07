@@ -8,94 +8,103 @@ import type {
   ReadFileResult,
   WriteFileResult,
 } from '@code-quest/shared';
-import { REMOTE_METHODS } from '@code-quest/shared';
-import type { Connection } from './connection.ts';
+import {
+  fsBrowseDirectoriesResponseSchema,
+  fsBrowseEntriesResponseSchema,
+  fsExistsResponseSchema,
+  fsIsDirectoryResponseSchema,
+  fsListResponseSchema,
+  fsMutationResultSchema,
+  fsReadFileAbsoluteResponseSchema,
+  fsReadFileResponseSchema,
+  fsStatKindResponseSchema,
+  REMOTE_METHODS,
+} from '@code-quest/shared';
+import type { RemoteRpc } from './types.ts';
 
 export class RemoteFilesystemService implements FilesystemService {
-  private readonly connection: Connection;
+  private readonly rpc: RemoteRpc;
 
-  constructor(connection: Connection) {
-    this.connection = connection;
+  constructor(rpc: RemoteRpc) {
+    this.rpc = rpc;
   }
 
   async browseDirectories(path?: string): Promise<DirectoryEntry[]> {
-    const res = await this.connection.request<{ entries: DirectoryEntry[] }>(
-      REMOTE_METHODS.fs.browseDirectories,
-      { path },
-    );
-    return res.entries;
+    const raw = await this.rpc.request(REMOTE_METHODS.fs.browseDirectories, { path });
+    return fsBrowseDirectoriesResponseSchema.parse(raw).entries;
   }
 
   async browseEntries(
     path?: string,
     opts?: { showHidden?: boolean },
   ): Promise<{ directories: DirectoryEntry[]; files: DirectoryEntry[] }> {
-    return this.connection.request(REMOTE_METHODS.fs.browseEntries, {
+    const raw = await this.rpc.request(REMOTE_METHODS.fs.browseEntries, {
       path,
       showHidden: opts?.showHidden,
     });
+    return fsBrowseEntriesResponseSchema.parse(raw);
   }
 
-  readFileAbsolute(absolutePath: string): Promise<ReadFileAbsoluteResult> {
-    return this.connection.request(REMOTE_METHODS.fs.readFileAbsolute, { absolutePath });
+  async readFileAbsolute(absolutePath: string): Promise<ReadFileAbsoluteResult> {
+    const raw = await this.rpc.request(REMOTE_METHODS.fs.readFileAbsolute, { absolutePath });
+    return fsReadFileAbsoluteResponseSchema.parse(raw);
   }
 
   async writeFileAbsolute(absolutePath: string, content: string): Promise<WriteFileResult> {
-    return this.connection.request(REMOTE_METHODS.fs.writeFileAbsolute, { absolutePath, content });
+    const raw = await this.rpc.request(REMOTE_METHODS.fs.writeFileAbsolute, {
+      absolutePath,
+      content,
+    });
+    return fsMutationResultSchema.parse(raw);
   }
 
-  create(absolutePath: string, kind: FileKind): Promise<FsMutationResult> {
-    return this.connection.request(REMOTE_METHODS.fs.create, { absolutePath, kind });
+  async create(absolutePath: string, kind: FileKind): Promise<FsMutationResult> {
+    const raw = await this.rpc.request(REMOTE_METHODS.fs.create, { absolutePath, kind });
+    return fsMutationResultSchema.parse(raw);
   }
 
-  delete(absolutePath: string): Promise<FsMutationResult> {
-    return this.connection.request(REMOTE_METHODS.fs.delete, { absolutePath });
+  async delete(absolutePath: string): Promise<FsMutationResult> {
+    const raw = await this.rpc.request(REMOTE_METHODS.fs.delete, { absolutePath });
+    return fsMutationResultSchema.parse(raw);
   }
 
-  rename(from: string, to: string): Promise<FsMutationResult> {
-    return this.connection.request(REMOTE_METHODS.fs.rename, { from, to });
+  async rename(from: string, to: string): Promise<FsMutationResult> {
+    const raw = await this.rpc.request(REMOTE_METHODS.fs.rename, { from, to });
+    return fsMutationResultSchema.parse(raw);
   }
 
-  copy(from: string, to: string): Promise<FsMutationResult> {
-    return this.connection.request(REMOTE_METHODS.fs.copy, { from, to });
+  async copy(from: string, to: string): Promise<FsMutationResult> {
+    const raw = await this.rpc.request(REMOTE_METHODS.fs.copy, { from, to });
+    return fsMutationResultSchema.parse(raw);
   }
 
-  move(from: string, to: string): Promise<FsMutationResult> {
-    return this.connection.request(REMOTE_METHODS.fs.move, { from, to });
+  async move(from: string, to: string): Promise<FsMutationResult> {
+    const raw = await this.rpc.request(REMOTE_METHODS.fs.move, { from, to });
+    return fsMutationResultSchema.parse(raw);
   }
 
   async listFiles(cwd: string, pattern: string): Promise<FileResult[]> {
-    const res = await this.connection.request<{ files: FileResult[] }>(REMOTE_METHODS.fs.list, {
-      cwd,
-      pattern,
-    });
-    return res.files;
+    const raw = await this.rpc.request(REMOTE_METHODS.fs.list, { cwd, pattern });
+    return fsListResponseSchema.parse(raw).files;
   }
 
-  readFile(cwd: string, filePath: string): Promise<ReadFileResult> {
-    return this.connection.request(REMOTE_METHODS.fs.read, { cwd, filePath });
+  async readFile(cwd: string, filePath: string): Promise<ReadFileResult> {
+    const raw = await this.rpc.request(REMOTE_METHODS.fs.read, { cwd, filePath });
+    return fsReadFileResponseSchema.parse(raw);
   }
 
   async exists(path: string): Promise<boolean> {
-    const res = await this.connection.request<{ exists: boolean }>(REMOTE_METHODS.fs.exists, {
-      path,
-    });
-    return res.exists;
+    const raw = await this.rpc.request(REMOTE_METHODS.fs.exists, { path });
+    return fsExistsResponseSchema.parse(raw).exists;
   }
 
   async isDirectory(path: string): Promise<boolean> {
-    const res = await this.connection.request<{ isDirectory: boolean }>(
-      REMOTE_METHODS.fs.isDirectory,
-      { path },
-    );
-    return res.isDirectory;
+    const raw = await this.rpc.request(REMOTE_METHODS.fs.isDirectory, { path });
+    return fsIsDirectoryResponseSchema.parse(raw).isDirectory;
   }
 
   async statKind(path: string): Promise<FileKind | null> {
-    const res = await this.connection.request<{ kind: FileKind | null }>(
-      REMOTE_METHODS.fs.statKind,
-      { path },
-    );
-    return res.kind;
+    const raw = await this.rpc.request(REMOTE_METHODS.fs.statKind, { path });
+    return fsStatKindResponseSchema.parse(raw).kind;
   }
 }

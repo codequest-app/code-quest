@@ -3,6 +3,8 @@ import type {
   InitResponseResult,
   SessionInitPayload,
   SessionLaunchPayload,
+  SocketCallback,
+  TypedSocket,
 } from '@code-quest/shared';
 import {
   channelExitPayloadSchema,
@@ -18,9 +20,8 @@ import { config } from '../../../config.ts';
 import { logger } from '../../../logger.ts';
 import type { HandlerContext } from '../../../types.ts';
 import type { Channel } from '../../channel.ts';
-import { withChannel } from '../../channel-emitter.ts';
+import { BROADCAST_CHANNEL_ID, withChannel } from '../../channel-emitter.ts';
 import { DEFAULT_THINKING_TOKENS } from '../../schemas.ts';
-import type { SocketCallback, TypedSocket } from '../../types.ts';
 import { errMsg, pickDefined } from '../../utils/helpers.ts';
 import { resolveProjectRoot } from '../../utils/project-root.ts';
 import { err, ok } from '../../utils/rpc.ts';
@@ -107,7 +108,10 @@ export function create({
     if (!socket) return;
     socket.emit(EVENTS.session.init, buildSessionInitPayload(channel));
     if (channelManager.cachedModels) {
-      socket.emit(EVENTS.app.models, { channelId: '', models: channelManager.cachedModels });
+      socket.emit(EVENTS.app.models, {
+        channelId: BROADCAST_CHANNEL_ID,
+        models: channelManager.cachedModels,
+      });
     }
   }
 
@@ -148,13 +152,13 @@ export function create({
     if (models) {
       channelManager.cachedModels = models;
       await settingsStore.set(channelManager.provider, 'models', models);
-      emitter.broadcastAll(EVENTS.app.models, { channelId: '', models });
+      emitter.broadcastAll(EVENTS.app.models, { channelId: BROADCAST_CHANNEL_ID, models });
     }
 
     if (account && Object.keys(account).length > 0) {
       const { email, subscriptionType, authMethod, organization } = account;
       emitter.broadcastAll(EVENTS.settings.update, {
-        channelId: '',
+        channelId: BROADCAST_CHANNEL_ID,
         accountInfo: { email, subscriptionType, authMethod, organization },
       });
     }
@@ -373,7 +377,7 @@ export function create({
       // child must spawn with the same cwd or "No conversation found" fires.
       const row = await sessionStore.getById(sessionId);
       if (!row?.cwd) {
-        callback?.(err('session row has no cwd; cannot resume', 'no_cwd'));
+        callback?.(err('session row has no cwd; cannot resume', ERROR_CODES.NO_CWD));
         return;
       }
       const cwd = row.cwd;

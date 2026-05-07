@@ -1,16 +1,10 @@
 import { createServer, type Server as HttpServer } from 'node:http';
 import type { AddressInfo } from 'node:net';
+import type { TransportHandle } from '@code-quest/shared';
+import { auth, heartbeat, NullAuthenticator, WsTransport, wsAdapter } from '@code-quest/shared';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { WebSocket } from 'ws';
-import { NullAuthenticator } from '../authenticator.ts';
-import type { TransportHandle } from '../transport.ts';
-import { WsTransport } from '../ws-transport.ts';
 
-/**
- * Heartbeat behavior for WsTransport. Uses fake timers to avoid waiting
- * 25 / 60 real seconds. Real ws client + real http server still in play
- * for the rest of the protocol.
- */
 describe('WsTransport heartbeat', () => {
   let httpServer: HttpServer;
   let handle: TransportHandle | undefined;
@@ -42,13 +36,13 @@ describe('WsTransport heartbeat', () => {
 
   it('server pings each client at the configured interval (default 25s)', async () => {
     vi.useFakeTimers({ shouldAdvanceTime: true });
-    const transport = new WsTransport({
-      authenticator: new NullAuthenticator(),
-      path: '/ws',
-      heartbeatIntervalMs: 25_000,
-    });
-    handle = transport.attach(httpServer);
-    handle.onConnection(() => {});
+    const server = new WsTransport(wsAdapter());
+    server.route(
+      '/ws',
+      [auth(new NullAuthenticator()), heartbeat({ pingIntervalMs: 25_000 })],
+      () => {},
+    );
+    handle = server.attach(httpServer);
 
     const ws = new WebSocket(url());
     clients.push(ws);
@@ -60,9 +54,9 @@ describe('WsTransport heartbeat', () => {
   });
 
   it('client envelope ping receives pong', async () => {
-    const transport = new WsTransport({ authenticator: new NullAuthenticator(), path: '/ws' });
-    handle = transport.attach(httpServer);
-    handle.onConnection(() => {});
+    const server = new WsTransport(wsAdapter());
+    server.route('/ws', [auth(new NullAuthenticator())], () => {});
+    handle = server.attach(httpServer);
 
     const ws = new WebSocket(url());
     clients.push(ws);
@@ -76,17 +70,13 @@ describe('WsTransport heartbeat', () => {
   });
 
   it('idle timeout closes the connection with code 4000', async () => {
-    // Use real timers but tiny intervals. heartbeatInterval is set huge so the
-    // server-side ping (which the ws library would auto-pong) does NOT touch
-    // lastSeen — guaranteeing true idle.
-    const transport = new WsTransport({
-      authenticator: new NullAuthenticator(),
-      path: '/ws',
-      heartbeatIntervalMs: 60_000,
-      idleTimeoutMs: 80,
-    });
-    handle = transport.attach(httpServer);
-    handle.onConnection(() => {});
+    const server = new WsTransport(wsAdapter());
+    server.route(
+      '/ws',
+      [auth(new NullAuthenticator()), heartbeat({ pingIntervalMs: 60_000, idleTimeoutMs: 80 })],
+      () => {},
+    );
+    handle = server.attach(httpServer);
 
     const ws = new WebSocket(url());
     clients.push(ws);
