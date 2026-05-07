@@ -1,12 +1,12 @@
 import { act, screen } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { afterEach, describe, expect, it } from 'vitest';
-import { useMessageVisibilityStore } from '@/stores/useMessageVisibilityStore';
+import { usePreferencesStore } from '@/stores/usePreferencesStore';
 import { memoryBackend, readPersistedRaw } from '@/test/memory-persist-storage';
 import { renderWithChannel } from '@/test/render-with-channel';
 import { useMessageVisibility } from '../MessageVisibilityContext.tsx';
 
-const LS_KEY = 'code-quest:message-visibility';
+const LS_KEY = 'code-quest:preferences';
 
 // Test component that exposes context values via DOM
 function Probe() {
@@ -49,7 +49,7 @@ function Probe() {
 }
 
 afterEach(() => {
-  useMessageVisibilityStore.setState({ enabledTypes: null });
+  usePreferencesStore.setState({ enabledTypes: null });
 });
 
 describe('MessageVisibilityContext — defaults', () => {
@@ -176,10 +176,10 @@ describe('MessageVisibilityContext — external store changes', () => {
     expect(screen.getByRole('status', { name: 'hooks-state' }).textContent).toBe('none');
 
     // simulate Settings toggling hooks on by writing directly to store
-    const current = useMessageVisibilityStore.getState().enabledTypes;
+    const current = usePreferencesStore.getState().enabledTypes;
     const base = current ?? [];
     act(() => {
-      useMessageVisibilityStore
+      usePreferencesStore
         .getState()
         .setEnabledTypes([...base, 'hook_started', 'hook_response', 'hook_diagnostics']);
     });
@@ -211,11 +211,7 @@ describe('MessageVisibilityContext — persistence', () => {
       'thinking',
       'redacted_thinking',
     ];
-    memoryBackend.setItem(
-      LS_KEY,
-      JSON.stringify({ state: { enabledTypes: seedTypes }, version: 0 }),
-    );
-    useMessageVisibilityStore.persist.rehydrate();
+    usePreferencesStore.setState({ enabledTypes: seedTypes });
     await renderWithChannel(<Probe />);
     const enabled = screen.getByRole('status', { name: 'enabled-types' }).textContent ?? '';
     expect(enabled).toContain('hook_started');
@@ -224,7 +220,7 @@ describe('MessageVisibilityContext — persistence', () => {
 
   it('ignores invalid persisted data (non-array) and uses defaults', async () => {
     memoryBackend.setItem(LS_KEY, JSON.stringify({ invalid: 'object' }));
-    useMessageVisibilityStore.persist.rehydrate();
+    usePreferencesStore.persist.rehydrate();
     await renderWithChannel(<Probe />);
     // Should fall back to defaults — hooks off, conversation on
     const enabled = screen.getByRole('status', { name: 'enabled-types' }).textContent ?? '';
@@ -234,7 +230,7 @@ describe('MessageVisibilityContext — persistence', () => {
 
   it('ignores persisted entries that are not strings', async () => {
     memoryBackend.setItem(LS_KEY, JSON.stringify([42, null, 'text']));
-    useMessageVisibilityStore.persist.rehydrate();
+    usePreferencesStore.persist.rehydrate();
     await renderWithChannel(<Probe />);
     // Unrecognized format — store falls back to null → context uses defaults
     const enabled = screen.getByRole('status', { name: 'enabled-types' }).textContent ?? '';

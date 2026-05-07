@@ -8,7 +8,7 @@ import {
   type WorktreeListingEntry,
 } from '@/contexts/GitContext';
 import type { Project } from '@/contexts/ProjectContext';
-import { useExpandedProjectsStore } from '@/stores/useExpandedProjectsStore';
+import { usePreferencesStore } from '@/stores/usePreferencesStore';
 import { ProjectCard } from './ProjectCard.tsx';
 import { WorktreeChildList } from './WorktreeChildList.tsx';
 
@@ -31,8 +31,8 @@ export function ProjectRow({
 }): React.JSX.Element {
   // Subscribe to the `expanded` array so this row re-renders when any row
   // toggles (single source of truth via zustand persist).
-  const expanded = useExpandedProjectsStore((s) => s.expanded.includes(project.cwd));
-  const { toggle, setExpanded } = useExpandedProjectsStore.getState();
+  const expanded = usePreferencesStore((s) => s.expandedProjects.includes(project.cwd));
+  const { toggleExpanded, setExpanded } = usePreferencesStore.getState();
   const { listing } = useGitState();
   const { list, initRepo } = useGitActions();
 
@@ -64,7 +64,7 @@ export function ProjectRow({
           <button
             type="button"
             aria-label={`${expanded ? 'Collapse' : 'Expand'} ${project.name}`}
-            onClick={() => toggle(project.cwd)}
+            onClick={() => toggleExpanded(project.cwd)}
             className="shrink-0 p-0.5 text-text-muted hover:text-text"
           >
             {expanded ? (
@@ -85,7 +85,7 @@ export function ProjectRow({
               // Clicking project row = toggle expand for git projects;
               // also call through parent onSelect so active-project logic runs.
               onSelect();
-              if (!nonGit) toggle(project.cwd);
+              if (!nonGit) toggleExpanded(project.cwd);
             }}
             onSelectInitRepo={
               nonGit

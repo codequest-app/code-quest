@@ -2,7 +2,6 @@ import { render, screen, within } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { VISIBILITY_GROUPS } from '@/contexts/channel/MessageVisibilityContext';
-import { useMessageVisibilityStore } from '@/stores/useMessageVisibilityStore';
 import { usePreferencesStore } from '@/stores/usePreferencesStore';
 import { SettingsDialog } from '../SettingsDialog.tsx';
 
@@ -13,7 +12,7 @@ function resetStore() {
     density: 'comfortable',
     hiddenItems: [],
   });
-  useMessageVisibilityStore.setState({ enabledTypes: null });
+  usePreferencesStore.setState({ enabledTypes: null });
 }
 
 describe('SettingsDialog', () => {
@@ -22,7 +21,7 @@ describe('SettingsDialog', () => {
   });
 
   afterEach(() => {
-    useMessageVisibilityStore.setState({ enabledTypes: null });
+    usePreferencesStore.setState({ enabledTypes: null });
   });
 
   it('does not render when closed', () => {
@@ -148,7 +147,7 @@ describe('SettingsDialog', () => {
       const hooksRow = screen.getByLabelText('group-row-hooks');
       const toggle = within(hooksRow).getByLabelText('group-toggle');
       await user.click(toggle);
-      const stored = useMessageVisibilityStore.getState().enabledTypes;
+      const stored = usePreferencesStore.getState().enabledTypes;
       expect(stored).toContain('hook_started');
     });
   });

@@ -162,7 +162,8 @@ export class GitCommands {
     await git.raw(['init', '-b', 'main']);
     try {
       await git.raw(['commit', '--allow-empty', '-m', 'Initial commit']);
-    } catch {
+    } catch (err) {
+      logger.debug({ err }, '[GitService] commit without user config failed, retrying');
       await git.raw([
         '-c',
         'user.email=code-quest@local',

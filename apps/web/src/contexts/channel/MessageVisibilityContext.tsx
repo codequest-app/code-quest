@@ -14,7 +14,7 @@ import {
   useMemo,
   useState,
 } from 'react';
-import { useMessageVisibilityStore } from '@/stores/useMessageVisibilityStore';
+import { usePreferencesStore } from '@/stores/usePreferencesStore';
 
 export type GroupId = 'conversation' | 'tools' | 'system' | 'hooks' | 'debug' | 'other';
 type GroupState = 'all' | 'partial' | 'none';
@@ -117,8 +117,8 @@ export function MessageVisibilityProvider({
 }: {
   children: ReactNode;
 }): React.JSX.Element {
-  const storedTypes = useMessageVisibilityStore((s) => s.enabledTypes);
-  const setStoredTypes = useMessageVisibilityStore((s) => s.setEnabledTypes);
+  const storedTypes = usePreferencesStore((s) => s.enabledTypes);
+  const setStoredTypes = usePreferencesStore((s) => s.setEnabledTypes);
 
   const enabledTypes = useMemo(
     () => (storedTypes !== null ? new Set(storedTypes) : defaultEnabledTypes()),

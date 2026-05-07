@@ -130,3 +130,50 @@ describe('usePreferencesStore', () => {
     expect(items).toEqual(['onboarding-overlay', 'custom-item']);
   });
 });
+
+describe('usePreferencesStore — expandedProjects slice', () => {
+  it('starts empty — no project is expanded', () => {
+    expect(usePreferencesStore.getState().isExpanded('/any')).toBe(false);
+  });
+
+  it('toggle adds then removes', () => {
+    const { toggleExpanded, isExpanded } = usePreferencesStore.getState();
+    toggleExpanded('/a');
+    expect(isExpanded('/a')).toBe(true);
+    toggleExpanded('/a');
+    expect(isExpanded('/a')).toBe(false);
+  });
+
+  it('setExpanded is idempotent', () => {
+    const { setExpanded, isExpanded } = usePreferencesStore.getState();
+    setExpanded('/a', true);
+    setExpanded('/a', true);
+    expect(usePreferencesStore.getState().expandedProjects).toEqual(['/a']);
+    setExpanded('/a', false);
+    setExpanded('/a', false);
+    expect(isExpanded('/a')).toBe(false);
+  });
+
+  it('persists expandedProjects via zustand persist', () => {
+    usePreferencesStore.getState().toggleExpanded('/a');
+    const stored = JSON.parse(readPersistedRaw(STORAGE_KEY) ?? '{}');
+    expect(stored.state.expandedProjects).toContain('/a');
+  });
+});
+
+describe('usePreferencesStore — messageVisibility slice', () => {
+  it('has null as default (defers to context defaults)', () => {
+    expect(usePreferencesStore.getState().enabledTypes).toBeNull();
+  });
+
+  it('setEnabledTypes updates the store', () => {
+    usePreferencesStore.getState().setEnabledTypes(['text', 'tool_use']);
+    expect(usePreferencesStore.getState().enabledTypes).toEqual(['text', 'tool_use']);
+  });
+
+  it('persists enabledTypes via zustand persist', () => {
+    usePreferencesStore.getState().setEnabledTypes(['text', 'hook_started']);
+    const stored = JSON.parse(readPersistedRaw(STORAGE_KEY) ?? '{}');
+    expect(stored.state.enabledTypes).toContain('hook_started');
+  });
+});

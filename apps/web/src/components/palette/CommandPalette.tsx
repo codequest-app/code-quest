@@ -11,7 +11,6 @@ import { createOpenSettingsFeature } from '@/features/global-actions/open-settin
 import { createSwitchProjectFeatures } from '@/features/global-actions/switch-project-feature';
 import type { Feature, PaletteTab } from '@/lib/feature';
 import { useMessageRegistryStore } from '@/stores/useMessageRegistryStore';
-import { useMessageVisibilityStore } from '@/stores/useMessageVisibilityStore';
 import { usePreferencesStore } from '@/stores/usePreferencesStore';
 import type { Message } from '@/types/ui';
 import { cn } from '@/utils/cn';
@@ -37,7 +36,7 @@ export function CommandPalette(): React.ReactNode {
   const { open, defaultTab, paletteActions } = useCommandPaletteState();
   const { closePalette, jumpTo } = useCommandPaletteActions();
   const channels = useMessageRegistryStore((s) => s.channels);
-  const visibilityTypes = useMessageVisibilityStore((s) => s.enabledTypes);
+  const visibilityTypes = usePreferencesStore((s) => s.enabledTypes);
   const { projects, activeProjectCwd } = useProjectState();
   const { setActiveProject } = useProjectActions();
 
@@ -94,10 +93,10 @@ export function CommandPalette(): React.ReactNode {
     return map;
   }, [channels]);
 
-  const setStoreEnabledTypes = useMessageVisibilityStore((s) => s.setEnabledTypes);
+  const setStoreEnabledTypes = usePreferencesStore((s) => s.setEnabledTypes);
   const toggleType = useCallback(
     (type: string) => {
-      const current = useMessageVisibilityStore.getState().enabledTypes;
+      const current = usePreferencesStore.getState().enabledTypes;
       const base = current !== null ? new Set(current) : defaultEnabledTypes();
       if (base.has(type)) base.delete(type);
       else base.add(type);

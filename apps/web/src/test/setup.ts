@@ -8,22 +8,20 @@ import { afterEach, beforeEach, vi } from 'vitest';
 // Production ships with VITE_TRANSPORT=ws (the project default) elsewhere.
 vi.stubEnv('VITE_TRANSPORT', 'socketio');
 
-import { useExpandedProjectsStore } from '../stores/useExpandedProjectsStore.ts';
-import { useMessageVisibilityStore } from '../stores/useMessageVisibilityStore.ts';
 import { usePreferencesStore } from '../stores/usePreferencesStore.ts';
 import { memoryBackend, memoryPersist } from './memory-persist-storage.ts';
 
 // DI: swap each persisted store's storage adapter from localStorage to the
 // in-memory backend. Production stores know nothing about tests.
-for (const store of [useExpandedProjectsStore, useMessageVisibilityStore, usePreferencesStore]) {
-  store.persist.setOptions({ storage: memoryPersist() });
-}
+usePreferencesStore.persist.setOptions({ storage: memoryPersist() });
 
 beforeEach(() => {
   memoryBackend.clear();
-  useExpandedProjectsStore.setState({ expanded: [] });
-  useMessageVisibilityStore.setState({ enabledTypes: null });
-  usePreferencesStore.setState({ hiddenItems: ['onboarding-overlay'] });
+  usePreferencesStore.setState({
+    expandedProjects: [],
+    enabledTypes: null,
+    hiddenItems: ['onboarding-overlay'],
+  });
 });
 
 afterEach(() => {

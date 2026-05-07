@@ -20,13 +20,26 @@ interface PreferencesState extends PersistedPreferences {
   hideItem: (id: string) => void;
   showItem: (id: string) => void;
   clearHiddenItems: () => void;
+
+  expandedProjects: string[];
+  isExpanded: (cwd: string) => boolean;
+  toggleExpanded: (cwd: string) => void;
+  setExpanded: (cwd: string, expanded: boolean) => void;
+
+  enabledTypes: string[] | null;
+  setEnabledTypes: (types: string[]) => void;
 }
 
-const DEFAULTS: PersistedPreferences = {
+const DEFAULTS: PersistedPreferences & {
+  expandedProjects: string[];
+  enabledTypes: string[] | null;
+} = {
   colorTheme: 'system',
   fontSize: 'md',
   density: 'comfortable',
   hiddenItems: [],
+  expandedProjects: [],
+  enabledTypes: null,
 };
 
 const persistedPreferencesSchema = preferencesStateSchema.partial();
@@ -54,7 +67,7 @@ export const usePreferencesStore: UseBoundStore<
   Mutate<StoreApi<PreferencesState>, [['zustand/persist', unknown]]>
 > = create<PreferencesState>()(
   persist(
-    (set) => ({
+    (set, get) => ({
       ...DEFAULTS,
       setColorTheme: (colorTheme) => set({ colorTheme }),
       setFontSize: (fontSize) => set({ fontSize }),
@@ -64,11 +77,46 @@ export const usePreferencesStore: UseBoundStore<
         set((s) => (s.hiddenItems.includes(id) ? s : { hiddenItems: [...s.hiddenItems, id] })),
       showItem: (id) => set((s) => ({ hiddenItems: s.hiddenItems.filter((i) => i !== id) })),
       clearHiddenItems: () => set({ hiddenItems: [] }),
+
+      isExpanded: (cwd) => get().expandedProjects.includes(cwd),
+      toggleExpanded: (cwd) =>
+        set((s) => ({
+          expandedProjects: s.expandedProjects.includes(cwd)
+            ? s.expandedProjects.filter((x) => x !== cwd)
+            : [...s.expandedProjects, cwd],
+        })),
+      setExpanded: (cwd, expanded) =>
+        set((s) => {
+          const has = s.expandedProjects.includes(cwd);
+          if (expanded === has) return s;
+          return {
+            expandedProjects: expanded
+              ? [...s.expandedProjects, cwd]
+              : s.expandedProjects.filter((x) => x !== cwd),
+          };
+        }),
+
+      setEnabledTypes: (types) => set({ enabledTypes: types }),
     }),
     {
       name: 'code-quest:preferences',
       storage: localStoragePersist(),
-      version: 3,
+      version: 4,
+      partialize: ({
+        colorTheme,
+        fontSize,
+        density,
+        hiddenItems,
+        expandedProjects,
+        enabledTypes,
+      }) => ({
+        colorTheme,
+        fontSize,
+        density,
+        hiddenItems,
+        expandedProjects,
+        enabledTypes,
+      }),
       migrate: (persisted: unknown, fromVersion: number) => {
         const v2 = fromVersion < 3 ? migrateV2ToV3((persisted ?? {}) as V2Shape) : persisted;
         const parsed = persistedPreferencesSchema.safeParse(v2);

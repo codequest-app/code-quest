@@ -3,12 +3,12 @@ import { act, screen } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { afterEach, beforeEach, describe, expect, it } from 'vitest';
 import { CommandPaletteProvider, useCommandPalette } from '@/contexts/CommandPaletteContext';
-import { useMessageVisibilityStore } from '@/stores/useMessageVisibilityStore';
+import { usePreferencesStore } from '@/stores/usePreferencesStore';
 import { renderWithChannel } from '@/test/render-with-channel';
 import { CommandPalette } from '../CommandPalette.tsx';
 
-beforeEach(() => useMessageVisibilityStore.setState({ enabledTypes: null }));
-afterEach(() => useMessageVisibilityStore.setState({ enabledTypes: null }));
+beforeEach(() => usePreferencesStore.setState({ enabledTypes: null }));
+afterEach(() => usePreferencesStore.setState({ enabledTypes: null }));
 
 function OpenButton() {
   const { openPalette } = useCommandPalette();

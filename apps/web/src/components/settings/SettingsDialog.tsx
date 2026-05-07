@@ -4,7 +4,6 @@ import { createColorThemeFeature } from '@/features/color-theme/color-theme-feat
 import { createDensityFeature } from '@/features/density/density-feature';
 import { createFilterFeatures } from '@/features/filters/create-filter-features';
 import { createFontSizeFeature } from '@/features/font-size/font-size-feature';
-import { useMessageVisibilityStore } from '@/stores/useMessageVisibilityStore';
 import { usePreferencesStore } from '@/stores/usePreferencesStore';
 import { cn } from '@/utils/cn';
 import { FeatureRow } from '../palette/FeatureRow.tsx';
@@ -97,8 +96,8 @@ function ThemeSection() {
 }
 
 function DisplaySection() {
-  const visibilityTypes = useMessageVisibilityStore((s) => s.enabledTypes);
-  const setStoreEnabledTypes = useMessageVisibilityStore((s) => s.setEnabledTypes);
+  const visibilityTypes = usePreferencesStore((s) => s.enabledTypes);
+  const setStoreEnabledTypes = usePreferencesStore((s) => s.setEnabledTypes);
 
   const enabledTypes = useMemo(
     () => (visibilityTypes !== null ? new Set(visibilityTypes) : defaultEnabledTypes()),
@@ -107,7 +106,7 @@ function DisplaySection() {
 
   const toggleType = useCallback(
     (type: string) => {
-      const current = useMessageVisibilityStore.getState().enabledTypes;
+      const current = usePreferencesStore.getState().enabledTypes;
       const base = current !== null ? new Set(current) : defaultEnabledTypes();
       if (base.has(type)) base.delete(type);
       else base.add(type);

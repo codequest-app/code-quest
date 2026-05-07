@@ -4,7 +4,7 @@ import userEvent from '@testing-library/user-event';
 import { afterEach, describe, expect, it } from 'vitest';
 import { CommandPaletteProvider, useCommandPalette } from '@/contexts/CommandPaletteContext';
 import { useMessageRegistryStore } from '@/stores/useMessageRegistryStore';
-import { useMessageVisibilityStore } from '@/stores/useMessageVisibilityStore';
+import { usePreferencesStore } from '@/stores/usePreferencesStore';
 import { renderWithChannel } from '@/test/render-with-channel';
 import type { Message } from '@/types/ui';
 import { CommandPalette } from '../CommandPalette.tsx';
@@ -220,7 +220,7 @@ describe('CommandPalette — cross-channel messages', () => {
 
 describe('CommandPalette — visibility filtering', () => {
   afterEach(() => {
-    useMessageVisibilityStore.setState({ enabledTypes: null });
+    usePreferencesStore.setState({ enabledTypes: null });
     useMessageRegistryStore.getState().unregister('vis-ch');
   });
 
@@ -233,7 +233,7 @@ describe('CommandPalette — visibility filtering', () => {
       ],
     });
     // disable tools group — only keep text types enabled
-    useMessageVisibilityStore.getState().setEnabledTypes(['text', 'thinking', 'redacted_thinking']);
+    usePreferencesStore.getState().setEnabledTypes(['text', 'thinking', 'redacted_thinking']);
 
     await renderPalette();
     await userEvent.click(screen.getByRole('tab', { name: /messages/i }));
