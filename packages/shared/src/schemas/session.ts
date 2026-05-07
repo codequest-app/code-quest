@@ -7,7 +7,26 @@ const SESSION_LIST_LIMIT = 100;
 
 // ── Session summary (moved from common.ts) ──
 
-export const sessionSummarySchema = z.object({
+export const sessionSummarySchema: z.ZodObject<
+  {
+    id: z.ZodString;
+    channelId: z.ZodString;
+    provider: z.ZodString;
+    command: z.ZodString;
+    args: z.ZodString;
+    cwd: z.ZodOptional<z.ZodString>;
+    projectRoot: z.ZodString;
+    mode: z.ZodString;
+    role: z.ZodString;
+    parentId: z.ZodOptional<z.ZodString>;
+    title: z.ZodOptional<z.ZodString>;
+    createdAt: z.ZodString;
+    isActive: z.ZodOptional<z.ZodBoolean>;
+    lastAssistantMessage: z.ZodOptional<z.ZodString>;
+    firstUserMessage: z.ZodOptional<z.ZodString>;
+  },
+  z.core.$strip
+> = z.object({
   /** The durable sessionId (DB row PK). Use this when calling useResume(). */
   id: z.string(),
   channelId: z.string(),
@@ -27,7 +46,28 @@ export const sessionSummarySchema = z.object({
 });
 export type SessionSummary = z.infer<typeof sessionSummarySchema>;
 
-export const sessionListResponseSchema = rpcResult(
+export const sessionListResponseSchema: z.ZodDiscriminatedUnion<
+  [
+    z.ZodObject<
+      {
+        ok: z.ZodLiteral<true>;
+        data: z.ZodObject<
+          {
+            sessions: z.ZodArray<typeof sessionSummarySchema>;
+            total: z.ZodNumber;
+          },
+          z.core.$strip
+        >;
+      },
+      z.core.$strip
+    >,
+    z.ZodObject<
+      { ok: z.ZodLiteral<false>; error: z.ZodString; code: z.ZodOptional<z.ZodString> },
+      z.core.$strip
+    >,
+  ],
+  'ok'
+> = rpcResult(
   z.object({
     sessions: z.array(sessionSummarySchema),
     total: z.number(),
@@ -37,19 +77,31 @@ export type SessionListResponse = z.infer<typeof sessionListResponseSchema>;
 
 // ── Internal schemas ──
 
-export const initializeOptionsSchema = z.looseObject({
-  hooks: z
-    .record(
-      z.string(),
-      z.array(
-        z.object({
-          matcher: z.string(),
-          hookCallbackIds: z.array(z.string()),
-          timeout: z.number().optional(),
-        }),
-      ),
-    )
-    .optional(),
+const hookEntrySchema: z.ZodObject<
+  {
+    matcher: z.ZodString;
+    hookCallbackIds: z.ZodArray<z.ZodString>;
+    timeout: z.ZodOptional<z.ZodNumber>;
+  },
+  z.core.$strip
+> = z.object({
+  matcher: z.string(),
+  hookCallbackIds: z.array(z.string()),
+  timeout: z.number().optional(),
+});
+
+export const initializeOptionsSchema: z.ZodObject<
+  {
+    hooks: z.ZodOptional<z.ZodRecord<z.ZodString, z.ZodArray<typeof hookEntrySchema>>>;
+    systemPrompt: z.ZodOptional<z.ZodString>;
+    appendSystemPrompt: z.ZodOptional<z.ZodString>;
+    jsonSchema: z.ZodOptional<z.ZodRecord<z.ZodString, z.ZodUnknown>>;
+    agents: z.ZodOptional<z.ZodRecord<z.ZodString, z.ZodUnknown>>;
+    resumeSessionAt: z.ZodOptional<z.ZodString>;
+  },
+  z.core.$loose
+> = z.looseObject({
+  hooks: z.record(z.string(), z.array(hookEntrySchema)).optional(),
   systemPrompt: z.string().optional(),
   appendSystemPrompt: z.string().optional(),
   jsonSchema: z.record(z.string(), z.unknown()).optional(),
@@ -58,7 +110,46 @@ export const initializeOptionsSchema = z.looseObject({
 });
 export type InitializeOptions = z.infer<typeof initializeOptionsSchema>;
 
-export const launchOptionsSchema = z
+export const launchOptionsSchema: z.ZodOptional<
+  z.ZodObject<
+    {
+      resumeSessionId: z.ZodOptional<z.ZodString>;
+      continueSession: z.ZodOptional<z.ZodBoolean>;
+      forkSession: z.ZodOptional<z.ZodBoolean>;
+      sessionId: z.ZodOptional<z.ZodString>;
+      resumeSessionAt: z.ZodOptional<z.ZodString>;
+      noSessionPersistence: z.ZodOptional<z.ZodBoolean>;
+      model: z.ZodOptional<z.ZodString>;
+      fallbackModel: z.ZodOptional<z.ZodString>;
+      thinking: z.ZodOptional<
+        z.ZodUnion<readonly [z.ZodLiteral<'adaptive'>, z.ZodLiteral<'disabled'>, z.ZodNumber]>
+      >;
+      effort: z.ZodOptional<typeof effortLevelSchema>;
+      maxTurns: z.ZodOptional<z.ZodNumber>;
+      maxBudgetUsd: z.ZodOptional<z.ZodNumber>;
+      agent: z.ZodOptional<z.ZodString>;
+      allowedTools: z.ZodOptional<z.ZodArray<z.ZodString>>;
+      disallowedTools: z.ZodOptional<z.ZodArray<z.ZodString>>;
+      tools: z.ZodOptional<z.ZodArray<z.ZodString>>;
+      mcpConfig: z.ZodOptional<
+        z.ZodUnion<readonly [z.ZodString, z.ZodRecord<z.ZodString, z.ZodUnknown>]>
+      >;
+      settingSources: z.ZodOptional<z.ZodArray<z.ZodString>>;
+      strictMcpConfig: z.ZodOptional<z.ZodBoolean>;
+      permissionMode: z.ZodOptional<z.ZodString>;
+      proactive: z.ZodOptional<z.ZodBoolean>;
+      assistant: z.ZodOptional<z.ZodBoolean>;
+      jsonSchema: z.ZodOptional<z.ZodRecord<z.ZodString, z.ZodUnknown>>;
+      betas: z.ZodOptional<z.ZodArray<z.ZodString>>;
+      debug: z.ZodOptional<z.ZodBoolean>;
+      debugFile: z.ZodOptional<z.ZodString>;
+      debugToStderr: z.ZodOptional<z.ZodBoolean>;
+      addDirs: z.ZodOptional<z.ZodArray<z.ZodString>>;
+      pluginDirs: z.ZodOptional<z.ZodArray<z.ZodString>>;
+    },
+    z.core.$strip
+  >
+> = z
   .object({
     resumeSessionId: z.string().optional(),
     continueSession: z.boolean().optional(),
@@ -92,7 +183,19 @@ export const launchOptionsSchema = z
   })
   .optional();
 
-export const sessionLaunchPayloadSchema = z.object({
+export const sessionLaunchPayloadSchema: z.ZodObject<
+  {
+    channelId: z.ZodOptional<z.ZodString>;
+    initialPrompt: z.ZodOptional<z.ZodString>;
+    model: z.ZodOptional<z.ZodString>;
+    permissionMode: z.ZodOptional<z.ZodString>;
+    thinkingLevel: z.ZodOptional<z.ZodString>;
+    cwd: z.ZodOptional<z.ZodString>;
+    initOptions: z.ZodOptional<typeof initializeOptionsSchema>;
+    launchOptions: typeof launchOptionsSchema;
+  },
+  z.core.$strip
+> = z.object({
   channelId: z.string().optional(),
   initialPrompt: z.string().optional(),
   model: z.string().optional(),
@@ -236,17 +339,9 @@ export type SessionBroadcastState = z.infer<typeof sessionBroadcastStateSchema>;
 export const sessionStateSummarySchema: z.ZodObject<
   {
     channelId: z.ZodString;
-    state: z.ZodEnum<{
-      disconnected: 'disconnected';
-      busy: 'busy';
-      idle: 'idle';
-      launching: 'launching';
-      exited: 'exited';
-    }>;
+    state: typeof sessionBroadcastStateSchema;
     title: z.ZodOptional<z.ZodString>;
-    effort: z.ZodOptional<
-      z.ZodEnum<{ low: 'low'; medium: 'medium'; high: 'high'; xhigh: 'xhigh'; max: 'max' }>
-    >;
+    effort: z.ZodOptional<typeof effortLevelSchema>;
     cwd: z.ZodOptional<z.ZodString>;
     projectRoot: z.ZodString;
   },
@@ -336,45 +431,9 @@ export const getSessionResponseSchema: z.ZodDiscriminatedUnion<
         ok: z.ZodLiteral<true>;
         data: z.ZodObject<
           {
-            session: z.ZodObject<
-              {
-                id: z.ZodString;
-                channelId: z.ZodString;
-                provider: z.ZodString;
-                command: z.ZodString;
-                args: z.ZodString;
-                cwd: z.ZodOptional<z.ZodString>;
-                projectRoot: z.ZodString;
-                mode: z.ZodString;
-                role: z.ZodString;
-                parentId: z.ZodOptional<z.ZodString>;
-                title: z.ZodOptional<z.ZodString>;
-                createdAt: z.ZodString;
-                isActive: z.ZodOptional<z.ZodBoolean>;
-                lastAssistantMessage: z.ZodOptional<z.ZodString>;
-                firstUserMessage: z.ZodOptional<z.ZodString>;
-              },
-              z.core.$strip
-            >;
-            events: z.ZodArray<
-              z.ZodObject<
-                { name: z.ZodString; payload: z.ZodRecord<z.ZodString, z.ZodUnknown> },
-                z.core.$strip
-              >
-            >;
-            meta: z.ZodObject<
-              {
-                model: z.ZodOptional<z.ZodString>;
-                tools: z.ZodOptional<z.ZodArray<z.ZodString>>;
-                permissionMode: z.ZodOptional<z.ZodString>;
-                slashCommands: z.ZodOptional<z.ZodArray<z.ZodString>>;
-                fastModeState: z.ZodOptional<z.ZodUnknown>;
-                mcpServers: z.ZodOptional<
-                  z.ZodArray<z.ZodObject<{ name: z.ZodString; status: z.ZodString }, z.core.$strip>>
-                >;
-              },
-              z.core.$strip
-            >;
+            session: typeof sessionSummarySchema;
+            events: z.ZodArray<typeof clientMessageSchema>;
+            meta: typeof channelMetaCacheSchema;
           },
           z.core.$strip
         >;
@@ -404,12 +463,7 @@ export const teleportSessionResponseSchema: z.ZodDiscriminatedUnion<
         data: z.ZodObject<
           {
             channelId: z.ZodString;
-            events: z.ZodArray<
-              z.ZodObject<
-                { name: z.ZodString; payload: z.ZodRecord<z.ZodString, z.ZodUnknown> },
-                z.core.$strip
-              >
-            >;
+            events: z.ZodArray<typeof clientMessageSchema>;
             branchCheckoutFailed: z.ZodOptional<z.ZodBoolean>;
             branch: z.ZodOptional<z.ZodString>;
           },
@@ -460,27 +514,7 @@ export type ForkConversationResponse = z.infer<typeof forkConversationResponseSc
 export const initResponseSchema: z.ZodObject<
   {
     settings: z.ZodRecord<z.ZodString, z.ZodUnknown>;
-    sessions: z.ZodArray<
-      z.ZodObject<
-        {
-          channelId: z.ZodString;
-          state: z.ZodEnum<{
-            disconnected: 'disconnected';
-            busy: 'busy';
-            idle: 'idle';
-            launching: 'launching';
-            exited: 'exited';
-          }>;
-          title: z.ZodOptional<z.ZodString>;
-          effort: z.ZodOptional<
-            z.ZodEnum<{ low: 'low'; medium: 'medium'; high: 'high'; xhigh: 'xhigh'; max: 'max' }>
-          >;
-          cwd: z.ZodOptional<z.ZodString>;
-          projectRoot: z.ZodString;
-        },
-        z.core.$strip
-      >
-    >;
+    sessions: z.ZodArray<typeof sessionStateSummarySchema>;
     activeChannelId: z.ZodOptional<z.ZodString>;
     models: z.ZodOptional<z.ZodArray<z.ZodUnknown>>;
     state: z.ZodOptional<z.ZodRecord<z.ZodString, z.ZodUnknown>>;
@@ -534,27 +568,7 @@ export type SessionDeadPayload = z.infer<typeof sessionDeadPayloadSchema>;
 
 export const sessionStatesPayloadSchema: z.ZodObject<
   {
-    sessions: z.ZodArray<
-      z.ZodObject<
-        {
-          channelId: z.ZodString;
-          state: z.ZodEnum<{
-            disconnected: 'disconnected';
-            busy: 'busy';
-            idle: 'idle';
-            launching: 'launching';
-            exited: 'exited';
-          }>;
-          title: z.ZodOptional<z.ZodString>;
-          effort: z.ZodOptional<
-            z.ZodEnum<{ low: 'low'; medium: 'medium'; high: 'high'; xhigh: 'xhigh'; max: 'max' }>
-          >;
-          cwd: z.ZodOptional<z.ZodString>;
-          projectRoot: z.ZodString;
-        },
-        z.core.$strip
-      >
-    >;
+    sessions: z.ZodArray<typeof sessionStateSummarySchema>;
     activeChannelId: z.ZodOptional<z.ZodString>;
   },
   z.core.$strip
@@ -711,9 +725,7 @@ export const sessionConfigSchema: z.ZodObject<
   {
     model: z.ZodOptional<z.ZodString>;
     permissionMode: z.ZodOptional<z.ZodString>;
-    effort: z.ZodOptional<
-      z.ZodEnum<{ low: 'low'; medium: 'medium'; high: 'high'; xhigh: 'xhigh'; max: 'max' }>
-    >;
+    effort: z.ZodOptional<typeof effortLevelSchema>;
     thinkingLevel: z.ZodOptional<z.ZodString>;
     tools: z.ZodOptional<z.ZodArray<z.ZodString>>;
     mcpServers: z.ZodOptional<
@@ -736,9 +748,7 @@ export const sessionInitConfigSchema: z.ZodObject<
   {
     model: z.ZodOptional<z.ZodString>;
     permissionMode: z.ZodOptional<z.ZodString>;
-    effort: z.ZodOptional<
-      z.ZodEnum<{ low: 'low'; medium: 'medium'; high: 'high'; xhigh: 'xhigh'; max: 'max' }>
-    >;
+    effort: z.ZodOptional<typeof effortLevelSchema>;
     cwd: z.ZodOptional<z.ZodString>;
   },
   z.core.$strip
@@ -771,15 +781,7 @@ export const rewindResultSchema: z.ZodObject<
   {
     canRewind: z.ZodBoolean;
     filesChanged: z.ZodOptional<z.ZodArray<z.ZodString>>;
-    fileDiffs: z.ZodOptional<
-      z.ZodRecord<
-        z.ZodString,
-        z.ZodObject<
-          { oldContent: z.ZodNullable<z.ZodString>; newContent: z.ZodNullable<z.ZodString> },
-          z.core.$strip
-        >
-      >
-    >;
+    fileDiffs: z.ZodOptional<z.ZodRecord<z.ZodString, typeof fileDiffSchema>>;
     insertions: z.ZodOptional<z.ZodNumber>;
     deletions: z.ZodOptional<z.ZodNumber>;
     error: z.ZodOptional<z.ZodString>;

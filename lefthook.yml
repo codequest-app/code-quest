@@ -7,6 +7,9 @@ pre-commit:
         - "docs/prototype/**"
       run: pnpm biome check --write {staged_files}
       stage_fixed: true
+    typecheck-shared:
+      glob: "packages/shared/**/*.ts"
+      run: pnpm --filter @code-quest/shared exec tsc --noEmit
     typecheck-server:
       glob: "packages/server/**/*.ts"
       run: pnpm --filter server exec tsc --noEmit

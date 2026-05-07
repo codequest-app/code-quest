@@ -142,6 +142,48 @@ When to use which:
 - `z.object()` — internal data, form inputs, known shapes
 - `z.looseObject()` / `.passthrough()` — external data (CLI output, API responses) where you validate known fields but must preserve unknown ones for downstream consumers
 
+## isolatedDeclarations Compatibility
+
+Exported Zod schemas need explicit type annotations so TypeScript can emit `.d.ts` without deep inference. Two patterns are available:
+
+**Pattern A: Structural annotation (preferred for this project)**
+
+Annotate the schema variable with its precise Zod structural type. Use `typeof` to reference already-annotated schemas and avoid deep nesting.
+
+```ts
+export const userSchema: z.ZodObject<
+  { name: z.ZodString; age: z.ZodOptional<z.ZodNumber> },
+  z.core.$strip
+> = z.object({ name: z.string(), age: z.number().optional() });
+
+// Use typeof to reference other annotated schemas — avoids inline expansion
+export const responseSchema: z.ZodObject<
+  { users: z.ZodArray<typeof userSchema> },
+  z.core.$strip
+> = z.object({ users: z.array(userSchema) });
+
+// export type is fine — z.infer on an annotated schema resolves in one file
+export type User = z.infer<typeof userSchema>;
+```
+
+**Pattern B: Interface-first (for public API / cross-package types)**
+
+Define the interface first, then annotate the schema with `z.ZodType<T>`. Better for types consumed outside the package.
+
+```ts
+export interface User { name: string; age?: number }
+export const userSchema: z.ZodType<User> = z.object({
+  name: z.string(),
+  age: z.number().optional(),
+});
+```
+
+**Rules:**
+- Exported schema consts MUST have an explicit type annotation (Pattern A or B)
+- Use `typeof otherSchema` in annotations to avoid repeating nested types
+- Non-exported (file-local) schemas can skip annotations, but annotating them enables `typeof` reuse
+- `export type X = z.infer<typeof schema>` is fine when the schema itself is annotated
+
 ## Common Pitfalls
 
 - Do NOT use `invalid_type_error` / `required_error` — these are v3 only; use `error` in v4.

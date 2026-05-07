@@ -35,12 +35,8 @@ export const fsBrowseResponseSchema: z.ZodUnion<
   readonly [
     z.ZodObject<
       {
-        directories: z.ZodArray<
-          z.ZodObject<{ name: z.ZodString; path: z.ZodString }, z.core.$strip>
-        >;
-        files: z.ZodDefault<
-          z.ZodArray<z.ZodObject<{ name: z.ZodString; path: z.ZodString }, z.core.$strip>>
-        >;
+        directories: z.ZodArray<typeof fsDirectorySchema>;
+        files: z.ZodDefault<z.ZodArray<typeof fsFileSchema>>;
       },
       z.core.$strip
     >,
@@ -62,7 +58,19 @@ export const fsReadPayloadSchema: z.ZodObject<{ path: z.ZodString }, z.core.$str
 });
 export type FsReadPayload = z.infer<typeof fsReadPayloadSchema>;
 
-export const fsReadResponseSchema = z.union([
+export const fsReadResponseSchema: z.ZodUnion<
+  readonly [
+    z.ZodObject<
+      {
+        content: z.ZodString;
+        contentType: z.ZodString;
+        encoding: z.ZodEnum<{ 'utf-8': 'utf-8'; base64: 'base64' }>;
+      },
+      z.core.$strip
+    >,
+    z.ZodObject<{ error: z.ZodString }, z.core.$strip>,
+  ]
+> = z.union([
   z.object({
     content: z.string(),
     contentType: z.string(),
@@ -84,11 +92,7 @@ export const fsSearchPayloadSchema: z.ZodObject<
 export type FsSearchPayload = z.infer<typeof fsSearchPayloadSchema>;
 
 export const fsSearchResultSchema: z.ZodObject<
-  {
-    path: z.ZodString;
-    name: z.ZodString;
-    type: z.ZodEnum<{ file: 'file'; directory: 'directory' }>;
-  },
+  { path: z.ZodString; name: z.ZodString; type: typeof fsEntryTypeSchema },
   z.core.$strip
 > = z.object({
   path: z.string(),
@@ -102,21 +106,7 @@ export const fsSearchResponseSchema: z.ZodDiscriminatedUnion<
     z.ZodObject<
       {
         ok: z.ZodLiteral<true>;
-        data: z.ZodObject<
-          {
-            files: z.ZodArray<
-              z.ZodObject<
-                {
-                  path: z.ZodString;
-                  name: z.ZodString;
-                  type: z.ZodEnum<{ file: 'file'; directory: 'directory' }>;
-                },
-                z.core.$strip
-              >
-            >;
-          },
-          z.core.$strip
-        >;
+        data: z.ZodObject<{ files: z.ZodArray<typeof fsSearchResultSchema> }, z.core.$strip>;
       },
       z.core.$strip
     >,
@@ -141,7 +131,7 @@ export const fsMutationResultSchema: z.ZodUnion<
 export type FsMutationResult = z.infer<typeof fsMutationResultSchema>;
 
 export const fsCreatePayloadSchema: z.ZodObject<
-  { path: z.ZodString; kind: z.ZodEnum<{ file: 'file'; directory: 'directory' }> },
+  { path: z.ZodString; kind: typeof fsEntryTypeSchema },
   z.core.$strip
 > = z.object({
   path: z.string(),

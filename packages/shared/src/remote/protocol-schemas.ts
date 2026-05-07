@@ -4,7 +4,16 @@ import { worktreeInfoSchema } from '../schemas/worktree.ts';
 
 // ── Process ──
 
-export const processSpawnParamsSchema = z.object({
+export const processSpawnParamsSchema: z.ZodObject<
+  {
+    sessionId: z.ZodString;
+    command: z.ZodString;
+    args: z.ZodArray<z.ZodString>;
+    cwd: z.ZodOptional<z.ZodString>;
+    env: z.ZodOptional<z.ZodRecord<z.ZodString, z.ZodString>>;
+  },
+  z.core.$strip
+> = z.object({
   sessionId: z.string(),
   command: z.string(),
   args: z.array(z.string()),
@@ -12,176 +21,285 @@ export const processSpawnParamsSchema = z.object({
   env: z.record(z.string(), z.string()).optional(),
 });
 
-export const processStdinParamsSchema = z.object({
+export const processStdinParamsSchema: z.ZodObject<
+  { sessionId: z.ZodString; data: z.ZodString },
+  z.core.$strip
+> = z.object({
   sessionId: z.string(),
   data: z.string(),
 });
 
-export const processKillParamsSchema = z.object({
-  sessionId: z.string(),
-});
+export const processKillParamsSchema: z.ZodObject<{ sessionId: z.ZodString }, z.core.$strip> =
+  z.object({
+    sessionId: z.string(),
+  });
 
-export const processLineEventSchema = z.object({
+export const processLineEventSchema: z.ZodObject<
+  { sessionId: z.ZodString; line: z.ZodString },
+  z.core.$strip
+> = z.object({
   sessionId: z.string(),
   line: z.string(),
 });
 
-export const processExitEventSchema = z.object({
+export const processExitEventSchema: z.ZodObject<
+  { sessionId: z.ZodString; code: z.ZodNullable<z.ZodNumber> },
+  z.core.$strip
+> = z.object({
   sessionId: z.string(),
   code: z.number().nullable(),
 });
 
 // ── Filesystem ──
 
-export const fsBrowseDirectoriesParamsSchema = z.object({
+export const fsBrowseDirectoriesParamsSchema: z.ZodObject<
+  { path: z.ZodOptional<z.ZodString> },
+  z.core.$strip
+> = z.object({
   path: z.string().optional(),
 });
 
-export const fsBrowseEntriesParamsSchema = z.object({
+export const fsBrowseEntriesParamsSchema: z.ZodObject<
+  { path: z.ZodOptional<z.ZodString>; showHidden: z.ZodOptional<z.ZodBoolean> },
+  z.core.$strip
+> = z.object({
   path: z.string().optional(),
   showHidden: z.boolean().optional(),
 });
 
-export const fsReadFileAbsoluteParamsSchema = z.object({
+export const fsReadFileAbsoluteParamsSchema: z.ZodObject<
+  { absolutePath: z.ZodString },
+  z.core.$strip
+> = z.object({
   absolutePath: z.string(),
 });
 
-export const fsWriteFileAbsoluteParamsSchema = z.object({
+export const fsWriteFileAbsoluteParamsSchema: z.ZodObject<
+  { absolutePath: z.ZodString; content: z.ZodString },
+  z.core.$strip
+> = z.object({
   absolutePath: z.string(),
   content: z.string(),
 });
 
-export const fsCreateParamsSchema = z.object({
+export const fsCreateParamsSchema: z.ZodObject<
+  { absolutePath: z.ZodString; kind: typeof fsEntryTypeSchema },
+  z.core.$strip
+> = z.object({
   absolutePath: z.string(),
   kind: fsEntryTypeSchema,
 });
 
-export const fsDeleteParamsSchema = z.object({
-  absolutePath: z.string(),
-});
+export const fsDeleteParamsSchema: z.ZodObject<{ absolutePath: z.ZodString }, z.core.$strip> =
+  z.object({
+    absolutePath: z.string(),
+  });
 
-const fromToSchema = z.object({
+const fromToSchema: z.ZodObject<{ from: z.ZodString; to: z.ZodString }, z.core.$strip> = z.object({
   from: z.string(),
   to: z.string(),
 });
 
-export const fsRenameParamsSchema = fromToSchema;
-export const fsCopyParamsSchema = fromToSchema;
-export const fsMoveParamsSchema = fromToSchema;
+export const fsRenameParamsSchema: typeof fromToSchema = fromToSchema;
+export const fsCopyParamsSchema: typeof fromToSchema = fromToSchema;
+export const fsMoveParamsSchema: typeof fromToSchema = fromToSchema;
 
-export const fsListParamsSchema = z.object({
+export const fsListParamsSchema: z.ZodObject<
+  { cwd: z.ZodString; pattern: z.ZodString },
+  z.core.$strip
+> = z.object({
   cwd: z.string(),
   pattern: z.string(),
 });
 
-export const fsReadParamsSchema = z.object({
+export const fsReadParamsSchema: z.ZodObject<
+  { cwd: z.ZodString; filePath: z.ZodString },
+  z.core.$strip
+> = z.object({
   cwd: z.string(),
   filePath: z.string(),
 });
 
-export const fsExistsParamsSchema = z.object({
+export const fsExistsParamsSchema: z.ZodObject<{ path: z.ZodString }, z.core.$strip> = z.object({
   path: z.string(),
 });
 
-export const fsIsDirectoryParamsSchema = z.object({
-  path: z.string(),
-});
+export const fsIsDirectoryParamsSchema: z.ZodObject<{ path: z.ZodString }, z.core.$strip> =
+  z.object({
+    path: z.string(),
+  });
 
-export const fsStatKindParamsSchema = z.object({
+export const fsStatKindParamsSchema: z.ZodObject<{ path: z.ZodString }, z.core.$strip> = z.object({
   path: z.string(),
 });
 
 // ── Filesystem responses ──
 
-const directoryEntrySchema = z.object({ name: z.string(), path: z.string() });
+const directoryEntrySchema: z.ZodObject<{ name: z.ZodString; path: z.ZodString }, z.core.$strip> =
+  z.object({ name: z.string(), path: z.string() });
 
-export const fsBrowseDirectoriesResponseSchema = z.object({
+export const fsBrowseDirectoriesResponseSchema: z.ZodObject<
+  { entries: z.ZodArray<typeof directoryEntrySchema> },
+  z.core.$strip
+> = z.object({
   entries: z.array(directoryEntrySchema),
 });
 
-export const fsBrowseEntriesResponseSchema = z.object({
+export const fsBrowseEntriesResponseSchema: z.ZodObject<
+  {
+    directories: z.ZodArray<typeof directoryEntrySchema>;
+    files: z.ZodArray<typeof directoryEntrySchema>;
+  },
+  z.core.$strip
+> = z.object({
   directories: z.array(directoryEntrySchema),
   files: z.array(directoryEntrySchema),
 });
 
-const fileResultSchema = z.object({
+const fileResultSchema: z.ZodObject<
+  { path: z.ZodString; name: z.ZodString; type: typeof fsEntryTypeSchema },
+  z.core.$strip
+> = z.object({
   path: z.string(),
   name: z.string(),
   type: fsEntryTypeSchema,
 });
 
-export const fsListResponseSchema = z.object({
+export const fsListResponseSchema: z.ZodObject<
+  { files: z.ZodArray<typeof fileResultSchema> },
+  z.core.$strip
+> = z.object({
   files: z.array(fileResultSchema),
 });
 
-export const fsExistsResponseSchema = z.object({ exists: z.boolean() });
-export const fsIsDirectoryResponseSchema = z.object({ isDirectory: z.boolean() });
-export const fsStatKindResponseSchema = z.object({
+export const fsExistsResponseSchema: z.ZodObject<{ exists: z.ZodBoolean }, z.core.$strip> =
+  z.object({ exists: z.boolean() });
+export const fsIsDirectoryResponseSchema: z.ZodObject<
+  { isDirectory: z.ZodBoolean },
+  z.core.$strip
+> = z.object({ isDirectory: z.boolean() });
+export const fsStatKindResponseSchema: z.ZodObject<
+  { kind: z.ZodNullable<typeof fsEntryTypeSchema> },
+  z.core.$strip
+> = z.object({
   kind: fsEntryTypeSchema.nullable(),
 });
 
-export const fsReadFileAbsoluteResponseSchema = z.union([
+export const fsReadFileAbsoluteResponseSchema: z.ZodUnion<
+  readonly [
+    z.ZodObject<
+      {
+        content: z.ZodString;
+        contentType: z.ZodString;
+        encoding: z.ZodEnum<{ 'utf-8': 'utf-8'; base64: 'base64' }>;
+      },
+      z.core.$strip
+    >,
+    z.ZodObject<{ error: z.ZodString }, z.core.$strip>,
+  ]
+> = z.union([
   z.object({ content: z.string(), contentType: z.string(), encoding: z.enum(['utf-8', 'base64']) }),
   z.object({ error: z.string() }),
 ]);
 
-export const fsReadFileResponseSchema = z.union([
-  z.object({ content: z.string() }),
-  z.object({ error: z.string() }),
-]);
+export const fsReadFileResponseSchema: z.ZodUnion<
+  readonly [
+    z.ZodObject<{ content: z.ZodString }, z.core.$strip>,
+    z.ZodObject<{ error: z.ZodString }, z.core.$strip>,
+  ]
+> = z.union([z.object({ content: z.string() }), z.object({ error: z.string() })]);
 
 // ── Git responses ──
 
-export const gitNullableRootSchema = z.string().nullable();
+export const gitNullableRootSchema: z.ZodNullable<z.ZodString> = z.string().nullable();
 
-export const gitBranchResultSchema = z.object({ branch: z.string() });
+export const gitBranchResultSchema: z.ZodObject<{ branch: z.ZodString }, z.core.$strip> = z.object({
+  branch: z.string(),
+});
 
-export const gitBranchListSchema = z.array(z.string());
+export const gitBranchListSchema: z.ZodArray<z.ZodString> = z.array(z.string());
 
-export const gitWorktreeListSchema = z.array(worktreeInfoSchema);
+export const gitWorktreeListSchema: z.ZodArray<typeof worktreeInfoSchema> =
+  z.array(worktreeInfoSchema);
 
 // ── Git ──
 
-export const gitCwdParamsSchema = z.object({
+export const gitCwdParamsSchema: z.ZodObject<{ cwd: z.ZodString }, z.core.$strip> = z.object({
   cwd: z.string(),
 });
 
-export const gitCheckoutParamsSchema = z.object({
+export const gitCheckoutParamsSchema: z.ZodObject<
+  { cwd: z.ZodString; branch: z.ZodString },
+  z.core.$strip
+> = z.object({
   cwd: z.string(),
   branch: z.string(),
 });
 
-export const gitLogParamsSchema = z.object({
+export const gitLogParamsSchema: z.ZodObject<
+  { cwd: z.ZodString; limit: z.ZodOptional<z.ZodNumber> },
+  z.core.$strip
+> = z.object({
   cwd: z.string(),
   limit: z.number().optional(),
 });
 
-export const gitDiffParamsSchema = z.object({
+export const gitDiffParamsSchema: z.ZodObject<
+  { cwd: z.ZodString; filePath: z.ZodOptional<z.ZodString>; status: z.ZodOptional<z.ZodString> },
+  z.core.$strip
+> = z.object({
   cwd: z.string(),
   filePath: z.string().optional(),
   status: z.string().optional(),
 });
 
-export const gitAddParamsSchema = z.object({
+export const gitAddParamsSchema: z.ZodObject<
+  { cwd: z.ZodString; paths: z.ZodOptional<z.ZodArray<z.ZodString>> },
+  z.core.$strip
+> = z.object({
   cwd: z.string(),
   paths: z.array(z.string()).optional(),
 });
 
-export const gitCommitParamsSchema = z.object({
+export const gitCommitParamsSchema: z.ZodObject<
+  { cwd: z.ZodString; message: z.ZodString },
+  z.core.$strip
+> = z.object({
   cwd: z.string(),
   message: z.string(),
 });
 
-export const gitDiscardFileParamsSchema = z.object({
+export const gitDiscardFileParamsSchema: z.ZodObject<
+  { cwd: z.ZodString; file: z.ZodString },
+  z.core.$strip
+> = z.object({
   cwd: z.string(),
   file: z.string(),
 });
 
-export const gitListBranchesParamsSchema = z.object({
-  repoRoot: z.string(),
-});
+export const gitListBranchesParamsSchema: z.ZodObject<{ repoRoot: z.ZodString }, z.core.$strip> =
+  z.object({
+    repoRoot: z.string(),
+  });
 
-export const gitCreateWorktreeParamsSchema = z.object({
+export const gitCreateWorktreeParamsSchema: z.ZodObject<
+  {
+    repoRoot: z.ZodString;
+    opts: z.ZodOptional<
+      z.ZodObject<
+        {
+          name: z.ZodOptional<z.ZodString>;
+          existingBranch: z.ZodOptional<z.ZodString>;
+          newBranch: z.ZodOptional<z.ZodString>;
+          baseBranch: z.ZodOptional<z.ZodString>;
+          path: z.ZodOptional<z.ZodString>;
+        },
+        z.core.$strip
+      >
+    >;
+  },
+  z.core.$strip
+> = z.object({
   repoRoot: z.string(),
   opts: z
     .object({
@@ -194,21 +312,35 @@ export const gitCreateWorktreeParamsSchema = z.object({
     .optional(),
 });
 
-export const gitListWorktreesParamsSchema = z.object({
-  repoRoot: z.string(),
-});
+export const gitListWorktreesParamsSchema: z.ZodObject<{ repoRoot: z.ZodString }, z.core.$strip> =
+  z.object({
+    repoRoot: z.string(),
+  });
 
-export const gitDeleteWorktreeParamsSchema = z.object({
+export const gitDeleteWorktreeParamsSchema: z.ZodObject<
+  { repoRoot: z.ZodString; name: z.ZodString },
+  z.core.$strip
+> = z.object({
   repoRoot: z.string(),
   name: z.string(),
 });
 
-export const gitRenameWorktreeParamsSchema = z.object({
+export const gitRenameWorktreeParamsSchema: z.ZodObject<
+  { worktreeCwd: z.ZodString; newBranchName: z.ZodString },
+  z.core.$strip
+> = z.object({
   worktreeCwd: z.string(),
   newBranchName: z.string(),
 });
 
-export const gitArchiveWorktreeParamsSchema = z.object({
+export const gitArchiveWorktreeParamsSchema: z.ZodObject<
+  {
+    repoRoot: z.ZodString;
+    name: z.ZodString;
+    opts: z.ZodOptional<z.ZodObject<{ force: z.ZodOptional<z.ZodBoolean> }, z.core.$strip>>;
+  },
+  z.core.$strip
+> = z.object({
   repoRoot: z.string(),
   name: z.string(),
   opts: z.object({ force: z.boolean().optional() }).optional(),

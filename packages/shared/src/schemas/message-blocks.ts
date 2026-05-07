@@ -56,28 +56,10 @@ export type ToolResultBlock = z.infer<typeof toolResultBlockSchema>;
 
 export const contentBlockSchema: z.ZodUnion<
   readonly [
-    z.ZodObject<{ type: z.ZodLiteral<'text'>; text: z.ZodString }, z.core.$strip>,
-    z.ZodObject<{ type: z.ZodLiteral<'thinking'>; thinking: z.ZodString }, z.core.$strip>,
-    z.ZodObject<
-      {
-        type: z.ZodLiteral<'tool_use'>;
-        toolId: z.ZodString;
-        toolName: z.ZodString;
-        input: z.ZodUnknown;
-        model: z.ZodOptional<z.ZodString>;
-      },
-      z.core.$strip
-    >,
-    z.ZodObject<
-      {
-        type: z.ZodLiteral<'tool_result'>;
-        toolUseId: z.ZodString;
-        toolName: z.ZodOptional<z.ZodString>;
-        content: z.ZodUnknown;
-        isError: z.ZodOptional<z.ZodBoolean>;
-      },
-      z.core.$strip
-    >,
+    typeof textBlockSchema,
+    typeof thinkingBlockSchema,
+    typeof toolUseBlockSchema,
+    typeof toolResultBlockSchema,
   ]
 > = z.union([textBlockSchema, thinkingBlockSchema, toolUseBlockSchema, toolResultBlockSchema]);
 export type ContentBlock = z.infer<typeof contentBlockSchema>;
