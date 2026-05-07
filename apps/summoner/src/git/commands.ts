@@ -160,16 +160,20 @@ export class GitCommands {
     if ((await this.getRepoRoot(cwd)) !== null) throw new AlreadyRepoError(cwd);
     const git = createGit(cwd);
     await git.raw(['init', '-b', 'main']);
-    await git.raw([
-      '-c',
-      'user.email=cc-office@local',
-      '-c',
-      'user.name=cc-office',
-      'commit',
-      '--allow-empty',
-      '-m',
-      'Initial commit',
-    ]);
+    try {
+      await git.raw(['commit', '--allow-empty', '-m', 'Initial commit']);
+    } catch {
+      await git.raw([
+        '-c',
+        'user.email=code-quest@local',
+        '-c',
+        'user.name=code-quest',
+        'commit',
+        '--allow-empty',
+        '-m',
+        'Initial commit',
+      ]);
+    }
     return { branch: 'main' };
   }
 
