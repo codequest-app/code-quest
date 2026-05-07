@@ -3,13 +3,10 @@ import {
   isRecord,
   type ProjectsRemovedEvent,
   type Project as ServerProject,
-  type SessionStateSummary,
 } from '@code-quest/shared';
 import { createContext, type ReactNode, useContext, useEffect, useRef, useState } from 'react';
 import { toast } from 'sonner';
-import { basename } from '../utils/basename.ts';
 import { useSocket } from './SocketContext.tsx';
-import { TERMINAL_STATES } from './session-states.ts';
 
 export interface Project {
   cwd: string;
@@ -142,22 +139,6 @@ function pickNextActive(remaining: ServerProject[]): string | null {
     return a.lastOpenedAt < b.lastOpenedAt ? 1 : -1;
   });
   return sorted[0]?.path ?? null;
-}
-
-/** Pure helper that groups sessions by `projectRoot` into Project objects.
- *  Provider no longer uses this internally (server is the source of truth) but
- *  it remains exported for any consumer that wants to derive ad-hoc. */
-export function deriveProjects(sessions: SessionStateSummary[], prev: Project[]): Project[] {
-  const keys = new Set<string>();
-  for (const s of sessions) {
-    if (!TERMINAL_STATES.has(s.state)) keys.add(s.projectRoot);
-  }
-  if (keys.size === 0) return prev;
-  const existing = new Set(prev.map((p) => p.cwd));
-  const newProjects = [...keys]
-    .filter((k) => !existing.has(k))
-    .map((cwd) => ({ cwd, name: basename(cwd), pinned: false, lastOpenedAt: '' }));
-  return newProjects.length > 0 ? [...prev, ...newProjects] : prev;
 }
 
 export function ProjectProvider({ children }: { children: ReactNode }): React.JSX.Element {

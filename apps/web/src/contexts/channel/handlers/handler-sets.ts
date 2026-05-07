@@ -24,5 +24,4 @@ function buildHandlers(exclude: Set<string>): HandlerMap {
 // Session lifecycle events excluded — transient connection state, must not replay.
 const sessionKeys = new Set(Object.keys(sessionHandlerOn));
 
-export const liveHandlers: HandlerMap = buildHandlers(sessionKeys);
-export { liveHandlers as historyHandlers };
+export const messageHandlers: HandlerMap = buildHandlers(sessionKeys);

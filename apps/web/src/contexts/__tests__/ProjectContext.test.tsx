@@ -4,7 +4,6 @@ import { describe, expect, it, vi } from 'vitest';
 import { createFakeSummoner, type FakeSummoner } from '@/test/fake-summoner';
 import { AppInitProvider } from '../AppInitContext.tsx';
 import {
-  deriveProjects,
   type Project,
   ProjectProvider,
   useProjectActions,
@@ -296,22 +295,6 @@ describe('ProjectContext (server-backed)', () => {
         await result.current.actions.removeProject('/p/b');
       });
       await waitFor(() => expect(result.current.state.activeProjectCwd).toBe('/p/a'));
-    });
-  });
-
-  describe('deriveProjects (legacy helper, no longer used by provider)', () => {
-    it('groups sessions with same projectRoot but different cwd under one Project', () => {
-      const sessions = [
-        { channelId: 'a', state: 'idle' as const, cwd: '/repo', projectRoot: '/repo' },
-        {
-          channelId: 'b',
-          state: 'idle' as const,
-          cwd: '/repo/.claude/worktrees/feat',
-          projectRoot: '/repo',
-        },
-      ];
-      const result = deriveProjects(sessions, []);
-      expect(result).toEqual([expect.objectContaining({ cwd: '/repo', name: 'repo' })]);
     });
   });
 });

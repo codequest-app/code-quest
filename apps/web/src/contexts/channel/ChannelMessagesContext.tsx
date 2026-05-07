@@ -44,7 +44,7 @@ import { useChannelSocketRouter } from './ChannelSocketRouterContext.tsx';
 import { FeatureRegistryContext } from './FeatureRegistryContext.tsx';
 import { createFileActions } from './handlers/file.ts';
 import type { Payload } from './handlers/guard.ts';
-import { historyHandlers, liveHandlers } from './handlers/handler-sets.ts';
+import { messageHandlers } from './handlers/handler-sets.ts';
 import { applyHistoryBatch, shouldApplyBatch } from './handlers/history.ts';
 import { parseJoinResponse } from './handlers/join.ts';
 import { createMessageActions } from './handlers/message.ts';
@@ -392,7 +392,7 @@ export function ChannelMessagesProvider({
   // ── Auto-wiring: state handlers + effect handlers ──
   useEffect(() => {
     if (!socket) return;
-    return router.register<ChannelState, EffectContext>(liveHandlers, setChannelState, {
+    return router.register<ChannelState, EffectContext>(messageHandlers, setChannelState, {
       skipGuard: new Set(['disconnect']),
       beforeUpdate(event) {
         if (resetStreamingEvents.has(event)) {
@@ -406,7 +406,7 @@ export function ChannelMessagesProvider({
     });
   }, [channelId, socket, router]);
 
-  // ── Special: session lifecycle events (excluded from liveHandlers to prevent replay) ──
+  // ── Special: session lifecycle events (excluded from messageHandlers to prevent replay) ──
   useEffect(() => {
     if (!socket) return;
     const off1 = router.on(EVENTS.session.closed, (p) =>
@@ -453,7 +453,7 @@ export function ChannelMessagesProvider({
         // Skip first batch if live events already arrived (socket was already watching the channel).
         // Subsequent batches of the same replay are always applied.
         if (isFirstBatch && prev.messages.length > 0) return prev;
-        return applyHistoryBatch(prev, payload.events, historyHandlers);
+        return applyHistoryBatch(prev, payload.events, messageHandlers);
       });
     });
   }, [socket, router]);

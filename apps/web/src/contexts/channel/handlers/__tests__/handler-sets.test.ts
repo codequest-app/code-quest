@@ -1,42 +1,42 @@
 import { describe, expect, it } from 'vitest';
-import { historyHandlers, liveHandlers } from '../handler-sets.ts';
+import { messageHandlers } from '../handler-sets.ts';
 
-describe('liveHandlers', () => {
+describe('messageHandlers', () => {
   it('includes message event handlers', () => {
-    expect('message:assistant' in liveHandlers).toBe(true);
-    expect('message:user' in liveHandlers).toBe(true);
+    expect('message:assistant' in messageHandlers).toBe(true);
+    expect('message:user' in messageHandlers).toBe(true);
   });
 
   it('includes streaming handlers', () => {
-    expect('stream:chunk' in liveHandlers).toBe(true);
-    expect('stream:end' in liveHandlers).toBe(true);
+    expect('stream:chunk' in messageHandlers).toBe(true);
+    expect('stream:end' in messageHandlers).toBe(true);
   });
 
   it('excludes session lifecycle events that must not replay', () => {
-    expect('session:closed' in liveHandlers).toBe(false);
-    expect('session:status' in liveHandlers).toBe(false);
-    expect('disconnect' in liveHandlers).toBe(false);
+    expect('session:closed' in messageHandlers).toBe(false);
+    expect('session:status' in messageHandlers).toBe(false);
+    expect('disconnect' in messageHandlers).toBe(false);
   });
 });
 
-describe('historyHandlers', () => {
+describe('messageHandlers', () => {
   it('includes message event handlers', () => {
-    expect('message:assistant' in historyHandlers).toBe(true);
-    expect('message:user' in historyHandlers).toBe(true);
+    expect('message:assistant' in messageHandlers).toBe(true);
+    expect('message:user' in messageHandlers).toBe(true);
   });
 
   it('includes streaming handlers', () => {
-    expect('stream:chunk' in historyHandlers).toBe(true);
-    expect('stream:end' in historyHandlers).toBe(true);
+    expect('stream:chunk' in messageHandlers).toBe(true);
+    expect('stream:end' in messageHandlers).toBe(true);
   });
 
   it('excludes session lifecycle events that must not replay', () => {
-    expect('session:closed' in historyHandlers).toBe(false);
-    expect('session:status' in historyHandlers).toBe(false);
-    expect('disconnect' in historyHandlers).toBe(false);
+    expect('session:closed' in messageHandlers).toBe(false);
+    expect('session:status' in messageHandlers).toBe(false);
+    expect('disconnect' in messageHandlers).toBe(false);
   });
 
-  it('liveHandlers and historyHandlers are identical', () => {
-    expect(Object.keys(liveHandlers).sort()).toEqual(Object.keys(historyHandlers).sort());
+  it('messageHandlers and messageHandlers are identical', () => {
+    expect(Object.keys(messageHandlers).sort()).toEqual(Object.keys(messageHandlers).sort());
   });
 });
