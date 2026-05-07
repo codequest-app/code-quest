@@ -29,7 +29,7 @@ describe('ChatHandler > git', () => {
 
   describe('git:log and git:diff', () => {
     it('git:log parses formatted output into entries', async () => {
-      const { claude, channelId, git } = await setup();
+      const { claude, git } = await setup();
       git.setLogEntries([
         {
           hash: 'abc123',
