@@ -39,7 +39,6 @@ export function McpServerRow({
   const [tools, setTools] = useState<McpTool[]>([]);
   const [toolsExpanded, setToolsExpanded] = useState(false);
   const [authUrl, setAuthUrl] = useState('');
-  const [callbackInput, setCallbackInput] = useState('');
 
   const runAction = async <T,>(label: string, fn: () => T | Promise<T>): Promise<T | null> => {
     try {
@@ -140,68 +139,105 @@ export function McpServerRow({
         )}
       </div>
       {authUrl && (
-        <div className="px-4 pb-2">
-          <a
-            href={authUrl}
-            target="_blank"
-            rel="noopener noreferrer"
-            className="text-xs text-accent hover:underline"
+        <McpAuthSection
+          authUrl={authUrl}
+          serverName={s.name}
+          onOAuthCallback={onOAuthCallback}
+          onComplete={(result) => {
+            if (result.ok) {
+              showFeedback(`OAuth callback sent for ${s.name}`, 'success');
+              setAuthUrl('');
+            } else {
+              showFeedback(result.error || 'Callback failed', 'error');
+            }
+          }}
+          runAction={runAction}
+        />
+      )}
+      {toolsExpanded && <McpToolsList tools={tools} serverName={s.name} />}
+    </div>
+  );
+}
+
+function McpAuthSection({
+  authUrl,
+  serverName,
+  onOAuthCallback,
+  onComplete,
+  runAction,
+}: {
+  authUrl: string;
+  serverName: string;
+  onOAuthCallback?: (serverName: string, callbackUrl: string) => Promise<Ack>;
+  onComplete: (result: Ack) => void;
+  runAction: <T>(label: string, fn: () => T | Promise<T>) => Promise<T | null>;
+}): React.JSX.Element {
+  const [callbackInput, setCallbackInput] = useState('');
+  return (
+    <div className="px-4 pb-2">
+      <a
+        href={authUrl}
+        target="_blank"
+        rel="noopener noreferrer"
+        className="text-xs text-accent hover:underline"
+      >
+        Complete authentication →
+      </a>
+      {onOAuthCallback && (
+        <div className="flex gap-1 mt-2">
+          <input
+            type="text"
+            placeholder="Callback URL"
+            value={callbackInput}
+            onChange={(e) => setCallbackInput(e.target.value)}
+            className="flex-1 bg-code-block border border-border rounded px-2 py-1 text-xs font-mono text-text"
+          />
+          <Button
+            variant="primary"
+            size="xs"
+            className="px-2 py-1"
+            onClick={async () => {
+              const url = callbackInput.trim();
+              if (!url) return;
+              const result = await runAction('submit callback for', () =>
+                onOAuthCallback(serverName, url),
+              );
+              if (result === null) return;
+              onComplete(result);
+              if (result.ok) setCallbackInput('');
+            }}
           >
-            Complete authentication →
-          </a>
-          {onOAuthCallback && (
-            <div className="flex gap-1 mt-2">
-              <input
-                type="text"
-                placeholder="Callback URL"
-                value={callbackInput}
-                onChange={(e) => setCallbackInput(e.target.value)}
-                className="flex-1 bg-code-block border border-border rounded px-2 py-1 text-xs font-mono text-text"
-              />
-              <Button
-                variant="primary"
-                size="xs"
-                className="px-2 py-1"
-                onClick={async () => {
-                  const url = callbackInput.trim();
-                  if (!url) return;
-                  const result = await runAction('submit callback for', () =>
-                    onOAuthCallback(s.name, url),
-                  );
-                  if (result === null) return;
-                  if (result.ok) {
-                    showFeedback(`OAuth callback sent for ${s.name}`, 'success');
-                    setCallbackInput('');
-                    setAuthUrl('');
-                  } else {
-                    showFeedback(result.error || 'Callback failed', 'error');
-                  }
-                }}
-              >
-                Submit
-              </Button>
-            </div>
-          )}
+            Submit
+          </Button>
         </div>
       )}
-      {toolsExpanded && (
-        <section aria-label={`tools-${s.name}`} className="px-6 pb-3">
-          {tools.length === 0 ? (
-            <p className="text-xs text-text-muted">No tools</p>
-          ) : (
-            <ul className="space-y-1">
-              {tools.map((tool) => (
-                <li key={tool.name} className="text-xs">
-                  <span className="font-mono text-text">{tool.name}</span>
-                  {tool.description && (
-                    <span className="ml-1 text-text-muted">— {tool.description}</span>
-                  )}
-                </li>
-              ))}
-            </ul>
-          )}
-        </section>
-      )}
     </div>
+  );
+}
+
+function McpToolsList({
+  tools,
+  serverName,
+}: {
+  tools: McpTool[];
+  serverName: string;
+}): React.JSX.Element {
+  return (
+    <section aria-label={`tools-${serverName}`} className="px-6 pb-3">
+      {tools.length === 0 ? (
+        <p className="text-xs text-text-muted">No tools</p>
+      ) : (
+        <ul className="space-y-1">
+          {tools.map((tool) => (
+            <li key={tool.name} className="text-xs">
+              <span className="font-mono text-text">{tool.name}</span>
+              {tool.description && (
+                <span className="ml-1 text-text-muted">— {tool.description}</span>
+              )}
+            </li>
+          ))}
+        </ul>
+      )}
+    </section>
   );
 }
