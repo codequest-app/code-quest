@@ -74,27 +74,27 @@ export const notificationHandlerOn: {
 
 // ── Effect handlers (side effects) ──
 
-export interface EffectDeps {
+export interface EffectContext {
   socket: TypedSocket;
   channelId: string;
 }
 
-function onNotificationToast(_deps: EffectDeps, p: Payload<'notification:toast'>): void {
+function onNotificationToast(_ctx: EffectContext, p: Payload<'notification:toast'>): void {
   toast.info(p.message ?? '');
 }
 
-function onNotificationAuthUrl(_deps: EffectDeps, p: Payload<'notification:auth_url'>): void {
+function onNotificationAuthUrl(_ctx: EffectContext, p: Payload<'notification:auth_url'>): void {
   toast.info(`Authentication required (${p.method})`, {
     duration: 30_000,
     action: { label: 'Open', onClick: () => openUrl(p.url) },
   });
 }
 
-function onActionOpenUrl(_deps: EffectDeps, p: Payload<'action:open_url'>): void {
+function onActionOpenUrl(_ctx: EffectContext, p: Payload<'action:open_url'>): void {
   openUrl(p.url);
 }
 
-function onActionOpenFile(_deps: EffectDeps, p: Payload<'action:open_file'>): void {
+function onActionOpenFile(_ctx: EffectContext, p: Payload<'action:open_file'>): void {
   const loc = p.location
     ? ` (line ${p.location.startLine ?? '?'}${p.location.endLine ? `–${p.location.endLine}` : ''})`
     : '';
@@ -102,14 +102,14 @@ function onActionOpenFile(_deps: EffectDeps, p: Payload<'action:open_file'>): vo
 }
 
 function onNotificationShowEffect(
-  deps: EffectDeps,
+  ctx: EffectContext,
   p: Payload<'notification:show'> & { requestId?: string },
 ): void {
   const severity = p.severity ?? 'info';
   const reqId = p.requestId;
   if (p.buttons?.length && reqId) {
     showNotificationToast(p.message ?? '', severity, p.buttons, (response) =>
-      channelEmit(deps.socket, deps.channelId, EVENTS.chat.respond, {
+      channelEmit(ctx.socket, ctx.channelId, EVENTS.chat.respond, {
         requestId: reqId,
         response,
       }),
@@ -121,19 +121,19 @@ function onNotificationShowEffect(
   showToast(p.message ?? '');
 }
 
-function onRawEventEffect(deps: EffectDeps, p: Payload<'raw:event'>): void {
+function onRawEventEffect(ctx: EffectContext, p: Payload<'raw:event'>): void {
   if (p.rawType === 'new_session_notification') {
     toast.info('New session started');
   } else if (p.rawType === 'control_request/open_in_editor') {
     toast.info('Open in Editor is not supported in web mode');
-    channelEmit(deps.socket, deps.channelId, EVENTS.chat.respond, {
+    channelEmit(ctx.socket, ctx.channelId, EVENTS.chat.respond, {
       requestId: String(p.data.requestId),
       response: { behavior: 'allow' },
     });
   }
 }
 
-function onMirrorError(_deps: EffectDeps, p: Payload<'system:mirror_error'>): void {
+function onMirrorError(_ctx: EffectContext, p: Payload<'system:mirror_error'>): void {
   toast.warning(`Mirror sync error: ${p.error}`);
 }
 
@@ -159,4 +159,4 @@ export const notificationHandlerEffects: {
   'raw:event': onRawEventEffect,
   'system:mirror_error': onMirrorError,
   disconnect: onDisconnectEffect,
-} satisfies Record<string, (deps: EffectDeps, payload: never) => void>;
+} satisfies Record<string, (ctx: EffectContext, payload: never) => void>;

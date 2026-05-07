@@ -19,6 +19,7 @@ import {
   useContext,
   useEffect,
   useLayoutEffect,
+  useMemo,
   useRef,
   useState,
 } from 'react';
@@ -47,7 +48,7 @@ import { historyHandlers, liveHandlers } from './handlers/handler-sets.ts';
 import { applyHistoryBatch, shouldApplyBatch } from './handlers/history.ts';
 import { parseJoinResponse } from './handlers/join.ts';
 import { createMessageActions } from './handlers/message.ts';
-import { type EffectDeps, notificationHandlerEffects } from './handlers/notification.ts';
+import { type EffectContext, notificationHandlerEffects } from './handlers/notification.ts';
 import { createPlanActions } from './handlers/plan.ts';
 import { createSessionActions, onSessionClosed, onSessionStatus } from './handlers/session.ts';
 import { resetStreaming } from './handlers/streaming.ts';
@@ -158,7 +159,7 @@ export function useChannelMessagesActions(): MessagesActionsValue {
 
 function registerMessageFeatures(
   registry: FeatureRegistry,
-  deps: {
+  ctx: {
     socket: TypedSocket;
     channelId: string;
     sessionActions: ReturnType<typeof createSessionActions>;
@@ -168,7 +169,7 @@ function registerMessageFeatures(
   },
 ) {
   const { socket, channelId, sessionActions, messageActions, clearMessages, clearModifiedFiles } =
-    deps;
+    ctx;
   registry.register(createBtwFeature({ askSideQuestion: sessionActions.askSideQuestion }));
   registry.register(createReloadPluginsFeature(() => sessionActions.reloadPlugins()));
   registry.register(
@@ -197,7 +198,7 @@ function registerMessageFeatures(
   );
 }
 
-function buildMessagesActions(deps: {
+function buildMessagesActions(ctx: {
   socket: TypedSocket;
   channelId: string;
   cwd?: string;
@@ -206,7 +207,7 @@ function buildMessagesActions(deps: {
   messageQueueRef: RefObject<string[]>;
   registry: FeatureRegistry;
 }): MessagesActionsValue {
-  const { socket, channelId, cwd, setChannelState, statusRef, messageQueueRef, registry } = deps;
+  const { socket, channelId, cwd, setChannelState, statusRef, messageQueueRef, registry } = ctx;
   const sessionActions = createSessionActions({ socket, channelId });
   const messageActions = createMessageActions({
     socket,
@@ -391,7 +392,7 @@ export function ChannelMessagesProvider({
   // ── Auto-wiring: state handlers + effect handlers ──
   useEffect(() => {
     if (!socket) return;
-    return router.register<ChannelState, EffectDeps>(liveHandlers, setChannelState, {
+    return router.register<ChannelState, EffectContext>(liveHandlers, setChannelState, {
       skipGuard: new Set(['disconnect']),
       beforeUpdate(event) {
         if (resetStreamingEvents.has(event)) {
@@ -401,8 +402,7 @@ export function ChannelMessagesProvider({
           });
         }
       },
-      effects: notificationHandlerEffects,
-      effectDeps: { socket, channelId },
+      sideEffects: { handlers: notificationHandlerEffects, ctx: { socket, channelId } },
     });
   }, [channelId, socket, router]);
 
@@ -464,17 +464,19 @@ export function ChannelMessagesProvider({
     statusRef.current = channelState.status;
   });
 
-  // ── Stable actions (don't depend on channelState) ──
-  const [actions] = useState<MessagesActionsValue>(() =>
-    buildMessagesActions({
-      socket,
-      channelId,
-      cwd,
-      setChannelState,
-      statusRef,
-      messageQueueRef,
-      registry,
-    }),
+  // ── Actions (rebuilt when socket/channelId/cwd change) ──
+  const actions = useMemo<MessagesActionsValue>(
+    () =>
+      buildMessagesActions({
+        socket,
+        channelId,
+        cwd,
+        setChannelState,
+        statusRef,
+        messageQueueRef,
+        registry,
+      }),
+    [socket, channelId, cwd, messageQueueRef, registry],
   );
 
   // ── Message Registry: expose messages to workspace-level consumers ──

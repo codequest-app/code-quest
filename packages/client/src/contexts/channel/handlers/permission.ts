@@ -5,7 +5,7 @@ import { channelEmit } from '@/socket/rpc';
 import type { ChannelState, PendingDiffReview, PendingElicitation } from '@/types/chat';
 import { msg } from '@/utils/message';
 import type { Payload } from './guard.ts';
-import type { EffectDeps } from './notification.ts';
+import type { EffectContext } from './notification.ts';
 
 function getFeedbackLabel(response: ControlPermissionResponse): string {
   if ('continue' in response) {
@@ -74,10 +74,10 @@ export const controlHandlers: {
   'chat:cancel_request': onCancelRequest,
 } satisfies Record<string, (state: ControlState, payload: never) => ControlState>;
 
-function onControlMcpEffect(deps: EffectDeps, p: Payload<'control:mcp'>): void {
+function onControlMcpEffect(ctx: EffectContext, p: Payload<'control:mcp'>): void {
   const mcpMsg = p.message;
-  deps.socket.emit(EVENTS.chat.respond, {
-    channelId: deps.channelId,
+  ctx.socket.emit(EVENTS.chat.respond, {
+    channelId: ctx.channelId,
     requestId: p.requestId,
     response: {
       jsonrpc: '2.0',
@@ -91,17 +91,7 @@ export const controlHandlerEffects: {
   'control:mcp': typeof onControlMcpEffect;
 } = {
   'control:mcp': onControlMcpEffect,
-} satisfies Record<string, (deps: EffectDeps, payload: never) => void>;
-
-interface ControlActionsDeps {
-  socket: TypedSocket;
-  channelId: string;
-  controlsRef: RefObject<PendingControl[]>;
-  setControls: (fn: (prev: PendingControl[]) => PendingControl[]) => void;
-  setElicitation: (v: PendingElicitation | null) => void;
-  setDiffReview: (v: PendingDiffReview | null) => void;
-  setChannelState: (fn: (prev: ChannelState) => ChannelState) => void;
-}
+} satisfies Record<string, (ctx: EffectContext, payload: never) => void>;
 
 export function createControlActions({
   socket,
@@ -111,7 +101,15 @@ export function createControlActions({
   setElicitation,
   setDiffReview,
   setChannelState,
-}: ControlActionsDeps): {
+}: {
+  socket: TypedSocket;
+  channelId: string;
+  controlsRef: RefObject<PendingControl[]>;
+  setControls: (fn: (prev: PendingControl[]) => PendingControl[]) => void;
+  setElicitation: (v: PendingElicitation | null) => void;
+  setDiffReview: (v: PendingDiffReview | null) => void;
+  setChannelState: (fn: (prev: ChannelState) => ChannelState) => void;
+}): {
   setPendingControls: (fn: (prev: PendingControl[]) => PendingControl[]) => void;
   setPendingElicitation: (v: PendingElicitation | null) => void;
   setPendingDiffReview: (v: PendingDiffReview | null) => void;

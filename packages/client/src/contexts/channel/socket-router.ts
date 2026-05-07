@@ -5,8 +5,10 @@ import { matchesChannel, type Payload } from './handlers/guard.ts';
 interface RegisterOptions<D> {
   beforeUpdate?: (event: string, payload: { channelId: string }) => void;
   skipGuard?: Set<string>;
-  effects?: Record<string, (deps: D, payload: never) => void>;
-  effectDeps?: D;
+  sideEffects?: {
+    handlers: Record<string, (ctx: D, payload: never) => void>;
+    ctx: D;
+  };
 }
 
 type SocketListener = (payload: { channelId: string }) => void;
@@ -62,16 +64,17 @@ export class ChannelSocketRouter {
     setState: (fn: (prev: S) => S) => void,
     options?: RegisterOptions<D>,
   ): () => void {
-    const { beforeUpdate, skipGuard, effects, effectDeps } = options ?? {};
-    const events = new Set([...Object.keys(handlers), ...Object.keys(effects ?? {})]);
+    const { beforeUpdate, skipGuard, sideEffects } = options ?? {};
+    const effectHandlers = sideEffects?.handlers ?? {};
+    const events = new Set([...Object.keys(handlers), ...Object.keys(effectHandlers)]);
 
     const offs = [...events].map((event) => {
       const stateHandler = handlers[event];
-      const effectHandler = effects?.[event];
+      const effectHandler = effectHandlers[event];
       const handleEvent: SocketListener = (payload) => {
         beforeUpdate?.(event, payload);
         if (stateHandler) setState((prev) => stateHandler(prev, payload as never));
-        if (effectHandler && effectDeps !== undefined) effectHandler(effectDeps, payload as never);
+        if (effectHandler && sideEffects) effectHandler(sideEffects.ctx, payload as never);
       };
       return this.subscribe(event, handleEvent, !skipGuard?.has(event));
     });

@@ -1,7 +1,7 @@
 import { describe, expect, it, vi } from 'vitest';
 import { createClearFeature } from '../clear-feature.ts';
 
-function makeDeps() {
+function makeCtx() {
   return {
     clearMessages: vi.fn(),
     clearModifiedFiles: vi.fn(),
@@ -11,21 +11,21 @@ function makeDeps() {
 
 describe('createClearFeature', () => {
   it('has id clear', () => {
-    expect(createClearFeature(makeDeps()).id).toBe('clear');
+    expect(createClearFeature(makeCtx()).id).toBe('clear');
   });
 
   it('is in Context section with label Clear conversation', () => {
-    const feature = createClearFeature(makeDeps());
+    const feature = createClearFeature(makeCtx());
     expect(feature.label).toBe('Clear conversation');
     expect(feature.section).toBe('Context');
     expect(feature.order).toBe(0);
   });
 
   it('execute calls clearMessages, clearModifiedFiles, and sends /clear to CLI', () => {
-    const deps = makeDeps();
-    createClearFeature(deps).execute();
-    expect(deps.clearMessages).toHaveBeenCalledOnce();
-    expect(deps.clearModifiedFiles).toHaveBeenCalledOnce();
-    expect(deps.sendMessage).toHaveBeenCalledWith('/clear');
+    const ctx = makeCtx();
+    createClearFeature(ctx).execute();
+    expect(ctx.clearMessages).toHaveBeenCalledOnce();
+    expect(ctx.clearModifiedFiles).toHaveBeenCalledOnce();
+    expect(ctx.sendMessage).toHaveBeenCalledWith('/clear');
   });
 });

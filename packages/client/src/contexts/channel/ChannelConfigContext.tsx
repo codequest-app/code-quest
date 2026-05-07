@@ -16,7 +16,7 @@ import {
   type ReactNode,
   useContext,
   useEffect,
-  useLayoutEffect,
+  useMemo,
   useRef,
   useState,
 } from 'react';
@@ -132,14 +132,8 @@ export function ChannelConfigProvider({
 
   const { socket } = useSocket();
 
-  const socketRef = useRef(socket);
-  const channelIdRef = useRef(channelId);
   const onNewChannelRef = useRef(onNewChannel);
-  useLayoutEffect(() => {
-    socketRef.current = socket;
-    channelIdRef.current = channelId;
-    onNewChannelRef.current = onNewChannel;
-  });
+  onNewChannelRef.current = onNewChannel;
 
   // ── Fetch provider config on mount ──
   useEffect(() => {
@@ -185,31 +179,14 @@ export function ChannelConfigProvider({
     });
   }, [channelId, sessionsMap]);
 
-  // ── Stable actions (created once, read deps from refs) ──
-  const setConfigStateRef = useRef(setConfigState);
-  const addSystemMessageRef = useRef(addSystemMessage);
-  useLayoutEffect(() => {
-    setConfigStateRef.current = setConfigState;
-    addSystemMessageRef.current = addSystemMessage;
-  });
-  const [depsProxy] = useState(() => ({
-    get socket() {
-      return socketRef.current;
-    },
-    get channelId() {
-      return channelIdRef.current;
-    },
-    get setState() {
-      return setConfigStateRef.current;
-    },
-    get addSystemMessage() {
-      return addSystemMessageRef.current;
-    },
-  }));
-  const [actions] = useState<ConfigActionsValue>(() => ({
-    ...createConfigActions(depsProxy),
-    openNewChannel: (cwd: string) => onNewChannelRef.current?.(cwd),
-  }));
+  // ── Actions (rebuilt when socket/channelId change) ──
+  const actions = useMemo<ConfigActionsValue>(
+    () => ({
+      ...createConfigActions({ socket, channelId, setState: setConfigState, addSystemMessage }),
+      openNewChannel: (cwd: string) => onNewChannelRef.current?.(cwd),
+    }),
+    [socket, channelId, addSystemMessage],
+  );
 
   // ── State value ──
   const stateValue: ConfigStateValue = {

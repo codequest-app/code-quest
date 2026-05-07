@@ -5,6 +5,7 @@ import {
   useContext,
   useEffect,
   useLayoutEffect,
+  useMemo,
   useRef,
   useState,
 } from 'react';
@@ -15,7 +16,7 @@ import { useChannelMessagesActions } from './ChannelMessagesContext.tsx';
 import { useChannelId } from './ChannelMetaContext.tsx';
 import { useChannelSocketRouter } from './ChannelSocketRouterContext.tsx';
 import type { Payload } from './handlers/guard.ts';
-import type { EffectDeps } from './handlers/notification.ts';
+import type { EffectContext } from './handlers/notification.ts';
 import {
   type ControlState,
   controlHandlerEffects,
@@ -155,9 +156,8 @@ export function ChannelControlProvider({
   // biome-ignore lint/correctness/useExhaustiveDependencies: setControlState uses refs which are stable
   useEffect(() => {
     if (!channelId) return;
-    return router.register<ControlState, EffectDeps>(controlHandlers, setControlState, {
-      effects: controlHandlerEffects,
-      effectDeps: { socket, channelId },
+    return router.register<ControlState, EffectContext>(controlHandlers, setControlState, {
+      sideEffects: { handlers: controlHandlerEffects, ctx: { socket, channelId } },
     });
   }, [channelId, socket, router]);
 
@@ -174,16 +174,20 @@ export function ChannelControlProvider({
     };
   }, [channelId, router]);
 
-  // ── Stable actions ──
-  const actions = createControlActions({
-    socket,
-    channelId,
-    controlsRef,
-    setControls,
-    setElicitation,
-    setDiffReview,
-    setChannelState,
-  });
+  // ── Stable actions (rebuilt when socket/channelId change) ──
+  const actions = useMemo(
+    () =>
+      createControlActions({
+        socket,
+        channelId,
+        controlsRef,
+        setControls,
+        setElicitation,
+        setDiffReview,
+        setChannelState,
+      }),
+    [socket, channelId, setChannelState],
+  );
 
   return (
     <ControlActionsContext.Provider value={actions}>

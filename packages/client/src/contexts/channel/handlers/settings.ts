@@ -33,48 +33,15 @@ function parseModels(raw: unknown[]): ModelInfo[] {
 
 // ── On handlers: (state, payload) → newState ──
 
-/**
- * Per-payload-key copier into ConfigState. Keys map to differently-typed state
- * fields, so each entry is a closure with concrete in/out types — no dynamic
- * key indexing means no `as Record<>` cast needed.
- */
-type Copier<P> = (update: Partial<ConfigState>, value: Exclude<P, undefined>) => void;
-type CopierMap = {
-  [K in keyof Payload<'settings:update'>]?: Copier<Payload<'settings:update'>[K]>;
-};
-
-const SETTINGS_COPIERS: CopierMap = {
-  model: (u, v) => {
-    u.model = v;
-  },
-  permissionMode: (u, v) => {
-    u.permissionMode = v;
-  },
-  tools: (u, v) => {
-    u.tools = v;
-  },
-  thinkingLevel: (u, v) => {
-    u.thinkingLevel = v;
-  },
-  fastModeState: (u, v) => {
-    u.fastModeState = v;
-  },
-  config: (u, v) => {
-    u.config = v;
-  },
-  mcpServers: (u, v) => {
-    u.mcpServers = v;
-  },
-};
-
 function onSettingsUpdate(state: ConfigState, payload: Payload<'settings:update'>): ConfigState {
   const update: Partial<ConfigState> = {};
-  for (const [key, copier] of Object.entries(SETTINGS_COPIERS) as Array<
-    [keyof Payload<'settings:update'>, Copier<unknown>]
-  >) {
-    const value = payload[key];
-    if (value !== undefined) copier(update, value);
-  }
+  if (payload.model !== undefined) update.model = payload.model;
+  if (payload.permissionMode !== undefined) update.permissionMode = payload.permissionMode;
+  if (payload.tools !== undefined) update.tools = payload.tools;
+  if (payload.thinkingLevel !== undefined) update.thinkingLevel = payload.thinkingLevel;
+  if (payload.fastModeState !== undefined) update.fastModeState = payload.fastModeState;
+  if (payload.config !== undefined) update.config = payload.config;
+  if (payload.mcpServers !== undefined) update.mcpServers = payload.mcpServers;
   if (payload.effort !== undefined) update.effort = toEffort(payload.effort);
   if (payload.currentRepo !== undefined) update.currentRepo = payload.currentRepo ?? null;
   if (payload.accountInfo !== undefined) {
@@ -201,14 +168,12 @@ export { parseModels, toEffort };
 
 // ── Emit actions (send) ──
 
-interface ConfigActionsDeps {
+export function createConfigActions(ctx: {
   socket: TypedSocket;
   channelId: string;
   setState?: (updater: (prev: ConfigState) => ConfigState) => void;
   addSystemMessage?: (type: string, content: string) => void;
-}
-
-export function createConfigActions(deps: ConfigActionsDeps): {
+}): {
   setModel: (model: string) => void;
   setPermissionMode: (mode: string) => void;
   setThinkingLevel: (thinkingLevel: string) => void;
@@ -231,18 +196,18 @@ export function createConfigActions(deps: ConfigActionsDeps): {
   requestUsageUpdate: () => void;
 } {
   const emit = (event: string, payload: Record<string, unknown>, ...rest: unknown[]) =>
-    channelEmit(deps.socket, deps.channelId, event, payload, ...rest);
+    channelEmit(ctx.socket, ctx.channelId, event, payload, ...rest);
 
   function setModel(model: string): void {
-    deps.addSystemMessage?.('slash_command_result', `Set model to ${model}`);
-    deps.setState?.((prev) => ({ ...prev, model }));
+    ctx.addSystemMessage?.('slash_command_result', `Set model to ${model}`);
+    ctx.setState?.((prev) => ({ ...prev, model }));
     emit(EVENTS.settings.set_model, { model }, (res: { ok: boolean; error?: string }) => {
       if (!res?.ok) toast.error(res?.error ?? 'Failed to switch model');
     });
   }
 
   function setPermissionMode(mode: string): void {
-    deps.setState?.((prev) => ({ ...prev, permissionMode: mode }));
+    ctx.setState?.((prev) => ({ ...prev, permissionMode: mode }));
     emit(EVENTS.settings.set_permission_mode, { mode });
   }
 
@@ -255,38 +220,38 @@ export function createConfigActions(deps: ConfigActionsDeps): {
   }
 
   function setEffort(effort: string): Promise<Ack> {
-    return rpc(deps.socket, EVENTS.settings.apply, {
-      channelId: deps.channelId,
+    return rpc(ctx.socket, EVENTS.settings.apply, {
+      channelId: ctx.channelId,
       settings: { effortLevel: effort },
     });
   }
 
   function mcpStatus(): Promise<ControlResponse> {
-    return rpc(deps.socket, EVENTS.mcp.servers, { channelId: deps.channelId });
+    return rpc(ctx.socket, EVENTS.mcp.servers, { channelId: ctx.channelId });
   }
 
   function mcpToggle(serverName: string, enabled: boolean): Promise<ControlResponse> {
-    return rpc(deps.socket, EVENTS.mcp.toggle, { channelId: deps.channelId, serverName, enabled });
+    return rpc(ctx.socket, EVENTS.mcp.toggle, { channelId: ctx.channelId, serverName, enabled });
   }
 
   function mcpReconnect(serverName: string): Promise<ControlResponse> {
-    return rpc(deps.socket, EVENTS.mcp.reconnect, { channelId: deps.channelId, serverName });
+    return rpc(ctx.socket, EVENTS.mcp.reconnect, { channelId: ctx.channelId, serverName });
   }
 
   function mcpSetServers(servers: Record<string, unknown>): Promise<ControlResponse> {
-    return rpc(deps.socket, EVENTS.mcp.set_servers, { channelId: deps.channelId, servers });
+    return rpc(ctx.socket, EVENTS.mcp.set_servers, { channelId: ctx.channelId, servers });
   }
 
   function mcpMessage(
     serverName: string,
     message: Record<string, unknown>,
   ): Promise<ControlResponse> {
-    return rpc(deps.socket, EVENTS.mcp.message, { channelId: deps.channelId, serverName, message });
+    return rpc(ctx.socket, EVENTS.mcp.message, { channelId: ctx.channelId, serverName, message });
   }
 
   async function mcpListTools(serverName: string): Promise<unknown[]> {
-    const result = await rpc(deps.socket, EVENTS.mcp.message, {
-      channelId: deps.channelId,
+    const result = await rpc(ctx.socket, EVENTS.mcp.message, {
+      channelId: ctx.channelId,
       serverName,
       message: { jsonrpc: '2.0', method: 'tools/list', params: {}, id: Date.now() },
     });
@@ -303,45 +268,45 @@ export function createConfigActions(deps: ConfigActionsDeps): {
   }
 
   function mcpAuthenticate(serverName: string): Promise<RpcResult<{ authUrl?: string }>> {
-    return rpc(deps.socket, EVENTS.mcp.authenticate, { channelId: deps.channelId, serverName });
+    return rpc(ctx.socket, EVENTS.mcp.authenticate, { channelId: ctx.channelId, serverName });
   }
 
   function mcpOAuthCallback(serverName: string, callbackUrl: string): Promise<Ack> {
-    return rpc(deps.socket, EVENTS.mcp.oauth_callback, {
-      channelId: deps.channelId,
+    return rpc(ctx.socket, EVENTS.mcp.oauth_callback, {
+      channelId: ctx.channelId,
       serverName,
       callbackUrl,
     });
   }
 
   function mcpClearAuth(serverName: string): Promise<Ack> {
-    return rpc(deps.socket, EVENTS.mcp.clear_auth, { channelId: deps.channelId, serverName });
+    return rpc(ctx.socket, EVENTS.mcp.clear_auth, { channelId: ctx.channelId, serverName });
   }
 
   function ensureChromeMcpEnabled(): Promise<ControlResponse> {
-    return rpc(deps.socket, EVENTS.mcp.ensure_chrome, { channelId: deps.channelId });
+    return rpc(ctx.socket, EVENTS.mcp.ensure_chrome, { channelId: ctx.channelId });
   }
 
   function disableChromeMcp(): Promise<ControlResponse> {
-    return rpc(deps.socket, EVENTS.mcp.disable_chrome, { channelId: deps.channelId });
+    return rpc(ctx.socket, EVENTS.mcp.disable_chrome, { channelId: ctx.channelId });
   }
 
   function enableJupyterMcp(): Promise<ControlResponse> {
-    return rpc(deps.socket, EVENTS.mcp.enable_jupyter, { channelId: deps.channelId });
+    return rpc(ctx.socket, EVENTS.mcp.enable_jupyter, { channelId: ctx.channelId });
   }
 
   function disableJupyterMcp(): Promise<ControlResponse> {
-    return rpc(deps.socket, EVENTS.mcp.disable_jupyter, { channelId: deps.channelId });
+    return rpc(ctx.socket, EVENTS.mcp.disable_jupyter, { channelId: ctx.channelId });
   }
 
   function askDebuggerHelp(): Promise<
     RpcResult<{ response: { type: 'ask_debugger_help_response' } }>
   > {
-    return rpc(deps.socket, EVENTS.mcp.ask_debugger, { channelId: deps.channelId });
+    return rpc(ctx.socket, EVENTS.mcp.ask_debugger, { channelId: ctx.channelId });
   }
 
   function requestUsageUpdate(): void {
-    deps.socket.emit(EVENTS.settings.refresh_usage, { channelId: deps.channelId });
+    ctx.socket.emit(EVENTS.settings.refresh_usage, { channelId: ctx.channelId });
   }
 
   return {
