@@ -133,10 +133,9 @@ export class WsClient {
    * is created via the configured backoff.
    */
   forceCloseUnderlying(): void {
-    const ws = this.ws as (WebSocket & { terminate?: () => void }) | undefined;
-    if (!ws) return;
-    if (typeof ws.terminate === 'function') ws.terminate();
-    else ws.close(4001, 'forced');
+    if (!this.ws) return;
+    if ('terminate' in this.ws && typeof this.ws.terminate === 'function') this.ws.terminate();
+    else this.ws.close(4001, 'forced');
   }
 
   // ── Internals ──

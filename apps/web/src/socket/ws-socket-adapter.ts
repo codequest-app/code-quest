@@ -1,3 +1,4 @@
+import type { SocketLike } from './client.ts';
 import type { WsClient } from './ws-client.ts';
 
 type Listener = (...args: unknown[]) => void;
@@ -16,7 +17,7 @@ type Listener = (...args: unknown[]) => void;
  *   - `on('connect' | 'connect_error', fn)` are tracked locally rather than
  *     sent over the wire, since they're transport lifecycle events.
  */
-export class WsSocketAdapter {
+export class WsSocketAdapter implements SocketLike {
   connected = false;
   id = '';
 
