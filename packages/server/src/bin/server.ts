@@ -145,7 +145,7 @@ function setupRemoteMode() {
 }
 
 function broadcastRemoteStatus(c: ReturnType<typeof createContainer>, connected: boolean) {
-  logger.info(connected ? 'remote daemon connected' : 'remote daemon disconnected');
+  logger.info(connected ? 'remote summoner connected' : 'remote summoner disconnected');
   c.get<ChannelEmitter>(TYPES.ChannelEventRouter).broadcastAll('remote:status', { connected });
 }
 

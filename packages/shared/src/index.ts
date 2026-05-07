@@ -5,7 +5,7 @@ export { CONTENT_TYPE } from './content-types.ts';
 
 // Errors
 export { ERROR_CODES, type ErrorCode } from './errors.ts';
-// Remote daemon ↔ server protocol (JSON-RPC 2.0 over WebSocket)
+// Remote summoner ↔ server protocol (JSON-RPC 2.0 over WebSocket)
 export { REMOTE_METHODS } from './remote/methods.ts';
 export * from './remote/protocol.ts';
 export * from './remote/protocol-schemas.ts';

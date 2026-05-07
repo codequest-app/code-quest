@@ -1,4 +1,4 @@
-// JSON-RPC 2.0 types for remote daemon ↔ server communication.
+// JSON-RPC 2.0 types for remote summoner ↔ server communication.
 
 // ---------- Framing ----------
 
@@ -60,21 +60,21 @@ export interface ProcessKillParams {
 
 export type ProcessKillResult = OkResult;
 
-// ---------- process/stdout (notification: daemon → server) ----------
+// ---------- process/stdout (notification: summoner → server) ----------
 
 export interface ProcessStdoutParams {
   sessionId: string;
   line: string;
 }
 
-// ---------- process/stderr (notification: daemon → server) ----------
+// ---------- process/stderr (notification: summoner → server) ----------
 
 export interface ProcessStderrParams {
   sessionId: string;
   line: string;
 }
 
-// ---------- process/exit (notification: daemon → server) ----------
+// ---------- process/exit (notification: summoner → server) ----------
 
 export interface ProcessExitParams {
   sessionId: string;

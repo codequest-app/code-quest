@@ -10,17 +10,17 @@ export class ReconnectableRpc implements RemoteRpcWithEvents {
 
   replace(rpc: RemoteRpcWithEvents): void {
     this.current = rpc;
-    logger.info('Remote daemon connected');
+    logger.info('Remote summoner connected');
     rpc.on('disconnect', () => {
       if (this.current === rpc) {
-        logger.info('Remote daemon disconnected');
+        logger.info('Remote summoner disconnected');
         this.current = null;
       }
     });
   }
 
   request<R = unknown>(method: string, params: unknown): Promise<R> {
-    if (!this.current) return Promise.reject(new Error('No remote daemon connected'));
+    if (!this.current) return Promise.reject(new Error('No remote summoner connected'));
     return this.current.request(method, params);
   }
 
