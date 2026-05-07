@@ -5,6 +5,15 @@ import type { Channel } from './channel.ts';
 
 export const BROADCAST_CHANNEL_ID = '' as const;
 
+function extractPayloadAndCb(args: unknown[]): { payload: unknown; cb?: SocketCallback } {
+  const lastArg = args[args.length - 1];
+  const hasCb = typeof lastArg === 'function';
+  const cb = hasCb ? (lastArg as SocketCallback) : undefined;
+  if (hasCb && args.length > 1) return { payload: args[0], cb };
+  if (hasCb) return { payload: {}, cb };
+  return { payload: args[0] ?? {} };
+}
+
 /** Unified handler signature for all events (runner + client). */
 type EmitterHandler = (
   ch: Channel | null,
@@ -174,17 +183,7 @@ export class ChannelEmitter {
     // NOTE: handlers must be registered (emitter.on) before connections are accepted.
     for (const event of this.eventMap.keys()) {
       socket.on(event, (...args: unknown[]) => {
-        const lastArg = args[args.length - 1];
-        const hasCb = typeof lastArg === 'function';
-        const cb: SocketCallback | undefined = hasCb ? (lastArg as SocketCallback) : undefined;
-        let payload: unknown;
-        if (hasCb && args.length > 1) {
-          payload = args[0];
-        } else if (hasCb) {
-          payload = {};
-        } else {
-          payload = args[0] ?? {};
-        }
+        const { payload, cb } = extractPayloadAndCb(args);
         const channelId =
           isRecord(payload) && 'channelId' in payload ? String(payload.channelId) : undefined;
         const ch = channelId ? (resolveChannel(channelId) ?? null) : null;

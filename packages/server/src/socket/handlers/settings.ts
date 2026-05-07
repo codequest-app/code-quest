@@ -236,15 +236,17 @@ export function create({
     channelManager.broadcastSessionState(ch.channelId, 'busy');
   }
 
-  const onModelUpdated = (ch: Channel, payload: unknown) =>
+  function onModelUpdated(ch: Channel, payload: unknown): void {
     onCliSettingsUpdate(ch, payload, serverActionModelSchema, (c, { model }) =>
       c.updateSessionConfig({ model }),
     );
+  }
 
-  const onPermissionModeUpdated = (ch: Channel, payload: unknown) =>
+  function onPermissionModeUpdated(ch: Channel, payload: unknown): void {
     onCliSettingsUpdate(ch, payload, serverActionModeSchema, (c, { mode }) =>
       c.updateSessionConfig({ permissionMode: mode }),
     );
+  }
 
   emitter.on(EVENTS.settings.get_settings, withChannel(onGetSettings));
   emitter.on(EVENTS.settings.model_updated, withChannel(onModelUpdated));

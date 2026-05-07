@@ -21,7 +21,7 @@ function parseJsonValue(raw: string): unknown {
   try {
     return JSON.parse(raw);
   } catch (err) {
-    logger.debug(err, 'Failed to parse settings value as JSON');
+    logger.debug({ err }, 'Failed to parse settings value as JSON');
     return raw;
   }
 }

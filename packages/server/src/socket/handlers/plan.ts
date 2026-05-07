@@ -58,7 +58,7 @@ export function create({ emitter }: Pick<HandlerContext, 'emitter'>): PlanApi {
       const { channelId } = channelIdPayloadSchema.parse(payload);
       callback?.({ comments: commentsMap.get(channelId) ?? [] });
     } catch (err) {
-      logger.debug(err, 'failed to get plan comments');
+      logger.debug({ err }, 'failed to get plan comments');
       callback?.({ comments: [] });
     }
   }

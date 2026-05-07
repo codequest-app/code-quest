@@ -26,7 +26,7 @@ export function extractTextFromRaw(raw: string, type: 'user' | 'assistant'): str
     const textBlock = result.data.message.content.find((b) => b.type === 'text');
     return textBlock?.text;
   } catch (err) {
-    logger.debug(err, 'failed to parse raw event content');
+    logger.debug({ err }, 'failed to parse raw event content');
   }
   return undefined;
 }

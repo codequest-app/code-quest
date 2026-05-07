@@ -82,7 +82,7 @@ export function create({
       });
       callback?.(ok({ result }));
     } catch (e) {
-      callback?.(err(String(e)));
+      callback?.(err(errMsg(e, 'Failed to generate title')));
     }
   }
 

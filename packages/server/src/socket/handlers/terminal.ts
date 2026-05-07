@@ -7,6 +7,8 @@ import type { Channel } from '../channel.ts';
 import { withChannel } from '../channel-emitter.ts';
 import { err, ok } from '../utils/rpc.ts';
 
+const TERMINAL_MAX_LINES = 100;
+
 export function create({
   channelManager,
   emitter,
@@ -22,7 +24,7 @@ export function create({
         callback?.({ content: null });
         return;
       }
-      const lines = ch.terminalLines.slice(-100);
+      const lines = ch.terminalLines.slice(-TERMINAL_MAX_LINES);
       callback?.({ content: lines.join('\n') });
     } catch (err) {
       logger.warn({ err }, 'Failed to read terminal');

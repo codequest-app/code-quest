@@ -15,6 +15,22 @@ import { err, ok } from '../../utils/rpc.ts';
 
 const rawJsonSchema = z.record(z.string(), z.unknown());
 
+function parseRawEventEntry(e: {
+  direction: string;
+  seq: number;
+  raw: string;
+}): Record<string, unknown> {
+  try {
+    const parsed = rawJsonSchema.safeParse(JSON.parse(e.raw));
+    if (parsed.success) {
+      return { direction: e.direction, seq: e.seq, ...parsed.data };
+    }
+  } catch (err) {
+    logger.debug({ err }, 'Failed to parse raw event JSON');
+  }
+  return { direction: e.direction, seq: e.seq, raw: e.raw };
+}
+
 export function create({
   channelManager,
   sessionStore,
@@ -52,7 +68,7 @@ export function create({
       });
       callback?.(ok({ sessions, total: result.total }));
     } catch (e) {
-      logger.debug(e, 'Failed to list sessions');
+      logger.debug({ err: e }, 'Failed to list sessions');
       callback?.(ok({ sessions: [], total: 0 }));
     }
   }
@@ -72,7 +88,7 @@ export function create({
       });
       callback?.(ok({ sessions: result.sessions, total: result.total }));
     } catch (e) {
-      logger.debug(e, 'Failed to list remote sessions');
+      logger.debug({ err: e }, 'Failed to list remote sessions');
       callback?.(ok({ sessions: [], total: 0 }));
     }
   }
@@ -107,21 +123,10 @@ export function create({
     try {
       const { channelId } = sessionGetPayloadSchema.parse(payload);
       const rawEvents = await sessionHistory.getRawEvents(channelId);
-      const events = rawEvents.map((e) => {
-        try {
-          const parsed = rawJsonSchema.safeParse(JSON.parse(e.raw));
-          if (parsed.success) {
-            return { direction: e.direction, seq: e.seq, ...parsed.data };
-          }
-          return { direction: e.direction, seq: e.seq, raw: e.raw };
-        } catch (err) {
-          logger.debug(err, 'Failed to parse raw event JSON');
-          return { direction: e.direction, seq: e.seq, raw: e.raw };
-        }
-      });
+      const events = rawEvents.map(parseRawEventEntry);
       callback?.({ events });
     } catch (err) {
-      logger.debug(err, 'Failed to get raw events');
+      logger.debug({ err }, 'Failed to get raw events');
       callback?.({ events: [] });
     }
   }

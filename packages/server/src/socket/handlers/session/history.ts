@@ -78,7 +78,7 @@ function parseRawEvents(
       if (!isRecord(raw)) continue;
       parsed.push({ direction: event.direction, obj: raw });
     } catch (err) {
-      logger.debug(err, 'Skipping malformed raw event during replay');
+      logger.debug({ err }, 'Skipping malformed raw event during replay');
     }
   }
   return parsed;

@@ -44,20 +44,18 @@ export class Channel {
   // ── State ──
   private _sessionConfig: SessionConfig = {};
   private _metaCache: ChannelMetaCache = {};
-  sessionId: string | null = null;
-  cwd: string;
-  /** Main repo path (git common-dir parent). Shared across worktrees of the
-   *  same repo. Populated once per Channel from gitService.getProjectRoot. */
-  projectRoot: string | null = null;
+  private _sessionId: string | null = null;
+  private _cwd: string;
+  private _projectRoot: string | null = null;
   private _worktree: WorktreeInfo | null = null;
-  lastError: string | undefined;
-  exited = false;
+  private _lastError: string | undefined;
+  private _exited = false;
 
   // ── UI / Metadata (not CLI config) ──
-  titleGenerated = false;
-  pendingTitlePrompt: string | undefined;
-  title: string | undefined;
-  parentId: string | undefined;
+  private _titleGenerated = false;
+  private _pendingTitlePrompt: string | undefined;
+  private _title: string | undefined;
+  private _parentId: string | undefined;
 
   // ── Initialization ──
   private _readyPromise: Promise<void> = Promise.resolve();
@@ -80,12 +78,69 @@ export class Channel {
   // ── Meta ──
   terminalLines: string[] = [];
 
+  get sessionId(): string | null {
+    return this._sessionId;
+  }
+  set sessionId(v: string | null) {
+    this._sessionId = v;
+  }
+
+  get cwd(): string {
+    return this._cwd;
+  }
+
+  get projectRoot(): string | null {
+    return this._projectRoot;
+  }
+  set projectRoot(v: string | null) {
+    this._projectRoot = v;
+  }
+
   get worktree(): WorktreeInfo | null {
     return this._worktree;
   }
   set worktree(v: WorktreeInfo | null) {
     this._worktree = v;
-    if (v) this.cwd = v.path;
+    if (v) this._cwd = v.path;
+  }
+
+  get lastError(): string | undefined {
+    return this._lastError;
+  }
+  set lastError(v: string | undefined) {
+    this._lastError = v;
+  }
+
+  get exited(): boolean {
+    return this._exited;
+  }
+
+  get titleGenerated(): boolean {
+    return this._titleGenerated;
+  }
+  set titleGenerated(v: boolean) {
+    this._titleGenerated = v;
+  }
+
+  get pendingTitlePrompt(): string | undefined {
+    return this._pendingTitlePrompt;
+  }
+  set pendingTitlePrompt(v: string | undefined) {
+    this._pendingTitlePrompt = v;
+  }
+
+  get title(): string | undefined {
+    return this._title;
+  }
+  set title(v: string | undefined) {
+    this._title = v;
+  }
+
+  get parentId(): string | undefined {
+    return this._parentId;
+  }
+  set parentId(v: string | undefined) {
+    this._parentId = v;
   }
 
   constructor(
@@ -98,7 +153,7 @@ export class Channel {
     this.channelId = channelId;
     this.runner = runner;
     this.provider = provider;
-    this.cwd = cwd;
+    this._cwd = cwd;
     this.controlRequests = new ControlRequestTracker(controlTimeout);
   }
 
@@ -265,7 +320,7 @@ export class Channel {
       'session:init config',
       ({ cwd: initCwd, ...initConfig }) => {
         if (initCwd) {
-          this.cwd = initCwd;
+          this._cwd = initCwd;
           const wt = detectWorktree(initCwd);
           if (wt) this.worktree = wt;
         }
@@ -311,7 +366,7 @@ export class Channel {
 
     const onExit = (code: number | null) => {
       logger.info({ channelId: this.channelId, exitCode: code }, 'CLI process exited');
-      this.exited = true;
+      this._exited = true;
       this.controlRequests.rejectAllPending(this.lastError ?? `Process exited with code ${code}`);
 
       // Delegate cleanup to hook (broadcastSessionConfig, session:closed emit)
@@ -344,6 +399,6 @@ export class Channel {
     for (const timer of this.mcpTimeouts.values()) clearTimeout(timer);
     this.mcpTimeouts.clear();
     this.resetSessionConfig();
-    this.exited = true;
+    this._exited = true;
   }
 }

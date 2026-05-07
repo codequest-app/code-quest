@@ -23,7 +23,7 @@ function createHandler<T>(
   fn: (parsed: T) => Promise<Record<string, unknown>>,
   errorLabel: string,
 ): EmitterHandler {
-  return async (_ch, payload, _socket, callback) => {
+  return async function handler(_ch, payload, _socket, callback) {
     try {
       const parsed = schema.parse(payload);
       callback?.(await fn(parsed));

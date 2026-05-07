@@ -48,7 +48,7 @@ export class UsageTracker {
         utilization: data.utilization ?? (data.status === 'blocked' ? 1.0 : 0),
       };
       if (data.resetsAt !== undefined) {
-        entry.resets_at = new Date(data.resetsAt * 1000).toISOString();
+        entry.resets_at = new Date(data.resetsAt * 1_000).toISOString();
       }
       usage[tier] = entry;
     }

@@ -26,12 +26,12 @@ function createFsHandler<T>(
   errorLabel: string,
   errorFallback?: Record<string, unknown>,
 ) {
-  return async (
+  return async function handler(
     _ch: unknown,
     payload: unknown,
     _socket?: TypedSocket,
     callback?: SocketCallback,
-  ): Promise<void> => {
+  ): Promise<void> {
     try {
       callback?.(await fn(schema.parse(payload)));
     } catch (err) {
@@ -131,7 +131,9 @@ export function create({
         socket.on('disconnect', () => {
           const m = subsBySocket.get(socket.id);
           if (!m) return;
-          for (const unsubs of m.values()) for (const off of unsubs) off();
+          for (const unsubs of m.values()) {
+            for (const off of unsubs) off();
+          }
           subsBySocket.delete(socket.id);
         });
       }

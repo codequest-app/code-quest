@@ -32,6 +32,7 @@ import { TYPES } from '../types.ts';
 
 const WS_PATH = '/ws';
 const SUMMONER_PATH = '/summoner';
+const SHUTDOWN_TIMEOUT_MS = 10_000;
 
 const storeConfig: StoreConfig = {};
 
@@ -184,7 +185,6 @@ const shutdown = () => {
   Promise.all(handles.map((h) => h.close())).finally(() => {
     httpServer.close(() => process.exit(0));
   });
-  const SHUTDOWN_TIMEOUT_MS = 10_000;
   setTimeout(() => process.exit(1), SHUTDOWN_TIMEOUT_MS).unref();
 };
 

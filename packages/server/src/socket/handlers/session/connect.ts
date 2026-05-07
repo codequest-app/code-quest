@@ -281,7 +281,7 @@ export function create({
         try {
           ({ channel } = await channelManager.join(channelId));
         } catch (e) {
-          logger.debug(e, 'failed to join channel during connect');
+          logger.debug({ err: e }, 'failed to join channel during connect');
           callback?.(err('Session not found', ERROR_CODES.SESSION_NOT_FOUND));
           return;
         }

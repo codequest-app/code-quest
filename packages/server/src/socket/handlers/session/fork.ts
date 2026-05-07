@@ -105,7 +105,7 @@ export function create({
         try {
           await gitService.checkout(cwd, parsed.branch);
         } catch (err) {
-          logger.debug(err, 'branch checkout failed during fork');
+          logger.debug({ err }, 'branch checkout failed during fork');
           branchCheckoutFailed = true;
         }
       }
@@ -113,8 +113,8 @@ export function create({
       const { channel: newCh } = await channelManager.create(parsed.newChannelId, {
         cwd,
         launchOptions: { resumeSessionId: parsed.remoteChannelId },
-        onBeforeSpawn: (ch) => {
-          if (socket) channelManager.addSocketToChannel(ch, socket);
+        onBeforeSpawn: (spawnedCh) => {
+          if (socket) channelManager.addSocketToChannel(spawnedCh, socket);
         },
       });
 
