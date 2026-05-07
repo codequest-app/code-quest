@@ -1,31 +1,18 @@
 import type { McpServerInfo, ProviderClientConfig } from '@code-quest/shared';
-import { lazy, Suspense, useSyncExternalStore } from 'react';
+import { useSyncExternalStore } from 'react';
 import { toast } from 'sonner';
+import { AuthDialog } from '@/components/settings/AuthDialog';
+import { InitOptionsDialog } from '@/components/settings/InitOptionsDialog';
+import { ManageMcpDialog } from '@/components/settings/ManageMcpDialog';
+import { ManagePluginsDialog } from '@/components/settings/ManagePluginsDialog';
 import type { ChannelConfigValue } from '@/contexts/channel/ChannelConfigContext';
 import type { ChannelMessagesValue } from '@/contexts/channel/ChannelMessagesContext';
 import { generalConfigSignal } from '@/features/general-config/general-config-feature';
 import { RewindDialog } from '@/features/rewind/RewindDialog';
 import { rewindOpenSignal } from '@/features/rewind/rewind-feature';
 import { switchAccountSignal } from '@/features/switch-account/switch-account-feature';
+import { AccountUsageDialog } from '@/features/usage/AccountUsageDialog';
 import { usageOpenSignal } from '@/features/usage/usage-feature';
-
-const AccountUsageDialog = lazy(() =>
-  import('../../../features/usage/AccountUsageDialog').then((m) => ({
-    default: m.AccountUsageDialog,
-  })),
-);
-const AuthDialog = lazy(() =>
-  import('../../settings/AuthDialog').then((m) => ({ default: m.AuthDialog })),
-);
-const InitOptionsDialog = lazy(() =>
-  import('../../settings/InitOptionsDialog').then((m) => ({ default: m.InitOptionsDialog })),
-);
-const ManageMcpDialog = lazy(() =>
-  import('../../settings/ManageMcpDialog').then((m) => ({ default: m.ManageMcpDialog })),
-);
-const ManagePluginsDialog = lazy(() =>
-  import('../../settings/ManagePluginsDialog').then((m) => ({ default: m.ManagePluginsDialog })),
-);
 
 export type ActiveDialog = 'modelPicker' | 'manageMcp' | 'mcpStatus' | 'plugins' | null;
 
@@ -89,66 +76,52 @@ export function ToolbarDialogs({
   return (
     <>
       {activeDialog === 'manageMcp' && (
-        <Suspense fallback={null}>
-          <ManageMcpDialog
-            open
-            onClose={closeDialog}
-            servers={mcpServers}
-            onToggle={async (name, enabled) => {
-              await mcpToggle(name, enabled);
-              mcpRefresh();
-            }}
-            onReconnect={async (name) => {
-              await mcpReconnect(name);
-              mcpRefresh();
-            }}
-            onRefresh={mcpRefresh}
-            onAuthenticate={mcpAuthenticate}
-            onClearAuth={mcpClearAuth}
-          />
-        </Suspense>
+        <ManageMcpDialog
+          open
+          onClose={closeDialog}
+          servers={mcpServers}
+          onToggle={async (name, enabled) => {
+            await mcpToggle(name, enabled);
+            mcpRefresh();
+          }}
+          onReconnect={async (name) => {
+            await mcpReconnect(name);
+            mcpRefresh();
+          }}
+          onRefresh={mcpRefresh}
+          onAuthenticate={mcpAuthenticate}
+          onClearAuth={mcpClearAuth}
+        />
       )}
       {activeDialog === 'mcpStatus' && (
-        <Suspense fallback={null}>
-          <ManageMcpDialog open onClose={closeDialog} servers={mcpServers} />
-        </Suspense>
+        <ManageMcpDialog open onClose={closeDialog} servers={mcpServers} />
       )}
       {isGeneralConfigOpen && (
-        <Suspense fallback={null}>
-          <InitOptionsDialog
-            open
-            onClose={() => generalConfigSignal.setOpen(false)}
-            onSave={(opts) => setInitOptions(opts)}
-            initial={initOptions}
-          />
-        </Suspense>
+        <InitOptionsDialog
+          open
+          onClose={() => generalConfigSignal.setOpen(false)}
+          onSave={(opts) => setInitOptions(opts)}
+          initial={initOptions}
+        />
       )}
       {isUsageOpen && (
-        <Suspense fallback={null}>
-          <AccountUsageDialog
-            open
-            onClose={() => usageOpenSignal.setOpen(false)}
-            usage={usageQuota ?? undefined}
-            contextUsage={contextUsage ?? undefined}
-            stats={stats ?? undefined}
-            model={accountInfo?.model}
-            authMethod={accountInfo?.authMethod}
-            email={accountInfo?.email}
-            organization={accountInfo?.organization}
-            subscriptionType={accountInfo?.subscriptionType}
-            providerConfig={providerConfig}
-          />
-        </Suspense>
+        <AccountUsageDialog
+          open
+          onClose={() => usageOpenSignal.setOpen(false)}
+          usage={usageQuota ?? undefined}
+          contextUsage={contextUsage ?? undefined}
+          stats={stats ?? undefined}
+          model={accountInfo?.model}
+          authMethod={accountInfo?.authMethod}
+          email={accountInfo?.email}
+          organization={accountInfo?.organization}
+          subscriptionType={accountInfo?.subscriptionType}
+          providerConfig={providerConfig}
+        />
       )}
-      {activeDialog === 'plugins' && (
-        <Suspense fallback={null}>
-          <ManagePluginsDialog open onClose={closeDialog} />
-        </Suspense>
-      )}
+      {activeDialog === 'plugins' && <ManagePluginsDialog open onClose={closeDialog} />}
       {isSwitchAccountOpen && (
-        <Suspense fallback={null}>
-          <AuthDialog open onClose={() => switchAccountSignal.setOpen(false)} />
-        </Suspense>
+        <AuthDialog open onClose={() => switchAccountSignal.setOpen(false)} />
       )}
       {isRewindOpen && (
         <RewindDialog

@@ -13,8 +13,10 @@
   },
   "scripts": {
     "dev": "tsx --env-file=.env src/main.ts",
+    "build": "tsup",
     "test": "vitest run",
-    "lint": "biome check src"
+    "lint": "biome check src",
+    "clean": "rm -rf dist node_modules"
   },
   "dependencies": {
     "@code-quest/shared": "workspace:*",
@@ -31,8 +33,9 @@
   "devDependencies": {
     "@types/node": "^20.11.5",
     "knip": "^6.11.0",
-    "tsx": "^4.7.0",
     "memfs": "^4.57.2",
+    "tsup": "^8.5.1",
+    "tsx": "^4.7.0",
     "typescript": "6.0.3",
     "vitest": "^3.2.4"
   }

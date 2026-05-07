@@ -12,10 +12,10 @@ pre-commit:
       run: pnpm --filter @code-quest/shared exec tsc --noEmit
     typecheck-server:
       glob: "packages/server/**/*.ts"
-      run: pnpm --filter server exec tsc --noEmit
+      run: pnpm --filter @code-quest/server exec tsc --noEmit
     typecheck-client:
       glob: "packages/client/**/*.{ts,tsx}"
-      run: pnpm --filter client exec tsc --noEmit
+      run: pnpm --filter @code-quest/client exec tsc --noEmit
     typecheck-summoner:
       glob: "packages/summoner/**/*.ts"
       run: pnpm --filter @code-quest/summoner exec tsc --noEmit
@@ -30,18 +30,20 @@ pre-commit:
       run: node scripts/check-deprecated.mjs packages/summoner/tsconfig.json {staged_files}
 
 pre-push:
-  parallel: false
+  parallel: true
   commands:
+    test-shared:
+      run: pnpm --filter @code-quest/shared exec vitest run
     test-server:
-      run: pnpm --filter server exec vitest run
+      run: pnpm --filter @code-quest/server exec vitest run
     test-summoner:
       run: pnpm --filter @code-quest/summoner exec vitest run
     test-client:
-      run: pnpm --filter client exec vitest run
+      run: pnpm --filter @code-quest/client exec vitest run
     knip-client:
-      run: pnpm --filter client exec knip --no-progress
+      run: pnpm --filter @code-quest/client exec knip --no-progress
     knip-server:
-      run: pnpm --filter server exec knip --no-progress
+      run: pnpm --filter @code-quest/server exec knip --no-progress
     knip-summoner:
       run: pnpm --filter @code-quest/summoner exec knip --no-progress
     knip-shared:

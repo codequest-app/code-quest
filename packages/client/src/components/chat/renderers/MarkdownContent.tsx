@@ -1,12 +1,15 @@
 import * as ContextMenu from '@radix-ui/react-context-menu';
-import { isValidElement, useRef } from 'react';
+import { isValidElement, lazy, Suspense, useRef } from 'react';
 import Markdown, { type Components } from 'react-markdown';
 import remarkGfm from 'remark-gfm';
 import { copyToClipboard } from '@/utils/clipboard';
 import { cn } from '@/utils/cn';
 import { CopyButton, HOVER_COPY_BASE } from '../tool-use/message-blocks/CopyButton.tsx';
 import { CodeBlock } from './CodeBlock.tsx';
-import { MermaidDiagram } from './MermaidDiagram.tsx';
+
+const MermaidDiagram = lazy(() =>
+  import('./MermaidDiagram.tsx').then((m) => ({ default: m.MermaidDiagram })),
+);
 
 function isElementWithLanguageClass(node: React.ReactNode): boolean {
   if (!isValidElement<{ className?: string }>(node)) return false;
@@ -58,7 +61,12 @@ const components: Components = {
   code({ className, children }) {
     const lang = /language-(\w+)/.exec(className ?? '')?.[1];
     const code = String(children).replace(/\n$/, '');
-    if (lang === 'mermaid') return <MermaidDiagram code={code} />;
+    if (lang === 'mermaid')
+      return (
+        <Suspense fallback={null}>
+          <MermaidDiagram code={code} />
+        </Suspense>
+      );
     if (lang) return <CodeBlock code={code} language={lang} className={className} />;
     return <code className={className}>{children}</code>;
   },

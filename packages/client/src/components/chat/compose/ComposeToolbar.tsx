@@ -6,7 +6,7 @@ import {
   toPermissionMode,
 } from '@code-quest/shared';
 import * as Popover from '@radix-ui/react-popover';
-import { lazy, Suspense, useState, useSyncExternalStore } from 'react';
+import { useState, useSyncExternalStore } from 'react';
 import { z } from 'zod';
 import { CommandMenu } from '@/components/chat/compose/command-menu/CommandMenu';
 import { IconButton } from '@/components/ui/IconButton';
@@ -56,9 +56,7 @@ function SendButton({
   );
 }
 
-const ModelPickerPopover = lazy(() =>
-  import('../../settings/ModelPickerPopover').then((m) => ({ default: m.ModelPickerPopover })),
-);
+import { ModelPickerPopover } from '../../settings/ModelPickerPopover';
 
 const rawMcpServerSchema = z.object({
   name: z.string(),
@@ -199,17 +197,15 @@ export function ComposeToolbar({
               className="z-modal"
               style={{ width: 'var(--radix-popper-anchor-width)' }}
             >
-              <Suspense fallback={null}>
-                <ModelPickerPopover
-                  currentModel={model ?? null}
-                  availableModels={availableModels}
-                  onSwitch={(v) => {
-                    setModel(v);
-                    modelOpenSignal.setOpen(false);
-                  }}
-                  defaultModelDescription={providerConfig?.defaultModelDescription}
-                />
-              </Suspense>
+              <ModelPickerPopover
+                currentModel={model ?? null}
+                availableModels={availableModels}
+                onSwitch={(v) => {
+                  setModel(v);
+                  modelOpenSignal.setOpen(false);
+                }}
+                defaultModelDescription={providerConfig?.defaultModelDescription}
+              />
             </Popover.Content>
           )}
 

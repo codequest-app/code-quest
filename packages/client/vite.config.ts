@@ -37,11 +37,25 @@ export default defineConfig({
   },
   build: {
     outDir: 'dist',
-    sourcemap: true,
-    rollupOptions: {
+    sourcemap: false,
+    cssMinify: true,
+    rolldownOptions: {
       output: {
-        manualChunks(id) {
-          if (id.includes('node_modules')) return 'vendor';
+        codeSplitting: {
+          groups: [
+            {
+              name: 'mermaid',
+              test: /mermaid/,
+              priority: 20,
+              minSize: 0,
+            },
+            {
+              name: 'vendor',
+              test: /node_modules/,
+              priority: 10,
+              minSize: 0,
+            },
+          ],
         },
       },
     },
