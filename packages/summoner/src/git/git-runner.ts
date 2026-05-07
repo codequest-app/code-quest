@@ -1,4 +1,4 @@
-import { errMsg } from '@code-quest/shared';
+import { errMsg } from '@code-quest/shared/node';
 import { GitResponseError, type SimpleGit, simpleGit } from 'simple-git';
 
 export function createGit(cwd?: string): SimpleGit {

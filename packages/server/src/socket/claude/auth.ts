@@ -1,10 +1,10 @@
-import type { SocketCallback, TypedSocket } from '@code-quest/shared';
 import {
   controlAuthenticateResponseSchema,
   EVENTS,
   loginPayloadSchema,
   oauthCodePayloadSchema,
 } from '@code-quest/shared';
+import type { SocketCallback, TypedSocket } from '@code-quest/shared/node';
 import type { HandlerContext } from '../../types.ts';
 import type { Channel } from '../channel.ts';
 import { BROADCAST_CHANNEL_ID } from '../channel-emitter.ts';

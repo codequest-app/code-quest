@@ -1,9 +1,7 @@
 import { homedir } from 'node:os';
 import { resolve } from 'node:path';
-import type { SocketCallback, TypedSocket } from '@code-quest/shared';
 import {
   EVENTS,
-  errMsg,
   PathOutsideRootsError,
   type ProjectsError,
   type ProjectsRemoveResponse,
@@ -13,6 +11,7 @@ import {
   projectsRemovePayloadSchema,
   projectsUpdatePayloadSchema,
 } from '@code-quest/shared';
+import { errMsg, type SocketCallback, type TypedSocket } from '@code-quest/shared/node';
 import type { FilesystemService } from '@code-quest/summoner';
 import { logger } from '../../logger.ts';
 import type { HandlerContext } from '../../types.ts';

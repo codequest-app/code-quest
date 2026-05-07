@@ -1,4 +1,3 @@
-import type { SocketCallback, TypedSocket } from '@code-quest/shared';
 import {
   channelIdPayloadSchema,
   EVENTS,
@@ -11,6 +10,7 @@ import {
   mcpSetEnabledPayloadSchema,
   mcpSetServersPayloadSchema,
 } from '@code-quest/shared';
+import type { SocketCallback, TypedSocket } from '@code-quest/shared/node';
 import type { z } from 'zod';
 import type { HandlerContext } from '../../types.ts';
 import type { Channel } from '../channel.ts';

@@ -1,4 +1,4 @@
-import type { TypedSocket } from '@code-quest/shared';
+import type { TypedSocket } from '@code-quest/shared/node';
 import { ClaudeAdapter, ProcessRunner } from '@code-quest/summoner';
 import { createFakeSocket, FakeProcessProvider } from '@code-quest/summoner/test';
 import { describe, expect, it, vi } from 'vitest';

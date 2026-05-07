@@ -1,4 +1,3 @@
-import type { SocketCallback, TypedSocket } from '@code-quest/shared';
 import {
   ERROR_CODES,
   EVENTS,
@@ -8,6 +7,7 @@ import {
   sessionRenamePayloadSchema,
   sessionUpdateStatePayloadSchema,
 } from '@code-quest/shared';
+import type { SocketCallback, TypedSocket } from '@code-quest/shared/node';
 import { logger } from '../../../logger.ts';
 import type { HandlerContext } from '../../../types.ts';
 import type { Channel } from '../../channel.ts';

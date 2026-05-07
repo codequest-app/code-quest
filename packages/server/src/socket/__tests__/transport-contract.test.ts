@@ -1,5 +1,10 @@
 import type { IncomingMessage } from 'node:http';
-import type { Authenticator, Transport, TransportHandle, TypedSocket } from '@code-quest/shared';
+import type {
+  Authenticator,
+  Transport,
+  TransportHandle,
+  TypedSocket,
+} from '@code-quest/shared/node';
 import { describe, expect, it, vi } from 'vitest';
 
 /**

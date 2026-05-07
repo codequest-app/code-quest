@@ -1,6 +1,7 @@
 import { cp, mkdir, readdir, readFile, rename, rm, stat, writeFile } from 'node:fs/promises';
 import { basename, join, normalize, relative, resolve } from 'node:path';
-import { errMsg, getOrSet, PathOutsideRootsError, type RootGuard } from '@code-quest/shared';
+import { getOrSet, PathOutsideRootsError, type RootGuard } from '@code-quest/shared';
+import { errMsg } from '@code-quest/shared/node';
 import Fuse from 'fuse.js';
 import { glob } from 'glob';
 import type { Unsubscribe, WatchService } from '../fs-watch/types.ts';

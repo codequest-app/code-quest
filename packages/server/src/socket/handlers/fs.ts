@@ -1,4 +1,3 @@
-import type { SocketCallback, TypedSocket } from '@code-quest/shared';
 import {
   EVENTS,
   fsBrowsePayloadSchema,
@@ -12,6 +11,7 @@ import {
   fsUnwatchPayloadSchema,
   fsWatchPayloadSchema,
 } from '@code-quest/shared';
+import type { SocketCallback, TypedSocket } from '@code-quest/shared/node';
 import type { Unsubscribe } from '@code-quest/summoner';
 import type { ZodType } from 'zod';
 import { logger } from '../../logger.ts';

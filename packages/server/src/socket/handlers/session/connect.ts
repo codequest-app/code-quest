@@ -3,8 +3,6 @@ import type {
   InitResponseResult,
   SessionInitPayload,
   SessionLaunchPayload,
-  SocketCallback,
-  TypedSocket,
 } from '@code-quest/shared';
 import {
   channelExitPayloadSchema,
@@ -16,6 +14,7 @@ import {
   sessionLaunchPayloadSchema,
   sessionResumePayloadSchema,
 } from '@code-quest/shared';
+import type { SocketCallback, TypedSocket } from '@code-quest/shared/node';
 import { config } from '../../../config.ts';
 import { logger } from '../../../logger.ts';
 import type { HandlerContext } from '../../../types.ts';

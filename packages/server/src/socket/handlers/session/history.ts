@@ -1,4 +1,3 @@
-import type { TypedSocket } from '@code-quest/shared';
 import {
   type ClientMessage,
   contentBlockSchema,
@@ -6,6 +5,7 @@ import {
   EVENTS,
   isRecord,
 } from '@code-quest/shared';
+import type { TypedSocket } from '@code-quest/shared/node';
 import type { ProviderAdapter, RawEvent } from '@code-quest/summoner';
 import { logger } from '../../../logger.ts';
 import type { RawEventService } from '../../../services/raw-event-service.ts';

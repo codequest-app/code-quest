@@ -1,4 +1,3 @@
-import type { SocketCallback, TypedSocket } from '@code-quest/shared';
 import {
   addMarketplacePayloadSchema,
   availablePluginSchema,
@@ -14,6 +13,7 @@ import {
   refreshMarketplacePayloadSchema,
   removeMarketplacePayloadSchema,
 } from '@code-quest/shared';
+import type { SocketCallback, TypedSocket } from '@code-quest/shared/node';
 import type { PluginCliService } from '@code-quest/summoner';
 import { z } from 'zod';
 import { logger } from '../../logger.ts';

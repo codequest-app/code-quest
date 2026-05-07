@@ -1,6 +1,5 @@
 import 'dotenv/config';
-import { bearerToken, createConnectionLoop } from '@code-quest/shared';
-import { WsTransport, wsAdapter } from '@code-quest/shared/node';
+import { bearerToken, createConnectionLoop, WsTransport, wsAdapter } from '@code-quest/shared/node';
 import { loadConfig } from './config.ts';
 import { Agent } from './connection/agent.ts';
 import { LocalFilesystemService } from './filesystem/local.ts';

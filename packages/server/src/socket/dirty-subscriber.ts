@@ -1,5 +1,5 @@
-import type { TypedSocket } from '@code-quest/shared';
 import { EVENTS } from '@code-quest/shared';
+import type { TypedSocket } from '@code-quest/shared/node';
 import type { Unsubscribe } from '@code-quest/summoner';
 import type { DirtyBroadcaster } from '../services/dirty-broadcaster.ts';
 

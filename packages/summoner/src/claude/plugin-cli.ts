@@ -2,7 +2,7 @@ import { spawn } from 'node:child_process';
 import { mkdtemp, open, readFile, rm } from 'node:fs/promises';
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
-import { errMsg } from '@code-quest/shared';
+import { errMsg } from '@code-quest/shared/node';
 
 export interface PluginCliRunResult {
   stdout: string;

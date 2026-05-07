@@ -1,4 +1,3 @@
-import type { SocketCallback, TypedSocket } from '@code-quest/shared';
 import {
   createWorktreePayloadSchema,
   EVENTS,
@@ -19,6 +18,7 @@ import {
   worktreeRenamePayloadSchema,
   worktreeStatusPayloadSchema,
 } from '@code-quest/shared';
+import type { SocketCallback, TypedSocket } from '@code-quest/shared/node';
 import { AlreadyRepoError, NotARepoError } from '@code-quest/summoner';
 import { logger } from '../../logger.ts';
 import type { HandlerContext } from '../../types.ts';

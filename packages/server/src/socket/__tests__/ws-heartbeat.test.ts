@@ -1,8 +1,13 @@
 import { createServer, type Server as HttpServer } from 'node:http';
 import type { AddressInfo } from 'node:net';
-import type { TransportHandle } from '@code-quest/shared';
-import { auth, heartbeat, NullAuthenticator } from '@code-quest/shared';
-import { WsTransport, wsAdapter } from '@code-quest/shared/node';
+import {
+  auth,
+  heartbeat,
+  NullAuthenticator,
+  type TransportHandle,
+  WsTransport,
+  wsAdapter,
+} from '@code-quest/shared/node';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { WebSocket } from 'ws';
 

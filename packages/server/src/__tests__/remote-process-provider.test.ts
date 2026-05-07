@@ -1,6 +1,6 @@
 import { createServer, type Server as HttpServer } from 'node:http';
 import type { AddressInfo } from 'node:net';
-import { RpcChannel, type RpcChannelSocket } from '@code-quest/shared';
+import { RpcChannel, type RpcChannelSocket } from '@code-quest/shared/node';
 import { Agent } from '@code-quest/summoner/connection';
 import {
   FakeFilesystemService,

@@ -1,4 +1,4 @@
-export { errMsg } from '@code-quest/shared';
+export { errMsg } from '@code-quest/shared/node';
 
 export function pickDefined(obj: Record<string, unknown>): Record<string, unknown> {
   const result: Record<string, unknown> = {};

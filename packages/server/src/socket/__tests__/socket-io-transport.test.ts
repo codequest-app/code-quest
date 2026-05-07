@@ -1,7 +1,7 @@
 import { createServer, type Server as HttpServer } from 'node:http';
 import type { AddressInfo } from 'node:net';
-import type { TransportHandle, TypedSocket } from '@code-quest/shared';
-import { NullAuthenticator } from '@code-quest/shared';
+import type { TransportHandle, TypedSocket } from '@code-quest/shared/node';
+import { NullAuthenticator } from '@code-quest/shared/node';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { SocketIoTransport } from '../../transport/socket-io-transport.ts';
 

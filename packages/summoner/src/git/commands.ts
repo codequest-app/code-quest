@@ -1,11 +1,7 @@
 import { readFile } from 'node:fs/promises';
 import { isAbsolute, resolve, sep } from 'node:path';
-import {
-  errMsg,
-  type GitDiffResult,
-  type GitLogResult,
-  type GitStatusResult,
-} from '@code-quest/shared';
+import type { GitDiffResult, GitLogResult, GitStatusResult } from '@code-quest/shared';
+import { errMsg } from '@code-quest/shared/node';
 import type { SimpleGit } from 'simple-git';
 import { AlreadyRepoError, NotARepoError } from './errors.ts';
 

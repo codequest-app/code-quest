@@ -1,5 +1,5 @@
 import type { IncomingMessage } from 'node:http';
-import { type Authenticator, NullAuthenticator } from '@code-quest/shared';
+import { type Authenticator, NullAuthenticator } from '@code-quest/shared/node';
 import { describe, expect, it } from 'vitest';
 
 function fakeReq(headers: Record<string, string> = {}): IncomingMessage {

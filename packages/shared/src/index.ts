@@ -22,44 +22,9 @@ export type {
 } from './socket-events.ts';
 export { EVENTS } from './socket-events.ts';
 export { TopicEmitter } from './topic-emitter.ts';
-export {
-  type AuthContext,
-  type Authenticator,
-  NullAuthenticator,
-} from './transport/authenticator.ts';
-export {
-  type ConnectionLoopOptions,
-  createConnectionLoop,
-} from './transport/connection-loop.ts';
-// Transport (envelope protocol for ws-based transport)
-export { type Envelope, EnvelopeSchema, parseEnvelope } from './transport/envelope.ts';
-export { auth } from './transport/middleware/auth.ts';
-export { bearerAuth, PEER_TYPE_SUMMONER } from './transport/middleware/bearer-auth.ts';
-export { bearerToken } from './transport/middleware/bearer-token.ts';
-export { type HeartbeatOptions, heartbeat } from './transport/middleware/heartbeat.ts';
-export { type ResumableOptions, resumable } from './transport/middleware/resumable.ts';
-export { Pipeline, type PipelineContext, type PipelineMiddleware } from './transport/pipeline.ts';
-export {
-  ResumableSocket,
-  type ResumableSocketOptions,
-  type ResumeResult,
-} from './transport/resumable-socket.ts';
-export {
-  RESUME_EVENT,
-  RpcChannel,
-  type RpcChannelOptions,
-  type RpcSocket as RpcChannelSocket,
-} from './transport/rpc-channel.ts';
-export type { Transport, TransportHandle } from './transport/transport.ts';
-export type { SocketCallback, TypedSocket } from './transport/types.ts';
-export type {
-  AcceptCallback,
-  CreateSocketOptions,
-  RpcSocket as WsRpcSocket,
-  WsAdapter,
-} from './transport/ws-adapter.ts';
+// Transport — only browser-safe schema/type re-exports; runtime lives in ./node.ts
+export { type Envelope, EnvelopeSchema } from './transport/envelope.ts';
 // Utils
-export { errMsg } from './utils/err-msg.ts';
 export { getOrSet } from './utils/get-or-set.ts';
 export { isRecord } from './utils/is-record.ts';
 export { parseFsRoots } from './utils/parse-fs-roots.ts';

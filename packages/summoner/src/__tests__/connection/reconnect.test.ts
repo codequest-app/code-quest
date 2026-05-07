@@ -1,7 +1,12 @@
 import { createServer, type Server as HttpServer } from 'node:http';
 import type { AddressInfo } from 'node:net';
-import { createConnectionLoop, RpcChannel } from '@code-quest/shared';
-import { toRpcSocket, WsTransport, wsAdapter } from '@code-quest/shared/node';
+import {
+  createConnectionLoop,
+  RpcChannel,
+  toRpcSocket,
+  WsTransport,
+  wsAdapter,
+} from '@code-quest/shared/node';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { WebSocketServer } from 'ws';
 import { Agent } from '../../connection/agent.ts';

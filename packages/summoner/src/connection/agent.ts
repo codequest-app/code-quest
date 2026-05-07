@@ -39,8 +39,8 @@ import {
   processSpawnParamsSchema,
   processStdinParamsSchema,
   REMOTE_METHODS,
-  type RpcChannel,
 } from '@code-quest/shared';
+import type { RpcChannel } from '@code-quest/shared/node';
 
 export class Agent {
   private readonly spawned = new Map<string, ProcessHandle>();
