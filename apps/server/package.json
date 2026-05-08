@@ -10,7 +10,8 @@
   "description": "Code Quest server - Terminal and Socket.io management",
   "scripts": {
     "dev": "tsx watch --env-file=.env src/bin/server.ts",
-    "build": "pnpm clean && tsup && tsx obfuscate.ts",
+    "build": "pnpm clean && tsup",
+    "build:release": "pnpm build && tsx obfuscate.ts",
     "start": "node --env-file=dist/.env dist/bin/server.js",
     "test": "vitest run",
     "test:ui": "vitest --ui",
@@ -20,6 +21,7 @@
     "db:migrate:sqlite": "tsx --env-file=.env src/scripts/migrate-sqlite.ts",
     "db:migrate:mysql": "tsx --env-file=.env src/scripts/migrate-mysql.ts",
     "db:migrate": "pnpm db:migrate:sqlite && pnpm db:migrate:mysql",
+    "db:sync:mysql-to-sqlite": "tsx --env-file=.env src/scripts/sync-mysql-to-sqlite.ts",
     "clean": "rimraf --glob \"dist/*\" \"!dist/.env\" \"!dist/node_modules\""
   },
   "dependencies": {

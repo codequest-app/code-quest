@@ -13,6 +13,7 @@
     "dev:server:mock": "MOCK_CLI=true pnpm --filter @code-quest/server dev",
     "dev:web": "pnpm --filter @code-quest/web dev",
     "build": "pnpm --filter @code-quest/summoner build && pnpm --filter @code-quest/server build && pnpm --filter @code-quest/web build",
+    "build:release": "pnpm --filter @code-quest/summoner build && pnpm --filter @code-quest/server build:release && pnpm --filter @code-quest/web build",
     "start": "pnpm --filter @code-quest/server start",
     "start:summoner": "node apps/summoner/dist/main.js",
     "test": "pnpm -r --parallel run test",

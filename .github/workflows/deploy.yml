@@ -28,5 +28,3 @@ jobs:
             cd deploy
             docker compose build
             docker compose up -d --wait
-            docker cp $(docker compose ps -q server):/app/public/. /srv/code-quest/web/
-            sudo systemctl reload caddy
