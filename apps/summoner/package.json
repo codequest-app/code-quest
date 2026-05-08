@@ -14,6 +14,7 @@
   "scripts": {
     "dev": "bun run --env-file=.env src/main.ts",
     "build": "pnpm clean && bun run build.ts && bun build dist/main.js --compile --outfile dist/summoner",
+    "build:release": "pnpm clean && bun run build.ts && bun run compile.ts",
     "test": "vitest run",
     "lint": "biome check src",
     "clean": "rimraf --glob \"dist/*\" \"!dist/.env\""

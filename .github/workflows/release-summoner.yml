@@ -1,0 +1,53 @@
+name: Release Summoner
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - 'apps/summoner/**'
+      - 'packages/shared/**'
+
+jobs:
+  release:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: oven-sh/setup-bun@v2
+        with:
+          bun-version: latest
+
+      - uses: pnpm/action-setup@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: pnpm
+
+      - run: pnpm install --frozen-lockfile
+
+      - name: Bundle and obfuscate
+        working-directory: apps/summoner
+        run: |
+          pnpm clean
+          bun run build.ts
+
+      - name: Cross-compile all targets
+        working-directory: apps/summoner
+        run: bun run compile.ts
+
+      - name: Upload to GitHub Releases
+        uses: softprops/action-gh-release@v2
+        with:
+          tag_name: latest
+          name: Summoner (latest)
+          files: |
+            apps/summoner/dist/summoner-darwin-arm64
+            apps/summoner/dist/summoner-darwin-x64
+            apps/summoner/dist/summoner-linux-x64
+            apps/summoner/dist/summoner-linux-arm64
+            apps/summoner/dist/summoner-windows-x64.exe
+          make_latest: true
