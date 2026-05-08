@@ -12,10 +12,9 @@ COPY apps/summoner/package.json apps/summoner/
 COPY packages/shared/package.json packages/shared/
 COPY packages/db-schema/package.json packages/db-schema/
 RUN --mount=type=cache,id=pnpm,target=/root/.local/share/pnpm/store \
-    pnpm install --frozen-lockfile --ignore-scripts && \
-    npm rebuild better-sqlite3 --prefix node_modules/.pnpm/better-sqlite3@*/node_modules/better-sqlite3 2>/dev/null; \
-    pnpm rebuild better-sqlite3 2>/dev/null; \
-    true
+    pnpm install --frozen-lockfile --ignore-scripts
+RUN cd $(find node_modules -path '*/better-sqlite3/package.json' -exec dirname {} \; | head -1) && \
+    npx --yes prebuild-install || npx --yes node-gyp rebuild
 
 # --- web build ---
 FROM deps AS web-build

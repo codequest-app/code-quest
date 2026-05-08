@@ -1,4 +1,4 @@
-import { cpSync, mkdirSync, readFileSync, writeFileSync } from 'node:fs';
+import { cpSync, readFileSync, writeFileSync } from 'node:fs';
 import { createRequire } from 'node:module';
 import { dirname, resolve } from 'node:path';
 import { defineConfig } from 'tsup';
@@ -23,14 +23,13 @@ export default defineConfig({
       recursive: true,
     });
 
-    const copyDep = (name: string) => {
-      const depRequire = createRequire(require.resolve('better-sqlite3/package.json'));
-      const dir = dirname(depRequire.resolve(`${name}/package.json`));
+    const betterSqlite3Require = createRequire(require.resolve('better-sqlite3/package.json'));
+    const copyDep = (name: string, req = betterSqlite3Require) => {
+      const dir = dirname(req.resolve(`${name}/package.json`));
       cpSync(dir, resolve(`dist/node_modules/${name}`), { recursive: true });
     };
 
-    const betterSqlite3Dir = dirname(require.resolve('better-sqlite3/package.json'));
-    cpSync(betterSqlite3Dir, resolve('dist/node_modules/better-sqlite3'), { recursive: true });
+    copyDep('better-sqlite3', require);
     copyDep('bindings');
     copyDep('file-uri-to-path');
 
