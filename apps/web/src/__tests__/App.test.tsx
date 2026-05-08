@@ -1,43 +1,44 @@
-import { render, screen } from '@testing-library/react';
+import { render, screen, waitFor } from '@testing-library/react';
 import { describe, expect, it } from 'vitest';
 import { App } from '../App.tsx';
 import { usePreferencesStore } from '../stores/usePreferencesStore.ts';
 
 describe('App', () => {
-  it('renders WorkspaceLayout without hitting ErrorBoundary — all providers are present', () => {
+  it('renders WorkspaceLayout without hitting ErrorBoundary — all providers are present', async () => {
     render(<App />);
 
-    expect(screen.queryByText('Something went wrong')).not.toBeInTheDocument();
+    await waitFor(() => expect(screen.queryByText('Something went wrong')).not.toBeInTheDocument());
   });
 
-  it('shows only EmptyState when no projects exist — no sidebar or tab bar', () => {
+  it('shows only EmptyState when no projects exist — no sidebar or tab bar', async () => {
     render(<App />);
 
-    expect(screen.getByRole('button', { name: 'Add Project' })).toBeInTheDocument();
+    await waitFor(() =>
+      expect(screen.getByRole('button', { name: 'Add Project' })).toBeInTheDocument(),
+    );
     expect(screen.queryByRole('tablist', { name: 'tab-bar' })).not.toBeInTheDocument();
     expect(screen.queryByRole('complementary', { name: 'sidebar-panel' })).not.toBeInTheDocument();
   });
 
-  it('syncs preferences axes to <html> data-attrs', () => {
+  it('syncs preferences axes to <html> data-attrs', async () => {
     usePreferencesStore.setState({
       colorTheme: 'light',
       fontSize: 'lg',
       density: 'compact',
     });
     render(<App />);
-    const ds = document.documentElement.dataset;
-    expect(ds.theme).toBe('light');
-    expect(ds.font).toBe('lg');
-    expect(ds.density).toBe('compact');
+    await waitFor(() => expect(document.documentElement.dataset.theme).toBe('light'));
+    expect(document.documentElement.dataset.font).toBe('lg');
+    expect(document.documentElement.dataset.density).toBe('compact');
   });
 
-  it('writes resolved effective theme to data-theme when preference is system', () => {
-    // jsdom matchMedia mock in test/setup.ts returns matches=false for
-    // prefers-color-scheme: dark (the mock answers true only for min-width queries)
+  it('writes resolved effective theme to data-theme when preference is system', async () => {
     usePreferencesStore.setState({ colorTheme: 'system' });
     render(<App />);
-    const theme = document.documentElement.dataset.theme;
-    expect(theme === 'dark' || theme === 'light').toBe(true);
-    expect(theme).not.toBe('system');
+    await waitFor(() => {
+      const theme = document.documentElement.dataset.theme;
+      expect(theme === 'dark' || theme === 'light').toBe(true);
+    });
+    expect(document.documentElement.dataset.theme).not.toBe('system');
   });
 });

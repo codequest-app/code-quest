@@ -13,15 +13,24 @@ import { ProjectProvider } from './contexts/ProjectContext.tsx';
 import { SessionProvider } from './contexts/SessionContext.tsx';
 import { SocketProvider } from './contexts/SocketContext.tsx';
 import { useEffectiveColorTheme } from './hooks/useEffectiveColorTheme.ts';
-import { createSocket } from './socket/client.ts';
+import { createSocket, type TypedSocket } from './socket/client.ts';
 import { usePreferencesStore } from './stores/usePreferencesStore.ts';
 import './App.css';
 
 export function App(): React.JSX.Element {
-  const [socket] = useState(() => createSocket());
+  const [socket, setSocket] = useState<TypedSocket | null>(() => {
+    const result = createSocket();
+    return result instanceof Promise ? null : result;
+  });
   const effectiveColorTheme = useEffectiveColorTheme();
   const fontSize = usePreferencesStore((s) => s.fontSize);
   const density = usePreferencesStore((s) => s.density);
+
+  useEffect(() => {
+    if (socket) return;
+    const result = createSocket();
+    if (result instanceof Promise) result.then(setSocket);
+  }, [socket]);
 
   useEffect(() => {
     const ds = document.documentElement.dataset;
@@ -34,25 +43,27 @@ export function App(): React.JSX.Element {
     <div className="flex flex-col h-screen overflow-hidden bg-bg text-text">
       <Toaster position="top-right" richColors />
       <ErrorBoundary FallbackComponent={ErrorFallback}>
-        <SocketProvider socket={socket}>
-          <AppInitProvider>
-            <SessionProvider>
-              <PluginProvider>
-                <ProjectProvider>
-                  <NavigationProvider>
-                    <GitProvider>
-                      <FsProvider>
-                        <OpenspecProvider>
-                          <WorkspaceLayout />
-                        </OpenspecProvider>
-                      </FsProvider>
-                    </GitProvider>
-                  </NavigationProvider>
-                </ProjectProvider>
-              </PluginProvider>
-            </SessionProvider>
-          </AppInitProvider>
-        </SocketProvider>
+        {socket && (
+          <SocketProvider socket={socket}>
+            <AppInitProvider>
+              <SessionProvider>
+                <PluginProvider>
+                  <ProjectProvider>
+                    <NavigationProvider>
+                      <GitProvider>
+                        <FsProvider>
+                          <OpenspecProvider>
+                            <WorkspaceLayout />
+                          </OpenspecProvider>
+                        </FsProvider>
+                      </GitProvider>
+                    </NavigationProvider>
+                  </ProjectProvider>
+                </PluginProvider>
+              </SessionProvider>
+            </AppInitProvider>
+          </SocketProvider>
+        )}
       </ErrorBoundary>
     </div>
   );

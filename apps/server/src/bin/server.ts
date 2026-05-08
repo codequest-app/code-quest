@@ -27,7 +27,6 @@ import { logger } from '../logger.ts';
 import { ReconnectableRpc } from '../remote/reconnectable-rpc.ts';
 import type { ChannelEmitter } from '../socket/channel-emitter.ts';
 import type { SocketServer } from '../socket/server.ts';
-import { SocketIoTransport } from '../transport/socket-io-transport.ts';
 import { TYPES } from '../types.ts';
 
 const WS_PATH = '/ws';
@@ -77,6 +76,7 @@ const httpServer = createServer(app);
 const authenticator = new NullAuthenticator();
 const handles: TransportHandle[] = [];
 if (config.transport.socketio) {
+  const { SocketIoTransport } = await import('../transport/socket-io-transport.ts');
   handles.push(new SocketIoTransport({ authenticator, cors: { origin: '*' } }).attach(httpServer));
 }
 

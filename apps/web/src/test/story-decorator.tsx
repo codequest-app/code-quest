@@ -5,7 +5,7 @@
 
 import { DISMISSIBLE_IDS, type EffectiveColorTheme, type PendingControl } from '@code-quest/shared';
 import type { StoryObj } from '@storybook/react-vite';
-import { useLayoutEffect, useRef } from 'react';
+import { useEffect, useLayoutEffect, useRef, useState } from 'react';
 import { expect } from 'storybook/test';
 import { AppInitProvider } from '../contexts/AppInitContext.tsx';
 import { CommandPaletteProvider } from '../contexts/CommandPaletteContext.tsx';
@@ -27,7 +27,7 @@ import { ProjectProvider } from '../contexts/ProjectContext.tsx';
 import { SessionProvider } from '../contexts/SessionContext.tsx';
 import { SocketProvider } from '../contexts/SocketContext.tsx';
 import { TabProvider } from '../contexts/TabContext.tsx';
-import { createSocket } from '../socket/client.ts';
+import { createSocket, type TypedSocket } from '../socket/client.ts';
 import type { Density } from '../stores/usePreferencesStore.ts';
 import { usePreferencesStore } from '../stores/usePreferencesStore.ts';
 import type { ChannelState } from '../types/chat.ts';
@@ -50,9 +50,18 @@ interface StoryChannelOptions {
 const DEFAULT_STORY_CLASS = 'max-w-3xl bg-bg text-text p-6 relative';
 
 function AppProviderShell({ children }: { children: React.ReactNode }) {
-  const socketRef = useRef(createSocket());
+  const [socket, setSocket] = useState<TypedSocket | null>(() => {
+    const result = createSocket();
+    return result instanceof Promise ? null : result;
+  });
+  useEffect(() => {
+    if (socket) return;
+    const result = createSocket();
+    if (result instanceof Promise) result.then(setSocket);
+  }, [socket]);
+  if (!socket) return null;
   return (
-    <SocketProvider socket={socketRef.current}>
+    <SocketProvider socket={socket}>
       <AppInitProvider>
         <SessionProvider>
           <PluginProvider>
