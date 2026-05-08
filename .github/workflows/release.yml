@@ -65,7 +65,8 @@ jobs:
 
       - name: Compile summoner for current platform
         working-directory: apps/summoner
-        run: bun build dist/main.js --compile --target="$BUN_TARGET" --outfile="dist/$SUMMONER_BIN"
+        shell: bash
+        run: bun build dist/main.js --compile --target $BUN_TARGET --outfile "dist/$SUMMONER_BIN"
 
       - name: Package release (unix)
         if: runner.os != 'Windows'
