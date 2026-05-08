@@ -11,7 +11,8 @@ COPY apps/web/package.json apps/web/
 COPY apps/summoner/package.json apps/summoner/
 COPY packages/shared/package.json packages/shared/
 COPY packages/db-schema/package.json packages/db-schema/
-RUN pnpm install --frozen-lockfile --ignore-scripts
+RUN --mount=type=cache,id=pnpm,target=/root/.local/share/pnpm/store \
+    pnpm install --frozen-lockfile --ignore-scripts
 
 # --- web build ---
 FROM deps AS web-build
@@ -30,7 +31,8 @@ COPY packages/shared/ packages/shared/
 COPY packages/db-schema/ packages/db-schema/
 COPY apps/server/ apps/server/
 COPY apps/summoner/src/ apps/summoner/src/
-RUN BUILD_SOURCEMAP=$BUILD_SOURCEMAP pnpm --filter @code-quest/server $BUILD_TARGET
+RUN --mount=type=cache,id=npm,target=/root/.npm \
+    BUILD_SOURCEMAP=$BUILD_SOURCEMAP pnpm --filter @code-quest/server $BUILD_TARGET
 
 # --- production (clean, no build tools) ---
 FROM node:22-alpine AS production
