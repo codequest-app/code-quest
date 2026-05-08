@@ -1,15 +1,7 @@
 name: Deploy
 
 on:
-  push:
-    branches: [main]
-    paths:
-      - 'apps/server/**'
-      - 'apps/web/**'
-      - 'packages/**'
-      - 'deploy/**'
-      - 'package.json'
-      - 'pnpm-lock.yaml'
+  workflow_dispatch:
 
 jobs:
   deploy:
