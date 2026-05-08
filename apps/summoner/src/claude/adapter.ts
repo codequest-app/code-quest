@@ -1,15 +1,22 @@
 import type { ClientMessage, ProviderClientConfig } from '@code-quest/shared';
-import type { z } from 'zod';
 import type { AdapterOutput, ParseResult, ProviderAdapter } from '../types.ts';
 import { isRecord } from '../utils.ts';
 import { claudeClientConfig } from './client-config.ts';
 import type { LaunchOptions } from './launch-options.ts';
 import { ClaudeProtocol } from './protocol.ts';
-import type { ProtocolMessage, rateLimitEventSchema } from './schemas.ts';
+import type { ProtocolMessage } from './schemas.ts';
+import { transformAvailableModels, transformExperimentGates } from './transforms/app.ts';
 import { transformAssistant } from './transforms/assistant.ts';
+import { transformAuthStatus, transformAuthUrl } from './transforms/auth.ts';
 import { transformControlRequest } from './transforms/control.ts';
+import { transformError, transformNotification, transformSpeechToText } from './transforms/misc.ts';
+import { transformRateLimit } from './transforms/rate-limit.ts';
 import { transformResult } from './transforms/result.ts';
-import { transformStream } from './transforms/stream.ts';
+import {
+  transformStream,
+  transformStreamlinedText,
+  transformStreamlinedToolUseSummary,
+} from './transforms/stream.ts';
 import { transformSystem } from './transforms/system.ts';
 import { transformUser } from './transforms/user.ts';
 
@@ -76,36 +83,6 @@ const REQUEST_MAPPINGS: Record<string, RequestMapping> = {
     mapPayload: oauthCallbackPayload,
   },
 };
-
-type RateLimitEvent = z.infer<typeof rateLimitEventSchema>;
-
-function convertRateLimitMessage(message: RateLimitEvent): ClientMessage {
-  const rli = message.rate_limit_info;
-  return {
-    name: 'system:rate_limit',
-    payload: {
-      info: {
-        status: rli.status ?? '',
-        rateLimitType: rli.rateLimitType,
-        resetsAt: rli.resetsAt != null ? String(rli.resetsAt) : undefined,
-        utilization: typeof rli.utilization === 'number' ? rli.utilization : undefined,
-        overageStatus: rli.overageStatus,
-        isUsingOverage: rli.isUsingOverage,
-      },
-    },
-  };
-}
-
-function convertAuthStatusMessage(message: ProtocolMessage): ClientMessage {
-  return {
-    name: 'notification:auth_status',
-    payload: {
-      status: message.isAuthenticating ? 'authenticating' : 'authenticated',
-      output: Array.isArray(message.output) ? message.output.join('\n') : undefined,
-      account: isRecord(message.account) ? message.account : undefined,
-    },
-  };
-}
 
 export class ClaudeAdapter implements ProviderAdapter<ProtocolMessage, LaunchOptions> {
   private readonly protocol = new ClaudeProtocol();
@@ -239,43 +216,16 @@ const OTHER_MESSAGE_TRANSFORMERS: Record<string, OtherTransformer> = Object.from
   handler('user', transformUser),
   handler('result', transformResult),
   handler('stream_event', transformStream),
-  handler('rate_limit_event', convertRateLimitMessage),
-  handler('speech_to_text_message', (msg) => ({
-    name: 'speech:message',
-    payload: { text: msg.text, done: msg.done },
-  })),
-  handler('streamlined_text', (msg) => ({
-    name: 'stream:text',
-    payload: { text: msg.text },
-  })),
-  handler('streamlined_tool_use_summary', (msg) => ({
-    name: 'stream:tool_summary',
-    payload: { toolSummary: msg.tool_summary },
-  })),
-  handler('error', (msg) => ({
-    name: 'error:message',
-    payload: { message: msg.error?.message ?? 'Unknown error' },
-  })),
-  handler('experiment_gates', (msg) => {
-    const gates: Record<string, boolean> = {};
-    for (const [k, v] of Object.entries(msg.gates)) {
-      gates[k] = Boolean(v);
-    }
-    return { name: 'app:experiment_gates', payload: { gates } };
-  }),
-  handler('available_models', (msg) => ({
-    name: 'app:models',
-    payload: { models: msg.models },
-  })),
-  handler('notification', (msg) => ({
-    name: 'notification:toast',
-    payload: { message: msg.message },
-  })),
-  handler('auth_status', convertAuthStatusMessage),
-  handler('auth_url', (msg) => ({
-    name: 'notification:auth_url',
-    payload: { url: msg.url, method: msg.method ?? 'oauth' },
-  })),
+  handler('rate_limit_event', transformRateLimit),
+  handler('speech_to_text_message', transformSpeechToText),
+  handler('streamlined_text', transformStreamlinedText),
+  handler('streamlined_tool_use_summary', transformStreamlinedToolUseSummary),
+  handler('error', transformError),
+  handler('experiment_gates', transformExperimentGates),
+  handler('available_models', transformAvailableModels),
+  handler('notification', transformNotification),
+  handler('auth_status', transformAuthStatus),
+  handler('auth_url', transformAuthUrl),
   handler('raw_event', (msg) => ({
     name: 'raw:event',
     payload: { rawType: msg.rawType, data: msg.data },

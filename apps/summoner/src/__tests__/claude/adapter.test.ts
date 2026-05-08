@@ -172,41 +172,6 @@ describe('ClaudeAdapter', () => {
       expect(toClientMessage(s.controlResponse('r1'))).toBeNull();
     });
 
-    it('converts error', () => {
-      expect(toClientMessage(s.error('boom'))).toMatchObject({
-        name: 'error:message',
-        payload: { message: 'boom' },
-      });
-    });
-
-    it('converts notification', () => {
-      expect(toClientMessage(s.notification('hello'))).toMatchObject({
-        name: 'notification:toast',
-        payload: { message: 'hello' },
-      });
-    });
-
-    it('converts auth_url', () => {
-      expect(toClientMessage(s.authUrl('https://auth.test', 'oauth'))).toMatchObject({
-        name: 'notification:auth_url',
-        payload: { url: 'https://auth.test' },
-      });
-    });
-
-    it('converts streamlined_text', () => {
-      expect(toClientMessage(s.streamlinedText('fast'))).toMatchObject({
-        name: 'stream:text',
-        payload: { text: 'fast' },
-      });
-    });
-
-    it('converts streamlined_tool_use_summary', () => {
-      expect(toClientMessage(s.streamlinedToolUseSummary('Read 3'))).toMatchObject({
-        name: 'stream:tool_summary',
-        payload: { toolSummary: 'Read 3' },
-      });
-    });
-
     it('converts unknown type to raw:event', () => {
       expect(toClientMessage(s.rawUnknown('some_future_thing', { data: 123 }))).toMatchObject({
         name: 'raw:event',
@@ -219,74 +184,6 @@ describe('ClaudeAdapter', () => {
         name: 'control:cancel',
         payload: { requestId: 'cc-1' },
       });
-    });
-
-    it('converts auth_status to structured ClientMessage', () => {
-      const result = toClientMessage(
-        JSON.stringify({
-          type: 'auth_status',
-          isAuthenticating: false,
-          output: ['Logged in as user@example.com'],
-          account: { email: 'user@example.com', plan: 'pro' },
-        }),
-      );
-      expect(result).toMatchObject({
-        name: 'notification:auth_status',
-        payload: {
-          status: 'authenticated',
-          output: 'Logged in as user@example.com',
-          account: { email: 'user@example.com', plan: 'pro' },
-        },
-      });
-    });
-
-    it('converts auth_status with isAuthenticating=true', () => {
-      const result = toClientMessage(
-        JSON.stringify({ type: 'auth_status', isAuthenticating: true, output: [] }),
-      );
-      expect(result).toMatchObject({
-        name: 'notification:auth_status',
-        payload: { status: 'authenticating' },
-      });
-    });
-
-    it('converts auth_status without optional fields', () => {
-      const result = toClientMessage(
-        JSON.stringify({ type: 'auth_status', isAuthenticating: false, output: [] }),
-      );
-      const msg = expectName(result, 'notification:auth_status');
-      expect(msg.payload.status).toBe('authenticated');
-      expect(msg.payload.account).toBeUndefined();
-    });
-
-    it('converts rate_limit_event with overage fields', () => {
-      const result = toClientMessage(
-        s.rateLimitEvent({
-          status: 'rate_limited',
-          rateLimitType: '5hr',
-          overageStatus: 'active',
-          isUsingOverage: true,
-        }),
-      );
-      expect(result).toMatchObject({
-        name: 'system:rate_limit',
-        payload: {
-          info: { status: 'rate_limited', overageStatus: 'active', isUsingOverage: true },
-        },
-      });
-    });
-
-    it('converts rate_limit_event without overage fields (backward compat)', () => {
-      const base = JSON.parse(s.rateLimitEvent({ status: 'ok' }));
-      delete base.rate_limit_info.overageStatus;
-      delete base.rate_limit_info.isUsingOverage;
-      delete base.rate_limit_info.rateLimitType;
-      delete base.rate_limit_info.resetsAt;
-      const result = toClientMessage(JSON.stringify(base));
-      const msg = expectName(result, 'system:rate_limit');
-      expect(msg.payload.info.status).toBe('ok');
-      expect(msg.payload.info.overageStatus).toBeUndefined();
-      expect(msg.payload.info.isUsingOverage).toBeUndefined();
     });
   });
 

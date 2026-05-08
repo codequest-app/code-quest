@@ -540,7 +540,7 @@ export const rateLimitEventSchema: Loose<{
 
 // ── Streamlined (fast mode) ──
 
-const streamlinedTextSchema: Loose<{
+export const streamlinedTextSchema: Loose<{
   type: z.ZodLiteral<'streamlined_text'>;
   text: Str;
   session_id: Opt<Str>;
@@ -552,7 +552,7 @@ const streamlinedTextSchema: Loose<{
   uuid: z.string().optional(),
 });
 
-const streamlinedToolUseSummarySchema: Loose<{
+export const streamlinedToolUseSummarySchema: Loose<{
   type: z.ZodLiteral<'streamlined_tool_use_summary'>;
   tool_summary: Str;
   session_id: Opt<Str>;
@@ -566,7 +566,7 @@ const streamlinedToolUseSummarySchema: Loose<{
 
 // ── Experiment gates ──
 
-const experimentGatesSchema: Loose<{
+export const experimentGatesSchema: Loose<{
   type: z.ZodLiteral<'experiment_gates'>;
   gates: z.ZodRecord<Str, z.ZodUnion<readonly [Bool, Str]>>;
 }> = z.looseObject({
@@ -576,7 +576,7 @@ const experimentGatesSchema: Loose<{
 
 // ── Available models ──
 
-const availableModelsSchema: Loose<{
+export const availableModelsSchema: Loose<{
   type: z.ZodLiteral<'available_models'>;
   models: z.ZodArray<Str>;
 }> = z.looseObject({
@@ -604,7 +604,7 @@ const toolUseSchema: Loose<{
 
 // ── Notification ──
 
-const notificationSchema: Loose<{
+export const notificationSchema: Loose<{
   type: z.ZodLiteral<'notification'>;
   message: Str;
   timestamp: Opt<Num>;
@@ -632,7 +632,7 @@ const newSessionNotificationSchema: Loose<{
 
 // ── Error ──
 
-const errorSchema: Loose<{
+export const errorSchema: Loose<{
   type: z.ZodLiteral<'error'>;
   error: Loose<{ type: Str; message: Str }>;
   session_id: Opt<Str>;
@@ -644,7 +644,7 @@ const errorSchema: Loose<{
 
 // ── Auth URL ──
 
-const authUrlSchema: Loose<{
+export const authUrlSchema: Loose<{
   type: z.ZodLiteral<'auth_url'>;
   url: Str;
   method: Str;
@@ -668,7 +668,7 @@ const keepAliveSchema: Loose<{
 
 // ── Auth status ──
 
-const authStatusSchema: Loose<{
+export const authStatusSchema: Loose<{
   type: z.ZodLiteral<'auth_status'>;
   isAuthenticating: Bool;
   output: z.ZodArray<Unk>;
@@ -698,7 +698,7 @@ const rawEventSchema: Loose<{
 
 // ── Speech ──
 
-const speechToTextMessageSchema: Loose<{
+export const speechToTextMessageSchema: Loose<{
   type: z.ZodLiteral<'speech_to_text_message'>;
   channelId: Str;
   text: Str;

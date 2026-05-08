@@ -1,8 +1,14 @@
 import type { ClientMessage } from '@code-quest/shared';
 import type { z } from 'zod';
-import type { streamEventSchema } from '../schemas.ts';
+import type {
+  streamEventSchema,
+  streamlinedTextSchema,
+  streamlinedToolUseSummarySchema,
+} from '../schemas.ts';
 
 type StreamMessage = z.infer<typeof streamEventSchema>;
+type StreamlinedTextMessage = z.infer<typeof streamlinedTextSchema>;
+type StreamlinedToolUseSummaryMessage = z.infer<typeof streamlinedToolUseSummarySchema>;
 
 function handleContentBlockDelta(
   delta: NonNullable<NonNullable<StreamMessage['event']>['delta']>,
@@ -32,6 +38,7 @@ function handleContentBlockDelta(
           chunk: {
             kind: 'citations',
             content: '',
+            // citation (singular) is legacy; prefer citations[]
             citations: delta.citations ?? (delta.citation ? [delta.citation] : []),
           },
           ...parent,
@@ -46,6 +53,23 @@ function handleContentBlockDelta(
         payload: { rawType: 'unknown_delta', data: { deltaType: delta.type, ...delta } },
       };
   }
+}
+
+export function transformStreamlinedText(raw: StreamlinedTextMessage): ClientMessage {
+  return { name: 'stream:text', payload: { text: raw.text } };
+}
+
+export function transformStreamlinedToolUseSummary(
+  raw: StreamlinedToolUseSummaryMessage,
+): ClientMessage {
+  return { name: 'stream:tool_summary', payload: { toolSummary: raw.tool_summary } };
+}
+
+function hasContentFields(block: Record<string, unknown>): boolean {
+  for (const k in block) {
+    if (k !== 'type') return true;
+  }
+  return false;
 }
 
 export function transformStream(raw: StreamMessage): ClientMessage | null {
@@ -67,7 +91,7 @@ export function transformStream(raw: StreamMessage): ClientMessage | null {
         payload: {
           index: streamData.index ?? 0,
           blockType: block?.type ?? 'unknown',
-          ...(block && Object.keys(block).length > 1 ? { contentBlock: block } : {}),
+          ...(block && hasContentFields(block) ? { contentBlock: block } : {}),
           ...(parentToolUseId ? { parentToolUseId } : {}),
         },
       };
@@ -80,6 +104,9 @@ export function transformStream(raw: StreamMessage): ClientMessage | null {
     case 'message_delta':
       return null;
     default:
-      return null;
+      return {
+        name: 'raw:event',
+        payload: { rawType: 'unknown_stream_event', data: { eventType: streamData.type } },
+      };
   }
 }

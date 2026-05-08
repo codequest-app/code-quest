@@ -1,9 +1,6 @@
 import { describe, expect, it } from 'vitest';
-import { ClaudeAdapter } from '../../../claude/adapter.ts';
 import { segments as s } from '../../../test/segments-node.ts';
-import { toClientMessage } from '../helpers.ts';
-
-const adapter = new ClaudeAdapter();
+import { adapter, toClientMessage } from '../helpers.ts';
 
 describe('transform — user events', () => {
   it('converts user with tool_result', () => {

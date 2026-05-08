@@ -73,4 +73,40 @@ describe('transform — stream events', () => {
     });
     expect(toClientMessage(raw)).toBeNull();
   });
+
+  it('content_block_start omits contentBlock when block has only type', () => {
+    const base = JSON.parse(s.contentBlockStart(0, 'text'));
+    base.event.content_block = { type: 'text' };
+    const result = toClientMessage(JSON.stringify(base));
+    const msg = expectName(result, 'stream:block_start');
+    expect(msg.payload.contentBlock).toBeUndefined();
+  });
+
+  it('emits raw:event for unknown stream event type', () => {
+    const raw = JSON.stringify({
+      type: 'stream_event',
+      event: { type: 'some_future_event', data: 42 },
+      session_id: 'x',
+      uuid: 'u',
+    });
+    const result = toClientMessage(raw);
+    expect(result).toMatchObject({
+      name: 'raw:event',
+      payload: { rawType: 'unknown_stream_event' },
+    });
+  });
+
+  it('converts streamlined_text', () => {
+    expect(toClientMessage(s.streamlinedText('fast'))).toMatchObject({
+      name: 'stream:text',
+      payload: { text: 'fast' },
+    });
+  });
+
+  it('converts streamlined_tool_use_summary', () => {
+    expect(toClientMessage(s.streamlinedToolUseSummary('Read 3'))).toMatchObject({
+      name: 'stream:tool_summary',
+      payload: { toolSummary: 'Read 3' },
+    });
+  });
 });
