@@ -613,11 +613,11 @@ function buildSegments(T: SegmentTemplates, ref: { seq: number }) {
     },
 
     authStatus(
-      status: string,
-      opts?: { output?: string; account?: Record<string, unknown> },
+      isAuthenticating: boolean,
+      opts?: { output?: unknown[]; account?: Record<string, unknown> },
     ): string {
       const line = JSON.parse(T.AUTH_STATUS ?? '{}') as Record<string, unknown>;
-      line.status = status;
+      line.isAuthenticating = isAuthenticating;
       if (opts?.output !== undefined) line.output = opts.output;
       if (opts?.account !== undefined) line.account = opts.account;
       line.uuid = `fake-auth-status-${next()}`;
