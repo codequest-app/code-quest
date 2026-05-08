@@ -42,20 +42,26 @@ describe('parseBool', () => {
   });
 });
 
-describe('loadConfig — database URL presence detection', () => {
-  it('only DATABASE_URL set → mysql active, sqlite undefined', () => {
-    const c = loadConfig({ DATABASE_URL: 'mysql://root@127.0.0.1/db' });
-    expect(c.database.url).toBe('mysql://root@127.0.0.1/db');
-    expect(c.database.sqliteUrl).toBeUndefined();
+describe('loadConfig — database URL resolution', () => {
+  it('empty env → url and sqliteUrl both default to sqlite', () => {
+    const c = loadConfig({});
+    expect(c.database.sqliteUrl).toBe('file:./data/code-quest.db');
+    expect(c.database.url).toBe('file:./data/code-quest.db');
   });
 
-  it('only DATABASE_SQLITE_URL set → sqlite active, mysql undefined', () => {
+  it('only DATABASE_SQLITE_URL set → url falls back to sqliteUrl', () => {
     const c = loadConfig({ DATABASE_SQLITE_URL: 'file:./data/app.db' });
     expect(c.database.sqliteUrl).toBe('file:./data/app.db');
-    expect(c.database.url).toBeUndefined();
+    expect(c.database.url).toBe('file:./data/app.db');
   });
 
-  it('both set → both populated', () => {
+  it('only DATABASE_URL set → url is DATABASE_URL, sqliteUrl is default', () => {
+    const c = loadConfig({ DATABASE_URL: 'mysql://root@127.0.0.1/db' });
+    expect(c.database.url).toBe('mysql://root@127.0.0.1/db');
+    expect(c.database.sqliteUrl).toBe('file:./data/code-quest.db');
+  });
+
+  it('both set → both populated independently', () => {
     const c = loadConfig({
       DATABASE_URL: 'mysql://root@127.0.0.1/db',
       DATABASE_SQLITE_URL: 'file:./data/app.db',
@@ -64,16 +70,10 @@ describe('loadConfig — database URL presence detection', () => {
     expect(c.database.sqliteUrl).toBe('file:./data/app.db');
   });
 
-  it('empty env → both undefined (boot-time code throws elsewhere)', () => {
-    const c = loadConfig({});
-    expect(c.database.url).toBeUndefined();
-    expect(c.database.sqliteUrl).toBeUndefined();
-  });
-
-  it('empty string values are treated as unset', () => {
+  it('empty string values fall back to defaults', () => {
     const c = loadConfig({ DATABASE_URL: '', DATABASE_SQLITE_URL: '' });
-    expect(c.database.url).toBeUndefined();
-    expect(c.database.sqliteUrl).toBeUndefined();
+    expect(c.database.sqliteUrl).toBe('file:./data/code-quest.db');
+    expect(c.database.url).toBe('file:./data/code-quest.db');
   });
 });
 
@@ -144,6 +144,43 @@ describe('loadConfig — non-database envs', () => {
 
   it('CLI_THINKING_DISPLAY=garbage → falls back to summarized', () => {
     expect(loadConfig({ CLI_THINKING_DISPLAY: 'bogus' }).thinkingDisplay).toBe('summarized');
+  });
+
+  describe('summoner', () => {
+    it('default mode is remote', () => {
+      const c = loadConfig({});
+      expect(c.summonerMode).toBe('remote');
+    });
+
+    it('SUMMONER_MODE=local → local mode', () => {
+      const c = loadConfig({ SUMMONER_MODE: 'local' });
+      expect(c.summonerMode).toBe('local');
+    });
+
+    it('uses SUMMONER_TOKEN when set', () => {
+      const c = loadConfig({ SUMMONER_TOKEN: 'my-secret' });
+      expect(c.summonerToken).toBe('my-secret');
+      expect(c.summonerTokenGenerated).toBe(false);
+    });
+
+    it('generates a random token when SUMMONER_TOKEN is empty and mode is remote', () => {
+      const c = loadConfig({});
+      expect(c.summonerToken).toBeDefined();
+      expect(c.summonerToken!.length).toBeGreaterThan(0);
+      expect(c.summonerTokenGenerated).toBe(true);
+    });
+
+    it('generates different tokens on each call', () => {
+      const c1 = loadConfig({});
+      const c2 = loadConfig({});
+      expect(c1.summonerToken).not.toBe(c2.summonerToken);
+    });
+
+    it('summonerToken is undefined when mode is local', () => {
+      const c = loadConfig({ SUMMONER_MODE: 'local' });
+      expect(c.summonerToken).toBeUndefined();
+      expect(c.summonerTokenGenerated).toBe(false);
+    });
   });
 
   describe('TRANSPORT', () => {

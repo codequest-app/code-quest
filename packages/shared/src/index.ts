@@ -24,6 +24,7 @@ export { EVENTS } from './socket-events.ts';
 export { TopicEmitter } from './topic-emitter.ts';
 // Transport — only browser-safe schema/type re-exports; runtime lives in ./node.ts
 export { type Envelope, EnvelopeSchema } from './transport/envelope.ts';
+export { type BannerItem, formatBanner } from './utils/banner.ts';
 // Utils
 export { getOrSet } from './utils/get-or-set.ts';
 export { isRecord } from './utils/is-record.ts';

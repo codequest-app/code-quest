@@ -17,7 +17,7 @@ bearer token auth, receives RPC calls from the server, and executes them locally
 ```bash
 # Summoner runs on the local machine, server can be remote
 pnpm --filter @code-quest/summoner start --server <url> --token <token>
-# Or via env vars: REMOTE_SERVER=<url> REMOTE_TOKEN=<token>
+# Or via env vars: SUMMONER_SERVER=<url> SUMMONER_TOKEN=<token>
 ```
 
 ## Directory Structure

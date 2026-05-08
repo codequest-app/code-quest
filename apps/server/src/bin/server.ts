@@ -2,6 +2,7 @@ import 'reflect-metadata';
 import { existsSync } from 'node:fs';
 import { createServer } from 'node:http';
 import { join } from 'node:path';
+import { type BannerItem, formatBanner } from '@code-quest/shared';
 import {
   auth,
   bearerAuth,
@@ -36,19 +37,19 @@ const SHUTDOWN_TIMEOUT_MS = 10_000;
 const storeConfig: StoreConfig = {};
 
 if (config.database.sqliteUrl) {
-  storeConfig.sqliteDatabase = createDatabase(resolveSqlitePath(config.database.sqliteUrl));
+  const sqlitePath = resolveSqlitePath(config.database.sqliteUrl);
+  storeConfig.sqliteDatabase = createDatabase(sqlitePath);
+  const { migrate } = await import('drizzle-orm/better-sqlite3/migrator');
+  const bundledMigrations = join(import.meta.dirname, '../migrations/sqlite');
+  const migrationsFolder = existsSync(bundledMigrations)
+    ? bundledMigrations
+    : (await import('@code-quest/db-schema')).sqliteMigrationsFolder;
+  migrate(storeConfig.sqliteDatabase, { migrationsFolder });
+  logger.info({ path: sqlitePath }, 'SQLite migrated');
 }
 
-if (config.database.url) {
+if (config.database.url !== config.database.sqliteUrl) {
   storeConfig.mysqlDatabase = createMysqlDatabase(config.database.url);
-}
-
-if (!storeConfig.sqliteDatabase && !storeConfig.mysqlDatabase) {
-  throw new Error(
-    'No database backend configured. Set DATABASE_URL (MySQL) and/or ' +
-      'DATABASE_SQLITE_URL (e.g. file:./data/code-quest.db) in .env. ' +
-      'See apps/server/.env.example for a working default.',
-  );
 }
 
 if (config.rawEvents.readDeltas && !config.rawEvents.writeDeltas) {
@@ -59,10 +60,10 @@ if (config.rawEvents.readDeltas && !config.rawEvents.writeDeltas) {
   );
 }
 
-function requireRemoteToken(): string {
-  const token = config.remoteToken;
-  if (!token) throw new Error('REMOTE_TOKEN must be set when REMOTE_MODE=remote');
-  return token;
+function requireSummonerToken(): string {
+  if (!config.summonerToken)
+    throw new Error('SUMMONER_TOKEN must be set when SUMMONER_MODE=remote');
+  return config.summonerToken;
 }
 
 const app = express();
@@ -103,7 +104,7 @@ function registerTransports(socketSrv: SocketServer): void {
 
 let container: ReturnType<typeof createContainer> | null = null;
 
-if (config.remoteMode === 'local') {
+if (config.summonerMode === 'local') {
   container = createContainer({
     processProvider: new ChildProcessProvider(),
     storeConfig,
@@ -114,12 +115,12 @@ if (config.remoteMode === 'local') {
   registerTransports(container.get<SocketServer>(TYPES.SocketServer));
 }
 
-if (config.remoteMode === 'remote') {
-  container = setupRemoteMode();
+if (config.summonerMode === 'remote') {
+  container = setupSummonerMode();
 }
 
-function setupRemoteMode() {
-  const remoteToken = requireRemoteToken();
+function setupSummonerMode() {
+  const summonerToken = requireSummonerToken();
   const reconnectableRpc = new ReconnectableRpc();
 
   const c = createContainer({
@@ -130,7 +131,7 @@ function setupRemoteMode() {
 
   wsTransport.route(
     SUMMONER_PATH,
-    [bearerAuth(remoteToken), heartbeat({ pingIntervalMs: 30_000, idleTimeoutMs: 60_000 })],
+    [bearerAuth(summonerToken), heartbeat({ pingIntervalMs: 30_000, idleTimeoutMs: 60_000 })],
     (_socket, ctx) => {
       const rpc = new RpcChannel(ctx.socket as RpcChannelSocket);
       reconnectableRpc.replace(rpc);
@@ -156,11 +157,12 @@ app.get(HEALTH_PATH, (_req, res) => {
   res.json({ status: 'ok', uptime: process.uptime() });
 });
 
-const PUBLIC_DIR = process.env.PUBLIC_DIR;
-const publicDir = PUBLIC_DIR
-  ? join(process.cwd(), PUBLIC_DIR)
-  : join(import.meta.dirname, '../../../web/dist');
-if (existsSync(publicDir)) {
+const publicDir = process.env.PUBLIC_DIR
+  ? join(process.cwd(), process.env.PUBLIC_DIR)
+  : [join(import.meta.dirname, '../public'), join(import.meta.dirname, '../../../web/dist')].find(
+      (dir) => existsSync(dir),
+    );
+if (publicDir) {
   app.use(express.static(publicDir));
   // SPA fallback
   app.get('*', (req, res, next) => {
@@ -178,8 +180,50 @@ app.use((err: unknown, _req: Request, res: Response, _next: NextFunction) => {
 });
 
 httpServer.listen(config.port, () => {
+  printBanner();
   logger.info({ port: config.port }, 'Server listening');
 });
+
+function printBanner() {
+  const base = `http://localhost:${config.port}`;
+  const items: BannerItem[] = [
+    { key: 'Local', value: base },
+    { key: 'Health', value: `${base}/health` },
+    { key: 'WS', value: `ws://localhost:${config.port}${WS_PATH}` },
+  ];
+
+  if (config.summonerMode === 'remote') {
+    items.push({ key: 'Summoner', value: `ws://localhost:${config.port}${SUMMONER_PATH}` });
+    items.push({ key: 'Mode', value: 'remote' });
+    const tokenValue = config.summonerTokenGenerated
+      ? `${config.summonerToken} (auto-generated)`
+      : '***';
+    items.push({ key: 'Token', value: tokenValue });
+  } else {
+    items.push({ key: 'Mode', value: 'local' });
+  }
+
+  const transports = [config.transport.ws && 'ws', config.transport.socketio && 'socket.io']
+    .filter(Boolean)
+    .join(', ');
+  items.push({ key: 'Transport', value: transports });
+
+  if (config.database.sqliteUrl) {
+    items.push({ icon: '✓', key: 'SQLite', value: resolveSqlitePath(config.database.sqliteUrl) });
+  }
+  if (config.database.url !== config.database.sqliteUrl) {
+    const masked = config.database.url.replace(/:\/\/([^:]+):([^@]+)@/, '://$1:***@');
+    items.push({ key: 'Database', value: masked });
+  }
+
+  items.push({
+    key: 'Static',
+    value: publicDir ? `${publicDir} ✓` : 'not found',
+    icon: publicDir ? '✓' : '✗',
+  });
+
+  console.log(formatBanner('Code Quest Server', items));
+}
 
 const shutdown = () => {
   logger.info('Shutting down gracefully...');

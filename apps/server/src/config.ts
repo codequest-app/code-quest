@@ -1,4 +1,5 @@
 import 'dotenv/config';
+import { randomUUID } from 'node:crypto';
 import { parseFsRoots, type ThinkingDisplay } from '@code-quest/shared';
 import { type LogConfig, parseLogConfig } from '@code-quest/shared/node';
 
@@ -30,6 +31,8 @@ export function resolveSqlitePath(url: string): string {
   return url;
 }
 
+const DEFAULT_SQLITE_URL = 'file:./data/code-quest.db';
+
 /** Default ws-only; falls back to ws on unrecognized values. */
 function parseTransport(raw: string | undefined): { ws: boolean; socketio: boolean } {
   switch (raw) {
@@ -45,8 +48,8 @@ function parseTransport(raw: string | undefined): { ws: boolean; socketio: boole
 interface AppConfig {
   readonly port: number;
   readonly database: {
-    readonly url: string | undefined;
-    readonly sqliteUrl: string | undefined;
+    readonly url: string;
+    readonly sqliteUrl: string;
   };
   readonly rawEvents: {
     readonly writeDeltas: boolean;
@@ -60,17 +63,15 @@ interface AppConfig {
   readonly transport: { readonly ws: boolean; readonly socketio: boolean };
   readonly historyBatchSize: number;
   readonly log: LogConfig;
-  readonly remoteMode: 'local' | 'remote';
-  readonly remoteToken: string | undefined;
+  readonly summonerMode: 'local' | 'remote';
+  readonly summonerToken: string | undefined;
+  readonly summonerTokenGenerated: boolean;
 }
 
 export function loadConfig(env: Env = process.env): AppConfig {
   return {
     port: parseNumber(env.APP_PORT, 3000),
-    database: {
-      url: env.DATABASE_URL || undefined,
-      sqliteUrl: env.DATABASE_SQLITE_URL || undefined,
-    },
+    database: resolveDatabase(env),
     rawEvents: {
       writeDeltas: parseBool(env.RAW_EVENTS_WRITE_DELTAS, false),
       readDeltas: parseBool(env.RAW_EVENTS_READ_DELTAS, false),
@@ -83,9 +84,26 @@ export function loadConfig(env: Env = process.env): AppConfig {
     transport: parseTransport(env.TRANSPORT),
     log: parseLogConfig(env),
     historyBatchSize: parseNumber(env.SESSION_HISTORY_BATCH_SIZE, 5000),
-    remoteMode: env.REMOTE_MODE === 'remote' ? 'remote' : 'local',
-    remoteToken: env.REMOTE_TOKEN || undefined,
+    summonerMode: env.SUMMONER_MODE === 'local' ? 'local' : 'remote',
+    ...resolveSummonerToken(env),
   } as const;
+}
+
+function resolveDatabase(env: Env): { url: string; sqliteUrl: string } {
+  const sqliteUrl = env.DATABASE_SQLITE_URL || DEFAULT_SQLITE_URL;
+  const url = env.DATABASE_URL || sqliteUrl;
+  return { url, sqliteUrl };
+}
+
+function resolveSummonerToken(env: Env): {
+  summonerToken: string | undefined;
+  summonerTokenGenerated: boolean;
+} {
+  if (env.SUMMONER_MODE === 'local')
+    return { summonerToken: undefined, summonerTokenGenerated: false };
+  if (env.SUMMONER_TOKEN)
+    return { summonerToken: env.SUMMONER_TOKEN, summonerTokenGenerated: false };
+  return { summonerToken: randomUUID(), summonerTokenGenerated: true };
 }
 
 export const config: AppConfig = loadConfig();
