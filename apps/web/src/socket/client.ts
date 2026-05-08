@@ -1,5 +1,5 @@
 import type { ClientToServerEvents, ServerToClientEvents } from '@code-quest/shared';
-import { io, type Socket } from 'socket.io-client';
+import type { Socket } from 'socket.io-client';
 import { config } from '../config.ts';
 import { WsClient } from './ws-client.ts';
 import { WsSocketAdapter } from './ws-socket-adapter.ts';
@@ -16,15 +16,13 @@ export interface SocketLike {
   off(event: string, fn: (...args: unknown[]) => void): void;
 }
 
-export function createSocket(url?: string): TypedSocket {
+export function createSocket(url?: string): TypedSocket | Promise<TypedSocket> {
   const target = url ?? config.serverUrl;
   if (config.transport === 'ws') {
-    const wsUrl = toWsUrl(target);
-    const client = new WsClient(wsUrl);
-    const adapter: SocketLike = new WsSocketAdapter(client);
-    return adapter as unknown as TypedSocket;
+    const client = new WsClient(toWsUrl(target));
+    return new WsSocketAdapter(client) as unknown as TypedSocket;
   }
-  return io(target, { autoConnect: false });
+  return import('socket.io-client').then(({ io }) => io(target, { autoConnect: false }));
 }
 
 /** http(s)://host[/path] → ws(s)://host/ws (or /ws appended). */
