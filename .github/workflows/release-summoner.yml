@@ -3,9 +3,6 @@ name: Release Summoner
 on:
   push:
     branches: [main]
-    paths:
-      - 'apps/summoner/**'
-      - 'packages/shared/**'
 
 jobs:
   release:
