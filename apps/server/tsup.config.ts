@@ -1,6 +1,9 @@
 import { cpSync, mkdirSync, readFileSync, writeFileSync } from 'node:fs';
-import { resolve } from 'node:path';
+import { createRequire } from 'node:module';
+import { dirname, resolve } from 'node:path';
 import { defineConfig } from 'tsup';
+
+const require = createRequire(import.meta.url);
 
 export default defineConfig({
   entry: ['src/bin/server.ts', 'src/scripts/migrate-sqlite.ts', 'src/scripts/migrate-mysql.ts'],
@@ -20,10 +23,16 @@ export default defineConfig({
       recursive: true,
     });
 
-    const nativeSource = resolve('node_modules/better-sqlite3/build/Release/better_sqlite3.node');
-    const nativeTarget = resolve('dist/build/Release/better_sqlite3.node');
-    mkdirSync(resolve('dist/build/Release'), { recursive: true });
-    cpSync(nativeSource, nativeTarget);
+    const copyDep = (name: string) => {
+      const depRequire = createRequire(require.resolve('better-sqlite3/package.json'));
+      const dir = dirname(depRequire.resolve(`${name}/package.json`));
+      cpSync(dir, resolve(`dist/node_modules/${name}`), { recursive: true });
+    };
+
+    const betterSqlite3Dir = dirname(require.resolve('better-sqlite3/package.json'));
+    cpSync(betterSqlite3Dir, resolve('dist/node_modules/better-sqlite3'), { recursive: true });
+    copyDep('bindings');
+    copyDep('file-uri-to-path');
 
     const pkg = JSON.parse(readFileSync(resolve('package.json'), 'utf-8'));
     writeFileSync(
