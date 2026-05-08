@@ -20,15 +20,19 @@ jobs:
           - os: ubuntu-latest
             platform: linux-x64
             summoner: summoner-linux-x64
+            bun-target: bun-linux-x64
           - os: ubuntu-24.04-arm
             platform: linux-arm64
             summoner: summoner-linux-arm64
+            bun-target: bun-linux-arm64
           - os: macos-latest
             platform: darwin-arm64
             summoner: summoner-darwin-arm64
+            bun-target: bun-darwin-arm64
           - os: windows-latest
             platform: windows-x64
             summoner: summoner-windows-x64.exe
+            bun-target: bun-windows-x64
 
     runs-on: ${{ matrix.os }}
     permissions:
@@ -37,6 +41,7 @@ jobs:
     env:
       PLATFORM: ${{ matrix.platform }}
       SUMMONER_BIN: ${{ matrix.summoner }}
+      BUN_TARGET: ${{ matrix.bun-target }}
 
     steps:
       - uses: actions/checkout@v4
@@ -57,9 +62,9 @@ jobs:
       - name: Build release
         run: pnpm build:release
 
-      - name: Cross-compile summoner
+      - name: Compile summoner for current platform
         working-directory: apps/summoner
-        run: bun run compile.ts
+        run: bun build dist/main.js --compile --target="$BUN_TARGET" --outfile="dist/$SUMMONER_BIN"
 
       - name: Package release (unix)
         if: runner.os != 'Windows'
