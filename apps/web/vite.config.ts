@@ -49,6 +49,7 @@ export default defineConfig({
   },
   build: {
     outDir: 'dist',
+    emptyOutDir: false,
     sourcemap: false,
     cssMinify: true,
     rolldownOptions: {

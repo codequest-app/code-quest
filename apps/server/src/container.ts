@@ -268,15 +268,6 @@ function buildStores(
   const sessionStores: SessionStore[] = [];
   const settingsStores: SettingsStore[] = [];
 
-  if (config?.sqliteDatabase) {
-    const db = config.sqliteDatabase;
-    const deltaTableForRead = flags.readDeltas ? sqliteSchema.rawDeltas : undefined;
-    eventStores.push(new DrizzleRawEventStore(db, sqliteSchema.rawEvents, deltaTableForRead));
-    deltaStores.push(new DrizzleRawDeltaStore(db, sqliteSchema.rawDeltas));
-    sessionStores.push(new DrizzleSessionStore(db, sqliteSchema.sessions));
-    settingsStores.push(new DrizzleSettingsStore(db, sqliteSchema.settings));
-  }
-
   if (config?.mysqlDatabase) {
     const db = config.mysqlDatabase;
     const deltaTableForRead = flags.readDeltas ? mysqlSchema.rawDeltas : undefined;
@@ -284,6 +275,15 @@ function buildStores(
     deltaStores.push(new DrizzleRawDeltaStore(db, mysqlSchema.rawDeltas));
     sessionStores.push(new DrizzleSessionStore(db, mysqlSchema.sessions));
     settingsStores.push(new DrizzleSettingsStore(db, mysqlSchema.settings));
+  }
+
+  if (config?.sqliteDatabase) {
+    const db = config.sqliteDatabase;
+    const deltaTableForRead = flags.readDeltas ? sqliteSchema.rawDeltas : undefined;
+    eventStores.push(new DrizzleRawEventStore(db, sqliteSchema.rawEvents, deltaTableForRead));
+    deltaStores.push(new DrizzleRawDeltaStore(db, sqliteSchema.rawDeltas));
+    sessionStores.push(new DrizzleSessionStore(db, sqliteSchema.sessions));
+    settingsStores.push(new DrizzleSettingsStore(db, sqliteSchema.settings));
   }
 
   if (eventStores.length === 0) {
@@ -304,11 +304,11 @@ function buildProjectStores(
   fallbackDb: DrizzleDatabase,
 ): ProjectStore[] {
   const stores: ProjectStore[] = [];
-  if (config?.sqliteDatabase) {
-    stores.push(new DrizzleProjectStore(config.sqliteDatabase, sqliteSchema.projects));
-  }
   if (config?.mysqlDatabase) {
     stores.push(new DrizzleProjectStore(config.mysqlDatabase, mysqlSchema.projects));
+  }
+  if (config?.sqliteDatabase) {
+    stores.push(new DrizzleProjectStore(config.sqliteDatabase, sqliteSchema.projects));
   }
   // Fallback: use the in-memory sqlite handle that container falls back to
   // when no storeConfig is provided (matches the same default for all stores).

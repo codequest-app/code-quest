@@ -4,7 +4,7 @@ import JavaScriptObfuscator from 'javascript-obfuscator';
 
 const distDir = 'dist';
 const jsFiles = readdirSync(distDir, { recursive: true }).filter(
-  (f): f is string => typeof f === 'string' && f.endsWith('.js'),
+  (f): f is string => typeof f === 'string' && f.endsWith('.js') && !f.includes('node_modules'),
 );
 
 for (const file of jsFiles) {

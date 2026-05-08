@@ -1,4 +1,5 @@
 import 'dotenv/config';
+import { formatBanner } from '@code-quest/shared';
 import { bearerToken, createConnectionLoop, WsTransport, wsAdapter } from '@code-quest/shared/node';
 import { loadConfig } from './config.ts';
 import { Agent } from './connection/agent.ts';
@@ -13,12 +14,36 @@ const config = loadConfig({
   env: process.env,
 });
 
-if (!config.server || !config.token) {
-  logger.error(
-    '[summoner] Server URL and token required. Use --server <url> --token <token> or set REMOTE_SERVER / REMOTE_TOKEN env vars.',
-  );
+if (config.showHelp) {
+  console.log(`
+  Usage: summoner [options]
+
+  Options:
+    --server <url>    Server WebSocket URL (default: ws://127.0.0.1:3000/summoner)
+    --token <token>   Authentication token (required)
+    --roots <paths>   Comma-separated directories to share (default: $HOME)
+    --help, -h        Show this help
+
+  Environment variables:
+    SUMMONER_SERVER   Same as --server
+    SUMMONER_TOKEN    Same as --token
+    EXPLORER_ROOTS    Same as --roots
+`);
+  process.exit(0);
+}
+
+if (!config.token) {
+  logger.error('[summoner] Token required. Use --token <token> or set SUMMONER_TOKEN env var.');
   process.exit(1);
 }
+
+console.log(
+  formatBanner('Code Quest Summoner', [
+    { key: 'Server', value: config.server },
+    { key: 'Token', value: '***' },
+    { key: 'Roots', value: config.fsRoots.join(', ') },
+  ]),
+);
 
 const processProvider = new ChildProcessProvider();
 const rootGuard = new LocalRootGuard(config.fsRoots);
