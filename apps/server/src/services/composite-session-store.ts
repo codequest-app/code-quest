@@ -1,22 +1,9 @@
-import { logger } from '../logger.ts';
-import { fanOutWrites } from './composite-fan-out.ts';
+import { CompositeStore } from './composite-store.ts';
 import type { SessionRecord, SessionStore } from './session-store.ts';
 
-/**
- * Fan-out writes to all stores, read from stores[0]. Assumes channel→id
- * agreement across backends (guaranteed because upsert fans out).
- */
-export class CompositeSessionStore implements SessionStore {
-  private readonly primary: SessionStore;
-  private stores: SessionStore[];
-  constructor(stores: SessionStore[]) {
-    if (stores.length === 0) {
-      throw new Error('CompositeSessionStore requires at least one store');
-    }
-    this.stores = stores;
-    this.primary = stores[0] as SessionStore;
-  }
+const anyTrue = (results: boolean[]) => results.some(Boolean);
 
+export class CompositeSessionStore extends CompositeStore<SessionStore> implements SessionStore {
   async list(opts?: {
     limit?: number;
     offset?: number;
@@ -36,32 +23,19 @@ export class CompositeSessionStore implements SessionStore {
   }
 
   async upsert(record: SessionRecord): Promise<void> {
-    await fanOutWrites(this.stores, 'session upsert', (s) => s.upsert(record));
-  }
-
-  private async fanoutBool(
-    label: string,
-    op: (s: SessionStore) => Promise<boolean>,
-  ): Promise<boolean> {
-    const results = await Promise.allSettled(this.stores.map(op));
-    for (const r of results) {
-      if (r.status === 'rejected') {
-        logger.error({ err: r.reason }, `Partial session ${label} failure`);
-      }
-    }
-    return results.some((r) => r.status === 'fulfilled' && r.value);
+    await this.fanOut('session upsert', (s) => s.upsert(record));
   }
 
   async rename(id: string, title: string): Promise<boolean> {
-    return this.fanoutBool('rename', (s) => s.rename(id, title));
+    return this.fanOutCollect('session rename', (s) => s.rename(id, title), anyTrue);
   }
 
   async updateStatus(id: string, status: string): Promise<boolean> {
-    return this.fanoutBool('updateStatus', (s) => s.updateStatus(id, status));
+    return this.fanOutCollect('session updateStatus', (s) => s.updateStatus(id, status), anyTrue);
   }
 
   async delete(id: string): Promise<boolean> {
-    return this.fanoutBool('delete', (s) => s.delete(id));
+    return this.fanOutCollect('session delete', (s) => s.delete(id), anyTrue);
   }
 
   async renameByChannelId(channelId: string, title: string): Promise<boolean> {

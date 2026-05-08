@@ -1,5 +1,5 @@
 import 'reflect-metadata';
-import { sqliteMigrationsFolder } from '@code-quest/db-schema';
+import { sqliteMigrationsFolder, sqliteSchema } from '@code-quest/db-schema';
 import type {
   DiffFileService,
   FilesystemService,
@@ -43,7 +43,11 @@ export function createTestContainer(overrides: TestContainerOverrides = {}): Con
   const container = createContainer({
     ...overrides,
     watchService: new FakeWatchService(),
-    storeConfig: { sqliteDatabase },
+    storeConfig: {
+      databases: [
+        { type: 'sqlite', url: 'file::memory:', db: sqliteDatabase, schema: sqliteSchema },
+      ],
+    },
     historyBatchSize: overrides.historyBatchSize,
     autoMode: overrides.autoMode ?? true,
     rawEvents: { writeDeltas: false, readDeltas: false, ...overrides.rawEvents },

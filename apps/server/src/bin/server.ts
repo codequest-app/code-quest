@@ -22,8 +22,7 @@ import express, { type NextFunction, type Request, type Response } from 'express
 import helmet from 'helmet';
 import { config, resolveSqlitePath } from '../config.ts';
 import { createContainer, type StoreConfig } from '../container.ts';
-import { createMysqlDatabase } from '../db/mysql-client.ts';
-import { createDatabase } from '../db/sqlite-client.ts';
+import { createDatabaseFromUrl } from '../db/create-database.ts';
 import { logger } from '../logger.ts';
 import { ReconnectableRpc } from '../remote/reconnectable-rpc.ts';
 import type { ChannelEmitter } from '../socket/channel-emitter.ts';
@@ -34,22 +33,20 @@ const WS_PATH = '/ws';
 const SUMMONER_PATH = '/summoner';
 const SHUTDOWN_TIMEOUT_MS = 10_000;
 
-const storeConfig: StoreConfig = {};
+const databases = config.database.map(createDatabaseFromUrl);
+const storeConfig: StoreConfig = { databases };
 
-if (config.database.sqliteUrl) {
-  const sqlitePath = resolveSqlitePath(config.database.sqliteUrl);
-  storeConfig.sqliteDatabase = createDatabase(sqlitePath);
+const sqliteEntries = databases.filter((e) => e.type === 'sqlite');
+if (sqliteEntries.length > 0) {
   const { migrate } = await import('drizzle-orm/better-sqlite3/migrator');
   const bundledMigrations = join(import.meta.dirname, '../migrations/sqlite');
   const migrationsFolder = existsSync(bundledMigrations)
     ? bundledMigrations
     : (await import('@code-quest/db-schema')).sqliteMigrationsFolder;
-  migrate(storeConfig.sqliteDatabase, { migrationsFolder });
-  logger.info({ path: sqlitePath }, 'SQLite migrated');
-}
-
-if (config.database.url !== config.database.sqliteUrl) {
-  storeConfig.mysqlDatabase = createMysqlDatabase(config.database.url);
+  for (const entry of sqliteEntries) {
+    migrate(entry.db, { migrationsFolder });
+    logger.info({ path: resolveSqlitePath(entry.url) }, 'SQLite migrated');
+  }
 }
 
 if (config.rawEvents.readDeltas && !config.rawEvents.writeDeltas) {
@@ -208,12 +205,9 @@ function printBanner() {
     .join(', ');
   items.push({ key: 'Transport', value: transports });
 
-  if (config.database.sqliteUrl) {
-    items.push({ icon: '✓', key: 'SQLite', value: resolveSqlitePath(config.database.sqliteUrl) });
-  }
-  if (config.database.url !== config.database.sqliteUrl) {
-    const masked = config.database.url.replace(/:\/\/([^:]+):([^@]+)@/, '://$1:***@');
-    items.push({ key: 'Database', value: masked });
+  for (const url of config.database) {
+    const masked = url.replace(/:\/\/([^:]+):([^@]+)@/, '://$1:***@');
+    items.push({ icon: '✓', key: 'Database', value: masked });
   }
 
   items.push({
