@@ -30,23 +30,32 @@ pre-commit:
       run: node scripts/check-deprecated.mjs apps/summoner/tsconfig.json {staged_files}
 
 pre-push:
-  parallel: true
+  piped: true
   commands:
+    knip-db-schema:
+      priority: 1
+      run: pnpm --filter @code-quest/db-schema exec knip --no-progress
+    knip-shared:
+      priority: 1
+      run: pnpm --filter @code-quest/shared exec knip --no-progress
+    knip-summoner:
+      priority: 1
+      run: pnpm --filter @code-quest/summoner exec knip --no-progress
+    knip-server:
+      priority: 1
+      run: pnpm --filter @code-quest/server exec knip --no-progress
+    knip-web:
+      priority: 1
+      run: pnpm --filter @code-quest/web exec knip --no-progress
     test-shared:
+      priority: 2
       run: pnpm --filter @code-quest/shared exec vitest run
     test-server:
+      priority: 2
       run: pnpm --filter @code-quest/server exec vitest run
     test-summoner:
+      priority: 2
       run: pnpm --filter @code-quest/summoner exec vitest run
     test-web:
+      priority: 2
       run: pnpm --filter @code-quest/web exec vitest run
-    knip-web:
-      run: pnpm --filter @code-quest/web exec knip --no-progress
-    knip-server:
-      run: pnpm --filter @code-quest/server exec knip --no-progress
-    knip-summoner:
-      run: pnpm --filter @code-quest/summoner exec knip --no-progress
-    knip-shared:
-      run: pnpm --filter @code-quest/shared exec knip --no-progress
-    knip-db-schema:
-      run: pnpm --filter @code-quest/db-schema exec knip --no-progress
