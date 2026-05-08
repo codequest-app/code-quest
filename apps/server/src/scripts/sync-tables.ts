@@ -1,6 +1,8 @@
 import type { Table } from 'drizzle-orm';
 import { sql } from 'drizzle-orm';
 
+const BATCH_SIZE = 500;
+
 interface TableMapping {
   name: string;
   from: Table;
@@ -12,40 +14,37 @@ interface SyncResult {
   count: number;
 }
 
+type DrizzleDb = {
+  select(): { from(t: Table): { all(): Record<string, unknown>[] } };
+  run(q: ReturnType<typeof sql>): void;
+  insert(t: Table): { values(v: unknown[]): { run(): void } };
+  transaction<T>(fn: (tx: DrizzleDb) => T): T;
+};
+
 export async function syncTables(
-  sourceDb: { select: () => { from: (t: Table) => { all: () => Record<string, unknown>[] } } },
-  targetDb: {
-    run: (q: ReturnType<typeof sql>) => void;
-    insert: (t: Table) => { values: (v: unknown[]) => { run: () => void } };
-    transaction: <T>(fn: (tx: typeof targetDb) => T) => T;
-  },
+  sourceDb: DrizzleDb,
+  targetDb: DrizzleDb,
   tables: readonly TableMapping[],
 ): Promise<SyncResult[]> {
-  const sourceRows = new Map<string, Record<string, unknown>[]>();
-  for (const { name, from } of tables) {
-    sourceRows.set(name, await sourceDb.select().from(from).all());
-  }
-
   const results: SyncResult[] = [];
 
-  targetDb.transaction((tx) => {
-    for (const { name, to } of tables) {
-      const rows = sourceRows.get(name) ?? [];
-      if (rows.length === 0) {
-        results.push({ name, count: 0 });
-        continue;
-      }
+  for (const { name, from, to } of tables) {
+    const rows = await sourceDb.select().from(from).all();
+    if (rows.length === 0) {
+      results.push({ name, count: 0 });
+      continue;
+    }
 
+    targetDb.transaction((tx) => {
       tx.run(sql`DELETE FROM ${to}`);
-      const BATCH = 500;
-      for (let i = 0; i < rows.length; i += BATCH) {
+      for (let i = 0; i < rows.length; i += BATCH_SIZE) {
         tx.insert(to)
-          .values(rows.slice(i, i + BATCH))
+          .values(rows.slice(i, i + BATCH_SIZE))
           .run();
       }
-      results.push({ name, count: rows.length });
-    }
-  });
+    });
+    results.push({ name, count: rows.length });
+  }
 
   return results;
 }
