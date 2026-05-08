@@ -20,7 +20,7 @@ COPY packages/shared/ packages/shared/
 COPY packages/db-schema/ packages/db-schema/
 COPY apps/web/ apps/web/
 RUN pnpm --filter @code-quest/web exec tsc -p tsconfig.build.json \
- && pnpm --filter @code-quest/web exec vite build
+ && pnpm --filter @code-quest/web exec vite build --outDir dist
 
 # --- server build (tsup bundles workspace deps, npm install in dist) ---
 FROM deps AS server-build
