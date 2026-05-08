@@ -48,8 +48,28 @@ export function wsAdapter(): WsAdapter {
     createSocket(url: string, options?: CreateSocketOptions): Promise<RpcSocket> {
       return new Promise((resolve, reject) => {
         const ws = new WebSocket(url, { headers: options?.headers });
-        ws.once('open', () => resolve(toRpcSocket(ws)));
-        ws.once('error', reject);
+        let settled = false;
+        let userErrorHandler: ((err: Error) => void) | undefined;
+        // Single error handler prevents unhandled error events from
+        // crashing the process (required for bun compatibility).
+        ws.on('error', (err) => {
+          if (!settled) {
+            settled = true;
+            reject(err);
+            return;
+          }
+          userErrorHandler?.(err);
+        });
+        ws.once('open', () => {
+          settled = true;
+          const rpc = toRpcSocket(ws);
+          resolve({
+            ...rpc,
+            onError: (fn) => {
+              userErrorHandler = fn;
+            },
+          });
+        });
       });
     },
 
