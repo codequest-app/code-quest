@@ -1,5 +1,4 @@
-import { execFileSync } from 'node:child_process';
-import { cpSync, readFileSync, writeFileSync } from 'node:fs';
+import { cpSync, mkdirSync, readFileSync, writeFileSync } from 'node:fs';
 import { resolve } from 'node:path';
 import { defineConfig } from 'tsup';
 
@@ -21,18 +20,15 @@ export default defineConfig({
       recursive: true,
     });
 
+    const nativeSource = resolve('node_modules/better-sqlite3/build/Release/better_sqlite3.node');
+    const nativeTarget = resolve('dist/build/Release/better_sqlite3.node');
+    mkdirSync(resolve('dist/build/Release'), { recursive: true });
+    cpSync(nativeSource, nativeTarget);
+
     const pkg = JSON.parse(readFileSync(resolve('package.json'), 'utf-8'));
-    const prodPkg = {
-      name: pkg.name,
-      version: pkg.version,
-      type: 'module',
-      dependencies: { 'better-sqlite3': pkg.dependencies['better-sqlite3'] },
-    };
-    writeFileSync(resolve('dist/package.json'), JSON.stringify(prodPkg, null, 2));
-    execFileSync('npm', ['install', '--omit=dev'], {
-      cwd: resolve('dist'),
-      stdio: 'inherit',
-      shell: process.platform === 'win32',
-    });
+    writeFileSync(
+      resolve('dist/package.json'),
+      JSON.stringify({ name: pkg.name, version: pkg.version, type: 'module' }, null, 2),
+    );
   },
 });
