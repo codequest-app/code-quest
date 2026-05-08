@@ -1,0 +1,22 @@
+{{ domain }} {
+	root * /srv/code-quest/web
+	file_server
+
+	handle /ws {
+		reverse_proxy localhost:3000 {
+			header_up Connection {>Connection}
+			header_up Upgrade {>Upgrade}
+		}
+	}
+
+	handle /summoner {
+		reverse_proxy localhost:3000 {
+			header_up Connection {>Connection}
+			header_up Upgrade {>Upgrade}
+		}
+	}
+
+	handle /api/* {
+		reverse_proxy localhost:3000
+	}
+}

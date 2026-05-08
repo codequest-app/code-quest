@@ -1,0 +1,46 @@
+---
+- name: Deploy application
+  hosts: production
+  become: false
+
+  tasks:
+    - name: Pull latest code
+      git:
+        repo: "{{ repo_url }}"
+        dest: "{{ app_dir }}"
+        version: main
+        force: true
+
+    - name: Copy Caddyfile
+      become: true
+      template:
+        src: templates/Caddyfile.j2
+        dest: /etc/caddy/Caddyfile
+        mode: "0644"
+      notify: Reload Caddy
+
+    - name: Copy env file
+      template:
+        src: templates/.env.j2
+        dest: "{{ app_dir }}/deploy/.env"
+        mode: "0600"
+
+    - name: Build and start containers
+      community.docker.docker_compose_v2:
+        project_src: "{{ app_dir }}/deploy"
+        build: always
+        state: present
+        pull: always
+
+    - name: Copy web static files for Caddy
+      shell: |
+        docker cp $(docker compose -f {{ app_dir }}/deploy/docker-compose.yml ps -q server):/app/public/. /srv/code-quest/web/
+      args:
+        chdir: "{{ app_dir }}/deploy"
+
+  handlers:
+    - name: Reload Caddy
+      become: true
+      systemd:
+        name: caddy
+        state: reloaded

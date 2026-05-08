@@ -1,0 +1,40 @@
+services:
+  server:
+    build:
+      context: ..
+      dockerfile: deploy/Dockerfile
+    restart: unless-stopped
+    ports:
+      - "127.0.0.1:3000:3000"
+    volumes:
+      - sqlite-data:/app/data
+    env_file:
+      - .env
+    environment:
+      - NODE_ENV=production
+      - PORT=3000
+    depends_on:
+      mysql:
+        condition: service_healthy
+
+  mysql:
+    image: mysql:8.0
+    restart: unless-stopped
+    volumes:
+      - mysql-data:/var/lib/mysql
+    env_file:
+      - .env
+    environment:
+      - MYSQL_DATABASE=${MYSQL_DATABASE:-code_quest}
+      - MYSQL_USER=${MYSQL_USER:-codequest}
+      - MYSQL_PASSWORD=${MYSQL_PASSWORD:-changeme}
+      - MYSQL_ROOT_PASSWORD=${MYSQL_ROOT_PASSWORD:-rootchangeme}
+    healthcheck:
+      test: ["CMD", "mysqladmin", "ping", "-h", "localhost"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+volumes:
+  sqlite-data:
+  mysql-data:
