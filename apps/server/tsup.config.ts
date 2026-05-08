@@ -30,6 +30,10 @@ export default defineConfig({
     } = pkg.dependencies;
     const prodPkg = { name: pkg.name, version: pkg.version, type: 'module', dependencies: deps };
     writeFileSync(resolve('dist/package.json'), JSON.stringify(prodPkg, null, 2));
-    execFileSync('npm', ['install', '--omit=dev'], { cwd: resolve('dist'), stdio: 'inherit' });
+    execFileSync('npm', ['install', '--omit=dev'], {
+      cwd: resolve('dist'),
+      stdio: 'inherit',
+      shell: process.platform === 'win32',
+    });
   },
 });
