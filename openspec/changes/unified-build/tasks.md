@@ -31,5 +31,5 @@
 
 - [x] 6.1 本地 `pnpm build && node apps/server/dist/bin/server.js` 驗證 static files 正常 serve
 - [x] 6.2 本地 `pnpm build:release` 驗證 obfuscation 正常
-- [ ] 6.3 `docker compose build` 驗證 image build 成功
+- [x] 6.3 `docker compose build` 驗證 image build 成功
 - [x] 6.4 跑全部 tests 確認 green

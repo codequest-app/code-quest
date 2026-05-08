@@ -84,5 +84,6 @@ jobs:
           tag_name: latest
           name: Code Quest (latest)
           files: |
-            code-quest-*.*
+            code-quest-*.tar.gz
+            code-quest-*.zip
           make_latest: true

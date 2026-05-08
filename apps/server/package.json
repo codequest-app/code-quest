@@ -21,6 +21,7 @@
     "db:migrate:sqlite": "tsx --env-file=.env src/scripts/migrate-sqlite.ts",
     "db:migrate:mysql": "tsx --env-file=.env src/scripts/migrate-mysql.ts",
     "db:migrate": "pnpm db:migrate:sqlite && pnpm db:migrate:mysql",
+    "db:sync:mysql-to-sqlite": "tsx --env-file=.env src/scripts/sync-mysql-to-sqlite.ts",
     "clean": "rimraf --glob \"dist/*\" \"!dist/.env\" \"!dist/node_modules\""
   },
   "dependencies": {
