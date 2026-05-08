@@ -1,0 +1,88 @@
+name: Release
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - 'apps/server/**'
+      - 'apps/web/**'
+      - 'apps/summoner/**'
+      - 'packages/**'
+      - 'package.json'
+      - 'pnpm-lock.yaml'
+
+jobs:
+  release:
+    strategy:
+      matrix:
+        include:
+          - os: ubuntu-latest
+            platform: linux-x64
+            summoner: summoner-linux-x64
+          - os: ubuntu-24.04-arm
+            platform: linux-arm64
+            summoner: summoner-linux-arm64
+          - os: macos-latest
+            platform: darwin-arm64
+            summoner: summoner-darwin-arm64
+          - os: windows-latest
+            platform: windows-x64
+            summoner: summoner-windows-x64.exe
+
+    runs-on: ${{ matrix.os }}
+    permissions:
+      contents: write
+
+    env:
+      PLATFORM: ${{ matrix.platform }}
+      SUMMONER_BIN: ${{ matrix.summoner }}
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: oven-sh/setup-bun@v2
+        with:
+          bun-version: latest
+
+      - uses: pnpm/action-setup@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: pnpm
+
+      - run: pnpm install --frozen-lockfile
+
+      - name: Build release
+        run: pnpm build:release
+
+      - name: Cross-compile summoner
+        working-directory: apps/summoner
+        run: bun run compile.ts
+
+      - name: Package release (unix)
+        if: runner.os != 'Windows'
+        run: |
+          mkdir -p release/server
+          cp -r apps/server/dist/* release/server/
+          cp "apps/summoner/dist/$SUMMONER_BIN" release/summoner
+          chmod +x release/summoner
+          cd release && tar czf "../code-quest-$PLATFORM.tar.gz" .
+
+      - name: Package release (windows)
+        if: runner.os == 'Windows'
+        shell: pwsh
+        run: |
+          New-Item -ItemType Directory -Force -Path release/server
+          Copy-Item -Recurse apps/server/dist/* release/server/
+          Copy-Item "apps/summoner/dist/$env:SUMMONER_BIN" release/summoner.exe
+          Compress-Archive -Path release/* -DestinationPath "code-quest-$env:PLATFORM.zip"
+
+      - name: Upload to GitHub Releases
+        uses: softprops/action-gh-release@v2
+        with:
+          tag_name: latest
+          name: Code Quest (latest)
+          files: |
+            code-quest-*.*
+          make_latest: true

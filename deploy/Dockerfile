@@ -21,36 +21,26 @@ COPY apps/web/ apps/web/
 RUN pnpm --filter @code-quest/web exec tsc -p tsconfig.build.json \
  && pnpm --filter @code-quest/web exec vite build
 
-# --- server build (tsup bundles workspace deps) ---
+# --- server build (tsup bundles workspace deps, npm install in dist) ---
 FROM deps AS server-build
+RUN apk add --no-cache python3 make g++
+ARG BUILD_TARGET=build
+ARG BUILD_SOURCEMAP=false
 COPY packages/shared/ packages/shared/
 COPY packages/db-schema/ packages/db-schema/
 COPY apps/server/ apps/server/
 COPY apps/summoner/src/ apps/summoner/src/
-RUN pnpm --filter @code-quest/server build
-
-# --- prod deps (native modules compiled here, not in final image) ---
-FROM node:22-alpine AS prod-deps
-RUN apk add --no-cache jq python3 make g++
-WORKDIR /app
-
-COPY --from=server-build /app/apps/server/package.json ./package.json
-
-RUN jq 'del(.dependencies["@code-quest/shared"], .dependencies["@code-quest/db-schema"], .dependencies["@code-quest/summoner"])' package.json > package.tmp.json \
- && mv package.tmp.json package.json \
- && npm install --omit=dev
+RUN BUILD_SOURCEMAP=$BUILD_SOURCEMAP pnpm --filter @code-quest/server $BUILD_TARGET
 
 # --- production (clean, no build tools) ---
 FROM node:22-alpine AS production
 WORKDIR /app
 
-COPY --from=prod-deps /app/node_modules ./node_modules
-COPY --from=server-build /app/apps/server/dist ./dist
+COPY --from=server-build /app/apps/server/dist ./
 COPY --from=web-build /app/apps/web/dist ./public
 
 ENV NODE_ENV=production
 ENV PORT=3000
-ENV PUBLIC_DIR=public
 EXPOSE 3000
 
-CMD ["node", "dist/bin/server.js"]
+CMD ["node", "bin/server.js"]

@@ -10,7 +10,7 @@ export default defineConfig({
   outDir: 'dist',
   clean: false,
   splitting: true,
-  sourcemap: false,
+  sourcemap: process.env.BUILD_SOURCEMAP === 'true',
   noExternal: [/@code-quest\/.*/],
   external: ['better-sqlite3'],
   banner: {

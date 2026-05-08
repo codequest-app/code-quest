@@ -10,7 +10,8 @@
   "description": "Code Quest server - Terminal and Socket.io management",
   "scripts": {
     "dev": "tsx watch --env-file=.env src/bin/server.ts",
-    "build": "pnpm clean && tsup && tsx obfuscate.ts",
+    "build": "pnpm clean && tsup",
+    "build:release": "pnpm build && tsx obfuscate.ts",
     "start": "node --env-file=dist/.env dist/bin/server.js",
     "test": "vitest run",
     "test:ui": "vitest --ui",
