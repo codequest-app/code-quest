@@ -1,0 +1,15 @@
+node_modules
+dist
+.git
+.github
+.claude
+.spectra
+deploy
+openspec/changes
+apps/summoner/dist
+apps/server/dist
+apps/web/dist
+*.md
+.env
+.env.*
+!.env.example

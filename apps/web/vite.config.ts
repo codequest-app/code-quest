@@ -2,6 +2,7 @@ import babel from '@rolldown/plugin-babel';
 import tailwindcss from '@tailwindcss/vite';
 import react, { reactCompilerPreset } from '@vitejs/plugin-react';
 import { defineConfig } from 'vite';
+import JavaScriptObfuscator from 'vite-plugin-javascript-obfuscator';
 import tsconfigPaths from 'vite-tsconfig-paths';
 
 // https://vitejs.dev/config/
@@ -14,6 +15,17 @@ export default defineConfig({
       filter: /\.[jt]sx?$/,
       babelConfig: {
         presets: [reactCompilerPreset()],
+      },
+    }),
+    JavaScriptObfuscator({
+      apply: 'build',
+      options: {
+        compact: true,
+        controlFlowFlattening: true,
+        controlFlowFlatteningThreshold: 0.5,
+        stringArray: true,
+        stringArrayEncoding: ['rc4'],
+        stringArrayThreshold: 0.5,
       },
     }),
   ],

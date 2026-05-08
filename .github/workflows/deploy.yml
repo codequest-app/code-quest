@@ -1,0 +1,32 @@
+name: Deploy
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - 'apps/server/**'
+      - 'apps/web/**'
+      - 'packages/**'
+      - 'deploy/**'
+      - 'package.json'
+      - 'pnpm-lock.yaml'
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Deploy to VPS
+        uses: appleboy/ssh-action@v1
+        with:
+          host: ${{ secrets.DEPLOY_HOST }}
+          username: ${{ secrets.DEPLOY_USER }}
+          key: ${{ secrets.DEPLOY_SSH_KEY }}
+          script: |
+            cd /srv/code-quest
+            git pull origin main
+            cd deploy
+            docker compose build
+            docker compose up -d --wait
+            docker cp $(docker compose ps -q server):/app/public/. /srv/code-quest/web/
+            sudo systemctl reload caddy
