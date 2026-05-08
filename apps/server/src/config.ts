@@ -47,10 +47,7 @@ function parseTransport(raw: string | undefined): { ws: boolean; socketio: boole
 
 interface AppConfig {
   readonly port: number;
-  readonly database: {
-    readonly url: string;
-    readonly sqliteUrl: string;
-  };
+  readonly database: readonly string[];
   readonly rawEvents: {
     readonly writeDeltas: boolean;
     readonly readDeltas: boolean;
@@ -71,7 +68,7 @@ interface AppConfig {
 export function loadConfig(env: Env = process.env): AppConfig {
   return {
     port: parseNumber(env.APP_PORT, 3000),
-    database: resolveDatabase(env),
+    database: resolveDatabaseUrls(env),
     rawEvents: {
       writeDeltas: parseBool(env.RAW_EVENTS_WRITE_DELTAS, false),
       readDeltas: parseBool(env.RAW_EVENTS_READ_DELTAS, false),
@@ -89,10 +86,10 @@ export function loadConfig(env: Env = process.env): AppConfig {
   } as const;
 }
 
-function resolveDatabase(env: Env): { url: string; sqliteUrl: string } {
+function resolveDatabaseUrls(env: Env): string[] {
   const sqliteUrl = env.DATABASE_SQLITE_URL || DEFAULT_SQLITE_URL;
-  const url = env.DATABASE_URL || sqliteUrl;
-  return { url, sqliteUrl };
+  const urls = [env.DATABASE_URL, sqliteUrl].filter((u): u is string => Boolean(u));
+  return [...new Set(urls)];
 }
 
 function resolveSummonerToken(env: Env): {

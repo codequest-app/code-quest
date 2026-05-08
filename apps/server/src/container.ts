@@ -1,5 +1,4 @@
 import 'reflect-metadata';
-import { mysqlSchema, sqliteSchema } from '@code-quest/db-schema';
 import type { FilesystemService, GitService, ProcessProvider } from '@code-quest/shared';
 import {
   ChildProcessProvider,
@@ -19,7 +18,7 @@ import {
 } from '@code-quest/summoner';
 import { Container } from 'inversify';
 import { config } from './config.ts';
-import type { MysqlDatabase } from './db/mysql-client.ts';
+import type { DatabaseEntry } from './db/create-database.ts';
 import { createDatabase, type DrizzleDatabase } from './db/sqlite-client.ts';
 import { logger } from './logger.ts';
 import { RemoteFilesystemService } from './remote/filesystem-service.ts';
@@ -53,15 +52,12 @@ import { SocketServer } from './socket/server.ts';
 import { type RunnerFactory, TYPES } from './types.ts';
 
 export interface StoreConfig {
-  /** SQLite db handle. Undefined = sqlite backend disabled. */
-  sqliteDatabase?: DrizzleDatabase;
-  /** MySQL db handle. Undefined = mysql backend disabled. */
-  mysqlDatabase?: MysqlDatabase;
+  databases: DatabaseEntry[];
 }
 
 export interface ContainerOptions {
   processProvider?: ProcessProvider;
-  storeConfig?: StoreConfig;
+  storeConfig: StoreConfig;
   watchService?: WatchService;
   historyBatchSize?: number;
   autoMode?: boolean;
@@ -97,21 +93,21 @@ export function createContainer(options: ContainerOptions): Container {
   };
   container.bind<RunnerFactory>(TYPES.RunnerFactory).toConstantValue(runnerFactory);
 
-  // Bind whichever DB handle is available to TYPES.Database (kept for handler
-  // consumers that still reach for a raw Drizzle handle; sqlite preferred when
-  // both are present since most tooling keys off it). Fallback to in-memory
-  // sqlite only for test containers that pass nothing.
-  const db = options.storeConfig?.sqliteDatabase ?? createDatabase(':memory:');
+  const { databases } = options.storeConfig;
+  if (databases.length === 0) {
+    throw new Error('At least one database must be configured in StoreConfig.databases.');
+  }
+  const sqliteEntry = databases.find((d) => d.type === 'sqlite');
+  const db = sqliteEntry?.db ?? createDatabase(':memory:');
   container.bind<DrizzleDatabase>(TYPES.Database).toConstantValue(db);
 
   const readDeltas = options.rawEvents?.readDeltas ?? config.rawEvents.readDeltas;
   const writeDeltas = options.rawEvents?.writeDeltas ?? config.rawEvents.writeDeltas;
   const autoMode = options.autoMode ?? config.autoMode;
 
-  const { eventStores, deltaStores, sessionStores, settingsStores } = buildStores(
-    options.storeConfig,
-    { readDeltas },
-  );
+  const { eventStores, deltaStores, sessionStores, settingsStores } = buildStores(databases, {
+    readDeltas,
+  });
 
   const lowEventStore = pickOrComposite(eventStores, (s) => new CompositeRawEventStore(s));
   const lowDeltaStore = pickOrComposite(deltaStores, (s) => new CompositeRawDeltaStore(s));
@@ -122,7 +118,7 @@ export function createContainer(options: ContainerOptions): Container {
   const sessionStore = pickOrComposite(sessionStores, (s) => new CompositeSessionStore(s));
   container.bind<SessionStore>(TYPES.SessionStore).toConstantValue(sessionStore);
 
-  const projectStores = buildProjectStores(options.storeConfig, db);
+  const projectStores = buildProjectStores(databases);
   const projectStore = pickOrComposite(projectStores, (s) => new CompositeProjectStore(s));
   container.bind<ProjectStore>(TYPES.ProjectStore).toConstantValue(projectStore);
 
@@ -255,7 +251,7 @@ function bindDirtyBroadcasters(container: Container, watchService: WatchService)
 }
 
 function buildStores(
-  config?: StoreConfig,
+  databases: DatabaseEntry[],
   flags: { readDeltas: boolean } = { readDeltas: false },
 ): {
   eventStores: RawEventStore[];
@@ -268,52 +264,17 @@ function buildStores(
   const sessionStores: SessionStore[] = [];
   const settingsStores: SettingsStore[] = [];
 
-  if (config?.mysqlDatabase) {
-    const db = config.mysqlDatabase;
-    const deltaTableForRead = flags.readDeltas ? mysqlSchema.rawDeltas : undefined;
-    eventStores.push(new DrizzleRawEventStore(db, mysqlSchema.rawEvents, deltaTableForRead));
-    deltaStores.push(new DrizzleRawDeltaStore(db, mysqlSchema.rawDeltas));
-    sessionStores.push(new DrizzleSessionStore(db, mysqlSchema.sessions));
-    settingsStores.push(new DrizzleSettingsStore(db, mysqlSchema.settings));
-  }
-
-  if (config?.sqliteDatabase) {
-    const db = config.sqliteDatabase;
-    const deltaTableForRead = flags.readDeltas ? sqliteSchema.rawDeltas : undefined;
-    eventStores.push(new DrizzleRawEventStore(db, sqliteSchema.rawEvents, deltaTableForRead));
-    deltaStores.push(new DrizzleRawDeltaStore(db, sqliteSchema.rawDeltas));
-    sessionStores.push(new DrizzleSessionStore(db, sqliteSchema.sessions));
-    settingsStores.push(new DrizzleSettingsStore(db, sqliteSchema.settings));
-  }
-
-  if (eventStores.length === 0) {
-    logger.error(
-      'At least one database backend must be configured. Provide sqliteDatabase and/or mysqlDatabase in StoreConfig.',
-    );
-    throw new Error(
-      'At least one database backend must be configured. ' +
-        'Provide sqliteDatabase and/or mysqlDatabase in StoreConfig.',
-    );
+  for (const { db, schema } of databases) {
+    const deltaTableForRead = flags.readDeltas ? schema.rawDeltas : undefined;
+    eventStores.push(new DrizzleRawEventStore(db, schema.rawEvents, deltaTableForRead));
+    deltaStores.push(new DrizzleRawDeltaStore(db, schema.rawDeltas));
+    sessionStores.push(new DrizzleSessionStore(db, schema.sessions));
+    settingsStores.push(new DrizzleSettingsStore(db, schema.settings));
   }
 
   return { eventStores, deltaStores, sessionStores, settingsStores };
 }
 
-function buildProjectStores(
-  config: StoreConfig | undefined,
-  fallbackDb: DrizzleDatabase,
-): ProjectStore[] {
-  const stores: ProjectStore[] = [];
-  if (config?.mysqlDatabase) {
-    stores.push(new DrizzleProjectStore(config.mysqlDatabase, mysqlSchema.projects));
-  }
-  if (config?.sqliteDatabase) {
-    stores.push(new DrizzleProjectStore(config.sqliteDatabase, sqliteSchema.projects));
-  }
-  // Fallback: use the in-memory sqlite handle that container falls back to
-  // when no storeConfig is provided (matches the same default for all stores).
-  if (stores.length === 0) {
-    stores.push(new DrizzleProjectStore(fallbackDb, sqliteSchema.projects));
-  }
-  return stores;
+function buildProjectStores(databases: DatabaseEntry[]): ProjectStore[] {
+  return databases.map(({ db, schema }) => new DrizzleProjectStore(db, schema.projects));
 }

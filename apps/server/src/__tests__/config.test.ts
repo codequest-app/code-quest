@@ -42,38 +42,43 @@ describe('parseBool', () => {
   });
 });
 
-describe('loadConfig — database URL resolution', () => {
-  it('empty env → url and sqliteUrl both default to sqlite', () => {
-    const c = loadConfig({});
-    expect(c.database.sqliteUrl).toBe('file:./data/code-quest.db');
-    expect(c.database.url).toBe('file:./data/code-quest.db');
+describe('loadConfig — database URLs', () => {
+  it('empty env → single sqlite default', () => {
+    expect(loadConfig({}).database).toEqual(['file:./data/code-quest.db']);
   });
 
-  it('only DATABASE_SQLITE_URL set → url falls back to sqliteUrl', () => {
-    const c = loadConfig({ DATABASE_SQLITE_URL: 'file:./data/app.db' });
-    expect(c.database.sqliteUrl).toBe('file:./data/app.db');
-    expect(c.database.url).toBe('file:./data/app.db');
+  it('only DATABASE_SQLITE_URL set → single entry', () => {
+    expect(loadConfig({ DATABASE_SQLITE_URL: 'file:./data/app.db' }).database).toEqual([
+      'file:./data/app.db',
+    ]);
   });
 
-  it('only DATABASE_URL set → url is DATABASE_URL, sqliteUrl is default', () => {
-    const c = loadConfig({ DATABASE_URL: 'mysql://root@127.0.0.1/db' });
-    expect(c.database.url).toBe('mysql://root@127.0.0.1/db');
-    expect(c.database.sqliteUrl).toBe('file:./data/code-quest.db');
+  it('only DATABASE_URL set (mysql) → primary first, sqlite default second', () => {
+    expect(loadConfig({ DATABASE_URL: 'mysql://root@localhost/db' }).database).toEqual([
+      'mysql://root@localhost/db',
+      'file:./data/code-quest.db',
+    ]);
   });
 
-  it('both set → both populated independently', () => {
-    const c = loadConfig({
-      DATABASE_URL: 'mysql://root@127.0.0.1/db',
-      DATABASE_SQLITE_URL: 'file:./data/app.db',
-    });
-    expect(c.database.url).toBe('mysql://root@127.0.0.1/db');
-    expect(c.database.sqliteUrl).toBe('file:./data/app.db');
+  it('both set → DATABASE_URL first, DATABASE_SQLITE_URL second', () => {
+    expect(
+      loadConfig({
+        DATABASE_URL: 'mysql://root@localhost/db',
+        DATABASE_SQLITE_URL: 'file:./custom.db',
+      }).database,
+    ).toEqual(['mysql://root@localhost/db', 'file:./custom.db']);
   });
 
-  it('empty string values fall back to defaults', () => {
-    const c = loadConfig({ DATABASE_URL: '', DATABASE_SQLITE_URL: '' });
-    expect(c.database.sqliteUrl).toBe('file:./data/code-quest.db');
-    expect(c.database.url).toBe('file:./data/code-quest.db');
+  it('DATABASE_URL same as sqlite → no duplicate', () => {
+    expect(loadConfig({ DATABASE_URL: 'file:./data/code-quest.db' }).database).toEqual([
+      'file:./data/code-quest.db',
+    ]);
+  });
+
+  it('empty strings fall back to single default', () => {
+    expect(loadConfig({ DATABASE_URL: '', DATABASE_SQLITE_URL: '' }).database).toEqual([
+      'file:./data/code-quest.db',
+    ]);
   });
 });
 

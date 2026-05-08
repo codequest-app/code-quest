@@ -4,14 +4,15 @@ import { migrate } from 'drizzle-orm/mysql2/migrator';
 import mysql from 'mysql2/promise';
 
 import { config } from '../config.ts';
+import { parseDatabaseType } from '../db/create-database.ts';
 
-const url = config.database.url;
-if (!url) {
-  console.error('DATABASE_URL is not set — nothing to migrate.');
+const mysqlUrl = config.database.find((url) => parseDatabaseType(url) === 'mysql');
+if (!mysqlUrl) {
+  console.error('No MySQL database configured — nothing to migrate.');
   process.exit(1);
 }
 
-const conn = await mysql.createConnection(url);
+const conn = await mysql.createConnection(mysqlUrl);
 const db = drizzle(conn);
 await migrate(db, { migrationsFolder: mysqlMigrationsFolder });
 await conn.end();
