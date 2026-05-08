@@ -11,8 +11,8 @@ export default defineConfig({
   clean: false,
   splitting: true,
   sourcemap: process.env.BUILD_SOURCEMAP === 'true',
-  noExternal: [/@code-quest\/.*/],
-  external: ['better-sqlite3'],
+  noExternal: [/^(?!better-sqlite3|bindings|file-uri-to-path).*/],
+  external: ['better-sqlite3', 'bindings', 'file-uri-to-path'],
   banner: {
     js: "import { createRequire } from 'node:module'; const require = createRequire(import.meta.url);",
   },
@@ -22,13 +22,12 @@ export default defineConfig({
     });
 
     const pkg = JSON.parse(readFileSync(resolve('package.json'), 'utf-8'));
-    const {
-      '@code-quest/shared': _,
-      '@code-quest/db-schema': _2,
-      '@code-quest/summoner': _3,
-      ...deps
-    } = pkg.dependencies;
-    const prodPkg = { name: pkg.name, version: pkg.version, type: 'module', dependencies: deps };
+    const prodPkg = {
+      name: pkg.name,
+      version: pkg.version,
+      type: 'module',
+      dependencies: { 'better-sqlite3': pkg.dependencies['better-sqlite3'] },
+    };
     writeFileSync(resolve('dist/package.json'), JSON.stringify(prodPkg, null, 2));
     execFileSync('npm', ['install', '--omit=dev'], {
       cwd: resolve('dist'),
