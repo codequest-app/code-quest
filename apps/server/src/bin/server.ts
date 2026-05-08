@@ -156,15 +156,16 @@ app.get(HEALTH_PATH, (_req, res) => {
   res.json({ status: 'ok', uptime: process.uptime() });
 });
 
-/** Relative path from server bin to the monorepo root */
-const CLIENT_DIST_RELATIVE = '../../..';
-const clientDist = join(import.meta.dirname, CLIENT_DIST_RELATIVE, 'client/dist');
-if (existsSync(clientDist)) {
-  app.use(express.static(clientDist));
+const PUBLIC_DIR = process.env.PUBLIC_DIR;
+const publicDir = PUBLIC_DIR
+  ? join(process.cwd(), PUBLIC_DIR)
+  : join(import.meta.dirname, '../../../apps/web/dist');
+if (existsSync(publicDir)) {
+  app.use(express.static(publicDir));
   // SPA fallback
   app.get('*', (req, res, next) => {
     if (req.path.startsWith(HEALTH_PATH)) return next();
-    res.sendFile(join(clientDist, 'index.html'));
+    res.sendFile(join(publicDir, 'index.html'));
   });
 }
 

@@ -50,6 +50,7 @@ COPY --from=web-build /app/apps/web/dist ./public
 
 ENV NODE_ENV=production
 ENV PORT=3000
+ENV PUBLIC_DIR=public
 EXPOSE 3000
 
 CMD ["node", "dist/bin/server.js"]
