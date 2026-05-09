@@ -1,7 +1,7 @@
 import { readdirSync, readFileSync, writeFileSync } from 'node:fs';
 import { join } from 'node:path';
 import JavaScriptObfuscator from 'javascript-obfuscator';
-import { getObfuscationOptions } from './obfuscation-config.ts';
+import { getObfuscationOptions } from './src/obfuscation-config.ts';
 
 const { level, options } = getObfuscationOptions(process.env.OBFUSCATE_LEVEL, 'high');
 
