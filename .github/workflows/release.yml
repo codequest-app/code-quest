@@ -38,6 +38,8 @@ jobs:
     runs-on: ${{ matrix.os }}
     permissions:
       contents: write
+      id-token: write
+      attestations: write
 
     env:
       PLATFORM: ${{ matrix.platform }}
@@ -86,12 +88,29 @@ jobs:
           Copy-Item "apps/summoner/dist/$env:SUMMONER_BIN" release/summoner.exe
           Compress-Archive -Path release/* -DestinationPath "code-quest-$env:PLATFORM.zip"
 
+      - name: Generate checksums
+        shell: bash
+        run: |
+          for f in code-quest-*; do
+            sha256sum "$f" >> "checksums-$PLATFORM.txt"
+          done
+
+      - name: Attest build provenance
+        uses: actions/attest-build-provenance@v2
+        with:
+          subject-path: |
+            code-quest-*.*
+            checksums-*.txt
+
       - name: Upload to GitHub Releases
         uses: softprops/action-gh-release@v2
         with:
+          repository: codequest-app/release
+          token: ${{ secrets.RELEASE_TOKEN }}
           tag_name: latest
           name: Code Quest (latest)
           files: |
             code-quest-*.tar.gz
             code-quest-*.zip
+            checksums-*.txt
           make_latest: true
