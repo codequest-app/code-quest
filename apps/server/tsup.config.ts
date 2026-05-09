@@ -1,7 +1,9 @@
-import { execFileSync } from 'node:child_process';
 import { cpSync, readFileSync, writeFileSync } from 'node:fs';
-import { resolve } from 'node:path';
+import { createRequire } from 'node:module';
+import { dirname, resolve } from 'node:path';
 import { defineConfig } from 'tsup';
+
+const require = createRequire(import.meta.url);
 
 export default defineConfig({
   entry: ['src/bin/server.ts', 'src/scripts/migrate-sqlite.ts', 'src/scripts/migrate-mysql.ts'],
@@ -11,8 +13,8 @@ export default defineConfig({
   clean: false,
   splitting: true,
   sourcemap: process.env.BUILD_SOURCEMAP === 'true',
-  noExternal: [/@code-quest\/.*/],
-  external: ['better-sqlite3'],
+  noExternal: [/^(?!better-sqlite3|bindings|file-uri-to-path).*/],
+  external: ['better-sqlite3', 'bindings', 'file-uri-to-path'],
   banner: {
     js: "import { createRequire } from 'node:module'; const require = createRequire(import.meta.url);",
   },
@@ -21,19 +23,25 @@ export default defineConfig({
       recursive: true,
     });
 
+    const betterSqlite3Dir = dirname(require.resolve('better-sqlite3/package.json'));
+    const betterSqlite3Require = createRequire(require.resolve('better-sqlite3/package.json'));
+    const copyDep = (name: string) => {
+      const dir = dirname(betterSqlite3Require.resolve(`${name}/package.json`));
+      cpSync(dir, resolve(`dist/node_modules/${name}`), { recursive: true });
+    };
+
+    for (const sub of ['lib', 'build', 'package.json', 'LICENSE']) {
+      cpSync(resolve(betterSqlite3Dir, sub), resolve(`dist/node_modules/better-sqlite3/${sub}`), {
+        recursive: true,
+      });
+    }
+    copyDep('bindings');
+    copyDep('file-uri-to-path');
+
     const pkg = JSON.parse(readFileSync(resolve('package.json'), 'utf-8'));
-    const {
-      '@code-quest/shared': _,
-      '@code-quest/db-schema': _2,
-      '@code-quest/summoner': _3,
-      ...deps
-    } = pkg.dependencies;
-    const prodPkg = { name: pkg.name, version: pkg.version, type: 'module', dependencies: deps };
-    writeFileSync(resolve('dist/package.json'), JSON.stringify(prodPkg, null, 2));
-    execFileSync('npm', ['install', '--omit=dev'], {
-      cwd: resolve('dist'),
-      stdio: 'inherit',
-      shell: process.platform === 'win32',
-    });
+    writeFileSync(
+      resolve('dist/package.json'),
+      JSON.stringify({ name: pkg.name, version: pkg.version, type: 'module' }, null, 2),
+    );
   },
 });
