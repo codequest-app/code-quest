@@ -23,13 +23,18 @@ export default defineConfig({
       recursive: true,
     });
 
+    const betterSqlite3Dir = dirname(require.resolve('better-sqlite3/package.json'));
     const betterSqlite3Require = createRequire(require.resolve('better-sqlite3/package.json'));
-    const copyDep = (name: string, req = betterSqlite3Require) => {
-      const dir = dirname(req.resolve(`${name}/package.json`));
+    const copyDep = (name: string) => {
+      const dir = dirname(betterSqlite3Require.resolve(`${name}/package.json`));
       cpSync(dir, resolve(`dist/node_modules/${name}`), { recursive: true });
     };
 
-    copyDep('better-sqlite3', require);
+    for (const sub of ['lib', 'build', 'package.json', 'LICENSE']) {
+      cpSync(resolve(betterSqlite3Dir, sub), resolve(`dist/node_modules/better-sqlite3/${sub}`), {
+        recursive: true,
+      });
+    }
     copyDep('bindings');
     copyDep('file-uri-to-path');
 

@@ -1,10 +1,11 @@
 FROM node:22-alpine AS base
-RUN apk add --no-cache git python3 make g++
+RUN apk add --no-cache git
 RUN corepack enable && corepack prepare pnpm@10.12.4 --activate
 WORKDIR /app
 
-# --- deps ---
+# --- deps (build tools for better-sqlite3 native compilation on alpine/musl) ---
 FROM base AS deps
+RUN apk add --no-cache python3 make g++
 COPY pnpm-lock.yaml pnpm-workspace.yaml package.json ./
 COPY apps/server/package.json apps/server/
 COPY apps/web/package.json apps/web/
