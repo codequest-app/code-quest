@@ -91,3 +91,4 @@ apps/server/data/
 .claude/worktrees/
 openspec/.vector-search.db*
 apps/data/
+tmp/
