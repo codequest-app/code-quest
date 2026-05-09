@@ -38,8 +38,6 @@ jobs:
     runs-on: ${{ matrix.os }}
     permissions:
       contents: write
-      id-token: write
-      attestations: write
 
     env:
       PLATFORM: ${{ matrix.platform }}
@@ -94,13 +92,6 @@ jobs:
           for f in code-quest-*; do
             sha256sum "$f" >> "checksums-$PLATFORM.txt"
           done
-
-      - name: Attest build provenance
-        uses: actions/attest-build-provenance@v2
-        with:
-          subject-path: |
-            code-quest-*.*
-            checksums-*.txt
 
       - name: Upload to GitHub Releases
         uses: softprops/action-gh-release@v2
