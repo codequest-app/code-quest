@@ -1,6 +1,12 @@
 import { ChevronRightIcon } from '@heroicons/react/24/outline';
 import * as Collapsible from '@radix-ui/react-collapsible';
-import Ansi from 'ansi-to-react';
+import AnsiModule from 'ansi-to-react';
+
+const Ansi =
+  typeof AnsiModule === 'function'
+    ? AnsiModule
+    : (AnsiModule as { default: typeof AnsiModule }).default;
+
 import { copyToClipboard } from '@/utils/clipboard';
 import { cn } from '@/utils/cn';
 
