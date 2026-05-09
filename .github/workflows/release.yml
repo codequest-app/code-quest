@@ -69,8 +69,9 @@ jobs:
           mkdir -p release/server
           cp -r apps/server/dist/* release/server/
           cp apps/server/.env.example release/server/.env.example
+          cp "$(which node)" release/node
           cp scripts/start.sh release/start.sh
-          chmod +x release/start.sh
+          chmod +x release/start.sh release/node
           cp "apps/summoner/dist/$SUMMONER_BIN" release/summoner
           chmod +x release/summoner
           cd release && tar czf "../code-quest-$PLATFORM.tar.gz" .
@@ -82,6 +83,7 @@ jobs:
           New-Item -ItemType Directory -Force -Path release/server
           Copy-Item -Recurse apps/server/dist/* release/server/
           Copy-Item apps/server/.env.example release/server/.env.example
+          Copy-Item (Get-Command node).Source release/node.exe
           Copy-Item scripts/start.bat release/start.bat
           Copy-Item "apps/summoner/dist/$env:SUMMONER_BIN" release/summoner.exe
           Compress-Archive -Path release/* -DestinationPath "code-quest-$env:PLATFORM.zip"
