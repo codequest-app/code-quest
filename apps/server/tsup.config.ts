@@ -1,7 +1,7 @@
 import { execFileSync } from 'node:child_process';
 import { cpSync, existsSync, readFileSync, writeFileSync } from 'node:fs';
 import { createRequire } from 'node:module';
-import { dirname, resolve } from 'node:path';
+import { dirname, join, resolve } from 'node:path';
 import { defineConfig } from 'tsup';
 
 const require = createRequire(import.meta.url);
@@ -47,6 +47,11 @@ export default defineConfig({
     }
     copyDep('bindings');
     copyDep('file-uri-to-path');
+
+    const webDist = resolve('../../apps/web/dist');
+    if (existsSync(join(webDist, 'index.html'))) {
+      cpSync(webDist, resolve('dist/public'), { recursive: true });
+    }
 
     const pkg = JSON.parse(readFileSync(resolve('package.json'), 'utf-8'));
     writeFileSync(

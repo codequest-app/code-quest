@@ -48,7 +48,7 @@ export default defineConfig({
     include: ['mermaid'],
   },
   build: {
-    outDir: '../server/dist/public',
+    outDir: 'dist',
     emptyOutDir: true,
     sourcemap: false,
     cssMinify: true,

@@ -156,11 +156,9 @@ app.get(HEALTH_PATH, (_req, res) => {
 
 const publicDir = process.env.PUBLIC_DIR
   ? join(process.cwd(), process.env.PUBLIC_DIR)
-  : [
-      join(import.meta.dirname, '../public'),
-      join(import.meta.dirname, '../../dist/public'),
-      join(import.meta.dirname, '../../../web/dist'),
-    ].find((dir) => existsSync(join(dir, 'index.html')));
+  : [join(import.meta.dirname, '../public'), join(import.meta.dirname, '../../../web/dist')].find(
+      (dir) => existsSync(join(dir, 'index.html')),
+    );
 if (publicDir) {
   app.use(express.static(publicDir));
   // SPA fallback
