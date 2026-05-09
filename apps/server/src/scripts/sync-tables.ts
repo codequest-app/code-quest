@@ -14,8 +14,10 @@ interface SyncResult {
   count: number;
 }
 
+type SelectResult = Record<string, unknown>[] | { all(): Record<string, unknown>[] };
+
 type DrizzleDb = {
-  select(): { from(t: Table): { all(): Record<string, unknown>[] } };
+  select(): { from(t: Table): SelectResult | Promise<SelectResult> };
   run(q: ReturnType<typeof sql>): void;
   insert(t: Table): { values(v: unknown[]): { run(): void } };
   transaction<T>(fn: (tx: DrizzleDb) => T): T;
@@ -29,7 +31,8 @@ export async function syncTables(
   const results: SyncResult[] = [];
 
   for (const { name, from, to } of tables) {
-    const rows = await sourceDb.select().from(from).all();
+    const result = await sourceDb.select().from(from);
+    const rows = Array.isArray(result) ? result : result.all();
     if (rows.length === 0) {
       results.push({ name, count: 0 });
       continue;

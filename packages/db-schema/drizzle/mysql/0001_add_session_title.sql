@@ -1,1 +1,0 @@
-ALTER TABLE `sessions` ADD `title` varchar(200);
