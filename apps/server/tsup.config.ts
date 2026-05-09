@@ -1,4 +1,5 @@
-import { cpSync, readFileSync, writeFileSync } from 'node:fs';
+import { execFileSync } from 'node:child_process';
+import { cpSync, existsSync, readFileSync, writeFileSync } from 'node:fs';
 import { createRequire } from 'node:module';
 import { dirname, resolve } from 'node:path';
 import { defineConfig } from 'tsup';
@@ -24,6 +25,15 @@ export default defineConfig({
     });
 
     const betterSqlite3Dir = dirname(require.resolve('better-sqlite3/package.json'));
+
+    if (!existsSync(resolve(betterSqlite3Dir, 'build/Release/better_sqlite3.node'))) {
+      execFileSync('npx', ['--yes', 'prebuild-install'], {
+        cwd: betterSqlite3Dir,
+        stdio: 'inherit',
+        shell: process.platform === 'win32',
+      });
+    }
+
     const betterSqlite3Require = createRequire(require.resolve('better-sqlite3/package.json'));
     const copyDep = (name: string) => {
       const dir = dirname(betterSqlite3Require.resolve(`${name}/package.json`));
