@@ -36,7 +36,7 @@ async function runMiddleware(
       terminateResolve = r;
     });
 
-  const done = mw(context, async () => {
+  const _done = mw(context, async () => {
     const transform = context.transformSocket as ((s: TypedSocket) => TypedSocket) | undefined;
     if (transform) {
       const wrapped = transform(typed);
@@ -103,7 +103,7 @@ describe('resumable middleware', () => {
     await runMiddleware(mw, ctx2, typed2);
 
     const transform2 = ctx2.transformSocket as (s: TypedSocket) => TypedSocket;
-    const resumable2 = transform2(typed2);
+    const _resumable2 = transform2(typed2);
 
     typed2.emit.mockClear();
     const resumeListener = typed2.listeners.get('__resume__');
@@ -133,7 +133,7 @@ describe('resumable middleware', () => {
     await runMiddleware(mw, ctx2, typed2);
 
     const transform2 = ctx2.transformSocket as (s: TypedSocket) => TypedSocket;
-    const resumable2 = transform2(typed2);
+    const _resumable2 = transform2(typed2);
 
     typed2.emit.mockClear();
     const resumeListener = typed2.listeners.get('__resume__');
@@ -162,7 +162,7 @@ describe('resumable middleware', () => {
     await runMiddleware(mw, ctx2, typed2);
 
     const transform2 = ctx2.transformSocket as (s: TypedSocket) => TypedSocket;
-    const resumable2 = transform2(typed2);
+    const _resumable2 = transform2(typed2);
 
     typed2.emit.mockClear();
     const resumeListener = typed2.listeners.get('__resume__');
@@ -194,10 +194,10 @@ describe('resumable middleware', () => {
 
     const ctx3 = makeContext('key-1');
     const typed3 = makeTypedSocket('s-3');
-    const { disconnectFn: dc3, terminateResolve: tr3 } = await runMiddleware(mw, ctx3, typed3);
+    const { disconnectFn: _dc3, terminateResolve: _tr3 } = await runMiddleware(mw, ctx3, typed3);
 
     const transform3 = ctx3.transformSocket as (s: TypedSocket) => TypedSocket;
-    const resumable3 = transform3(typed3);
+    const _resumable3 = transform3(typed3);
 
     typed3.emit.mockClear();
     const resumeListener = typed3.listeners.get('__resume__');

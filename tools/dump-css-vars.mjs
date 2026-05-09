@@ -6,7 +6,9 @@
 //   node tools/dump-css-vars.mjs > tools/snapshots/css-vars.json
 import { chromium } from 'playwright';
 
-const URL = process.env.DUMP_URL ?? 'http://127.0.0.1:6107/iframe.html?id=components-emptystate--no-sessions&viewMode=story';
+const URL =
+  process.env.DUMP_URL ??
+  'http://127.0.0.1:6107/iframe.html?id=components-emptystate--no-sessions&viewMode=story';
 
 const browser = await chromium.launch();
 const page = await browser.newPage();

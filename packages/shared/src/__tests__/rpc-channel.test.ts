@@ -1,4 +1,4 @@
-import { describe, expect, it, vi } from 'vitest';
+import { describe, expect, it } from 'vitest';
 import type { RpcSocket } from '../transport/rpc-channel.ts';
 import { RpcChannel } from '../transport/rpc-channel.ts';
 
@@ -10,8 +10,8 @@ function createPair(): {
 } {
   let clientHandler: ((data: string) => void) | null = null;
   let serverHandler: ((data: string) => void) | null = null;
-  let clientCloseHandler: (() => void) | null = null;
-  let serverCloseHandler: (() => void) | null = null;
+  let _clientCloseHandler: (() => void) | null = null;
+  let _serverCloseHandler: (() => void) | null = null;
 
   const clientSocket: RpcSocket = {
     send: (data) => serverHandler?.(data),
@@ -19,7 +19,7 @@ function createPair(): {
       clientHandler = fn;
     },
     onClose: (fn) => {
-      clientCloseHandler = fn;
+      _clientCloseHandler = fn;
     },
   };
 
@@ -29,7 +29,7 @@ function createPair(): {
       serverHandler = fn;
     },
     onClose: (fn) => {
-      serverCloseHandler = fn;
+      _serverCloseHandler = fn;
     },
   };
 
@@ -67,7 +67,6 @@ describe('RpcChannel', () => {
     });
 
     it('rejects on timeout', async () => {
-      const { client } = createPair();
       const fastClient = new RpcChannel(
         { send: () => {}, onMessage: () => {}, onClose: () => {} },
         { requestTimeoutMs: 50 },

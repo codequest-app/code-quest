@@ -22,6 +22,7 @@ export const projectSchema: z.ZodObject<
 });
 export type Project = z.infer<typeof projectSchema>;
 
+// biome-ignore lint/complexity/noBannedTypes: Zod infers {} for empty object schemas
 export const projectsListPayloadSchema: z.ZodOptional<z.ZodObject<{}, z.core.$strip>> = z
   .object({})
   .optional();

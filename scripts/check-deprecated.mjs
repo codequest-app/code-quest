@@ -7,9 +7,9 @@
  *   Otherwise all files in the tsconfig are checked.
  */
 
-import ts from 'typescript';
-import path from 'node:path';
 import fs from 'node:fs';
+import path from 'node:path';
+import ts from 'typescript';
 
 const DEPRECATED_CODE = 6385;
 
@@ -38,12 +38,11 @@ const parsedConfig = ts.parseJsonConfigFileContent(
   path.dirname(tsconfigPath),
 );
 
-const filesToCheck = fileArgs.length > 0
-  ? fileArgs.map((f) => path.resolve(f))
-  : parsedConfig.fileNames;
+const filesToCheck =
+  fileArgs.length > 0 ? fileArgs.map((f) => path.resolve(f)) : parsedConfig.fileNames;
 
 const program = ts.createProgram(parsedConfig.fileNames, parsedConfig.options);
-const checker = program.getTypeChecker();
+const _checker = program.getTypeChecker();
 
 let errorCount = 0;
 
@@ -57,9 +56,8 @@ for (const filePath of filesToCheck) {
   for (const diag of deprecated) {
     const { line, character } = sourceFile.getLineAndCharacterOfPosition(diag.start ?? 0);
     const rel = path.relative(process.cwd(), filePath);
-    const msg = typeof diag.messageText === 'string'
-      ? diag.messageText
-      : diag.messageText.messageText;
+    const msg =
+      typeof diag.messageText === 'string' ? diag.messageText : diag.messageText.messageText;
     console.error(`${rel}:${line + 1}:${character + 1} — ${msg}`);
     errorCount++;
   }
