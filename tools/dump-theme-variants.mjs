@@ -4,11 +4,12 @@
 //   pnpm -C apps/web build-storybook --quiet
 //   apps/web/node_modules/.bin/http-server apps/web/storybook-static -p 6107 --silent &
 //   node tools/dump-theme-variants.mjs
-import { writeFile, mkdir } from 'node:fs/promises';
+import { mkdir, writeFile } from 'node:fs/promises';
 import { chromium } from 'playwright';
 
 const OUT_DIR = new URL('./snapshots/theme-variants/', import.meta.url);
-const URL_ = 'http://127.0.0.1:6107/iframe.html?id=components-emptystate--no-sessions&viewMode=story';
+const URL_ =
+  'http://127.0.0.1:6107/iframe.html?id=components-emptystate--no-sessions&viewMode=story';
 const COMBINATIONS = [
   { theme: 'dark', density: 'comfortable' },
   { theme: 'dark', density: 'compact' },
@@ -23,10 +24,13 @@ const page = await browser.newPage({ viewport: { width: 1024, height: 768 } });
 
 for (const { theme, density } of COMBINATIONS) {
   await page.goto(URL_, { waitUntil: 'networkidle' });
-  await page.evaluate(([t, d]) => {
-    document.documentElement.dataset.theme = t;
-    document.documentElement.dataset.density = d;
-  }, [theme, density]);
+  await page.evaluate(
+    ([t, d]) => {
+      document.documentElement.dataset.theme = t;
+      document.documentElement.dataset.density = d;
+    },
+    [theme, density],
+  );
 
   const vars = await page.evaluate(() => {
     const el = document.documentElement;

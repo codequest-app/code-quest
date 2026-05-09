@@ -53,7 +53,9 @@
       "!**/test-results",
       "!**/pnpm-lock.yaml",
       "!**/*.jsonl",
-      "!docs/prototype"
+      "!docs/prototype",
+      "!docs/vscode",
+      "!**/storybook-static"
     ]
   }
 }

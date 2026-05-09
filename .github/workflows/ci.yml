@@ -17,7 +17,7 @@ jobs:
           node-version: 22
           cache: pnpm
       - run: pnpm install --frozen-lockfile --ignore-scripts
-      - run: pnpm biome check .
+      - run: pnpm biome check --max-diagnostics=200 .
 
   typecheck:
     runs-on: ubuntu-latest
@@ -40,5 +40,5 @@ jobs:
         with:
           node-version: 22
           cache: pnpm
-      - run: pnpm install --frozen-lockfile
+      - run: pnpm install --frozen-lockfile --ignore-scripts && pnpm rebuild better-sqlite3
       - run: pnpm -r --parallel run test

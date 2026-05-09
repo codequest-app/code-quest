@@ -1,5 +1,6 @@
 import { z } from 'zod';
 
+// biome-ignore lint/complexity/noBannedTypes: Zod infers {} for empty object schemas
 export const gitStatusPayloadSchema: z.ZodObject<{}, z.core.$strip> = z.object({});
 export type GitStatusPayload = z.infer<typeof gitStatusPayloadSchema>;
 
@@ -16,6 +17,7 @@ export const gitLogPayloadSchema: z.ZodObject<
 });
 export type GitLogPayload = z.infer<typeof gitLogPayloadSchema>;
 
+// biome-ignore lint/complexity/noBannedTypes: Zod infers {} for empty object schemas
 export const gitDiffPayloadSchema: z.ZodObject<{}, z.core.$strip> = z.object({});
 export type GitDiffPayload = z.infer<typeof gitDiffPayloadSchema>;
 

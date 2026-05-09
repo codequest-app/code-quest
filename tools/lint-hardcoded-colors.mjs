@@ -65,9 +65,7 @@ for (const file of files) {
       const absoluteOffset = block.start + (color.index ?? 0);
       const { line, col } = lineColAt(src, absoluteOffset);
       hitCount++;
-      console.log(
-        `${file.replace(`${ROOT}/`, '')}:${line}:${col}  ${color[0]}`,
-      );
+      console.log(`${file.replace(`${ROOT}/`, '')}:${line}:${col}  ${color[0]}`);
     }
   }
 }
@@ -77,7 +75,5 @@ if (hitCount === 0) {
   process.exit(0);
 }
 
-console.log(
-  `\n✖ ${hitCount} hardcoded color literal${hitCount === 1 ? '' : 's'} found.`,
-);
+console.log(`\n✖ ${hitCount} hardcoded color literal${hitCount === 1 ? '' : 's'} found.`);
 process.exit(1);
