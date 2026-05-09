@@ -2,19 +2,14 @@ name: Release
 
 on:
   workflow_dispatch:
-  push:
+  workflow_run:
+    workflows: [CI]
+    types: [completed]
     branches: [main]
-    paths:
-      - '.github/workflows/release.yml'
-      - 'apps/server/**'
-      - 'apps/web/**'
-      - 'apps/summoner/**'
-      - 'packages/**'
-      - 'package.json'
-      - 'pnpm-lock.yaml'
 
 jobs:
   release:
+    if: github.event_name == 'workflow_dispatch' || github.event.workflow_run.conclusion == 'success'
     strategy:
       matrix:
         include:
