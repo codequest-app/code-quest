@@ -10,7 +10,7 @@ import { createAddProjectFeature } from '@/features/global-actions/add-project-f
 import { createOpenSettingsFeature } from '@/features/global-actions/open-settings-feature';
 import { createSwitchProjectFeatures } from '@/features/global-actions/switch-project-feature';
 import type { Feature, PaletteTab } from '@/lib/feature';
-import { useMessageRegistryStore } from '@/stores/useMessageRegistryStore';
+import { useChannelsStore } from '@/stores/channels-store';
 import { usePreferencesStore } from '@/stores/usePreferencesStore';
 import type { Message } from '@/types/ui';
 import { cn } from '@/utils/cn';
@@ -35,7 +35,7 @@ const isPaletteTab = (t: TabId): t is PaletteTab => t !== 'messages';
 export function CommandPalette(): React.ReactNode {
   const { open, defaultTab, paletteActions } = useCommandPaletteState();
   const { closePalette, jumpTo } = useCommandPaletteActions();
-  const channels = useMessageRegistryStore((s) => s.channels);
+  const channels = useChannelsStore((s) => s.channels);
   const visibilityTypes = usePreferencesStore((s) => s.enabledTypes);
   const { projects, activeProjectCwd } = useProjectState();
   const { setActiveProject } = useProjectActions();
@@ -62,7 +62,11 @@ export function CommandPalette(): React.ReactNode {
     const result: Array<{ channelId: string; message: Message }> = [];
     for (const [channelId, entry] of channels) {
       for (const message of entry.messages) {
-        if (message.content.length > 0 && isMessageVisible(message, enabledTypes)) {
+        const hasContent =
+          message.content.length > 0 ||
+          (message.type === 'assistant_turn' &&
+            (message as import('@/types/ui').AssistantTurn).blocks.length > 0);
+        if (hasContent && isMessageVisible(message, enabledTypes)) {
           result.push({ channelId, message });
         }
       }
@@ -84,8 +88,7 @@ export function CommandPalette(): React.ReactNode {
     if (channels.size <= 1) return undefined;
     const map = new Map<string, string>();
     for (const [channelId, entry] of channels) {
-      const proj = entry.projectCwd.split('/').pop() ?? entry.projectCwd;
-      const label = `${proj} / ${channelId.slice(0, 8)}`;
+      const label = channelId.slice(0, 8);
       for (const message of entry.messages) {
         map.set(message.id, label);
       }

@@ -5,7 +5,7 @@ interface ComposeState {
   cursorPos: number;
   slashOpen: boolean;
   mentionOpen: boolean;
-  attachedFiles: File[];
+  attachedFiles: { id: string; file: File; objectUrl: string }[];
 }
 
 function onSpeechMessage(

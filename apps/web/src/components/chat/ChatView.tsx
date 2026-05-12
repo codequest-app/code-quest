@@ -2,15 +2,11 @@ import type { SessionSummary } from '@code-quest/shared';
 import { RectangleGroupIcon } from '@heroicons/react/24/outline';
 import { useCallback } from 'react';
 import { useHotkeys } from 'react-hotkeys-hook';
-import {
-  useChannelComposeActions,
-  useChannelConfig,
-  useChannelId,
-  useChannelMessages,
-} from '@/contexts/channel';
+import { useChannelComposeActions, useChannelConfig, useChannelId } from '@/contexts/channel';
 import { useNavigationActions } from '@/contexts/NavigationContext';
 import { useProjectActions, useProjectState } from '@/contexts/ProjectContext';
 import { useTabActions } from '@/contexts/TabContext';
+import { useChannelStore } from '@/stores/ChannelStoreContext';
 import { NO_FORM } from '@/utils/hotkey-options';
 import { resumeRoute } from '@/utils/resume-route';
 import { IconButton } from '../ui/IconButton.tsx';
@@ -30,7 +26,7 @@ interface ChatViewProps {
 
 export function ChatView({ title, onToggleRight, rightPane }: ChatViewProps): React.JSX.Element {
   const channelId = useChannelId();
-  const { messages } = useChannelMessages();
+  const messages = useChannelStore((s) => s.messages);
   const { worktree } = useChannelConfig();
   const { focusTextarea } = useChannelComposeActions();
   useHotkeys('/', focusTextarea, NO_FORM);

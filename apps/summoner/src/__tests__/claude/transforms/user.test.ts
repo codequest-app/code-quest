@@ -163,4 +163,26 @@ describe('transform — user events', () => {
     const event = Array.isArray(result) ? result[0] : result;
     expect(event?.payload).toMatchObject({ history: false });
   });
+
+  it('user event with parent_tool_use_id sets renderAs: markdown', () => {
+    const line = JSON.stringify({
+      type: 'user',
+      parent_tool_use_id: 'toolu_abc',
+      message: { role: 'user', content: [{ type: 'text', text: 'subagent msg' }] },
+    });
+    const result = toClientMessage(line);
+    const event = Array.isArray(result) ? result[0] : result;
+    expect(event?.payload).toMatchObject({ renderAs: 'markdown', parentToolUseId: 'toolu_abc' });
+  });
+
+  it('plain user message without parent_tool_use_id keeps renderAs: plain', () => {
+    const line = JSON.stringify({
+      type: 'user',
+      message: { role: 'user', content: [{ type: 'text', text: 'hello' }] },
+    });
+    const result = toClientMessage(line);
+    const event = Array.isArray(result) ? result[0] : result;
+    expect(event?.payload).toMatchObject({ renderAs: 'plain' });
+    expect(event?.payload).not.toHaveProperty('parentToolUseId');
+  });
 });

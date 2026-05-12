@@ -38,8 +38,11 @@ function AcceptRejectButtons({
   );
 }
 
+type DiffType = 'added' | 'removed' | 'header' | 'context';
+
 interface AnnotatedLine {
   cls: string;
+  diffType?: DiffType;
   gutter: string;
   text: string;
 }
@@ -55,22 +58,22 @@ function annotateLines(lines: string[]): AnnotatedLine[] {
         oldLine = hunk.oldStart;
         newLine = hunk.newStart;
       }
-      return { cls: 'text-accent', gutter: '  ', text: line };
+      return { cls: 'text-accent', diffType: 'header', gutter: '  ', text: line };
     }
     if (line.startsWith('---') || line.startsWith('+++')) {
-      return { cls: 'text-text-muted', gutter: '  ', text: line };
+      return { cls: 'text-text-muted', diffType: 'header', gutter: '  ', text: line };
     }
     if (line.startsWith('+')) {
       const gutter = String(newLine++).padStart(PAD);
-      return { cls: 'text-success', gutter, text: line };
+      return { cls: 'text-success', diffType: 'added', gutter, text: line };
     }
     if (line.startsWith('-')) {
       const gutter = String(oldLine++).padStart(PAD);
-      return { cls: 'text-danger', gutter, text: line };
+      return { cls: 'text-danger', diffType: 'removed', gutter, text: line };
     }
     const gutter = oldLine > 0 ? String(newLine++).padStart(PAD) : '';
     if (oldLine > 0) oldLine++;
-    return { cls: '', gutter, text: line };
+    return { cls: '', diffType: 'context', gutter, text: line };
   });
 }
 
@@ -186,9 +189,9 @@ export function DiffViewer({
           fileName ? 'rounded-b-lg' : 'rounded-lg',
         )}
       >
-        {annotated.map(({ cls, gutter, text }, i) => (
+        {annotated.map(({ cls, diffType, gutter, text }, i) => (
           // biome-ignore lint/suspicious/noArrayIndexKey: diff lines render once, never reorder
-          <div key={`${i}-${gutter ?? ''}`} className={cls}>
+          <div key={`${i}-${gutter ?? ''}`} className={cls} data-diff-type={diffType}>
             {gutter && <span className="text-text-muted/40 select-none mr-2">{gutter}</span>}
             {text}
           </div>

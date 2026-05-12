@@ -7,6 +7,7 @@ import {
 } from '@code-quest/shared';
 import * as Dialog from '@radix-ui/react-dialog';
 import { cn } from '@/utils/cn';
+import { formatTokens } from '@/utils/format-number';
 import { DEFAULT_USAGE_TIERS, getTier } from '@/utils/model-utils';
 import { openUrl } from '@/utils/open-url';
 import {
@@ -103,15 +104,7 @@ function UsageBarRow({
 }
 
 const HIGH_USAGE_THRESHOLD_PCT = 80;
-const MILLION = 1_000_000;
-const THOUSAND = 1_000;
 const FREE_SPACE_CATEGORY = 'Free space';
-
-function formatTokens(n: number): string {
-  if (n >= MILLION) return `${(n / MILLION).toFixed(1)}M`;
-  if (n >= THOUSAND) return `${(n / THOUSAND).toFixed(1)}k`;
-  return String(n);
-}
 
 export function AccountUsageDialog({
   open,

@@ -3359,6 +3359,19 @@ exports[`ClaudeProtocol.parseLine (real fixtures) > parses task-started.jsonl:1 
 }
 `;
 
+exports[`ClaudeProtocol.parseLine (real fixtures) > parses task-started-local-bash.jsonl:1 1`] = `
+{
+  "description": "Red-tile-based indoor rejection",
+  "session_id": "a00642b8-7d76-42f5-a41a-8f903b255788",
+  "subtype": "task_started",
+  "task_id": "bbd4y7qfe",
+  "task_type": "local_bash",
+  "tool_use_id": "toolu_018rh8vCZXif4qbQiQJP4vic",
+  "type": "system",
+  "uuid": "4312ddc4-3136-47ed-a647-31033b944207",
+}
+`;
+
 exports[`ClaudeProtocol.parseLine (real fixtures) > parses thinking.jsonl:1 1`] = `
 {
   "message": {

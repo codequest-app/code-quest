@@ -2,13 +2,14 @@ import { segments as s } from '@code-quest/summoner/test';
 import { act, screen } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { describe, expect, it } from 'vitest';
-import { useChannelControl, useChannelMessages } from '@/contexts/channel';
+import { useChannelControl } from '@/contexts/channel';
+import { useChannelStore } from '@/stores/ChannelStoreContext';
 import { renderWithChannel } from '@/test/render-with-channel';
 import { PendingActionButtons } from '../PendingActionButtons.tsx';
 
 function BannerWithState() {
   const { pendingControls } = useChannelControl();
-  const { messages } = useChannelMessages();
+  const messages = useChannelStore((s) => s.messages);
   return (
     <div>
       <span role="status" aria-label="pending-count">

@@ -1,18 +1,20 @@
 import { useState } from 'react';
 import { InlineAction } from '@/components/ui/InlineAction';
-import type { MessageNode } from '@/utils/message-tree';
+import type { Message } from '@/types/ui';
 import { pluralize } from '@/utils/pluralize';
-import { RotatableChevron } from '../tool-use/message-blocks/primitives.tsx';
+import { RotatableChevron } from '../renderers/primitives.tsx';
 import { CollapsibleTimeline } from './CollapsibleTimeline.tsx';
 
 export function SubagentChildren({
-  nodes,
+  messages,
+  childrenIndex,
   onStopTask,
   onDiffRespond,
   parentToolId,
   model,
 }: {
-  nodes: MessageNode[];
+  messages: Message[];
+  childrenIndex?: Map<string, Message[]>;
   onStopTask?: (taskId: string) => void;
   onDiffRespond?: (toolId: string, accepted: boolean) => void;
   parentToolId?: string;
@@ -29,7 +31,7 @@ export function SubagentChildren({
           className="text-xs text-text-muted/60 hover:text-text-muted cursor-pointer select-none flex items-center gap-1 py-0.5"
         >
           <RotatableChevron open={expanded} />
-          <span>{pluralize(nodes.length, 'subagent message')}</span>
+          <span>{pluralize(messages.length, 'subagent message')}</span>
         </button>
         {model && <span className="text-xs text-text-muted/40 font-mono">{model}</span>}
         {onStopTask && parentToolId && (
@@ -45,7 +47,8 @@ export function SubagentChildren({
       {expanded && (
         <div className="border-l-2 border-text-muted/15 pl-4 mt-1">
           <CollapsibleTimeline
-            nodes={nodes}
+            messages={messages}
+            childrenIndex={childrenIndex}
             onStopTask={onStopTask}
             onDiffRespond={onDiffRespond}
           />

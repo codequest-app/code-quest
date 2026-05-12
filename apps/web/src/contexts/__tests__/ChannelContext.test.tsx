@@ -4,6 +4,7 @@ import userEvent from '@testing-library/user-event';
 import { useRef } from 'react';
 import { describe, expect, it } from 'vitest';
 import { MessageList } from '@/components/chat/conversation/MessageList';
+import { useChannelStore } from '@/stores/ChannelStoreContext';
 import { createFakeSummoner } from '@/test/fake-summoner';
 import { renderWithChannel } from '@/test/render-with-channel';
 import { renderWithWorkspace } from '@/test/render-with-workspace';
@@ -17,37 +18,40 @@ import { SessionProvider } from '../SessionContext.tsx';
 import { SocketProvider } from '../SocketContext.tsx';
 import { TabProvider } from '../TabContext.tsx';
 
-/** Test harness that exposes useChannelMessages values to the DOM */
+/** Test harness that exposes channel state + actions to the DOM */
 function ChannelTestHarness() {
-  const ctx = useChannelMessages();
+  const actions = useChannelMessages();
   const channelId = useChannelId();
+  const isCancelling = useChannelStore((s) => s.status === 'cancelling');
+  const modifiedFiles = useChannelStore((s) => s.modifiedFiles);
+  const planComments = useChannelStore((s) => s.planComments);
   return (
     <div>
       <span role="status" aria-label="channelId">
         {channelId}
       </span>
       <span role="status" aria-label="isCancelling">
-        {String(ctx.isCancelling)}
+        {String(isCancelling)}
       </span>
       <span role="status" aria-label="modifiedFiles">
-        {JSON.stringify(ctx.modifiedFiles)}
+        {JSON.stringify(modifiedFiles)}
       </span>
       <span role="status" aria-label="planComments">
-        {JSON.stringify(ctx.planComments)}
+        {JSON.stringify(planComments)}
       </span>
-      <button type="button" onClick={ctx.abort}>
+      <button type="button" onClick={actions.abort}>
         abort
       </button>
-      <button type="button" onClick={ctx.clearModifiedFiles}>
+      <button type="button" onClick={actions.clearModifiedFiles}>
         clearModifiedFiles
       </button>
-      <button type="button" onClick={() => ctx.removeModifiedFile('nonexistent.ts')}>
+      <button type="button" onClick={() => actions.removeModifiedFile('nonexistent.ts')}>
         removeModifiedFile
       </button>
       <button
         type="button"
         onClick={() =>
-          ctx.addPlanComment({
+          actions.addPlanComment({
             id: 'c1',
             selectedText: 'foo',
             sectionHeading: 'Plan',
@@ -57,7 +61,7 @@ function ChannelTestHarness() {
       >
         addPlanComment
       </button>
-      <button type="button" onClick={ctx.clearPlanComments}>
+      <button type="button" onClick={actions.clearPlanComments}>
         clearPlanComments
       </button>
     </div>
@@ -223,7 +227,9 @@ describe('ChannelContext', () => {
       };
 
       function StatusHarness() {
-        const { isProcessing } = useChannelMessages();
+        const isProcessing = useChannelStore(
+          (s) => s.status === 'processing' || s.status === 'busy' || s.status === 'cancelling',
+        );
         return (
           <span role="status" aria-label="processing">
             {String(isProcessing)}

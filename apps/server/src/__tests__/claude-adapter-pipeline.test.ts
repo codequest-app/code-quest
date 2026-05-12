@@ -77,12 +77,12 @@ describe('End-to-end: FakeClaude → ClaudeAdapter → ClientMessage', () => {
     }
   });
 
-  it('hook_started → system:hook_started', () => {
+  it('hook_started → hook:started', () => {
     const parsed = adapter.parseLine(s.hookStarted());
     if (parsed.status === 'ok') {
       const output = adapter.transform(parsed.message);
       expect(output.messages).toHaveLength(1);
-      const msg = expectName(output.messages[0]!, 'system:hook_started');
+      const msg = expectName(output.messages[0]!, 'hook:started');
       expect(msg.payload.hook).toBeDefined();
     } else {
       expect(['error', 'unknown']).toContain(parsed.status);

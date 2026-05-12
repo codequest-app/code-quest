@@ -18,7 +18,8 @@ const conversation: Message[] = [
     role: 'assistant',
     type: 'tool_use',
     content: 'bash',
-    meta: { toolId: 't1', input: { command: 'ls -la' } },
+    toolId: 't1',
+    input: { command: 'ls -la' },
     timestamp: 3,
   },
   {
@@ -27,7 +28,8 @@ const conversation: Message[] = [
     type: 'tool_result',
     content:
       'total 8\n-rw-r--r-- 1 user user 123 Jan 1 main.ts\n-rw-r--r-- 1 user user 456 Jan 1 README.md',
-    meta: { toolId: 't1', name: 'bash' },
+    toolId: 't1',
+    name: 'bash',
     timestamp: 4,
   },
   {
@@ -97,7 +99,8 @@ const withSubagent: Message[] = [
     role: 'assistant',
     type: 'tool_use',
     content: 'Task',
-    meta: { toolId: 'task-1', input: {} },
+    toolId: 'task-1',
+    input: {},
     timestamp: 2,
   },
   {

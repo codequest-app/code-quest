@@ -7,7 +7,8 @@ interface ChannelMeta {
   cwd?: string;
 }
 
-const ChannelMetaContext = createContext<ChannelMeta | null>(null);
+export const ChannelMetaContext: React.Context<ChannelMeta | null> =
+  createContext<ChannelMeta | null>(null);
 
 export function useChannelMeta(): ChannelMeta {
   const meta = useContext(ChannelMetaContext);

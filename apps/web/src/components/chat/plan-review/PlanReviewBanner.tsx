@@ -7,10 +7,13 @@ import { planInputSchema } from '@code-quest/shared';
 import { ClipboardDocumentListIcon } from '@heroicons/react/24/outline';
 import { useEffect, useMemo, useRef, useState } from 'react';
 import { useChannelMessages } from '@/contexts/channel';
+import { useChannelStore } from '@/stores/ChannelStoreContext';
 import { cn } from '@/utils/cn';
 import { pluralize } from '@/utils/pluralize';
 import { MarkdownContent } from '../renderers/MarkdownContent.tsx';
 import { PlanCommentPopover } from './PlanCommentPopover.tsx';
+
+const DEFAULT_FEEDBACK_MESSAGE = 'User chose to stay in plan mode and continue planning';
 
 const formatComment = (c: PlanCommentData) => `[On "${c.selectedText}"]: ${c.comment}`;
 
@@ -26,7 +29,8 @@ export function PlanReviewBanner({ pending, onRespond }: PlanReviewBannerProps):
   const [comment, setComment] = useState('');
   const [feedbackOpen, setFeedbackOpen] = useState(false);
   const planContentRef = useRef<HTMLDivElement>(null);
-  const { planComments, addPlanComment, clearPlanComments } = useChannelMessages();
+  const planComments = useChannelStore((s) => s.planComments);
+  const { addPlanComment, clearPlanComments } = useChannelMessages();
 
   // biome-ignore lint/correctness/useExhaustiveDependencies: requestId is the trigger, not a consumed value
   useEffect(() => {
@@ -55,7 +59,7 @@ export function PlanReviewBanner({ pending, onRespond }: PlanReviewBannerProps):
     setFeedbackOpen(false);
     onRespond({
       behavior: 'deny',
-      message: commentParts.join('\n') || 'User chose to stay in plan mode and continue planning',
+      message: commentParts.join('\n') || DEFAULT_FEEDBACK_MESSAGE,
       interrupt: false,
     });
   };

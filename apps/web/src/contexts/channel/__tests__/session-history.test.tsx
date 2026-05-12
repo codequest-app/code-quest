@@ -93,6 +93,79 @@ describe('session:history client rendering (A sends, B joins)', () => {
 
     expect(document.querySelector('[data-type="permission"]')).not.toBeInTheDocument();
   });
+
+  it('B sees neither Running nor Done badge after A completed a local_agent task', async () => {
+    const { windowA, windowB, channelId } = await setupClientWindows();
+
+    await windowA.send('chat:send', { channelId, message: 'verify' });
+    await windowA.claude().emitSegment(s.agent('toolu_agent', 'Verify tokens'));
+    await windowA
+      .claude()
+      .emitSegment(s.taskStarted('toolu_agent', 'Verify tokens', { taskType: 'local_agent' }));
+    await windowA.claude().emitSegment(
+      s.taskProgress('task-1', {
+        toolUseId: 'toolu_agent',
+        description: 'Reading files',
+        lastToolName: 'Read',
+      }),
+    );
+    await windowA
+      .claude()
+      .emitSegment(s.taskNotification('task-1', { toolUseId: 'toolu_agent', status: 'completed' }));
+    await windowA.claude().emitSegment(s.toolResult('toolu_agent', 'All correct'));
+    await windowA.claude().emitSegment(s.result());
+
+    await renderAndJoinB(windowB, channelId);
+
+    await waitFor(() => {
+      expect(screen.queryByText(/Running/)).not.toBeInTheDocument();
+    });
+    expect(screen.queryByText(/Done/)).not.toBeInTheDocument();
+  });
+
+  it('B does NOT see "Running..." fallback text after task completes', async () => {
+    const { windowA, windowB, channelId } = await setupClientWindows();
+
+    await windowA.send('chat:send', { channelId, message: 'verify' });
+    await windowA.claude().emitSegment(s.agent('toolu_agent', 'Verify tokens'));
+    await windowA
+      .claude()
+      .emitSegment(s.taskStarted('toolu_agent', 'Verify tokens', { taskType: 'local_agent' }));
+    await windowA
+      .claude()
+      .emitSegment(s.taskNotification('task-1', { toolUseId: 'toolu_agent', status: 'completed' }));
+    await windowA.claude().emitSegment(s.toolResult('toolu_agent', 'All correct'));
+    await windowA.claude().emitSegment(s.result());
+
+    await renderAndJoinB(windowB, channelId);
+
+    await waitFor(() => {
+      expect(screen.queryByText(/Running/)).not.toBeInTheDocument();
+    });
+    // The body "Running..." fallback should NOT show
+    expect(screen.queryByText('Running...')).not.toBeInTheDocument();
+    expect(screen.queryByText(/Done/)).not.toBeInTheDocument();
+  });
+
+  it('B sees task not Running even without task_notification (auto-complete from tool_result)', async () => {
+    const { windowA, windowB, channelId } = await setupClientWindows();
+
+    await windowA.send('chat:send', { channelId, message: 'verify' });
+    await windowA.claude().emitSegment(s.agent('toolu_agent', 'Verify tokens'));
+    await windowA
+      .claude()
+      .emitSegment(s.taskStarted('toolu_agent', 'Verify tokens', { taskType: 'local_agent' }));
+    // NO task_notification — tool_result should auto-complete
+    await windowA.claude().emitSegment(s.toolResult('toolu_agent', 'All correct'));
+    await windowA.claude().emitSegment(s.result());
+
+    await renderAndJoinB(windowB, channelId);
+
+    await waitFor(() => {
+      expect(screen.queryByText(/Running/)).not.toBeInTheDocument();
+    });
+    expect(screen.queryByText(/Done/)).not.toBeInTheDocument();
+  });
 });
 
 describe('isConnecting state', () => {

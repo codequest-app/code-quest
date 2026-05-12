@@ -1,4 +1,4 @@
-import type { Message } from '@/types/ui';
+import type { AssistantTurn, Message } from '@/types/ui';
 
 const MESSAGE_TYPE_LABELS: Partial<Record<Message['type'], string>> = {
   streamlined_tool_use_summary: 'tool summary',
@@ -43,6 +43,7 @@ const TYPE_COLORS: Partial<Record<string, string>> = {
   hook_started: TYPE_COLOR_BLUE,
   hook_response: TYPE_COLOR_BLUE,
   hook_diagnostics: TYPE_COLOR_BLUE,
+  assistant_turn: TYPE_COLOR_GREEN,
 };
 
 export function typeColor(type: string): string {
@@ -80,8 +81,18 @@ function toolUsePreview(input: unknown): string {
 }
 
 export function messagePreview(m: Message): string {
-  if (m.type === 'tool_use' && m.meta?.input) {
-    return toolUsePreview(m.meta.input) || m.content;
+  if (m.type === 'tool_use') {
+    const input = m.input;
+    if (input) return toolUsePreview(input) || m.content;
+  }
+  if (m.type === 'assistant_turn') {
+    const turn = m as AssistantTurn;
+    const parts: string[] = [];
+    for (const block of turn.blocks) {
+      if (block.type === 'text') parts.push(block.content);
+      else if (block.type === 'tool_use' && block.input) parts.push(toolUsePreview(block.input));
+    }
+    return parts.join(' ') || m.content;
   }
   return m.content;
 }

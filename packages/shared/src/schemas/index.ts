@@ -193,6 +193,18 @@ export {
   gitUpdateSkippedBranchPayloadSchema,
 } from './git.ts';
 export type {
+  HookResponseInfo,
+  HookResponsePayload,
+  HookStartedInfo,
+  HookStartedPayload,
+} from './hook.ts';
+export {
+  hookResponseInfoSchema,
+  hookResponsePayloadSchema,
+  hookStartedInfoSchema,
+  hookStartedPayloadSchema,
+} from './hook.ts';
+export type {
   AskDebuggerHelpResponse,
   DisableChromeMcpResponse,
   DisableJupyterMcpResponse,
@@ -300,17 +312,25 @@ export {
 } from './message-stats.ts';
 export type {
   StreamBlockStartPayload,
+  StreamBlockStopPayload,
   StreamChunk,
   StreamChunkPayload,
+  StreamCompactionPayload,
   StreamEndPayload,
+  StreamMessageDeltaPayload,
+  StreamMessageStartPayload,
   StreamTextPayload,
   StreamToolSummaryPayload,
 } from './message-stream.ts';
 export {
   streamBlockStartPayloadSchema,
+  streamBlockStopPayloadSchema,
   streamChunkPayloadSchema,
   streamChunkSchema,
+  streamCompactionPayloadSchema,
   streamEndPayloadSchema,
+  streamMessageDeltaPayloadSchema,
+  streamMessageStartPayloadSchema,
   streamTextPayloadSchema,
   streamToolSummaryPayloadSchema,
 } from './message-stream.ts';
@@ -642,49 +662,47 @@ export {
 export type {
   ChatHookCallbackRespondPayload,
   ControlHookCallbackPayload,
-  HookResponseInfo,
-  HookStartedInfo,
   ModelInfo,
   RateLimitInternalPayload,
   SystemApiRetryPayload,
   SystemAvailableModelsPayload,
   SystemCompactBoundaryPayload,
   SystemExperimentGatesPayload,
-  SystemHookResponsePayload,
-  SystemHookStartedPayload,
   SystemMirrorErrorPayload,
+  SystemPostTurnSummaryPayload,
   SystemRateLimitPayload,
   SystemRemoteControlPayload,
-  SystemTaskNotificationPayload,
-  SystemTaskProgressPayload,
-  SystemTaskStartedPayload,
-  TaskStatus,
-  TaskType,
   TokenUsage,
 } from './system.ts';
 export {
   chatHookCallbackRespondPayloadSchema,
   controlHookCallbackPayloadSchema,
-  hookResponseInfoSchema,
-  hookStartedInfoSchema,
   modelInfoSchema,
   rateLimitInternalPayloadSchema,
   systemApiRetryPayloadSchema,
   systemAvailableModelsPayloadSchema,
   systemCompactBoundaryPayloadSchema,
   systemExperimentGatesPayloadSchema,
-  systemHookResponsePayloadSchema,
-  systemHookStartedPayloadSchema,
   systemMirrorErrorPayloadSchema,
+  systemPostTurnSummaryPayloadSchema,
   systemRateLimitPayloadSchema,
   systemRemoteControlPayloadSchema,
-  systemTaskNotificationPayloadSchema,
-  systemTaskProgressPayloadSchema,
-  systemTaskStartedPayloadSchema,
-  taskStatusSchema,
-  taskTypeSchema,
   tokenUsageSchema,
 } from './system.ts';
+export type {
+  TaskNotificationPayload,
+  TaskProgressPayload,
+  TaskStartedPayload,
+  TaskStatus,
+  TaskType,
+} from './task.ts';
+export {
+  taskNotificationPayloadSchema,
+  taskProgressPayloadSchema,
+  taskStartedPayloadSchema,
+  taskStatusSchema,
+  taskTypeSchema,
+} from './task.ts';
 export type {
   TerminalGetContentsPayload,
   TerminalGetContentsResponse,

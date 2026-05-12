@@ -507,6 +507,36 @@ describe('ChatHandler > session', () => {
       ).toBe(true);
     });
 
+    it('session:history excludes transient stream events', async () => {
+      const { claude, channelId } = await setup();
+
+      await claude.send('chat:send', { channelId, message: 'hi' });
+      await claude.emitSegment(s.messageStart());
+      await claude.emitSegment(s.contentBlockStart(0, 'text'));
+      await claude.emitSegment(s.textDelta('hello'));
+      await claude.emitSegment(s.assistant('hello'));
+      await claude.emitSegment(s.contentBlockStop(0));
+      await claude.emitSegment(s.messageDelta());
+      await claude.emitSegment(s.messageStop());
+      await claude.emitSegment(s.result());
+
+      await claude.send<JoinOk>('session:join', { channelId });
+
+      const names = historyEventNames(claude);
+      const streamTransient = names.filter((n) =>
+        [
+          'stream:chunk',
+          'stream:block_start',
+          'stream:block_stop',
+          'stream:end',
+          'stream:message_start',
+          'stream:message_delta',
+        ].includes(n),
+      );
+      expect(streamTransient).toEqual([]);
+      expect(names).toContain('message:assistant');
+    });
+
     it('chat:join callback returns the provided channelId (not internal CLI ID)', async () => {
       const claude = createFakeSummoner().claude();
       const clientId = 'client-join-uuid';

@@ -3,6 +3,7 @@ import {
   BugAntIcon,
   ChatBubbleLeftRightIcon,
   Cog6ToothIcon,
+  CpuChipIcon,
   WrenchScrewdriverIcon,
 } from '@heroicons/react/24/outline';
 import {
@@ -16,7 +17,7 @@ import {
 } from 'react';
 import { usePreferencesStore } from '@/stores/usePreferencesStore';
 
-export type GroupId = 'conversation' | 'tools' | 'system' | 'hooks' | 'debug' | 'other';
+export type GroupId = 'conversation' | 'tools' | 'tasks' | 'system' | 'hooks' | 'debug' | 'other';
 type GroupState = 'all' | 'partial' | 'none';
 
 interface Group {
@@ -31,7 +32,7 @@ export const VISIBILITY_GROUPS: Group[] = [
     id: 'conversation',
     label: 'Conversation',
     icon: ChatBubbleLeftRightIcon,
-    types: ['text', 'thinking', 'redacted_thinking'],
+    types: ['text', 'thinking', 'redacted_thinking', 'assistant_turn'],
   },
   {
     id: 'tools',
@@ -47,13 +48,18 @@ export const VISIBILITY_GROUPS: Group[] = [
     ],
   },
   {
+    id: 'tasks',
+    label: 'Tasks',
+    icon: CpuChipIcon,
+    types: ['task_started'],
+  },
+  {
     id: 'system',
     label: 'System',
     icon: Cog6ToothIcon,
     types: [
       'result',
       'error',
-      'task_started',
       'compact_boundary',
       'rate_limit_event',
       'interrupt',
@@ -161,17 +167,7 @@ export function MessageVisibilityProvider({
     [toggleTypeSet, unknownTypes],
   );
 
-  const toggleType = useCallback(
-    (type: string) => {
-      updateStore((prev) => {
-        const next = new Set(prev);
-        if (next.has(type)) next.delete(type);
-        else next.add(type);
-        return next;
-      });
-    },
-    [updateStore],
-  );
+  const toggleType = useCallback((type: string) => toggleTypeSet([type]), [toggleTypeSet]);
 
   const groupState = useCallback(
     (id: GroupId): GroupState => {

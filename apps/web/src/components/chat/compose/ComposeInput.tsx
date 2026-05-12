@@ -7,12 +7,68 @@ import { type ClipboardEvent, type KeyboardEvent, useEffect, useRef, useState } 
 import { useDebouncedCallback } from 'use-debounce';
 import { slashPaletteState } from '@/components/chat/compose/command-menu/slash-palette-state';
 import { useChannelCompose, useChannelConfig, useChannelMessages } from '@/contexts/channel';
+import { selectIsActive, useChannelStore } from '@/stores/ChannelStoreContext';
 import { cn } from '@/utils/cn';
 import { getMentionQuery, MENTION_REGEX } from '@/utils/slash-query';
 import { sortEntriesDirsFirst } from '@/utils/sort-entries';
+import { ImagePreviewModal } from '../tool-use/ImagePreviewModal.tsx';
 import { MentionDropdown } from './MentionDropdown.tsx';
 
 const DEFAULT_PERMISSION_MODES = ['normal', 'acceptEdits', 'plan', 'bypassPermissions'];
+
+function FileAttachmentChip({
+  file,
+  objectUrl,
+  index,
+  onRemove,
+  onPreview,
+}: {
+  file: File;
+  objectUrl: string;
+  index: number;
+  onRemove: (index: number) => void;
+  onPreview: (src: string, alt: string) => void;
+}) {
+  if (file.type.startsWith('image/')) {
+    return (
+      <div className="relative shrink-0 group">
+        <button
+          type="button"
+          className="block"
+          onClick={() => onPreview(objectUrl, file.name)}
+          aria-label={`Preview ${file.name}`}
+        >
+          <img
+            src={objectUrl}
+            alt={file.name}
+            className="h-12 w-12 object-cover rounded-md border border-border cursor-pointer"
+          />
+        </button>
+        <button
+          type="button"
+          onClick={() => onRemove(index)}
+          className="absolute -top-1 -right-1 bg-surface border border-border rounded-full w-4 h-4 text-xs flex items-center justify-center opacity-0 group-hover:opacity-100 leading-none"
+          aria-label={`Remove ${file.name}`}
+        >
+          ✕
+        </button>
+      </div>
+    );
+  }
+  return (
+    <div className="bg-code-block border border-border rounded-md flex items-center gap-1.5 px-2.5 py-1.5 text-xs shrink-0">
+      <span className="max-w-40 truncate">📄 {file.name}</span>
+      <button
+        type="button"
+        onClick={() => onRemove(index)}
+        className="text-text-muted hover:text-text leading-none"
+        aria-label={`Remove ${file.name}`}
+      >
+        ✕
+      </button>
+    </div>
+  );
+}
 
 type InputHistory = { history: string[]; index: number; draft: string };
 
@@ -61,7 +117,9 @@ export function ComposeInput({
 }): React.JSX.Element {
   const hasMicButton = isSpeechSupported();
   const textareaClass = cn(TEXTAREA_BASE_CLASS, hasMicButton ? 'pr-10' : 'pr-3.5');
-  const { isProcessing, searchFiles, historyMessages } = useChannelMessages();
+  const isProcessing = useChannelStore(selectIsActive);
+  const historyMessages = useChannelStore((s) => s.historyMessages);
+  const { searchFiles } = useChannelMessages();
   const { providerConfig, permissionMode, setPermissionMode } = useChannelConfig();
   const compose = useChannelCompose();
 
@@ -102,6 +160,7 @@ export function ComposeInput({
     historyRef.current.history = historyMessages ?? [];
   }, [historyMessages]);
 
+  const [previewSrc, setPreviewSrc] = useState<{ src: string; alt: string } | null>(null);
   const [fileResults, setFileResults] = useState<FsSearchResult[]>([]);
   const [selectedIndex, setSelectedIndex] = useState(-1);
 
@@ -310,88 +369,90 @@ export function ComposeInput({
   const showMentionDropdown = mentionOpen && hasFileResults;
 
   return (
-    <Popover.Root open={showMentionDropdown}>
-      <Popover.Anchor virtualRef={containerRef as React.RefObject<Element>} />
-      {attachedFiles.length > 0 && (
-        <div className="flex overflow-x-auto gap-1 px-2 pb-1 pt-2">
-          {attachedFiles.map((file, index) => (
-            <div
-              // biome-ignore lint/suspicious/noArrayIndexKey: duplicate filenames allowed; index disambiguates
-              key={`${file.name}-${index}`}
-              className="bg-code-block border border-border rounded-md flex items-center gap-1.5 px-2.5 py-1.5 text-xs shrink-0"
-            >
-              <span className="max-w-40 truncate">📄 {file.name}</span>
-              <button
-                type="button"
-                onClick={() => removeAttachment(index)}
-                className="text-text-muted hover:text-text leading-none"
-                aria-label={`Remove ${file.name}`}
-              >
-                ✕
-              </button>
-            </div>
-          ))}
-        </div>
-      )}
-      <div
-        className="grid max-h-50 overflow-y-auto"
-        role="combobox"
-        tabIndex={-1}
-        aria-haspopup="listbox"
-        aria-expanded={showMentionDropdown}
-        aria-controls={showMentionDropdown ? MENTION_LISTBOX_ID : undefined}
-        aria-autocomplete="list"
-      >
-        <textarea
-          ref={textareaRef}
-          rows={1}
-          value={value}
-          onChange={(e) => handleChange(e.target.value)}
-          onKeyDown={handleKeyDown}
-          onPaste={handlePaste}
-          onSelect={syncCursorPos}
-          onClick={syncCursorPos}
-          placeholder={
-            isProcessing
-              ? 'Queue another message…'
-              : (providerConfig?.brand.placeholder ?? '⌘ Esc to focus or unfocus Claude')
-          }
-          className={textareaClass}
-        />
-        <div className={cn(textareaClass, 'invisible whitespace-pre-wrap')} aria-hidden="true">
-          {`${value}\n`}
-        </div>
-      </div>
-      {showMentionDropdown && (
-        <Popover.Content
-          side="top"
-          align="start"
-          sideOffset={8}
-          avoidCollisions={false}
-          onOpenAutoFocus={(e) => e.preventDefault()}
-          onCloseAutoFocus={(e) => e.preventDefault()}
-          onPointerDownOutside={() => {
-            handleCloseMention();
-            setFileResults([]);
-          }}
-          onFocusOutside={(e) => e.preventDefault()}
-          onEscapeKeyDown={(e) => e.preventDefault()}
-          style={{ width: 'var(--radix-popper-anchor-width)' }}
+    <>
+      <Popover.Root open={showMentionDropdown}>
+        <Popover.Anchor virtualRef={containerRef as React.RefObject<Element>} />
+        {attachedFiles.length > 0 && (
+          <div className="flex overflow-x-auto gap-1 px-2 pb-1 pt-2">
+            {attachedFiles.map(({ id, file, objectUrl }, index) => (
+              <FileAttachmentChip
+                key={id}
+                file={file}
+                objectUrl={objectUrl}
+                index={index}
+                onRemove={removeAttachment}
+                onPreview={(src, alt) => setPreviewSrc({ src, alt })}
+              />
+            ))}
+          </div>
+        )}
+        <div
+          className="grid max-h-50 overflow-y-auto"
+          role="combobox"
+          tabIndex={-1}
+          aria-haspopup="listbox"
+          aria-expanded={showMentionDropdown}
+          aria-controls={showMentionDropdown ? MENTION_LISTBOX_ID : undefined}
+          aria-autocomplete="list"
         >
-          <MentionDropdown
-            id={MENTION_LISTBOX_ID}
-            mentionQuery={mentionQuery ?? ''}
-            filteredSuggestions={[]}
-            fileResults={fileResults}
-            searchStatus={searchStatus}
-            selectedIndex={selectedIndex}
-            hasFileSearch={true}
-            onSelectMention={handleSelectMention}
-            onHover={setSelectedIndex}
-            activeItemRef={scrollActiveIntoView}
+          <textarea
+            ref={textareaRef}
+            rows={1}
+            value={value}
+            onChange={(e) => handleChange(e.target.value)}
+            onKeyDown={handleKeyDown}
+            onPaste={handlePaste}
+            onSelect={syncCursorPos}
+            onClick={syncCursorPos}
+            placeholder={
+              isProcessing
+                ? 'Queue another message…'
+                : (providerConfig?.brand.placeholder ?? '⌘ Esc to focus or unfocus Claude')
+            }
+            className={textareaClass}
           />
-        </Popover.Content>
+          <div className={cn(textareaClass, 'invisible whitespace-pre-wrap')} aria-hidden="true">
+            {`${value}\n`}
+          </div>
+        </div>
+        {showMentionDropdown && (
+          <Popover.Content
+            side="top"
+            align="start"
+            sideOffset={8}
+            avoidCollisions={false}
+            onOpenAutoFocus={(e) => e.preventDefault()}
+            onCloseAutoFocus={(e) => e.preventDefault()}
+            onPointerDownOutside={() => {
+              handleCloseMention();
+              setFileResults([]);
+            }}
+            onFocusOutside={(e) => e.preventDefault()}
+            onEscapeKeyDown={(e) => e.preventDefault()}
+            style={{ width: 'var(--radix-popper-anchor-width)' }}
+          >
+            <MentionDropdown
+              id={MENTION_LISTBOX_ID}
+              mentionQuery={mentionQuery ?? ''}
+              filteredSuggestions={[]}
+              fileResults={fileResults}
+              searchStatus={searchStatus}
+              selectedIndex={selectedIndex}
+              hasFileSearch={true}
+              onSelectMention={handleSelectMention}
+              onHover={setSelectedIndex}
+              activeItemRef={scrollActiveIntoView}
+            />
+          </Popover.Content>
+        )}
+      </Popover.Root>
+      {previewSrc && (
+        <ImagePreviewModal
+          src={previewSrc.src}
+          alt={previewSrc.alt}
+          onClose={() => setPreviewSrc(null)}
+        />
       )}
-    </Popover.Root>
+    </>
   );
 }

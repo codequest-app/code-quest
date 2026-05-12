@@ -128,6 +128,27 @@ describe('ComposeInput', () => {
       expect(screen.queryByLabelText(/^Remove /)).toBeNull();
     });
 
+    it('pasting an image shows a thumbnail <img> instead of filename chip', async () => {
+      vi.stubGlobal('URL', { createObjectURL: vi.fn(() => 'blob:fake'), revokeObjectURL: vi.fn() });
+      await renderWithChannel(<ComposeInput containerRef={containerRef} />);
+      const textarea = screen.getByPlaceholderText(COMPOSE_PLACEHOLDER);
+      const img = new File(['bytes'], 'photo.png', { type: 'image/png' });
+      pasteClipboard(textarea, [{ kind: 'file', type: 'image/png', file: img }]);
+      const thumb = await screen.findByRole('img', { name: 'photo.png' });
+      expect(thumb).toHaveAttribute('src', 'blob:fake');
+    });
+
+    it('clicking the image thumbnail opens preview modal', async () => {
+      vi.stubGlobal('URL', { createObjectURL: vi.fn(() => 'blob:fake'), revokeObjectURL: vi.fn() });
+      await renderWithChannel(<ComposeInput containerRef={containerRef} />);
+      const textarea = screen.getByPlaceholderText(COMPOSE_PLACEHOLDER);
+      const img = new File(['bytes'], 'photo.png', { type: 'image/png' });
+      pasteClipboard(textarea, [{ kind: 'file', type: 'image/png', file: img }]);
+      const thumb = await screen.findByRole('img', { name: 'photo.png' });
+      await userEvent.click(thumb);
+      expect(screen.getByRole('dialog')).toBeInTheDocument();
+    });
+
     it('pasting a non-image file is ignored', async () => {
       await renderWithChannel(<ComposeInput containerRef={containerRef} />);
       const textarea = screen.getByPlaceholderText(COMPOSE_PLACEHOLDER);

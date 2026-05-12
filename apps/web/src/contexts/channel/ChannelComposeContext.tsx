@@ -12,11 +12,17 @@ import {
 import { createMentionFileFeature } from '@/features/mention-file/mention-file-feature';
 import type { FeatureRegistry } from '@/lib/feature-registry';
 import { getMentionQuery, getSlashQuery } from '@/utils/slash-query';
-import { useChannelMessagesActions } from './ChannelMessagesContext.tsx';
+import { useChannelMessages } from './ChannelMessagesContext.tsx';
 import { useChannelId } from './ChannelMetaContext.tsx';
 import { useChannelSocketRouter } from './ChannelSocketRouterContext.tsx';
 import { useFeatureRegistry } from './FeatureRegistryContext.tsx';
 import { composeHandlers } from './handlers/speech.ts';
+
+export interface AttachedFile {
+  id: string;
+  file: File;
+  objectUrl: string;
+}
 
 function toBase64(file: File): Promise<string> {
   return new Promise((resolve, reject) => {
@@ -48,7 +54,7 @@ interface ChannelComposeContextValue {
   executeSlashCommand: (cmd: string) => void;
   mentionFile: () => void;
   registerMentionTrigger: (fn: (value: string, pos: number) => void) => void;
-  attachedFiles: File[];
+  attachedFiles: AttachedFile[];
   addAttachments: (files: File[]) => void;
   removeAttachment: (index: number) => void;
 }
@@ -89,7 +95,7 @@ interface ComposeState {
   cursorPos: number;
   slashOpen: boolean;
   mentionOpen: boolean;
-  attachedFiles: File[];
+  attachedFiles: AttachedFile[];
 }
 
 function insertAtMentionSite(
@@ -222,9 +228,10 @@ function createComposeActions(ctx: ComposeActionCtx) {
       return;
     }
     void Promise.all(
-      files.map(async (f) => {
-        const data = await toBase64(f);
-        return `[Attachment: ${f.name}]\n${data}`;
+      files.map(async ({ file, objectUrl }) => {
+        const data = await toBase64(file);
+        URL.revokeObjectURL(objectUrl);
+        return `[Attachment: ${file.name}]\n${data}`;
       }),
     ).then((parts) => {
       sendMessage(`${trimmed}\n\n${parts.join('\n\n')}`);
@@ -248,12 +255,22 @@ function createComposeActions(ctx: ComposeActionCtx) {
     updateValue,
     setCursorPos: (pos: number) => setState((prev) => ({ ...prev, cursorPos: pos })),
     addAttachments: (files: File[]) =>
-      setState((prev) => ({ ...prev, attachedFiles: [...prev.attachedFiles, ...files] })),
-    removeAttachment: (index: number) =>
       setState((prev) => ({
         ...prev,
-        attachedFiles: prev.attachedFiles.filter((_, i) => i !== index),
+        attachedFiles: [
+          ...prev.attachedFiles,
+          ...files.map((file) => ({
+            id: crypto.randomUUID(),
+            file,
+            objectUrl: URL.createObjectURL(file),
+          })),
+        ],
       })),
+    removeAttachment: (index: number) =>
+      setState((prev) => {
+        URL.revokeObjectURL(prev.attachedFiles[index]?.objectUrl ?? '');
+        return { ...prev, attachedFiles: prev.attachedFiles.filter((_, i) => i !== index) };
+      }),
     ...createSlashActions(ctx, get),
     ...createMentionActions(ctx, get),
   };
@@ -269,7 +286,7 @@ const initialComposeState: ComposeState = {
 
 export function ChannelComposeProvider({ children }: { children: ReactNode }): React.JSX.Element {
   const channelId = useChannelId();
-  const { sendMessage } = useChannelMessagesActions();
+  const { sendMessage } = useChannelMessages();
   const registry = useFeatureRegistry();
   const [state, setState] = useState<ComposeState>(initialComposeState);
   const stateRef = useRef(state);
@@ -283,6 +300,13 @@ export function ChannelComposeProvider({ children }: { children: ReactNode }): R
     if (!channelId) return;
     return router.register(composeHandlers, (fn) => setState(fn));
   }, [channelId, router]);
+
+  // Revoke all objectURLs on unmount
+  useEffect(() => {
+    return () => {
+      for (const { objectUrl } of stateRef.current.attachedFiles) URL.revokeObjectURL(objectUrl);
+    };
+  }, []);
 
   const { value, cursorPos, slashOpen, mentionOpen, attachedFiles } = state;
 

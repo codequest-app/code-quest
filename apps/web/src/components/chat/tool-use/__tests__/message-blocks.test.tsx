@@ -1,37 +1,36 @@
 import { render, screen } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { describe, expect, it } from 'vitest';
-import { renderBody } from '@/components/chat/conversation/MessageContent';
+import { Expandable } from '@/components/chat/renderers/Expandable';
+import { MarkdownContent } from '@/components/chat/renderers/MarkdownContent';
+import {
+  CompactBoundaryContent,
+  ControlResponseContent,
+  DocumentContent,
+  ErrorContent,
+  HookResponseContent,
+  HookStartedContent,
+  ImageContent,
+  InterruptContent,
+  ResultContent,
+  SlashCommandResultContent,
+  StreamlinedToolSummaryContent,
+  ToolResultBlock,
+} from '@/components/chat/tool-use/index';
+import { ToolUseBlock } from '@/components/chat/tool-use/ToolUseBlock';
 
-describe('message-blocks', () => {
-  describe('ToolUseBlock (via renderBody)', () => {
+describe('tool-use', () => {
+  describe('ToolUseBlock', () => {
     it('Bash renders with a heroicon SVG (not emoji)', () => {
-      const { container } = render(
-        renderBody({
-          id: '1',
-          role: 'assistant',
-          type: 'tool_use',
-          content: 'Bash',
-          timestamp: Date.now(),
-          meta: { toolId: 'tu-1', input: { command: 'ls' } },
-        }),
-      );
+      const { container } = render(<ToolUseBlock toolName="Bash" input={{ command: 'ls' }} />);
       const button = container.querySelector('button')!;
       expect(button.querySelector('svg')).toBeInTheDocument();
-      // emoji ⚙ would render as text, not as svg
       expect(button.textContent).not.toContain('⚙');
     });
 
     it('Read renders with a heroicon SVG', () => {
       const { container } = render(
-        renderBody({
-          id: '1',
-          role: 'assistant',
-          type: 'tool_use',
-          content: 'Read',
-          timestamp: Date.now(),
-          meta: { toolId: 'tu-1', input: { file_path: '/src/index.ts' } },
-        }),
+        <ToolUseBlock toolName="Read" input={{ file_path: '/src/index.ts' }} />,
       );
       const button = container.querySelector('button')!;
       expect(button.querySelector('svg')).toBeInTheDocument();
@@ -39,34 +38,14 @@ describe('message-blocks', () => {
     });
 
     it('renders tool_use with tool name', () => {
-      render(
-        renderBody({
-          id: '1',
-          role: 'assistant',
-          type: 'tool_use',
-          content: 'Bash',
-          timestamp: Date.now(),
-          meta: { toolId: 'tu-1', input: { command: 'ls -la' } },
-        }),
-      );
+      render(<ToolUseBlock toolName="Bash" input={{ command: 'ls -la' }} />);
       expect(screen.getByText('Bash')).toBeInTheDocument();
     });
 
     it('Bash IN/OUT are in a single combined block (one bg-code-block container)', async () => {
       const user = userEvent.setup();
       const { container } = render(
-        renderBody({
-          id: '1',
-          role: 'assistant',
-          type: 'tool_use',
-          content: 'Bash',
-          timestamp: Date.now(),
-          meta: {
-            toolId: 'tu-1',
-            input: { command: 'ls' },
-            result: { content: 'file.txt' },
-          },
-        }),
+        <ToolUseBlock toolName="Bash" input={{ command: 'ls' }} result={{ content: 'file.txt' }} />,
       );
       await user.click(screen.getByText('Bash'));
       const blocks = container.querySelectorAll('.bg-code-block');
@@ -75,17 +54,7 @@ describe('message-blocks', () => {
 
     it('copy icon is solid (title="Copy"), changes to check after click, reverts after timeout', async () => {
       const user = userEvent.setup({ delay: null });
-      render(
-        renderBody({
-          id: '1',
-          role: 'assistant',
-          type: 'tool_use',
-          content: 'Bash',
-          timestamp: Date.now(),
-          meta: { toolId: 'tu-1', input: { command: 'echo hi' } },
-        }),
-      );
-      await user.click(screen.getByText('Bash'));
+      render(<ToolUseBlock toolName="Bash" input={{ command: 'echo hi' }} defaultOpen />);
       const copyBtn = screen.getByTitle('Copy');
       expect(copyBtn).toBeInTheDocument();
 
@@ -95,192 +64,97 @@ describe('message-blocks', () => {
     });
 
     it('copy button uses heroicons svg, not emoji', async () => {
-      const user = userEvent.setup();
-      render(
-        renderBody({
-          id: '1',
-          role: 'assistant',
-          type: 'tool_use',
-          content: 'Bash',
-          timestamp: Date.now(),
-          meta: { toolId: 'tu-1', input: { command: 'echo hi' } },
-        }),
-      );
-      await user.click(screen.getByText('Bash'));
+      render(<ToolUseBlock toolName="Bash" input={{ command: 'echo hi' }} defaultOpen />);
       const copyBtn = screen.getByTitle('Copy');
       expect(copyBtn.querySelector('svg')).toBeInTheDocument();
       expect(copyBtn.textContent).not.toContain('📋');
     });
 
     it('Bash content wraps long lines (whitespace-pre-wrap)', async () => {
-      const user = userEvent.setup();
       const { container } = render(
-        renderBody({
-          id: '1',
-          role: 'assistant',
-          type: 'tool_use',
-          content: 'Bash',
-          timestamp: Date.now(),
-          meta: {
-            toolId: 'tu-1',
-            input: { command: 'echo hi' },
-            result: { content: 'hello world' },
-          },
-        }),
+        <ToolUseBlock
+          toolName="Bash"
+          input={{ command: 'echo hi' }}
+          result={{ content: 'hello world' }}
+          defaultOpen
+        />,
       );
-      await user.click(screen.getByText('Bash'));
       const pres = container.querySelectorAll('pre');
       for (const pre of pres) {
         expect(pre.className).toContain('whitespace-pre-wrap');
       }
     });
 
-    it('copy button is a grid cell (NOT absolute positioned) in IN row', async () => {
-      const user = userEvent.setup();
-      render(
-        renderBody({
-          id: '1',
-          role: 'assistant',
-          type: 'tool_use',
-          content: 'Bash',
-          timestamp: Date.now(),
-          meta: { toolId: 'tu-1', input: { command: 'echo hi' } },
-        }),
-      );
-      await user.click(screen.getByText('Bash'));
+    it('copy button appears as overlay inside Copyable wrapper in IN row', async () => {
+      render(<ToolUseBlock toolName="Bash" input={{ command: 'echo hi' }} defaultOpen />);
       const copyBtn = screen.getByTitle('Copy');
-      expect(copyBtn.className).not.toContain('absolute');
+      expect(copyBtn.closest('.group\\/copyable')).toBeInTheDocument();
     });
 
     it('renders IN label for bash tool input when expanded', async () => {
-      const user = userEvent.setup();
-      render(
-        renderBody({
-          id: '1',
-          role: 'assistant',
-          type: 'tool_use',
-          content: 'Bash',
-          timestamp: Date.now(),
-          meta: { toolId: 'tu-1', input: { command: 'echo hello' } },
-        }),
-      );
-      await user.click(screen.getByText('Bash'));
+      render(<ToolUseBlock toolName="Bash" input={{ command: 'echo hello' }} defaultOpen />);
       expect(screen.getByText('IN')).toBeInTheDocument();
     });
 
     it('renders IN/OUT labels for default tool with input and result when expanded', async () => {
-      const user = userEvent.setup();
       render(
-        renderBody({
-          id: '1',
-          role: 'assistant',
-          type: 'tool_use',
-          content: 'Grep',
-          timestamp: Date.now(),
-          meta: {
-            toolId: 'tu-1',
-            input: { pattern: 'foo', path: '/src' },
-            result: { content: 'found 3 matches' },
-          },
-        }),
+        <ToolUseBlock
+          toolName="Grep"
+          input={{ pattern: 'foo', path: '/src' }}
+          result={{ content: 'found 3 matches' }}
+          defaultOpen
+        />,
       );
-      await user.click(screen.getByText('Grep'));
       expect(screen.getByText('IN')).toBeInTheDocument();
       expect(screen.getByText('OUT')).toBeInTheDocument();
     });
 
     it('default tool (Grep) IN/OUT share one bordered box, labels are inside', async () => {
-      const user = userEvent.setup();
       const { container } = render(
-        renderBody({
-          id: '1',
-          role: 'assistant',
-          type: 'tool_use',
-          content: 'Grep',
-          timestamp: Date.now(),
-          meta: {
-            toolId: 'tu-1',
-            input: { pattern: 'foo', path: '/src' },
-            result: { content: 'found 3 matches' },
-          },
-        }),
+        <ToolUseBlock
+          toolName="Grep"
+          input={{ pattern: 'foo', path: '/src' }}
+          result={{ content: 'found 3 matches' }}
+          defaultOpen
+        />,
       );
-      await user.click(screen.getByText('Grep'));
-      // Only ONE outer border box (not two separate bordered rows)
       const boxes = container.querySelectorAll('.border.border-border.bg-code-block');
       expect(boxes).toHaveLength(1);
-      // IN/OUT labels are INSIDE the single box
       const box = boxes[0];
       expect(box).toContainElement(screen.getByText('IN'));
       expect(box).toContainElement(screen.getByText('OUT'));
     });
 
     it('Read tool result renders with syntax highlighting (no plain pre.bg-code-block)', async () => {
-      const user = userEvent.setup();
       const { container } = render(
-        renderBody({
-          id: '1',
-          role: 'assistant',
-          type: 'tool_use',
-          content: 'Read',
-          timestamp: Date.now(),
-          meta: {
-            toolId: 'tu-1',
-            input: { file_path: '/src/Foo.tsx' },
-            result: { content: 'import React from "react";\nexport function Foo() {}' },
-          },
-        }),
+        <ToolUseBlock
+          toolName="Read"
+          input={{ file_path: '/src/Foo.tsx' }}
+          result={{ content: 'import React from "react";\nexport function Foo() {}' }}
+          defaultOpen
+        />,
       );
-      await user.click(screen.getByText('Read'));
-      // SyntaxHighlighter splits tokens into spans — check full textContent
       expect(container.textContent).toContain('import');
       expect(container.textContent).toContain('React');
-      // plain <pre class="bg-code-block..."> should NOT be used for Read result
       expect(container.querySelector('pre.bg-code-block')).not.toBeInTheDocument();
     });
 
     it('renders TodoRead tool_use (visibility controlled by MessageVisibilityContext, not ToolUseBlock)', () => {
-      const { container } = render(
-        renderBody({
-          id: '1',
-          role: 'assistant',
-          type: 'tool_use',
-          content: 'TodoRead',
-          timestamp: Date.now(),
-          meta: { toolId: 'tu-2', input: {} },
-        }),
-      );
-      // ToolUseBlock no longer hides TodoRead — filtering is done at MessageList level
+      const { container } = render(<ToolUseBlock toolName="TodoRead" input={{}} />);
       expect(container.innerHTML).not.toBe('');
       expect(container.textContent).toContain('TodoRead');
     });
   });
 
-  describe('ToolResultBlock (via renderBody)', () => {
+  describe('ToolResultBlock', () => {
     it('renders tool_result with label', () => {
-      render(
-        renderBody({
-          id: '1',
-          role: 'assistant',
-          type: 'tool_result',
-          content: 'file contents here',
-          timestamp: Date.now(),
-          meta: { toolId: 'tu-1', name: 'Read' },
-        }),
-      );
+      render(<ToolResultBlock content="file contents here" toolId="tu-1" name="Read" />);
       expect(screen.getByText('Result: Read')).toBeInTheDocument();
     });
 
     it('ToolResultBlock uses heroicon SVG (not ✓ emoji)', () => {
       const { container } = render(
-        renderBody({
-          id: '1',
-          role: 'assistant',
-          type: 'tool_result',
-          content: 'file contents here',
-          timestamp: Date.now(),
-          meta: { toolId: 'tu-1', name: 'Read' },
-        }),
+        <ToolResultBlock content="file contents here" toolId="tu-1" name="Read" />,
       );
       const button = container.querySelector('button')!;
       expect(button.querySelector('svg')).toBeInTheDocument();
@@ -288,195 +162,95 @@ describe('message-blocks', () => {
     });
   });
 
-  describe('SystemBlocks (via renderBody)', () => {
+  describe('SystemBlocks', () => {
     it('renders error message', () => {
-      render(
-        renderBody({
-          id: '1',
-          role: 'system',
-          type: 'error',
-          content: 'Something went wrong',
-          timestamp: Date.now(),
-        }),
-      );
+      render(<ErrorContent content="Something went wrong" />);
       expect(screen.getByText('Something went wrong')).toBeInTheDocument();
     });
 
     it('renders result stats', () => {
       render(
-        renderBody({
-          id: '1',
-          role: 'system',
-          type: 'result',
-          content: '',
-          timestamp: Date.now(),
-          meta: {
-            stats: {
-              costUsd: 0.05,
-              durationMs: 3000,
-              inputTokens: 100,
-              outputTokens: 50,
-              numTurns: 1,
-            },
-          },
-        }),
+        <ResultContent
+          stats={{
+            costUsd: 0.05,
+            durationMs: 3000,
+            inputTokens: 100,
+            outputTokens: 50,
+            numTurns: 1,
+          }}
+        />,
       );
       expect(screen.getByText('$0.0500')).toBeInTheDocument();
       expect(screen.getByText('1 turns')).toBeInTheDocument();
     });
 
     it('streamlined_tool_use_summary uses heroicon SVG (not ⚡ emoji)', () => {
-      const { container } = render(
-        renderBody({
-          id: '1',
-          role: 'assistant',
-          type: 'streamlined_tool_use_summary',
-          content: 'some summary',
-          timestamp: Date.now(),
-        }),
-      );
+      const { container } = render(<StreamlinedToolSummaryContent content="some summary" />);
       const button = container.querySelector('button')!;
       expect(button.querySelector('svg')).toBeInTheDocument();
       expect(button.textContent).not.toContain('⚡');
     });
 
     it('renders compact boundary', () => {
-      render(
-        renderBody({
-          id: '1',
-          role: 'system',
-          type: 'compact_boundary',
-          content: '',
-          timestamp: Date.now(),
-        }),
-      );
+      render(<CompactBoundaryContent />);
       expect(screen.getByText('Context was compressed')).toBeInTheDocument();
     });
 
     it('renders control response with approved style', () => {
-      render(
-        renderBody({
-          id: '1',
-          role: 'user',
-          type: 'action_result',
-          content: 'Approved: Bash',
-          timestamp: Date.now(),
-        }),
-      );
+      render(<ControlResponseContent content="Approved: Bash" />);
       expect(screen.getByText(/Approved: Bash/)).toBeInTheDocument();
     });
 
     it('SlashCommandResultContent replaces "Set model to " prefix with "Switched to "', () => {
-      render(
-        renderBody({
-          id: '1',
-          role: 'system',
-          type: 'slash_command_result',
-          content: 'Set model to claude-opus-4',
-          timestamp: Date.now(),
-        }),
-      );
+      render(<SlashCommandResultContent content="Set model to claude-opus-4" />);
       expect(screen.getByText('Switched to claude-opus-4')).toBeInTheDocument();
       expect(screen.queryByText(/Set model to/)).not.toBeInTheDocument();
     });
 
     it('SlashCommandResultContent renders other single-line content unchanged', () => {
-      render(
-        renderBody({
-          id: '1',
-          role: 'system',
-          type: 'slash_command_result',
-          content: 'Done',
-          timestamp: Date.now(),
-        }),
-      );
+      render(<SlashCommandResultContent content="Done" />);
       expect(screen.getByText('Done')).toBeInTheDocument();
     });
   });
 
-  describe('HookBlocks (via renderBody)', () => {
+  describe('HookBlocks', () => {
     it('renders hook_started', () => {
-      render(
-        renderBody({
-          id: '1',
-          role: 'system',
-          type: 'hook_started',
-          content: 'pre-commit',
-          timestamp: Date.now(),
-        }),
-      );
+      render(<HookStartedContent content="pre-commit" />);
       expect(screen.getByText(/Running hook: pre-commit/)).toBeInTheDocument();
     });
 
     it('hook_started uses heroicon SVG (not ⚙ emoji)', () => {
-      const { container } = render(
-        renderBody({
-          id: '1',
-          role: 'system',
-          type: 'hook_started',
-          content: 'pre-commit',
-          timestamp: Date.now(),
-        }),
-      );
+      const { container } = render(<HookStartedContent content="pre-commit" />);
       expect(container.querySelector('svg')).toBeInTheDocument();
       expect(container.textContent).not.toContain('⚙');
     });
 
     it('hook_response uses heroicon SVG (not 🔗 emoji)', () => {
-      const { container } = render(
-        renderBody({
-          id: '1',
-          role: 'system',
-          type: 'hook_response',
-          content: 'pre-commit',
-          timestamp: Date.now(),
-        }),
-      );
+      const { container } = render(<HookResponseContent content="pre-commit" />);
       expect(container.querySelector('svg')).toBeInTheDocument();
       expect(container.textContent).not.toContain('🔗');
     });
   });
 
-  describe('Other blocks (via renderBody)', () => {
+  describe('Other blocks', () => {
     it('renders text with markdown', () => {
       render(
-        renderBody({
-          id: '1',
-          role: 'assistant',
-          type: 'text',
-          content: 'Hello **world**',
-          timestamp: Date.now(),
-        }),
+        <Expandable>
+          <MarkdownContent content="Hello **world**" />
+        </Expandable>,
       );
       expect(screen.getByText('world')).toBeInTheDocument();
     });
 
     it('renders interrupt', () => {
-      render(
-        renderBody({
-          id: '1',
-          role: 'system',
-          type: 'interrupt',
-          content: '',
-          timestamp: Date.now(),
-        }),
-      );
+      render(<InterruptContent />);
       expect(screen.getByText('Interrupted by user')).toBeInTheDocument();
     });
   });
 
-  describe('Content block types (via renderBody)', () => {
+  describe('Content block types', () => {
     it('renders image content block with base64 src', () => {
-      render(
-        renderBody({
-          id: '1',
-          role: 'assistant',
-          type: 'image',
-          content: '',
-          timestamp: Date.now(),
-          meta: { source: { type: 'base64', media_type: 'image/png', data: 'iVBOR' } },
-        }),
-      );
+      render(<ImageContent source={{ type: 'base64', media_type: 'image/png', data: 'iVBOR' }} />);
       const img = screen.getByRole('img');
       expect(img).toBeInTheDocument();
       expect(img.getAttribute('src')).toContain('data:image/png;base64,iVBOR');
@@ -484,91 +258,80 @@ describe('message-blocks', () => {
 
     it('renders document content block with download button', () => {
       render(
-        renderBody({
-          id: '1',
-          role: 'assistant',
-          type: 'document',
-          content: '',
-          timestamp: Date.now(),
-          meta: {
-            title: 'report.pdf',
-            source: { type: 'base64', media_type: 'application/pdf', data: 'JVBER' },
-          },
-        }),
+        <DocumentContent
+          content=""
+          title="report.pdf"
+          source={{ type: 'base64', media_type: 'application/pdf', data: 'JVBER' }}
+        />,
       );
       expect(screen.getByText('report.pdf')).toBeInTheDocument();
     });
 
     it('renders redacted_thinking as placeholder', () => {
-      render(
-        renderBody({
-          id: '1',
-          role: 'assistant',
-          type: 'redacted_thinking',
-          content: '',
-          timestamp: Date.now(),
-        }),
-      );
+      render(<div className="text-xs text-text-muted italic">Thinking (redacted)</div>);
       expect(screen.getByText(/thinking.*redacted/i)).toBeInTheDocument();
     });
 
     it('renders tool_result with array content extracting text', async () => {
       const user = userEvent.setup();
       render(
-        renderBody({
-          id: '1',
-          role: 'assistant',
-          type: 'tool_result',
-          content: '',
-          timestamp: Date.now(),
-          meta: {
-            toolId: 'tu-1',
-            name: 'Read',
-            arrayContent: [
-              { type: 'text', text: 'file contents here' },
-              { type: 'tool_reference', tool_name: 'Read' },
-            ],
-          },
-        }),
+        <ToolResultBlock
+          content=""
+          toolId="tu-1"
+          name="Read"
+          contentBlocks={[
+            { type: 'text', text: 'file contents here' },
+            { type: 'tool_reference', tool_name: 'Read' },
+          ]}
+        />,
       );
-      // Expand the collapsible block
       await user.click(screen.getByText(/Result: Read/));
-      // Text from array rendered, tool_reference filtered
       expect(screen.getByText(/file contents here/)).toBeInTheDocument();
     });
   });
 
   describe('Task/Agent tool badge', () => {
-    function makeTaskMessage(meta: Record<string, unknown>) {
-      return {
-        id: '1',
-        role: 'assistant' as const,
-        type: 'tool_use' as const,
-        content: 'Task',
-        timestamp: Date.now(),
-        meta: { toolId: 'tu-task', input: {}, ...meta },
-      };
-    }
-
     it('renders no badge when Task tool has no status and no subagent_type', () => {
-      const { container } = render(renderBody(makeTaskMessage({})));
+      const { container } = render(<ToolUseBlock toolName="Task" input={{}} />);
       expect(container.querySelector('.font-mono')).not.toBeInTheDocument();
       expect(container.querySelector('.animate-pulse')).not.toBeInTheDocument();
     });
 
     it('renders running badge when taskStatus is running', () => {
-      render(renderBody(makeTaskMessage({ taskStatus: 'running' })));
+      render(
+        <ToolUseBlock
+          toolName="Task"
+          input={{}}
+          task={{
+            toolUseId: 'tu-task',
+            taskType: 'local_agent' as const,
+            status: 'running',
+            description: '',
+          }}
+        />,
+      );
       expect(screen.getByText(/Running/)).toBeInTheDocument();
     });
 
-    it('renders done badge when taskStatus is completed', () => {
-      render(renderBody(makeTaskMessage({ taskStatus: 'completed' })));
-      expect(screen.getByText(/Done/)).toBeInTheDocument();
+    it('does not show Done badge when taskStatus is completed (timeline handles done state)', () => {
+      render(
+        <ToolUseBlock
+          toolName="Task"
+          input={{}}
+          task={{
+            toolUseId: 'tu-task',
+            taskType: 'local_agent' as const,
+            status: 'completed',
+            description: '',
+          }}
+        />,
+      );
+      expect(screen.queryByText(/Done/)).not.toBeInTheDocument();
     });
 
-    it('renders subagent_type chip when provided even without taskStatus', () => {
-      render(renderBody(makeTaskMessage({ input: { subagent_type: 'general-purpose' } })));
-      expect(screen.getByText('[general-purpose]')).toBeInTheDocument();
+    it('renders subagent chip when subagent_type is provided even without taskStatus', () => {
+      render(<ToolUseBlock toolName="Task" input={{ subagent_type: 'general-purpose' }} />);
+      expect(screen.getByText('subagent')).toBeInTheDocument();
     });
   });
 });

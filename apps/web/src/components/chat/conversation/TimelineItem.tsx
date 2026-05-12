@@ -28,9 +28,16 @@ export function TimelineItem({
   return (
     <div {...divProps} className={cn('relative pl-7 leading-5', py)}>
       {showDot && (
-        <span className={cn('absolute left-2 top-3 w-2 h-2 rounded-full z-sticky', dotClass)} />
+        <span
+          data-testid="timeline-dot"
+          className={cn('absolute left-2 top-3 w-2 h-2 rounded-full z-sticky', dotClass)}
+        />
       )}
-      <span className={cn('absolute left-3 w-px bg-border', LINE_CLASS[position])} />
+      <span
+        data-testid="timeline-line"
+        aria-hidden={position === 'only' ? 'true' : undefined}
+        className={cn('absolute left-3 w-px bg-border', LINE_CLASS[position])}
+      />
       {children}
     </div>
   );

@@ -6,6 +6,7 @@ import type { DrizzleDb } from './drizzle-types.ts';
 import { extractTextFromRaw, type RawEventStore, type SessionPreview } from './raw-event-store.ts';
 
 const rawEventRowSchema = z.object({
+  id: z.string(),
   sessionId: z.string(),
   dir: z.string(),
   raw: z.string(),
@@ -107,13 +108,13 @@ export class DrizzleRawEventStore implements RawEventStore {
         .select()
         .from(this.table)
         .where(and(eq(this.table.sessionId, sessionId), eq(this.table.dir, 'out')))
-        .orderBy(desc(this.table.seq))
+        .orderBy(desc(this.table.createdAt), desc(this.table.id))
         .limit(10),
       this.db
         .select()
         .from(this.table)
         .where(and(eq(this.table.sessionId, sessionId), eq(this.table.dir, 'in')))
-        .orderBy(asc(this.table.seq))
+        .orderBy(asc(this.table.createdAt), asc(this.table.id))
         .limit(5),
     ]);
 
@@ -149,6 +150,7 @@ export class DrizzleRawEventStore implements RawEventStore {
 
   private getUnionBySession(sessionId: string, deltaTable: typeof this.table) {
     const selectCols = (table: typeof this.table) => ({
+      id: table.id,
       sessionId: table.sessionId,
       dir: table.dir,
       raw: table.raw,
@@ -169,7 +171,7 @@ export class DrizzleRawEventStore implements RawEventStore {
       .from(deltaTable)
       .where(eq(deltaTable.sessionId, sessionId));
 
-    return eventsQ.unionAll(deltasQ).orderBy(asc(this.table.createdAt), asc(this.table.seq));
+    return eventsQ.unionAll(deltasQ).orderBy(asc(this.table.createdAt), asc(this.table.id));
   }
 
   private async getEventsBySession(sessionId: string): Promise<RawEvent[]> {
@@ -177,7 +179,7 @@ export class DrizzleRawEventStore implements RawEventStore {
       .select()
       .from(this.table)
       .where(eq(this.table.sessionId, sessionId))
-      .orderBy(asc(this.table.createdAt), asc(this.table.seq));
+      .orderBy(asc(this.table.createdAt), asc(this.table.id));
 
     return z.array(rawEventRowSchema).parse(rows).map(toRawEvent);
   }
@@ -193,18 +195,18 @@ export class DrizzleRawEventStore implements RawEventStore {
           sql`json_extract(${this.table.raw}, '$.type') = 'user'`,
         ),
       )
-      .orderBy(asc(this.table.seq))
+      .orderBy(asc(this.table.createdAt), asc(this.table.id))
       .limit(1);
     return rows.length > 0;
   }
 
   async *streamBySession(sessionId: string, batchSize: number): AsyncGenerator<RawEvent[]> {
-    let cursor: { createdAt: string; seq: number } | undefined;
+    let cursor: { createdAt: string; id: string } | undefined;
     while (true) {
       const cond = cursor
         ? and(
             eq(this.table.sessionId, sessionId),
-            sql`(${this.table.createdAt}, ${this.table.seq}) > (${cursor.createdAt}, ${cursor.seq})`,
+            sql`(${this.table.createdAt}, ${this.table.id}) > (${cursor.createdAt}, ${cursor.id})`,
           )
         : eq(this.table.sessionId, sessionId);
       const rows = await (
@@ -212,12 +214,12 @@ export class DrizzleRawEventStore implements RawEventStore {
           .select()
           .from(this.table)
           .where(cond)
-          .orderBy(asc(this.table.createdAt), asc(this.table.seq)) as PageableQuery<RawEventRow>
+          .orderBy(asc(this.table.createdAt), asc(this.table.id)) as PageableQuery<RawEventRow>
       ).limit(batchSize);
       const parsed = z.array(rawEventRowSchema).parse(rows);
       if (parsed.length === 0) break;
       const last = parsed.at(-1);
-      if (last) cursor = { createdAt: last.createdAt, seq: last.seq };
+      if (last) cursor = { createdAt: last.createdAt, id: last.id };
       yield parsed.map(toRawEvent);
       if (parsed.length < batchSize) break;
     }

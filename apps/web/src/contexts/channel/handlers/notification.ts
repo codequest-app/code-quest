@@ -28,7 +28,8 @@ function onRawEvent(state: ChannelState, p: Payload<'raw:event'>): ChannelState 
             role: 'assistant',
             type: 'tool_use',
             content: typeof p.data.name === 'string' ? p.data.name : '',
-            meta: { toolId: p.data.id, input: p.data.input },
+            toolId: p.data.id,
+            input: p.data.input,
           }),
         ],
       };
@@ -41,7 +42,7 @@ function onRawEvent(state: ChannelState, p: Payload<'raw:event'>): ChannelState 
             role: 'system',
             type: 'unknown_delta',
             content: `Unknown delta: ${p.data.deltaType}`,
-            meta: { deltaType: p.data.deltaType, data: p.data },
+            data: p.data,
           }),
         ],
       };
@@ -57,7 +58,7 @@ function onRawEvent(state: ChannelState, p: Payload<'raw:event'>): ChannelState 
             role: 'system',
             type: 'raw_event',
             content: `Raw: ${p.rawType}`,
-            meta: { rawType: p.rawType, data: p.data },
+            data: p.data,
           }),
         ],
       };
@@ -101,24 +102,34 @@ function onActionOpenFile(_ctx: EffectContext, p: Payload<'action:open_file'>): 
   toast.info(`Open file: ${p.filePath}${loc}`);
 }
 
+function showInteractiveNotification(
+  ctx: EffectContext,
+  p: Payload<'notification:show'> & { requestId: string },
+): void {
+  showNotificationToast(p.message ?? '', p.severity ?? 'info', p.buttons ?? [], (response) =>
+    channelEmit(ctx.socket, ctx.channelId, EVENTS.chat.respond, {
+      requestId: p.requestId,
+      response,
+    }),
+  );
+}
+
+function showSeverityToast(p: Payload<'notification:show'>): void {
+  const severity = p.severity ?? 'info';
+  const showToast =
+    severity === 'error' ? toast.error : severity === 'warning' ? toast.warning : toast.info;
+  showToast(p.message ?? '');
+}
+
 function onNotificationShowEffect(
   ctx: EffectContext,
   p: Payload<'notification:show'> & { requestId?: string },
 ): void {
-  const severity = p.severity ?? 'info';
-  const reqId = p.requestId;
-  if (p.buttons?.length && reqId) {
-    showNotificationToast(p.message ?? '', severity, p.buttons, (response) =>
-      channelEmit(ctx.socket, ctx.channelId, EVENTS.chat.respond, {
-        requestId: reqId,
-        response,
-      }),
-    );
+  if (p.buttons?.length && p.requestId) {
+    showInteractiveNotification(ctx, { ...p, requestId: p.requestId });
     return;
   }
-  const showToast =
-    severity === 'error' ? toast.error : severity === 'warning' ? toast.warning : toast.info;
-  showToast(p.message ?? '');
+  showSeverityToast(p);
 }
 
 function onRawEventEffect(ctx: EffectContext, p: Payload<'raw:event'>): void {

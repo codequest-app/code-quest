@@ -33,7 +33,6 @@ async function setup(controls: PendingControl[]) {
     controlsRef: makeRef(controls),
     setControls,
     setElicitation: vi.fn(),
-    setDiffReview: vi.fn(),
     setChannelState,
   });
 

@@ -2,12 +2,12 @@ import { segments as s } from '@code-quest/summoner/test';
 import { act, screen } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { describe, expect, it } from 'vitest';
-import { useChannelMessages } from '@/contexts/channel';
+import { useChannelStore } from '@/stores/ChannelStoreContext';
 import { SendButton } from '@/test/helpers';
 import { renderWithChannel } from '@/test/render-with-channel';
 
 function MessagesProbe() {
-  const { messages } = useChannelMessages();
+  const messages = useChannelStore((s) => s.messages);
   const userMsgs = messages.filter((m) => m.role === 'user' && m.type === 'text');
   return (
     <ul aria-label="user-messages">
@@ -28,7 +28,7 @@ function MessagesProbe() {
 
 describe('message:user handler — meta.history propagation', () => {
   function HistoryProbe() {
-    const { messages } = useChannelMessages();
+    const messages = useChannelStore((s) => s.messages);
     const texts = messages.filter((m) => m.role === 'user' && m.type === 'text');
     return (
       <ul>
@@ -37,7 +37,7 @@ describe('message:user handler — meta.history propagation', () => {
             key={m.id}
             role="status"
             aria-label={`text-${i}`}
-            data-history={String((m.meta as { history?: boolean } | undefined)?.history ?? false)}
+            data-history={String(m.type === 'text' && m.history === true)}
           >
             {m.content}
           </li>
@@ -172,5 +172,55 @@ describe('message:user handler — cliUuid (fix-fork-message-uuid)', () => {
     expect(items).toHaveLength(1);
     expect(items[0]!.getAttribute('data-cli-uuid')).toBe('same-uuid');
     expect(items[0]!.getAttribute('data-id')).toBe(idAfterFirst);
+  });
+});
+
+describe('message:user handler — parentToolUseId', () => {
+  function ParentToolUseProbe() {
+    const messages = useChannelStore((s) => s.messages);
+    const userMsgs = messages.filter((m) => m.role === 'user' && m.type === 'text');
+    return (
+      <ul>
+        {userMsgs.map((m, i) => (
+          <li
+            key={m.id}
+            role="status"
+            aria-label={`umsg-${i}`}
+            data-parent-tool-use-id={m.type === 'text' ? (m.parentToolUseId ?? '') : ''}
+          >
+            {m.content}
+          </li>
+        ))}
+      </ul>
+    );
+  }
+
+  it('message:user with parentToolUseId stores it on the message', async () => {
+    const { claude } = await renderWithChannel(<ParentToolUseProbe />);
+    await act(async () => {
+      await claude.emitSegment(
+        JSON.stringify({
+          type: 'user',
+          parent_tool_use_id: 'toolu_agent123',
+          message: { role: 'user', content: [{ type: 'text', text: 'subagent body' }] },
+        }),
+      );
+    });
+    const el = screen.getByRole('status', { name: 'umsg-0' });
+    expect(el.getAttribute('data-parent-tool-use-id')).toBe('toolu_agent123');
+  });
+
+  it('message:user without parentToolUseId leaves it undefined', async () => {
+    const { claude } = await renderWithChannel(<ParentToolUseProbe />);
+    await act(async () => {
+      await claude.emitSegment(
+        JSON.stringify({
+          type: 'user',
+          message: { role: 'user', content: [{ type: 'text', text: 'plain msg' }] },
+        }),
+      );
+    });
+    const el = screen.getByRole('status', { name: 'umsg-0' });
+    expect(el.getAttribute('data-parent-tool-use-id')).toBe('');
   });
 });

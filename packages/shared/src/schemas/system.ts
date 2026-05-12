@@ -12,19 +12,6 @@ export const tokenUsageSchema: z.ZodObject<
 });
 export type TokenUsage = z.infer<typeof tokenUsageSchema>;
 
-export const taskTypeSchema: z.ZodEnum<{
-  local_agent: 'local_agent';
-  subagent: 'subagent';
-}> = z.enum(['local_agent', 'subagent']);
-export type TaskType = z.infer<typeof taskTypeSchema>;
-
-export const taskStatusSchema: z.ZodEnum<{
-  running: 'running';
-  completed: 'completed';
-  failed: 'failed';
-}> = z.enum(['running', 'completed', 'failed']);
-export type TaskStatus = z.infer<typeof taskStatusSchema>;
-
 // ── Model info ──
 
 export const modelInfoSchema: z.ZodObject<
@@ -53,134 +40,7 @@ export const modelInfoSchema: z.ZodObject<
 });
 export type ModelInfo = z.infer<typeof modelInfoSchema>;
 
-// ── Hook info ──
-
-export const hookStartedInfoSchema: z.ZodObject<
-  { hookName: z.ZodString; hookId: z.ZodString; hookEvent: z.ZodString },
-  z.core.$strip
-> = z.object({
-  hookName: z.string(),
-  hookId: z.string(),
-  hookEvent: z.string(),
-});
-export type HookStartedInfo = z.infer<typeof hookStartedInfoSchema>;
-
-export const hookResponseInfoSchema: z.ZodObject<
-  {
-    hookName: z.ZodString;
-    hookId: z.ZodString;
-    hookEvent: z.ZodString;
-    hookEventName: z.ZodOptional<z.ZodString>;
-    output: z.ZodOptional<z.ZodString>;
-    additionalContext: z.ZodOptional<z.ZodString>;
-  },
-  z.core.$strip
-> = z.object({
-  hookName: z.string(),
-  hookId: z.string(),
-  hookEvent: z.string(),
-  hookEventName: z.string().optional(),
-  output: z.string().optional(),
-  additionalContext: z.string().optional(),
-});
-export type HookResponseInfo = z.infer<typeof hookResponseInfoSchema>;
-
 // ── S2C payloads ──
-
-export const systemHookStartedPayloadSchema: z.ZodObject<
-  {
-    channelId: z.ZodString;
-    hook: z.ZodObject<
-      { hookName: z.ZodString; hookId: z.ZodString; hookEvent: z.ZodString },
-      z.core.$strip
-    >;
-  },
-  z.core.$strip
-> = z.object({
-  channelId: z.string(),
-  hook: hookStartedInfoSchema,
-});
-export type SystemHookStartedPayload = z.infer<typeof systemHookStartedPayloadSchema>;
-
-export const systemHookResponsePayloadSchema: z.ZodObject<
-  {
-    channelId: z.ZodString;
-    hook: z.ZodObject<
-      {
-        hookName: z.ZodString;
-        hookId: z.ZodString;
-        hookEvent: z.ZodString;
-        hookEventName: z.ZodOptional<z.ZodString>;
-        output: z.ZodOptional<z.ZodString>;
-        additionalContext: z.ZodOptional<z.ZodString>;
-      },
-      z.core.$strip
-    >;
-  },
-  z.core.$strip
-> = z.object({
-  channelId: z.string(),
-  hook: hookResponseInfoSchema,
-});
-export type SystemHookResponsePayload = z.infer<typeof systemHookResponsePayloadSchema>;
-
-export const systemTaskStartedPayloadSchema: z.ZodObject<
-  {
-    channelId: z.ZodString;
-    description: z.ZodString;
-    taskType: z.ZodOptional<z.ZodEnum<{ local_agent: 'local_agent'; subagent: 'subagent' }>>;
-    toolUseId: z.ZodOptional<z.ZodString>;
-  },
-  z.core.$strip
-> = z.object({
-  channelId: z.string(),
-  description: z.string(),
-  taskType: taskTypeSchema.optional(),
-  toolUseId: z.string().optional(),
-});
-export type SystemTaskStartedPayload = z.infer<typeof systemTaskStartedPayloadSchema>;
-
-export const systemTaskProgressPayloadSchema: z.ZodObject<
-  {
-    channelId: z.ZodString;
-    taskId: z.ZodString;
-    toolUseId: z.ZodOptional<z.ZodString>;
-    description: z.ZodOptional<z.ZodString>;
-    lastToolName: z.ZodOptional<z.ZodString>;
-    usage: z.ZodOptional<typeof tokenUsageSchema>;
-  },
-  z.core.$strip
-> = z.object({
-  channelId: z.string(),
-  taskId: z.string(),
-  toolUseId: z.string().optional(),
-  description: z.string().optional(),
-  lastToolName: z.string().optional(),
-  usage: tokenUsageSchema.optional(),
-});
-export type SystemTaskProgressPayload = z.infer<typeof systemTaskProgressPayloadSchema>;
-
-export const systemTaskNotificationPayloadSchema: z.ZodObject<
-  {
-    channelId: z.ZodString;
-    taskId: z.ZodString;
-    toolUseId: z.ZodOptional<z.ZodString>;
-    status: z.ZodOptional<z.ZodString>;
-    outputFile: z.ZodOptional<z.ZodString>;
-    summary: z.ZodOptional<z.ZodString>;
-    usage: z.ZodOptional<typeof tokenUsageSchema>;
-  },
-  z.core.$strip
-> = z.object({
-  channelId: z.string(),
-  taskId: z.string(),
-  toolUseId: z.string().optional(),
-  status: z.string().optional(),
-  outputFile: z.string().optional(),
-  summary: z.string().optional(),
-  usage: tokenUsageSchema.optional(),
-});
-export type SystemTaskNotificationPayload = z.infer<typeof systemTaskNotificationPayloadSchema>;
 
 export const systemCompactBoundaryPayloadSchema: z.ZodObject<
   { channelId: z.ZodString; preservedSegment: z.ZodOptional<z.ZodBoolean> },
@@ -342,3 +202,12 @@ export const controlHookCallbackPayloadSchema: z.ZodObject<
   toolUseId: z.string().optional(),
 });
 export type ControlHookCallbackPayload = z.infer<typeof controlHookCallbackPayloadSchema>;
+
+export const systemPostTurnSummaryPayloadSchema: z.ZodObject<
+  { channelId: z.ZodString; summary: z.ZodString },
+  z.core.$strip
+> = z.object({
+  channelId: z.string(),
+  summary: z.string(),
+});
+export type SystemPostTurnSummaryPayload = z.infer<typeof systemPostTurnSummaryPayloadSchema>;

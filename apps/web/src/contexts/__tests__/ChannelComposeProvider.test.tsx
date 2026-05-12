@@ -73,9 +73,9 @@ function ComposeTestUI() {
       <button type="button" onClick={compose.closeSlash}>
         CloseSlash
       </button>
-      {compose.attachedFiles.map((f, i) => (
-        <span key={f.name}>
-          {f.name}
+      {compose.attachedFiles.map(({ file }, i) => (
+        <span key={file.name}>
+          {file.name}
           <button type="button" onClick={() => compose.removeAttachment(i)}>
             Remove
           </button>
