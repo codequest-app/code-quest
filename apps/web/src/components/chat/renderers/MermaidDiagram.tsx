@@ -9,7 +9,7 @@ let initializedTheme: string | null = null;
 
 function initializeMermaid(theme: 'dark' | 'default') {
   if (initializedTheme === theme) return;
-  mermaid.initialize({ startOnLoad: false, theme });
+  mermaid.initialize({ startOnLoad: false, theme, securityLevel: 'strict' });
   initializedTheme = theme;
 }
 

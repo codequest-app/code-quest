@@ -23,6 +23,8 @@ export function channelEmit(
  * Promise-based wrapper around socket.emit with callback.
  * Sends a typed event and resolves with the server's callback response.
  */
+const RPC_TIMEOUT_MS = 10_000;
+
 export function rpc<E extends keyof ClientToServerEvents>(
   socket: TypedSocket,
   event: E,
@@ -30,9 +32,13 @@ export function rpc<E extends keyof ClientToServerEvents>(
 ): Promise<
   Parameters<ClientToServerEvents[E]> extends [...infer _P, (res: infer R) => void] ? R : never
 > {
-  return new Promise((resolve) => {
+  return new Promise((resolve, reject) => {
+    const timer = setTimeout(() => reject(new Error(`rpc timeout: ${event}`)), RPC_TIMEOUT_MS);
     // Cast needed: generic rpc() destructures event args at type level but Socket.IO's
     // emit overloads can't express this pattern without an escape hatch.
-    emitDynamic(socket, event, ...args, resolve);
+    emitDynamic(socket, event, ...args, (res: unknown) => {
+      clearTimeout(timer);
+      resolve(res as never);
+    });
   });
 }

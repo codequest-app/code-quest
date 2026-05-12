@@ -18,19 +18,26 @@ import { usePreferencesStore } from './stores/usePreferencesStore.ts';
 import './App.css';
 
 export function App(): React.JSX.Element {
-  const [socket, setSocket] = useState<TypedSocket | null>(() => {
-    const result = createSocket();
-    return result instanceof Promise ? null : result;
-  });
+  const [socket, setSocket] = useState<TypedSocket | null>(null);
   const effectiveColorTheme = useEffectiveColorTheme();
   const fontSize = usePreferencesStore((s) => s.fontSize);
   const density = usePreferencesStore((s) => s.density);
 
   useEffect(() => {
-    if (socket) return;
+    let cancelled = false;
     const result = createSocket();
-    if (result instanceof Promise) result.then(setSocket);
-  }, [socket]);
+    if (result instanceof Promise) {
+      result.then((s) => {
+        if (!cancelled) setSocket(s);
+      });
+    } else {
+      setSocket(result);
+    }
+    return () => {
+      cancelled = true;
+      if (!(result instanceof Promise)) result.disconnect();
+    };
+  }, []);
 
   useEffect(() => {
     const ds = document.documentElement.dataset;

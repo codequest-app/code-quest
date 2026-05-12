@@ -61,6 +61,15 @@ describe('MermaidDiagram', () => {
     expect(await screen.findByText('parse error')).toBeInTheDocument();
   });
 
+  it('initializes mermaid with securityLevel strict', async () => {
+    mockUseEffectiveColorTheme.mockReturnValue('dark');
+    render(<MermaidDiagram code="graph TD; A-->B" />);
+    await vi.waitFor(() => expect(mockMermaid.initialize).toHaveBeenCalled());
+    expect(mockMermaid.initialize).toHaveBeenCalledWith(
+      expect.objectContaining({ securityLevel: 'strict' }),
+    );
+  });
+
   it('uses the same element id when code changes', async () => {
     mockUseEffectiveColorTheme.mockReturnValue('dark');
     const { rerender } = render(<MermaidDiagram code="graph TD; A-->B" />);
