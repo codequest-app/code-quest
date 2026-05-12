@@ -16,7 +16,7 @@ vi.mock('@/hooks/useEffectiveColorTheme', () => ({
 
 import mermaid from 'mermaid';
 import { useEffectiveColorTheme } from '@/hooks/useEffectiveColorTheme';
-import { MermaidDiagram } from '../MermaidDiagram.tsx';
+import { _resetMermaidThemeCache, MermaidDiagram } from '../MermaidDiagram.tsx';
 
 const mockUseEffectiveColorTheme = vi.mocked(useEffectiveColorTheme);
 const mockMermaid = vi.mocked(mermaid);
@@ -24,6 +24,7 @@ const mockMermaid = vi.mocked(mermaid);
 describe('MermaidDiagram', () => {
   beforeEach(() => {
     vi.clearAllMocks();
+    _resetMermaidThemeCache();
     mockMermaid.render.mockResolvedValue({
       svg: '<svg><text>diagram</text></svg>',
       diagramType: 'flowchart',

@@ -26,6 +26,12 @@ beforeEach(() => {
 
 afterEach(() => {
   cleanup();
+  // Radix Dialog sets pointer-events:none on body while open. Clear it after
+  // cleanup so it doesn't bleed into the next file when shuffle is on.
+  document.body.style.pointerEvents = '';
+  // Restore all vi.spyOn mocks so prototype spies (e.g. scrollHeight in
+  // Expandable tests) don't bleed into subsequent files when shuffle is on.
+  vi.restoreAllMocks();
 });
 
 vi.mock('@iconify/react', async () => {

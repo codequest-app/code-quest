@@ -13,6 +13,11 @@ function initializeMermaid(theme: 'dark' | 'default') {
   initializedTheme = theme;
 }
 
+/** Reset the module-level theme cache. Only for use in tests. */
+export function _resetMermaidThemeCache(): void {
+  initializedTheme = null;
+}
+
 export function MermaidDiagram({ code }: { code: string }): React.JSX.Element | null {
   const idRef = useRef(`mermaid-${crypto.randomUUID()}`);
   const containerRef = useRef<HTMLDivElement>(null);

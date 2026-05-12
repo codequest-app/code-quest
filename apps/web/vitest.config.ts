@@ -35,9 +35,37 @@ export default defineConfig({
       // This is a known happy-dom behaviour, not a test or application bug.
       if (error instanceof DOMException && error.name === 'AbortError') return 'skip';
     },
-    pool: 'threads',
+    projects: [
+      {
+        // Pure logic / hooks — no DOM rendering. isolate:false shares the
+        // module cache across files within a worker, so collect only loads
+        // the module graph once per worker instead of once per file.
+        extends: true,
+        test: {
+          name: 'unit',
+          include: ['src/**/*.test.ts'],
+          pool: 'threads',
+          poolOptions: {
+            threads: { isolate: false, maxThreads: 2, minThreads: 2 },
+          },
+        },
+      },
+      {
+        // React component tests — singleFork runs all files in one process so
+        // Vite's transform cache stays warm (fast collect). isolate:true (default)
+        // resets the module registry per file, so vi.mock() never leaks across files.
+        extends: true,
+        test: {
+          name: 'component',
+          include: ['src/**/*.test.tsx'],
+          pool: 'forks',
+          poolOptions: {
+            forks: { singleFork: true },
+          },
+        },
+      },
+    ],
     passWithNoTests: false,
-    include: ['src/**/*.test.{ts,tsx}'],
     exclude: ['node_modules', 'dist'],
   },
 });
