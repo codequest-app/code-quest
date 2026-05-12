@@ -8,7 +8,6 @@ const levels: Record<ObfuscationLevel, object> = {
     controlFlowFlattening: true,
     controlFlowFlatteningThreshold: 0.5,
     stringArray: true,
-    stringArrayEncoding: ['rc4'],
     stringArrayThreshold: 0.5,
   },
   medium: {
@@ -17,7 +16,6 @@ const levels: Record<ObfuscationLevel, object> = {
     controlFlowFlattening: true,
     controlFlowFlatteningThreshold: 0.75,
     stringArray: true,
-    stringArrayEncoding: ['rc4'],
     stringArrayThreshold: 0.75,
     stringArrayRotate: true,
     stringArrayShuffle: true,
@@ -26,7 +24,6 @@ const levels: Record<ObfuscationLevel, object> = {
     identifierNamesGenerator: 'hexadecimal',
     selfDefending: true,
     transformObjectKeys: true,
-    unicodeEscapeSequence: true,
   },
   get high() {
     return {
