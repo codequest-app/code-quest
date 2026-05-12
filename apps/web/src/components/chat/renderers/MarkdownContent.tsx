@@ -4,6 +4,7 @@ import Markdown, { type Components } from 'react-markdown';
 import remarkGfm from 'remark-gfm';
 import { copyToClipboard } from '@/utils/clipboard';
 import { Highlight } from './Highlight.tsx';
+import { Pre } from './Pre.tsx';
 
 const MermaidDiagram = lazy(() =>
   import('./MermaidDiagram.tsx').then((m) => ({ default: m.MermaidDiagram })),
@@ -56,7 +57,7 @@ const components: Components = {
     // a CodeBlock (which owns its own <pre> layout + copy button).
     // Pass it through untouched to avoid double wrappers + duplicate copy.
     if (isElementWithLanguageClass(children)) return <>{children}</>;
-    return <pre className="whitespace-pre-wrap font-mono text-xs">{children}</pre>;
+    return <Pre>{children}</Pre>;
   },
   a({ href, children }) {
     return (

@@ -80,8 +80,10 @@ export const NodeContent: React.MemoExoticComponent<
 }: NodeContentProps): React.JSX.Element | null {
   const isUser = message.role === 'user';
   const toolId = getToolId(message);
-  const task = useChannelStore((s) => (toolId ? s.tasks.get(toolId) : undefined));
-  const result = useChannelStore((s) => (toolId ? s.results.get(toolId) : undefined));
+  const { task, result } = useChannelStore((s) => ({
+    task: toolId ? s.tasks.get(toolId) : undefined,
+    result: toolId ? s.results.get(toolId) : undefined,
+  }));
   const children = toolId && childrenIndex ? childrenIndex.get(toolId) : undefined;
 
   const body = renderContent(message, task, result, onDiffRespond, isLastTurn);

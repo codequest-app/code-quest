@@ -17,7 +17,7 @@ import {
   useMessageVisibility,
 } from '@/contexts/channel';
 import { findStreamingTurn } from '@/contexts/channel/handlers/streaming';
-import { useChannelStore } from '@/stores/ChannelStoreContext';
+import { selectIsActive, useChannelStore } from '@/stores/ChannelStoreContext';
 import type { ForkFn, Message, RewindFn } from '@/types/ui';
 import { NO_FORM } from '@/utils/hotkey-options';
 import { isMessageVisible } from '@/utils/isMessageVisible';
@@ -176,9 +176,7 @@ export const MessageList: React.ForwardRefExoticComponent<
 ) {
   const channelId = useChannelId();
   const messages = useChannelStore((s) => s.messages);
-  const isProcessing = useChannelStore(
-    (s) => s.status === 'processing' || s.status === 'busy' || s.status === 'cancelling',
-  );
+  const isProcessing = useChannelStore(selectIsActive);
   const statusText = useChannelStore((s) => s.statusText);
   const taskProgressText = useChannelStore((s) => {
     for (const task of s.tasks.values()) {

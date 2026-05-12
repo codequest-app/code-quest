@@ -14,8 +14,10 @@ function ToolUseBlockWithStore({
   isLastTurn?: boolean;
 }): React.JSX.Element {
   const toolId = block.toolId ?? '';
-  const task = useChannelStore((s) => s.tasks.get(toolId));
-  const result = useChannelStore((s) => s.results.get(toolId));
+  const { task, result } = useChannelStore((s) => ({
+    task: s.tasks.get(toolId),
+    result: s.results.get(toolId),
+  }));
   return (
     <ToolUseBlock
       toolName={block.content}

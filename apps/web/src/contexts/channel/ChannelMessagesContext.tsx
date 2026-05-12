@@ -228,10 +228,7 @@ export function ChannelMessagesProvider({
 
   const setChannelState: SetChannelState = useCallback(
     (action) => {
-      useChannelsStore.getState().setChannelState(channelId, (prev) => {
-        const next = typeof action === 'function' ? action(prev) : action;
-        return next;
-      });
+      useChannelsStore.getState().setChannelState(channelId, action);
     },
     [channelId],
   );

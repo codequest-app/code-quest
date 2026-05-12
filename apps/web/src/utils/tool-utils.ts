@@ -138,15 +138,21 @@ function flushPending(pending: Message[]): TimelineRun[] {
 }
 
 export function splitTimelineRuns(messages: Message[]): TimelineRun[] {
-  type Acc = { runs: TimelineRun[]; pending: Message[] };
-  const { runs, pending } = messages.reduce<Acc>(
-    ({ runs, pending }, message) => {
-      if (isToolUseMessage(message)) return { runs, pending: [...pending, message] };
-      return { runs: [...runs, ...flushPending(pending), { kind: 'solo', message }], pending: [] };
-    },
-    { runs: [], pending: [] },
-  );
-  return [...runs, ...flushPending(pending)];
+  const runs: TimelineRun[] = [];
+  const pending: Message[] = [];
+  for (const message of messages) {
+    if (isToolUseMessage(message)) {
+      pending.push(message);
+    } else {
+      if (pending.length > 0) {
+        runs.push(...flushPending(pending));
+        pending.length = 0;
+      }
+      runs.push({ kind: 'solo', message });
+    }
+  }
+  if (pending.length > 0) runs.push(...flushPending(pending));
+  return runs;
 }
 
 function stringInput(

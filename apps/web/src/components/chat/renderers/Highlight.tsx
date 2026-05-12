@@ -2,6 +2,7 @@ import { Prism as SyntaxHighlighter } from 'react-syntax-highlighter';
 import { oneLight, vscDarkPlus } from 'react-syntax-highlighter/dist/esm/styles/prism';
 import { useEffectiveColorTheme } from '@/hooks/useEffectiveColorTheme';
 import { langFromPath } from '@/utils/lang-from-path';
+import { Pre } from './Pre.tsx';
 
 interface HighlightProps {
   children: string;
@@ -22,7 +23,7 @@ export function Highlight({
   const resolvedLang = lang ?? (filePath ? langFromPath(filePath) : undefined);
 
   if (!resolvedLang) {
-    return <pre className="whitespace-pre-wrap font-mono text-xs">{children}</pre>;
+    return <Pre>{children}</Pre>;
   }
 
   return (
