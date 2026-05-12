@@ -24,8 +24,6 @@ export class PathOutsideRootsError extends Error {
 }
 
 export interface FilesystemService {
-  /** Returns true when path is within the configured fs roots (or no roots are configured). */
-  isWithinRoots(path: string): boolean;
   browseDirectories(path?: string): Promise<DirectoryEntry[]>;
   browseEntries(
     path?: string,

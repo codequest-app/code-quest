@@ -69,11 +69,6 @@ export class LocalFilesystemService implements FilesystemService {
     this.fsImpl = fsImpl;
   }
 
-  isWithinRoots(path: string): boolean {
-    if (this.fsRoots.length === 0) return true;
-    return this.rootGuard.isWithinRoots(path);
-  }
-
   async browseDirectories(path?: string): Promise<DirectoryEntry[]> {
     if (!path) {
       return this.fsRoots.map(toRootEntry);

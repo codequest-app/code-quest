@@ -67,12 +67,6 @@ export class FakeFilesystemService implements FilesystemService {
 
   // ── FilesystemService interface ──
 
-  isWithinRoots(path: string): boolean {
-    const roots = this.rootGuard.getRoots();
-    if (roots.length === 0) return true;
-    return this.rootGuard.isWithinRoots(path);
-  }
-
   async browseDirectories(path?: string): Promise<DirectoryEntry[]> {
     if (!path) {
       return this.rootGuard.getRoots().map((r) => ({ name: basename(r), path: r }));
