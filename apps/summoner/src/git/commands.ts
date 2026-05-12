@@ -1,5 +1,5 @@
 import { readFile } from 'node:fs/promises';
-import { isAbsolute, relative, resolve, sep } from 'node:path';
+import { isAbsolute, resolve, sep } from 'node:path';
 import type { GitDiffResult, GitLogResult, GitStatusResult } from '@code-quest/shared';
 import type { SimpleGit } from 'simple-git';
 import { logger } from '../logger.ts';
@@ -62,11 +62,7 @@ export class GitCommands {
       return { diff: await git.diff() };
     }
     if (status === GIT_STATUS_UNTRACKED) {
-      const resolvedCwd = resolve(cwd);
-      const absolute = resolve(resolvedCwd, filePath);
-      if (relative(resolvedCwd, absolute).startsWith('..')) {
-        return { diff: '' };
-      }
+      const absolute = resolve(cwd, filePath);
       const content = await readFile(absolute, 'utf-8').catch(() => '');
       return { diff: toPseudoDiff(filePath, content) };
     }
