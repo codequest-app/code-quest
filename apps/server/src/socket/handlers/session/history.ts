@@ -141,9 +141,7 @@ export class SessionHistory {
     return this.rawEventService.getPreview(sessionId);
   }
 
-  async getRawEvents(
-    channelId: string,
-  ): Promise<Array<{ direction: string; seq: number; raw: string }>> {
+  async getRawEvents(channelId: string): Promise<Array<{ direction: string; raw: string }>> {
     const sessionId = await this.resolveSessionId(channelId);
     return this.rawEventService.getBySession(sessionId);
   }

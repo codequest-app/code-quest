@@ -3,7 +3,6 @@ export interface RawDeltaEntry {
   sessionId: string;
   direction: 'in' | 'out' | 'err';
   raw: string;
-  seq: number;
   timestamp: number;
 }
 

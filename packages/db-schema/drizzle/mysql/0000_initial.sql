@@ -16,7 +16,6 @@ CREATE TABLE `raw_deltas` (
 	`session_id` varchar(36) NOT NULL,
 	`dir` varchar(10) NOT NULL,
 	`raw` mediumtext NOT NULL,
-	`seq` int NOT NULL DEFAULT 0,
 	`created_at` varchar(30) NOT NULL,
 	CONSTRAINT `raw_deltas_id` PRIMARY KEY(`id`)
 );
@@ -26,7 +25,6 @@ CREATE TABLE `raw_events` (
 	`session_id` varchar(36) NOT NULL,
 	`dir` varchar(10) NOT NULL,
 	`raw` mediumtext NOT NULL,
-	`seq` int NOT NULL DEFAULT 0,
 	`created_at` varchar(30) NOT NULL,
 	CONSTRAINT `raw_events_id` PRIMARY KEY(`id`)
 );
@@ -56,8 +54,7 @@ CREATE TABLE `settings` (
 );
 --> statement-breakpoint
 CREATE INDEX `idx_projects_pinned_last_opened` ON `projects` (`pinned`,`last_opened_at`);--> statement-breakpoint
-CREATE INDEX `idx_raw_deltas_session_seq` ON `raw_deltas` (`session_id`,`seq`);--> statement-breakpoint
+CREATE INDEX `idx_raw_deltas_session_created_id` ON `raw_deltas` (`session_id`,`created_at`,`id`);--> statement-breakpoint
 CREATE INDEX `idx_raw_deltas_parent` ON `raw_deltas` (`parent_id`);--> statement-breakpoint
-CREATE INDEX `idx_raw_events_session_created` ON `raw_events` (`session_id`,`created_at`,`seq`);--> statement-breakpoint
-CREATE INDEX `idx_raw_events_session_dir_seq` ON `raw_events` (`session_id`,`dir`,`seq`);--> statement-breakpoint
+CREATE INDEX `idx_raw_events_session_created_id` ON `raw_events` (`session_id`,`created_at`,`id`);--> statement-breakpoint
 CREATE INDEX `idx_sessions_channel_id` ON `sessions` (`channel_id`);

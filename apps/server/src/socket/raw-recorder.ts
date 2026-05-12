@@ -8,7 +8,6 @@ interface PendingEvent {
   raw: string;
   direction: 'in' | 'out' | 'err';
   timestamp: number;
-  seq: number;
 }
 
 function isUserStdin(raw: string, direction: 'in' | 'out' | 'err'): boolean {
@@ -37,7 +36,6 @@ export class RawRecorder {
 
   wire(channel: Channel): void {
     const { runner } = channel;
-    let seqCounter = 0;
     let currentTurnRootId: string | null = null;
     let pendingDropWarned = false;
     const pendingEvents: PendingEvent[] = [];
@@ -50,7 +48,6 @@ export class RawRecorder {
           sessionId,
           direction: pending.direction,
           raw: pending.raw,
-          seq: pending.seq,
           timestamp: pending.timestamp,
         });
         return;
@@ -62,7 +59,6 @@ export class RawRecorder {
         sessionId,
         direction: pending.direction,
         raw: pending.raw,
-        seq: pending.seq,
         timestamp: pending.timestamp,
       });
       if (isUserStdin(pending.raw, pending.direction)) {
@@ -94,11 +90,11 @@ export class RawRecorder {
             );
           }
         }
-        pendingEvents.push({ raw, direction, timestamp: Date.now(), seq: seqCounter++ });
+        pendingEvents.push({ raw, direction, timestamp: Date.now() });
         return;
       }
-      const next: PendingEvent = { raw, direction, timestamp: Date.now(), seq: seqCounter++ };
-      // Chain so buffered events flush before this one appends (preserves seq order in DB).
+      const next: PendingEvent = { raw, direction, timestamp: Date.now() };
+      // Chain so buffered events flush before this one appends.
       const flush = pendingEvents.length > 0 ? flushPending(sessionId) : Promise.resolve();
       void flush
         .then(() => persistOne(next, sessionId))

@@ -12,13 +12,11 @@ export const rawEventSchema: z.ZodObject<{
   sessionId: z.ZodString;
   direction: z.ZodEnum<{ in: 'in'; out: 'out'; err: 'err' }>;
   raw: z.ZodString;
-  seq: z.ZodNumber;
 }> = z.object({
   timestamp: z.number(),
   sessionId: z.string(),
   direction: z.enum(['in', 'out', 'err']),
   raw: z.string(),
-  seq: z.number(),
 });
 
 export type RawEvent = z.infer<typeof rawEventSchema>;

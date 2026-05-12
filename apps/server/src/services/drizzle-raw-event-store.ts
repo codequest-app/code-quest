@@ -10,7 +10,6 @@ const rawEventRowSchema = z.object({
   sessionId: z.string(),
   dir: z.string(),
   raw: z.string(),
-  seq: z.number(),
   createdAt: z.string(),
 });
 
@@ -23,7 +22,6 @@ interface RawEventsTable {
   sessionId: Column;
   dir: Column;
   raw: Column;
-  seq: Column;
   createdAt: Column;
 }
 
@@ -33,7 +31,6 @@ interface RawDeltasTable {
   sessionId: Column;
   dir: Column;
   raw: Column;
-  seq: Column;
   createdAt: Column;
 }
 
@@ -69,7 +66,6 @@ function toRawEvent(row: RawEventRow): RawEvent {
     sessionId: row.sessionId,
     direction: directionSchema.parse(row.dir),
     raw: row.raw,
-    seq: row.seq,
   };
 }
 
@@ -95,7 +91,6 @@ export class DrizzleRawEventStore implements RawEventStore {
       sessionId: event.sessionId,
       dir: event.direction,
       raw: event.raw,
-      seq: event.seq,
       createdAt: new Date(event.timestamp).toISOString(),
     });
     return rowId;
@@ -136,7 +131,6 @@ export class DrizzleRawEventStore implements RawEventStore {
       sessionId: toSessionId,
       dir: row.direction,
       raw: row.raw,
-      seq: i + 1,
       createdAt: new Date(row.timestamp).toISOString(),
     }));
     await this.db.insert(this.table).values(values);
@@ -154,7 +148,6 @@ export class DrizzleRawEventStore implements RawEventStore {
       sessionId: table.sessionId,
       dir: table.dir,
       raw: table.raw,
-      seq: table.seq,
       createdAt: table.createdAt,
     });
 

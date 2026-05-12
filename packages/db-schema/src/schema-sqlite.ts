@@ -34,12 +34,10 @@ export const rawEvents = sqliteTable(
     sessionId: text('session_id').notNull(),
     dir: text('dir').notNull(),
     raw: text('raw').notNull(),
-    seq: integer('seq').notNull().default(0),
     createdAt: text('created_at').notNull(),
   },
   (table) => [
-    index('idx_raw_events_session_created').on(table.sessionId, table.createdAt, table.seq),
-    index('idx_raw_events_session_dir_seq').on(table.sessionId, table.dir, table.seq),
+    index('idx_raw_events_session_created_id').on(table.sessionId, table.createdAt, table.id),
   ],
 );
 
@@ -51,11 +49,10 @@ export const rawDeltas = sqliteTable(
     sessionId: text('session_id').notNull(),
     dir: text('dir').notNull(),
     raw: text('raw').notNull(),
-    seq: integer('seq').notNull().default(0),
     createdAt: text('created_at').notNull(),
   },
   (table) => [
-    index('idx_raw_deltas_session_seq').on(table.sessionId, table.seq),
+    index('idx_raw_deltas_session_created_id').on(table.sessionId, table.createdAt, table.id),
     index('idx_raw_deltas_parent').on(table.parentId),
   ],
 );

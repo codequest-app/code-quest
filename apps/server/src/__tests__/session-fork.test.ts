@@ -292,14 +292,12 @@ describe('session:fork argv + sessionId + clone (fix-fork-resume-sessionid)', ()
       sessionId: 'sess-clone-parent',
       direction: 'in',
       raw: 'raw-A',
-      seq: 0,
     });
     await rawStore.appendEvent({
       timestamp: Date.now() + 1,
       sessionId: 'sess-clone-parent',
       direction: 'out',
       raw: 'raw-B',
-      seq: 1,
     });
 
     const forkClaude = summoner.claude();

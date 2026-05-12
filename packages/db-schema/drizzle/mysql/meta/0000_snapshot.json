@@ -1,8 +1,8 @@
 {
   "version": "5",
   "dialect": "mysql",
-  "id": "04cf26b6-7bab-40e2-9de5-99f632f1b780",
-  "prevId": "00000000-0000-0000-0000-000000000000",
+  "id": "c53adf02-df78-4120-b1c1-50697104c5e8",
+  "prevId": "04cf26b6-7bab-40e2-9de5-99f632f1b780",
   "tables": {
     "projects": {
       "name": "projects",
@@ -118,14 +118,6 @@
           "notNull": true,
           "autoincrement": false
         },
-        "seq": {
-          "name": "seq",
-          "type": "int",
-          "primaryKey": false,
-          "notNull": true,
-          "autoincrement": false,
-          "default": 0
-        },
         "created_at": {
           "name": "created_at",
           "type": "varchar(30)",
@@ -135,9 +127,9 @@
         }
       },
       "indexes": {
-        "idx_raw_deltas_session_seq": {
-          "name": "idx_raw_deltas_session_seq",
-          "columns": ["session_id", "seq"],
+        "idx_raw_deltas_session_created_id": {
+          "name": "idx_raw_deltas_session_created_id",
+          "columns": ["session_id", "created_at", "id"],
           "isUnique": false
         },
         "idx_raw_deltas_parent": {
@@ -187,14 +179,6 @@
           "notNull": true,
           "autoincrement": false
         },
-        "seq": {
-          "name": "seq",
-          "type": "int",
-          "primaryKey": false,
-          "notNull": true,
-          "autoincrement": false,
-          "default": 0
-        },
         "created_at": {
           "name": "created_at",
           "type": "varchar(30)",
@@ -204,14 +188,9 @@
         }
       },
       "indexes": {
-        "idx_raw_events_session_created": {
-          "name": "idx_raw_events_session_created",
-          "columns": ["session_id", "created_at", "seq"],
-          "isUnique": false
-        },
-        "idx_raw_events_session_dir_seq": {
-          "name": "idx_raw_events_session_dir_seq",
-          "columns": ["session_id", "dir", "seq"],
+        "idx_raw_events_session_created_id": {
+          "name": "idx_raw_events_session_created_id",
+          "columns": ["session_id", "created_at", "id"],
           "isUnique": false
         }
       },

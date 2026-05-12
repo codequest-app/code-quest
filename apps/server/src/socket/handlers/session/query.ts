@@ -15,20 +15,16 @@ import { err, ok } from '../../utils/rpc.ts';
 
 const rawJsonSchema = z.record(z.string(), z.unknown());
 
-function parseRawEventEntry(e: {
-  direction: string;
-  seq: number;
-  raw: string;
-}): Record<string, unknown> {
+function parseRawEventEntry(e: { direction: string; raw: string }): Record<string, unknown> {
   try {
     const parsed = rawJsonSchema.safeParse(JSON.parse(e.raw));
     if (parsed.success) {
-      return { direction: e.direction, seq: e.seq, ...parsed.data };
+      return { direction: e.direction, ...parsed.data };
     }
   } catch (err) {
     logger.debug({ err }, 'Failed to parse raw event JSON');
   }
-  return { direction: e.direction, seq: e.seq, raw: e.raw };
+  return { direction: e.direction, raw: e.raw };
 }
 
 export function create({

@@ -150,7 +150,6 @@ export function create({
         sessionId: await sessionHistory.resolveSessionId(ch.channelId),
         direction: 'out',
         raw: JSON.stringify({ type: 'teleport-skipped-branch', branch, failed }),
-        seq: 0,
       };
       await rawEventService.appendEvent(event);
       callback?.(ok({}));

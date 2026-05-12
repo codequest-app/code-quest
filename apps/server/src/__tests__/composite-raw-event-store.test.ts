@@ -49,7 +49,6 @@ describe('CompositeRawEventStore', () => {
       sessionId: 'sess-1',
       direction: 'out',
       raw: 'hello',
-      seq: 0,
     };
 
     await composite.append(event);
@@ -66,7 +65,6 @@ describe('CompositeRawEventStore', () => {
       sessionId: 'sess-1',
       direction: 'out',
       raw: 'data',
-      seq: 0,
     };
 
     await composite.append(event);
@@ -97,7 +95,6 @@ describe('CompositeRawEventStore', () => {
       sessionId: 'sess-1',
       direction: 'out',
       raw: 'test',
-      seq: 0,
     };
 
     await expect(composite.append(event)).rejects.toThrow();
@@ -116,7 +113,6 @@ describe('CompositeRawEventStore', () => {
       sessionId: 'sess-1',
       direction: 'out',
       raw: 'test',
-      seq: 0,
     };
 
     await composite.append(event);
@@ -142,7 +138,6 @@ describe('CompositeRawEventStore', () => {
       sessionId: 'sess',
       direction: 'out',
       raw: 'x',
-      seq: 0,
     };
 
     const returnedId = await composite.append(event);
@@ -196,7 +191,6 @@ describe('CompositeRawEventStore', () => {
       sessionId: 'sess',
       direction: 'out',
       raw: 'x',
-      seq: 0,
     };
     const id = await composite.append(event, 'caller-supplied-id');
     expect(id).toBe('caller-supplied-id');

@@ -1,7 +1,6 @@
 import {
   boolean,
   index,
-  int,
   mediumtext,
   mysqlTable,
   primaryKey,
@@ -43,12 +42,10 @@ export const rawEvents = mysqlTable(
     sessionId: varchar('session_id', { length: 36 }).notNull(),
     dir: varchar('dir', { length: 10 }).notNull(),
     raw: mediumtext('raw').notNull(),
-    seq: int('seq').notNull().default(0),
     createdAt: varchar('created_at', { length: 30 }).notNull(),
   },
   (table) => [
-    index('idx_raw_events_session_created').on(table.sessionId, table.createdAt, table.seq),
-    index('idx_raw_events_session_dir_seq').on(table.sessionId, table.dir, table.seq),
+    index('idx_raw_events_session_created_id').on(table.sessionId, table.createdAt, table.id),
   ],
 );
 
@@ -60,11 +57,10 @@ export const rawDeltas = mysqlTable(
     sessionId: varchar('session_id', { length: 36 }).notNull(),
     dir: varchar('dir', { length: 10 }).notNull(),
     raw: mediumtext('raw').notNull(),
-    seq: int('seq').notNull().default(0),
     createdAt: varchar('created_at', { length: 30 }).notNull(),
   },
   (table) => [
-    index('idx_raw_deltas_session_seq').on(table.sessionId, table.seq),
+    index('idx_raw_deltas_session_created_id').on(table.sessionId, table.createdAt, table.id),
     index('idx_raw_deltas_parent').on(table.parentId),
   ],
 );

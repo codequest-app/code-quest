@@ -16,23 +16,20 @@ CREATE TABLE `raw_deltas` (
 	`session_id` text NOT NULL,
 	`dir` text NOT NULL,
 	`raw` text NOT NULL,
-	`seq` integer DEFAULT 0 NOT NULL,
 	`created_at` text NOT NULL
 );
 --> statement-breakpoint
-CREATE INDEX `idx_raw_deltas_session_seq` ON `raw_deltas` (`session_id`,`seq`);--> statement-breakpoint
+CREATE INDEX `idx_raw_deltas_session_created_id` ON `raw_deltas` (`session_id`,`created_at`,`id`);--> statement-breakpoint
 CREATE INDEX `idx_raw_deltas_parent` ON `raw_deltas` (`parent_id`);--> statement-breakpoint
 CREATE TABLE `raw_events` (
 	`id` text PRIMARY KEY NOT NULL,
 	`session_id` text NOT NULL,
 	`dir` text NOT NULL,
 	`raw` text NOT NULL,
-	`seq` integer DEFAULT 0 NOT NULL,
 	`created_at` text NOT NULL
 );
 --> statement-breakpoint
-CREATE INDEX `idx_raw_events_session_created` ON `raw_events` (`session_id`,`created_at`,`seq`);--> statement-breakpoint
-CREATE INDEX `idx_raw_events_session_dir_seq` ON `raw_events` (`session_id`,`dir`,`seq`);--> statement-breakpoint
+CREATE INDEX `idx_raw_events_session_created_id` ON `raw_events` (`session_id`,`created_at`,`id`);--> statement-breakpoint
 CREATE TABLE `sessions` (
 	`id` text PRIMARY KEY NOT NULL,
 	`parent_id` text,

@@ -29,7 +29,6 @@ function makeEvent(overrides: Partial<RawEvent> = {}): RawEvent {
     sessionId: 'sess',
     direction: 'out',
     raw: 'x',
-    seq: 0,
     timestamp: Date.now(),
     ...overrides,
   };
@@ -41,7 +40,6 @@ function makeDelta(overrides: Partial<RawDeltaEntry> = {}): RawDeltaEntry {
     sessionId: 'sess',
     direction: 'out',
     raw: 'd',
-    seq: 1,
     timestamp: Date.now(),
     ...overrides,
   };

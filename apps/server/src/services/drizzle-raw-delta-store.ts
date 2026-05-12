@@ -10,7 +10,6 @@ const rowSchema = z.object({
   sessionId: z.string(),
   dir: z.string(),
   raw: z.string(),
-  seq: z.number(),
   createdAt: z.string(),
 });
 
@@ -22,7 +21,6 @@ interface RawDeltasTable {
   sessionId: Column;
   dir: Column;
   raw: Column;
-  seq: Column;
   createdAt: Column;
 }
 
@@ -41,7 +39,6 @@ export class DrizzleRawDeltaStore implements RawDeltaStore {
       sessionId: event.sessionId,
       dir: event.direction,
       raw: event.raw,
-      seq: event.seq,
       createdAt: new Date(event.timestamp).toISOString(),
     });
   }
@@ -61,7 +58,6 @@ export class DrizzleRawDeltaStore implements RawDeltaStore {
         sessionId: row.sessionId,
         direction: directionSchema.parse(row.dir),
         raw: row.raw,
-        seq: row.seq,
         timestamp: new Date(row.createdAt).getTime(),
       }));
   }

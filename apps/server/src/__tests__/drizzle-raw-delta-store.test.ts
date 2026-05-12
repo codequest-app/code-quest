@@ -12,7 +12,6 @@ function makeEntry(overrides: Partial<RawDeltaEntry> = {}): RawDeltaEntry {
     sessionId: 'sess-1',
     direction: 'out',
     raw: '{"type":"stream_event","event":{"type":"content_block_delta"}}',
-    seq: 0,
     timestamp: Date.now(),
     ...overrides,
   };
@@ -39,19 +38,19 @@ describe('DrizzleRawDeltaStore', () => {
   });
 
   it('preserves parent_id across multiple inserts', async () => {
-    await store.append(makeEntry({ parentId: 'parent-A', raw: 'a-1', seq: 0 }));
-    await store.append(makeEntry({ parentId: 'parent-A', raw: 'a-2', seq: 1 }));
-    await store.append(makeEntry({ parentId: 'parent-B', raw: 'b-1', seq: 2 }));
+    await store.append(makeEntry({ parentId: 'parent-A', raw: 'a-1' }));
+    await store.append(makeEntry({ parentId: 'parent-A', raw: 'a-2' }));
+    await store.append(makeEntry({ parentId: 'parent-B', raw: 'b-1' }));
 
     const results = await store.getBySession('sess-1');
     expect(results.map((r) => r.parentId)).toEqual(['parent-A', 'parent-A', 'parent-B']);
   });
 
-  it('returns results ordered by seq / createdAt', async () => {
+  it('returns results ordered by createdAt', async () => {
     const now = Date.now();
-    await store.append(makeEntry({ raw: 'c', seq: 2, timestamp: now + 20 }));
-    await store.append(makeEntry({ raw: 'a', seq: 0, timestamp: now }));
-    await store.append(makeEntry({ raw: 'b', seq: 1, timestamp: now + 10 }));
+    await store.append(makeEntry({ raw: 'c', timestamp: now + 20 }));
+    await store.append(makeEntry({ raw: 'a', timestamp: now }));
+    await store.append(makeEntry({ raw: 'b', timestamp: now + 10 }));
 
     const results = await store.getBySession('sess-1');
     expect(results.map((r) => r.raw)).toEqual(['a', 'b', 'c']);

@@ -20,7 +20,7 @@ export const SESSION_COLUMNS = [
   'createdAt',
 ] as const;
 
-export const RAW_EVENT_COLUMNS = ['id', 'sessionId', 'dir', 'raw', 'seq', 'createdAt'] as const;
+export const RAW_EVENT_COLUMNS = ['id', 'sessionId', 'dir', 'raw', 'createdAt'] as const;
 
 export const RAW_DELTA_COLUMNS = [
   'id',
@@ -28,7 +28,6 @@ export const RAW_DELTA_COLUMNS = [
   'sessionId',
   'dir',
   'raw',
-  'seq',
   'createdAt',
 ] as const;
 
