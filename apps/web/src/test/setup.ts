@@ -28,8 +28,6 @@ afterEach(() => {
   cleanup();
 });
 
-import '../lib/icons.ts';
-
 vi.mock('@iconify/react', async () => {
   const React = await import('react');
   return {
