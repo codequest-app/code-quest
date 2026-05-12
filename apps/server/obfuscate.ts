@@ -15,9 +15,17 @@ const jsFiles = readdirSync(distDir, { recursive: true }).filter(
   (f): f is string => typeof f === 'string' && f.endsWith('.js') && !f.includes('node_modules'),
 );
 
+// encodeURIComponent (used by javascript-obfuscator's btoa) throws URIError on
+// lone surrogates (\uD800-\uDFFF without a pair). Sanitize before obfuscating.
+function sanitizeLoneSurrogates(code: string): string {
+  return code.replace(/[\uD800-\uDFFF]/g, (ch) => {
+    return `\\u${ch.charCodeAt(0).toString(16).toUpperCase().padStart(4, '0')}`;
+  });
+}
+
 for (const file of jsFiles) {
   const filePath = join(distDir, file);
-  const code = readFileSync(filePath, 'utf-8');
+  const code = sanitizeLoneSurrogates(readFileSync(filePath, 'utf-8'));
   const obfuscated = JavaScriptObfuscator.obfuscate(code, options);
   writeFileSync(filePath, obfuscated.getObfuscatedCode());
   console.log(`✓ ${filePath}`);
