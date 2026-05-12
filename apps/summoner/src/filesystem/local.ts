@@ -91,7 +91,7 @@ export class LocalFilesystemService implements FilesystemService {
     path: string,
     showHidden: boolean,
   ): Promise<{ directories: DirectoryEntry[]; files: DirectoryEntry[] }> {
-    const validated = this.guardPath(path);
+    const validated = await this.guardPath(path);
 
     try {
       const entries = await readdir(validated, { withFileTypes: true });
@@ -119,7 +119,7 @@ export class LocalFilesystemService implements FilesystemService {
   // ── listFiles ──
 
   async listFiles(cwd: string, pattern: string): Promise<FileResult[]> {
-    this.guardPath(cwd);
+    await this.guardPath(cwd);
     const entry = await this.getOrBuildListCache(cwd);
 
     if (!pattern) {
@@ -160,7 +160,7 @@ export class LocalFilesystemService implements FilesystemService {
   // ── readFileAbsolute ──
 
   async readFileAbsolute(absolutePath: string): Promise<ReadFileAbsoluteResult> {
-    const validated = this.guardPath(absolutePath);
+    const validated = await this.guardPath(absolutePath);
     const { contentType, encoding } = mimeForPath(absolutePath);
     try {
       if (encoding === 'base64') {
@@ -178,7 +178,7 @@ export class LocalFilesystemService implements FilesystemService {
   // ── writeFileAbsolute ──
 
   async writeFileAbsolute(absolutePath: string, content: string): Promise<WriteFileResult> {
-    const validated = this.guardPath(absolutePath);
+    const validated = await this.guardPath(absolutePath);
     try {
       await writeFile(validated, content, 'utf-8');
       return { ok: true };
@@ -190,7 +190,7 @@ export class LocalFilesystemService implements FilesystemService {
   // ── Mutations ──
 
   async create(absolutePath: string, kind: FileKind): Promise<FsMutationResult> {
-    const validated = this.guardPath(absolutePath);
+    const validated = await this.guardPath(absolutePath);
     try {
       if (kind === 'directory') {
         // mkdir without `recursive: true` throws EEXIST naturally — no stat pre-check needed.
@@ -207,7 +207,7 @@ export class LocalFilesystemService implements FilesystemService {
   }
 
   async delete(absolutePath: string): Promise<FsMutationResult> {
-    const validated = this.guardPath(absolutePath);
+    const validated = await this.guardPath(absolutePath);
     try {
       await rm(validated, { recursive: true, force: true });
       return { ok: true };
@@ -217,8 +217,8 @@ export class LocalFilesystemService implements FilesystemService {
   }
 
   async rename(from: string, to: string): Promise<FsMutationResult> {
-    const fromV = this.guardPath(from);
-    const toV = this.guardPath(to);
+    const fromV = await this.guardPath(from);
+    const toV = await this.guardPath(to);
     // POSIX rename(2) silently overwrites; this stat pre-check is the
     // no-overwrite policy. A `link` + `unlink` pattern would close the
     // race for files but doesn't generalize (directories EPERM, EXDEV).
@@ -233,8 +233,8 @@ export class LocalFilesystemService implements FilesystemService {
   }
 
   async copy(from: string, to: string): Promise<FsMutationResult> {
-    const fromV = this.guardPath(from);
-    const toV = this.guardPath(to);
+    const fromV = await this.guardPath(from);
+    const toV = await this.guardPath(to);
     try {
       await cp(fromV, toV, { recursive: true, errorOnExist: true, force: false });
       return { ok: true };
@@ -254,7 +254,7 @@ export class LocalFilesystemService implements FilesystemService {
   // ── readFile ──
 
   async readFile(cwd: string, filePath: string): Promise<ReadFileResult> {
-    if (!this.rootGuard.isWithinRoots(cwd)) {
+    if (!(await this.rootGuard.isWithinRoots(cwd))) {
       return { error: 'Path traversal not allowed' };
     }
     const resolvedCwd = resolve(cwd);
@@ -275,8 +275,8 @@ export class LocalFilesystemService implements FilesystemService {
 
   // ── Private helpers ──
 
-  private guardPath(path: string): string {
-    if (!this.rootGuard.isWithinRoots(path)) throw new PathOutsideRootsError(path);
+  private async guardPath(path: string): Promise<string> {
+    if (!(await this.rootGuard.isWithinRoots(path))) throw new PathOutsideRootsError(path);
     return resolve(path);
   }
 
@@ -399,7 +399,7 @@ export class LocalFilesystemService implements FilesystemService {
 
   async exists(path: string): Promise<boolean> {
     try {
-      const validated = this.guardPath(path);
+      const validated = await this.guardPath(path);
       await stat(validated);
       return true;
     } catch {
@@ -409,7 +409,7 @@ export class LocalFilesystemService implements FilesystemService {
 
   async isDirectory(path: string): Promise<boolean> {
     try {
-      const validated = this.guardPath(path);
+      const validated = await this.guardPath(path);
       const s = await stat(validated);
       return s.isDirectory();
     } catch {
@@ -419,7 +419,7 @@ export class LocalFilesystemService implements FilesystemService {
 
   async statKind(path: string): Promise<FileKind | null> {
     try {
-      const validated = this.guardPath(path);
+      const validated = await this.guardPath(path);
       const s = await stat(validated);
       if (s.isDirectory()) return 'directory';
       if (s.isFile()) return 'file';

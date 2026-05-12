@@ -9,22 +9,12 @@ export class LocalRootGuard implements RootGuard {
     this.resolvedRoots = roots.map((r) => resolve(r));
   }
 
-  isWithinRoots(path: string): boolean {
-    const resolved = resolve(path);
-    for (const root of this.resolvedRoots) {
-      if (resolved === root) return true;
-      const rel = relative(root, resolved);
-      if (rel && !rel.startsWith('..') && !isAbsolute(rel)) return true;
-    }
-    return false;
-  }
-
-  async isWithinRootsReal(path: string): Promise<boolean> {
+  async isWithinRoots(path: string): Promise<boolean> {
     let real: string;
     try {
       real = await realpath(path);
     } catch {
-      return false;
+      real = resolve(path);
     }
     for (const root of this.resolvedRoots) {
       let realRoot: string;

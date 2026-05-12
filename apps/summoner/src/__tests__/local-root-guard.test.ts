@@ -9,41 +9,41 @@ const ROOT = '/test-root';
 describe('LocalRootGuard', () => {
   const guard = new LocalRootGuard([ROOT]);
 
-  it('returns true for the root itself (boundary inclusive)', () => {
-    expect(guard.isWithinRoots(ROOT)).toBe(true);
+  it('returns true for the root itself (boundary inclusive)', async () => {
+    expect(await guard.isWithinRoots(ROOT)).toBe(true);
   });
 
-  it('returns true for paths inside a root', () => {
-    expect(guard.isWithinRoots(join(ROOT, 'alpha'))).toBe(true);
-    expect(guard.isWithinRoots(join(ROOT, 'src'))).toBe(true);
+  it('returns true for paths inside a root', async () => {
+    expect(await guard.isWithinRoots(join(ROOT, 'alpha'))).toBe(true);
+    expect(await guard.isWithinRoots(join(ROOT, 'src'))).toBe(true);
   });
 
-  it('returns false for paths outside any root', () => {
-    expect(guard.isWithinRoots('/etc/passwd')).toBe(false);
-    expect(guard.isWithinRoots('/totally/unrelated')).toBe(false);
+  it('returns false for paths outside any root', async () => {
+    expect(await guard.isWithinRoots('/etc/passwd')).toBe(false);
+    expect(await guard.isWithinRoots('/totally/unrelated')).toBe(false);
   });
 
-  it('returns false for a parent of a root (cannot escape upward)', () => {
-    expect(guard.isWithinRoots('/')).toBe(false);
+  it('returns false for a parent of a root (cannot escape upward)', async () => {
+    expect(await guard.isWithinRoots('/')).toBe(false);
   });
 
-  it('returns false for prefix-similar but not actually inside (foo vs foo-bar)', () => {
+  it('returns false for prefix-similar but not actually inside (foo vs foo-bar)', async () => {
     const sibling = `${ROOT}-sibling`;
-    expect(guard.isWithinRoots(sibling)).toBe(false);
+    expect(await guard.isWithinRoots(sibling)).toBe(false);
   });
 
-  describe('isWithinRootsReal (symlink-aware)', () => {
+  describe('symlink-aware', () => {
     it('returns true for a real path inside roots', async () => {
       const tmp = mkdtempSync(join(tmpdir(), 'root-guard-'));
       const g = new LocalRootGuard([tmp]);
       writeFileSync(join(tmp, 'file.txt'), '');
-      expect(await g.isWithinRootsReal(join(tmp, 'file.txt'))).toBe(true);
+      expect(await g.isWithinRoots(join(tmp, 'file.txt'))).toBe(true);
     });
 
     it('returns false for a real path outside roots', async () => {
       const tmp = mkdtempSync(join(tmpdir(), 'root-guard-'));
       const g = new LocalRootGuard([tmp]);
-      expect(await g.isWithinRootsReal('/etc/passwd')).toBe(false);
+      expect(await g.isWithinRoots('/etc/passwd')).toBe(false);
     });
 
     it('returns false when symlink inside root points outside', async () => {
@@ -53,13 +53,13 @@ describe('LocalRootGuard', () => {
       const link = join(root, 'escape');
       symlinkSync(outside, link);
       const g = new LocalRootGuard([root]);
-      expect(await g.isWithinRootsReal(join(link, 'secret.txt'))).toBe(false);
+      expect(await g.isWithinRoots(join(link, 'secret.txt'))).toBe(false);
     });
 
     it('returns false when path does not exist (realpath fails)', async () => {
       const tmp = mkdtempSync(join(tmpdir(), 'root-guard-'));
       const g = new LocalRootGuard([tmp]);
-      expect(await g.isWithinRootsReal(join(tmp, 'nonexistent', 'path'))).toBe(false);
+      expect(await g.isWithinRoots(join(tmp, 'nonexistent', 'path'))).toBe(false);
     });
   });
 });

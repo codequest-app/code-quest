@@ -11,7 +11,7 @@ export type WriteFileResult = { ok: true } | { error: string };
 export type { FsMutationResult };
 
 export interface RootGuard {
-  isWithinRoots(path: string): boolean;
+  isWithinRoots(path: string): Promise<boolean>;
 }
 
 export class PathOutsideRootsError extends Error {
