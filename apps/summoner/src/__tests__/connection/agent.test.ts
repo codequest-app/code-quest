@@ -229,4 +229,36 @@ describe('Agent', () => {
       expect(ctx.processProvider.all[1]!.signal.aborted).toBe(true);
     });
   });
+
+  describe('duplicate sessionId spawn', () => {
+    it('rejects duplicate spawn and leaves original process running', async () => {
+      await ctx.rpc('process/spawn', { sessionId: 'dup', command: 'sleep', args: ['10'] });
+      const original = ctx.processProvider.all[0]!;
+
+      await expect(
+        ctx.rpc('process/spawn', { sessionId: 'dup', command: 'sleep', args: ['10'] }),
+      ).rejects.toThrow();
+
+      expect(original.signal.aborted).toBe(false);
+      expect(ctx.processProvider.all).toHaveLength(1);
+    });
+
+    it('allows respawn after process exits', async () => {
+      await ctx.rpc('process/spawn', { sessionId: 'reuse', command: 'sleep', args: ['10'] });
+      const first = ctx.processProvider.all[0]!;
+
+      // Abort the process to trigger exit cleanup in streamProcess
+      first.abort();
+      // Flush microtasks so streamProcess finally block runs and removes sessionId
+      await new Promise((r) => setTimeout(r, 10));
+
+      const result = await ctx.rpc<{ ok: true }>('process/spawn', {
+        sessionId: 'reuse',
+        command: 'sleep',
+        args: ['10'],
+      });
+      expect(result).toEqual({ ok: true });
+      expect(ctx.processProvider.all).toHaveLength(2);
+    });
+  });
 });

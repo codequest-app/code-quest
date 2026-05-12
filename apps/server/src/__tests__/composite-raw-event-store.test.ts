@@ -23,6 +23,7 @@ function stubStore(overrides: Partial<RawEventStore> = {}): RawEventStore {
       return false;
     },
     async *streamBySession() {},
+    async deleteBySession() {},
     ...overrides,
   };
 }

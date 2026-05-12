@@ -2,7 +2,8 @@
 
 import type { Ack, SessionListResponse } from '@code-quest/shared';
 import { segments as s } from '@code-quest/summoner/test';
-import { createFakeSummoner } from '../test/index.ts';
+import type { RawEventStore } from '../services/raw-event-store.ts';
+import { createFakeServer, createFakeSummoner, createTestContainer, TYPES } from '../test/index.ts';
 
 type UpdateStateResp = Ack;
 type SessionListOk = Extract<SessionListResponse, { ok: true }>;
@@ -126,6 +127,29 @@ describe('session:update_state', () => {
 
     expect(result.ok).toBe(false);
     if (!result.ok) expect(result.error).toBeDefined();
+  });
+});
+
+describe('session:delete', () => {
+  it('deletes raw events and deltas when session is deleted', async () => {
+    const container = createTestContainer();
+    const server = createFakeServer(container);
+    const claude = createFakeSummoner(server).claude();
+    const channelId = await claude.initialize(s.init('sess-to-delete'));
+
+    await claude.send('chat:send', { channelId, message: 'hello' });
+    await claude.emitSegment(s.assistant('reply'));
+    await claude.emitSegment(s.result());
+
+    const rawEventService = container.get<RawEventStore>(TYPES.RawEventService);
+    const eventsBefore = await rawEventService.getBySession('sess-to-delete');
+    expect(eventsBefore.length).toBeGreaterThan(0);
+
+    const result = await claude.send<Ack>('session:delete', { channelId });
+    expect(result.ok).toBe(true);
+
+    const eventsAfter = await rawEventService.getBySession('sess-to-delete');
+    expect(eventsAfter.length).toBe(0);
   });
 });
 

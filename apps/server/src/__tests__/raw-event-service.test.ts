@@ -12,6 +12,7 @@ function mockEventStore(overrides: Partial<RawEventStore> = {}): RawEventStore {
     cloneEvents: vi.fn(async () => {}),
     hasUserEcho: vi.fn(async () => false),
     streamBySession: vi.fn(async function* () {}),
+    deleteBySession: vi.fn(async () => {}),
     ...overrides,
   };
 }
@@ -20,6 +21,7 @@ function mockDeltaStore(overrides: Partial<RawDeltaStore> = {}): RawDeltaStore {
   return {
     append: vi.fn(async () => {}),
     getBySession: vi.fn(async () => []),
+    deleteBySession: vi.fn(async () => {}),
     ...overrides,
   };
 }
@@ -93,5 +95,11 @@ describe('RawEventService', () => {
     await service.cloneEvents('sess-a', 'sess-b');
     expect(eventStore.cloneEvents).toHaveBeenCalledWith('sess-a', 'sess-b');
     expect(deltaStore.getBySession).not.toHaveBeenCalled();
+  });
+
+  it('deleteBySession deletes from both eventStore and deltaStore', async () => {
+    await service.deleteBySession('sess-del');
+    expect(eventStore.deleteBySession).toHaveBeenCalledWith('sess-del');
+    expect(deltaStore.deleteBySession).toHaveBeenCalledWith('sess-del');
   });
 });

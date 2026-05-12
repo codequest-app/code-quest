@@ -9,4 +9,5 @@ export interface RawDeltaEntry {
 export interface RawDeltaStore {
   append(event: RawDeltaEntry): Promise<void>;
   getBySession(sessionId: string): Promise<RawDeltaEntry[]>;
+  deleteBySession(sessionId: string): Promise<void>;
 }

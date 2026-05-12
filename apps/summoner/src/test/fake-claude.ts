@@ -104,12 +104,15 @@ export class FakeClaude {
       channelId: crypto.randomUUID(),
       ...opts.launch,
     };
-    const channelId = await new Promise<string>((resolve) => {
+    const channelId = await new Promise<string>((resolve, reject) => {
       this._socket.emit(
         'session:launch',
         launchPayload,
         (res: { ok: true; data: { channelId: string } } | { ok: false; error: string }) => {
-          if (!res.ok) throw new Error(res.error);
+          if (!res.ok) {
+            reject(new Error(res.error));
+            return;
+          }
           resolve(res.data.channelId);
         },
       );

@@ -29,6 +29,10 @@ export class RemoteFilesystemService implements FilesystemService {
     this.rpc = rpc;
   }
 
+  isWithinRoots(_path: string): boolean {
+    return true;
+  }
+
   async browseDirectories(path?: string): Promise<DirectoryEntry[]> {
     const raw = await this.rpc.request(REMOTE_METHODS.fs.browseDirectories, { path });
     return fsBrowseDirectoriesResponseSchema.parse(raw).entries;

@@ -92,6 +92,7 @@ export function create({
   sessionHistory,
   emitter,
   gitService,
+  filesystemService,
 }: Pick<
   HandlerContext,
   | 'channelManager'
@@ -101,6 +102,7 @@ export function create({
   | 'sessionHistory'
   | 'emitter'
   | 'gitService'
+  | 'filesystemService'
 >): void {
   /** Push the session:init payload + cached models list to a single socket.
    *  Used by both launch finalization and session:join history replay. */
@@ -231,6 +233,10 @@ export function create({
       // project context. Fallback to process.cwd() for scripts / direct API
       // callers so Channel.cwd's string invariant is always satisfied.
       const cwd = parsed.cwd ?? process.cwd();
+      if (parsed.cwd && !filesystemService.isWithinRoots(cwd)) {
+        callback?.(err('cwd is outside allowed filesystem roots'));
+        return;
+      }
       const channelId = parsed.channelId ?? crypto.randomUUID();
       const { launchOptions, initOptions } = buildLaunchOpts(parsed);
       const projectRoot = await resolveProjectRoot(gitService, cwd);

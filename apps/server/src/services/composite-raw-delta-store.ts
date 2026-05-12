@@ -9,4 +9,8 @@ export class CompositeRawDeltaStore extends CompositeStore<RawDeltaStore> implem
   getBySession(sessionId: string): Promise<RawDeltaEntry[]> {
     return this.primary.getBySession(sessionId);
   }
+
+  async deleteBySession(sessionId: string): Promise<void> {
+    await this.fanOut('raw delta delete', (s) => s.deleteBySession(sessionId));
+  }
 }

@@ -69,6 +69,11 @@ export class LocalFilesystemService implements FilesystemService {
     this.fsImpl = fsImpl;
   }
 
+  isWithinRoots(path: string): boolean {
+    if (this.fsRoots.length === 0) return true;
+    return this.rootGuard.isWithinRoots(path);
+  }
+
   async browseDirectories(path?: string): Promise<DirectoryEntry[]> {
     if (!path) {
       return this.fsRoots.map(toRootEntry);
@@ -119,6 +124,7 @@ export class LocalFilesystemService implements FilesystemService {
   // ── listFiles ──
 
   async listFiles(cwd: string, pattern: string): Promise<FileResult[]> {
+    this.guardPath(cwd);
     const entry = await this.getOrBuildListCache(cwd);
 
     if (!pattern) {
@@ -253,6 +259,9 @@ export class LocalFilesystemService implements FilesystemService {
   // ── readFile ──
 
   async readFile(cwd: string, filePath: string): Promise<ReadFileResult> {
+    if (!this.rootGuard.isWithinRoots(cwd)) {
+      return { error: 'Path traversal not allowed' };
+    }
     const resolvedCwd = resolve(cwd);
     const absolute = resolve(resolvedCwd, normalize(filePath));
     // path.relative handles OS separators; ".." prefix signals escape.

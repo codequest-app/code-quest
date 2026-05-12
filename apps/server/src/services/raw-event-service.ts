@@ -50,4 +50,9 @@ export class RawEventService {
   streamBySession(sessionId: string, batchSize: number): AsyncGenerator<RawEvent[]> {
     return this.eventStore.streamBySession(sessionId, batchSize);
   }
+
+  async deleteBySession(sessionId: string): Promise<void> {
+    await this.eventStore.deleteBySession(sessionId);
+    await this.deltaStore.deleteBySession(sessionId);
+  }
 }

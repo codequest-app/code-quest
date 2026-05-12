@@ -1,5 +1,5 @@
 import { readFile } from 'node:fs/promises';
-import { isAbsolute, resolve, sep } from 'node:path';
+import { isAbsolute, relative, resolve, sep } from 'node:path';
 import type { GitDiffResult, GitLogResult, GitStatusResult } from '@code-quest/shared';
 import type { SimpleGit } from 'simple-git';
 import { logger } from '../logger.ts';
@@ -62,7 +62,12 @@ export class GitCommands {
       return { diff: await git.diff() };
     }
     if (status === GIT_STATUS_UNTRACKED) {
-      const content = await readFile(resolve(cwd, filePath), 'utf-8').catch(() => '');
+      const resolvedCwd = resolve(cwd);
+      const absolute = resolve(resolvedCwd, filePath);
+      if (relative(resolvedCwd, absolute).startsWith('..')) {
+        return { diff: '' };
+      }
+      const content = await readFile(absolute, 'utf-8').catch(() => '');
       return { diff: toPseudoDiff(filePath, content) };
     }
     // Single-char 'M'/'D' is ambiguous after trim, so HEAD covers both staged and unstaged.

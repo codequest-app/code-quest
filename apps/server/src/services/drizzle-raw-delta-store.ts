@@ -43,6 +43,10 @@ export class DrizzleRawDeltaStore implements RawDeltaStore {
     });
   }
 
+  async deleteBySession(sessionId: string): Promise<void> {
+    await this.db.delete(this.table).where(eq(this.table.sessionId, sessionId));
+  }
+
   async getBySession(sessionId: string): Promise<RawDeltaEntry[]> {
     const rows = await this.db
       .select()

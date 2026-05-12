@@ -32,4 +32,8 @@ export class CompositeRawEventStore extends CompositeStore<RawEventStore> implem
     const ids = rows.map(() => uuidv7());
     await this.fanOut('raw event clone', (s) => s.cloneEvents(fromSessionId, toSessionId, ids));
   }
+
+  async deleteBySession(sessionId: string): Promise<void> {
+    await this.fanOut('raw event delete', (s) => s.deleteBySession(sessionId));
+  }
 }

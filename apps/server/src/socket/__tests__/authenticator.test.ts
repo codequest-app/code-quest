@@ -1,6 +1,7 @@
 import type { IncomingMessage } from 'node:http';
 import { type Authenticator, NullAuthenticator } from '@code-quest/shared/node';
 import { describe, expect, it } from 'vitest';
+import { TokenAuthenticator } from '../token-authenticator.ts';
 
 function fakeReq(headers: Record<string, string> = {}): IncomingMessage {
   return { headers } as IncomingMessage;
@@ -44,5 +45,31 @@ describe('Authenticator interface', () => {
     });
     expect(await headerCheck.authenticate(fakeReq({ authorization: 'Bearer bad' }))).toBeNull();
     expect(await headerCheck.authenticate(fakeReq())).toBeNull();
+  });
+});
+
+describe('TokenAuthenticator', () => {
+  it('accepts request with valid Bearer token', async () => {
+    const auth = new TokenAuthenticator('my-secret');
+    const ctx = await auth.authenticate(fakeReq({ authorization: 'Bearer my-secret' }));
+    expect(ctx).toEqual({ userId: 'anon' });
+  });
+
+  it('rejects request with wrong token', async () => {
+    const auth = new TokenAuthenticator('my-secret');
+    const ctx = await auth.authenticate(fakeReq({ authorization: 'Bearer wrong-token' }));
+    expect(ctx).toBeNull();
+  });
+
+  it('rejects request with no Authorization header', async () => {
+    const auth = new TokenAuthenticator('my-secret');
+    const ctx = await auth.authenticate(fakeReq());
+    expect(ctx).toBeNull();
+  });
+
+  it('rejects request with non-Bearer scheme', async () => {
+    const auth = new TokenAuthenticator('my-secret');
+    const ctx = await auth.authenticate(fakeReq({ authorization: 'Basic my-secret' }));
+    expect(ctx).toBeNull();
   });
 });

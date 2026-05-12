@@ -18,8 +18,9 @@ import { err, ok } from '../../utils/rpc.ts';
 export function create({
   channelManager,
   sessionStore,
+  rawEventService,
   emitter,
-}: Pick<HandlerContext, 'channelManager' | 'sessionStore' | 'emitter'>): void {
+}: Pick<HandlerContext, 'channelManager' | 'sessionStore' | 'rawEventService' | 'emitter'>): void {
   function handleClose(ch: Channel, payload: unknown): void {
     try {
       const { channelId } = sessionClosePayloadSchema.parse(payload);
@@ -38,10 +39,14 @@ export function create({
   ): Promise<void> {
     try {
       const { channelId } = sessionDeletePayloadSchema.parse(payload);
+      const session = await sessionStore.getByChannelId(channelId);
       const success = await sessionStore.deleteByChannelId(channelId);
       if (!success) {
         callback?.(err('Session not found', ERROR_CODES.SESSION_NOT_FOUND));
         return;
+      }
+      if (session?.id) {
+        await rawEventService.deleteBySession(session.id);
       }
       callback?.(ok({}));
     } catch (e) {

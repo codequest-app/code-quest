@@ -9,7 +9,7 @@ type LaunchOk = Extract<SessionLaunchResponse, { ok: true }>;
 type JoinOk = Extract<SessionJoinResponse, { ok: true }>;
 type ResumeOk = Extract<SessionResumeResponse, { ok: true }>;
 
-import { type FakeClaude, segments as s } from '@code-quest/summoner/test';
+import { type FakeClaude, FakeFilesystemService, segments as s } from '@code-quest/summoner/test';
 import { logger } from '../logger.ts';
 import type { RawEventService } from '../services/raw-event-service.ts';
 import type { SessionStore } from '../services/session-store.ts';
@@ -286,6 +286,56 @@ describe('ChatHandler > session', () => {
       const modelEvents = windowB.receivedEvents('app:models');
       expect(modelEvents.length).toBeGreaterThan(0);
       expect(modelEvents[0].models).toEqual(models);
+    });
+  });
+
+  describe('session:launch fsRoots validation', () => {
+    it('rejects session:launch when cwd is outside configured fsRoots', async () => {
+      const fs = new FakeFilesystemService();
+      fs.setRoots(['/allowed/path']);
+      const container = createTestContainer({ filesystemService: fs });
+      const server = createFakeServer(container);
+      const claude = createFakeSummoner(server).claude();
+      claude.prepareInit(s.init('denied-sess'));
+
+      const result = await claude.send<SessionLaunchResponse>('session:launch', {
+        channelId: 'ch-denied',
+        cwd: '/not/allowed',
+      });
+
+      expect(result.ok).toBe(false);
+    });
+
+    it('allows session:launch when cwd is within configured fsRoots', async () => {
+      const fs = new FakeFilesystemService();
+      fs.setRoots(['/allowed/path']);
+      const container = createTestContainer({ filesystemService: fs });
+      const server = createFakeServer(container);
+      const claude = createFakeSummoner(server).claude();
+      claude.prepareInit(s.init('allowed-sess'));
+
+      const result = await claude.send<SessionLaunchResponse>('session:launch', {
+        channelId: 'ch-allowed',
+        cwd: '/allowed/path/project',
+      });
+
+      expect(result.ok).toBe(true);
+    });
+
+    it('allows session:launch when no fsRoots are configured', async () => {
+      const fs = new FakeFilesystemService();
+      // setRoots([]) = no restriction
+      const container = createTestContainer({ filesystemService: fs });
+      const server = createFakeServer(container);
+      const claude = createFakeSummoner(server).claude();
+      claude.prepareInit(s.init('unrestricted-sess'));
+
+      const result = await claude.send<SessionLaunchResponse>('session:launch', {
+        channelId: 'ch-unrestricted',
+        cwd: '/any/path',
+      });
+
+      expect(result.ok).toBe(true);
     });
   });
 

@@ -188,6 +188,20 @@ describe('loadConfig — non-database envs', () => {
     });
   });
 
+  describe('AUTH_TOKEN', () => {
+    it('authToken is undefined by default', () => {
+      expect(loadConfig({}).authToken).toBeUndefined();
+    });
+
+    it('AUTH_TOKEN=secret sets authToken', () => {
+      expect(loadConfig({ AUTH_TOKEN: 'secret-token' }).authToken).toBe('secret-token');
+    });
+
+    it('AUTH_TOKEN=empty string is treated as unset', () => {
+      expect(loadConfig({ AUTH_TOKEN: '' }).authToken).toBeUndefined();
+    });
+  });
+
   describe('TRANSPORT', () => {
     it('default (unset) → ws only', () => {
       expect(loadConfig({}).transport).toEqual({ ws: true, socketio: false });

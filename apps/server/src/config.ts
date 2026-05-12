@@ -63,6 +63,7 @@ interface AppConfig {
   readonly summonerMode: 'local' | 'remote';
   readonly summonerToken: string | undefined;
   readonly summonerTokenGenerated: boolean;
+  readonly authToken: string | undefined;
 }
 
 export function loadConfig(env: Env = process.env): AppConfig {
@@ -82,6 +83,7 @@ export function loadConfig(env: Env = process.env): AppConfig {
     log: parseLogConfig(env),
     historyBatchSize: parseNumber(env.SESSION_HISTORY_BATCH_SIZE, 5000),
     summonerMode: env.SUMMONER_MODE === 'local' ? 'local' : 'remote',
+    authToken: env.AUTH_TOKEN || undefined,
     ...resolveSummonerToken(env),
   } as const;
 }

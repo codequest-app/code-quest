@@ -65,6 +65,34 @@ describe('ChannelEmitter', () => {
       await new Promise((r) => setImmediate(r));
       // If we get here without unhandled rejection, the test passes
     });
+
+    it('calls cb with error response when async handler throws and cb is provided', async () => {
+      const emitter = new ChannelEmitter();
+      emitter.on('test:event', async () => {
+        throw new Error('handler boom');
+      });
+
+      const cb = vi.fn();
+      const ch = makeChannel();
+      emitter.dispatch('test:event', ch, {}, undefined, cb);
+
+      await new Promise((r) => setImmediate(r));
+
+      expect(cb).toHaveBeenCalledWith({ ok: false, error: 'handler boom' });
+    });
+
+    it('does not call cb when async handler succeeds', async () => {
+      const emitter = new ChannelEmitter();
+      emitter.on('test:event', async () => {});
+
+      const cb = vi.fn();
+      const ch = makeChannel();
+      emitter.dispatch('test:event', ch, {}, undefined, cb);
+
+      await new Promise((r) => setImmediate(r));
+
+      expect(cb).not.toHaveBeenCalled();
+    });
   });
 
   describe('channel:exit dispatch', () => {

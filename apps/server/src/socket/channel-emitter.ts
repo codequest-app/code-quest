@@ -86,7 +86,10 @@ export class ChannelEmitter {
       const result = h(ch, payload, socket, cb);
       if (result instanceof Promise) {
         promises.push(
-          result.catch((err) => logger.error({ err, event }, 'Unhandled error in async handler')),
+          result.catch((err) => {
+            logger.error({ err, event }, 'Unhandled error in async handler');
+            cb?.({ ok: false, error: err instanceof Error ? err.message : String(err) });
+          }),
         );
       }
     }

@@ -182,6 +182,10 @@ export class ChannelManager {
     channelId: string,
     opts: CreateChannelOptions,
   ): { channel: Channel; initResultPromise: Promise<ControlResponse> } {
+    const existing = this.channels.get(channelId);
+    if (existing && !existing.exited) {
+      throw new Error(`Channel already exists: ${channelId}`);
+    }
     const rawCwd = opts.worktree?.path ?? opts.cwd;
     const cwd = resolve(rawCwd);
     const runner = this.runnerFactory.create(opts.launchOptions, { cwd });

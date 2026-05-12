@@ -108,6 +108,16 @@ describe('LocalFilesystemService', () => {
   });
 
   describe('listFiles', () => {
+    it('throws PathOutsideRootsError when cwd is outside roots', async () => {
+      await expect(service.listFiles('/etc', '')).rejects.toThrow(PathOutsideRootsError);
+    });
+
+    it('throws PathOutsideRootsError when cwd traverses outside roots', async () => {
+      await expect(service.listFiles(`${ROOT}/../../etc`, '')).rejects.toThrow(
+        PathOutsideRootsError,
+      );
+    });
+
     it('empty pattern returns root entries', async () => {
       const results = await service.listFiles(ROOT, '');
       expect(results.some((f) => f.type === 'directory')).toBe(true);
@@ -227,6 +237,16 @@ describe('LocalFilesystemService', () => {
       expect(await service.readFile(ROOT, 'nope.txt')).toEqual({
         error: 'File not found: nope.txt',
       });
+    });
+
+    it('returns error when cwd is outside roots', async () => {
+      const result = await service.readFile('/etc', 'passwd');
+      expect(result).toMatchObject({ error: expect.any(String) });
+    });
+
+    it('returns error when cwd traverses outside roots', async () => {
+      const result = await service.readFile(`${ROOT}/../../etc`, 'passwd');
+      expect(result).toMatchObject({ error: expect.any(String) });
     });
   });
 

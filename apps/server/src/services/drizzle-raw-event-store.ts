@@ -193,6 +193,13 @@ export class DrizzleRawEventStore implements RawEventStore {
     return rows.length > 0;
   }
 
+  async deleteBySession(sessionId: string): Promise<void> {
+    await this.db.delete(this.table).where(eq(this.table.sessionId, sessionId));
+    if (this.deltaTable) {
+      await this.db.delete(this.deltaTable).where(eq(this.deltaTable.sessionId, sessionId));
+    }
+  }
+
   async *streamBySession(sessionId: string, batchSize: number): AsyncGenerator<RawEvent[]> {
     let cursor: { createdAt: string; id: string } | undefined;
     while (true) {

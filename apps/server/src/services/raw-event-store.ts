@@ -53,4 +53,6 @@ export interface RawEventStore {
   hasUserEcho(sessionId: string): Promise<boolean>;
   /** Yields events in batches of `batchSize`. */
   streamBySession(sessionId: string, batchSize: number): AsyncGenerator<RawEvent[]>;
+  /** Delete all events for a session. */
+  deleteBySession(sessionId: string): Promise<void>;
 }

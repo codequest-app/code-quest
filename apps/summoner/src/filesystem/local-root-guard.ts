@@ -1,3 +1,4 @@
+import { realpath } from 'node:fs/promises';
 import { isAbsolute, relative, resolve } from 'node:path';
 import type { RootGuard } from '@code-quest/shared';
 
@@ -13,6 +14,27 @@ export class LocalRootGuard implements RootGuard {
     for (const root of this.resolvedRoots) {
       if (resolved === root) return true;
       const rel = relative(root, resolved);
+      if (rel && !rel.startsWith('..') && !isAbsolute(rel)) return true;
+    }
+    return false;
+  }
+
+  async isWithinRootsReal(path: string): Promise<boolean> {
+    let real: string;
+    try {
+      real = await realpath(path);
+    } catch {
+      return false;
+    }
+    for (const root of this.resolvedRoots) {
+      let realRoot: string;
+      try {
+        realRoot = await realpath(root);
+      } catch {
+        realRoot = root;
+      }
+      if (real === realRoot) return true;
+      const rel = relative(realRoot, real);
       if (rel && !rel.startsWith('..') && !isAbsolute(rel)) return true;
     }
     return false;

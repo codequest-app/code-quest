@@ -265,6 +265,32 @@ describe('ChannelManager', () => {
     });
   });
 
+  describe('duplicate channelId', () => {
+    it('rejects launch with same channelId while channel is still alive', async () => {
+      const container = createTestContainer();
+      const server = createFakeServer(container);
+      const claude = createFakeSummoner(server).claude();
+      await claude.initialize({ launch: { channelId: 'ch-dup' } });
+
+      const secondClaude = createFakeSummoner(server).claude();
+      await expect(secondClaude.initialize({ launch: { channelId: 'ch-dup' } })).rejects.toThrow();
+    });
+
+    it('allows reuse of channelId after channel has exited', async () => {
+      const container = createTestContainer();
+      const server = createFakeServer(container);
+      const claude = createFakeSummoner(server).claude();
+      await claude.initialize({ launch: { channelId: 'ch-reuse' } });
+
+      claude.handle.abort();
+      await new Promise<void>((r) => queueMicrotask(r));
+
+      const secondClaude = createFakeSummoner(server).claude();
+      const channelId = await secondClaude.initialize({ launch: { channelId: 'ch-reuse' } });
+      expect(channelId).toBe('ch-reuse');
+    });
+  });
+
   describe('raw event persistence', () => {
     it('persists raw events to rawEventService', async () => {
       const { container, claude, channelId } = await setup();

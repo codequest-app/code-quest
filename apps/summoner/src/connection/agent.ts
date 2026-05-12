@@ -63,6 +63,9 @@ export class Agent {
   private registerProcessHandlers(provider: ProcessProvider): void {
     this.rpc.onRequest(REMOTE_METHODS.process.spawn, async (params) => {
       const p = processSpawnParamsSchema.parse(params);
+      if (this.spawned.has(p.sessionId)) {
+        throw new Error(`sessionId already active: ${p.sessionId}`);
+      }
       const handle = provider.spawn(p.command, p.args, {
         cwd: p.cwd,
         env: p.env,

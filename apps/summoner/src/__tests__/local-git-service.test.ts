@@ -127,6 +127,11 @@ describe.skipIf(SKIP)('LocalGitService', () => {
       expect(result.diff).toContain('brand new file');
       rmSync(join(tmpDir, 'untracked.txt'));
     });
+
+    it('returns empty diff when untracked filePath traverses outside cwd', async () => {
+      const result = await service.diff(tmpDir, '../../etc/passwd', '??');
+      expect(result.diff).toBe('');
+    });
   });
 
   describe('getRepoRoot', () => {

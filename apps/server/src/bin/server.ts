@@ -27,6 +27,7 @@ import { logger } from '../logger.ts';
 import { ReconnectableRpc } from '../remote/reconnectable-rpc.ts';
 import type { ChannelEmitter } from '../socket/channel-emitter.ts';
 import type { SocketServer } from '../socket/server.ts';
+import { TokenAuthenticator } from '../socket/token-authenticator.ts';
 import { TYPES } from '../types.ts';
 
 const WS_PATH = '/ws';
@@ -71,7 +72,9 @@ const httpServer = createServer(app);
 
 // Mount transports per config. socket.io and ws are independent and can both
 // run on the same http server (different paths). Default is ws-only.
-const authenticator = new NullAuthenticator();
+const authenticator = config.authToken
+  ? new TokenAuthenticator(config.authToken)
+  : new NullAuthenticator();
 const handles: TransportHandle[] = [];
 if (config.transport.socketio) {
   const { SocketIoTransport } = await import('../transport/socket-io-transport.ts');

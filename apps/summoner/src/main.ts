@@ -5,6 +5,7 @@ import { loadConfig } from './config.ts';
 import { Agent } from './connection/agent.ts';
 import { LocalFilesystemService } from './filesystem/local.ts';
 import { LocalRootGuard } from './filesystem/local-root-guard.ts';
+import { LocalWatchService } from './fs-watch/local.ts';
 import { LocalGitService } from './git/local.ts';
 import { logger } from './logger.ts';
 import { ChildProcessProvider } from './transports/child-process.ts';
@@ -47,7 +48,7 @@ console.log(
 
 const processProvider = new ChildProcessProvider();
 const rootGuard = new LocalRootGuard(config.fsRoots);
-const filesystem = new LocalFilesystemService(config.fsRoots, rootGuard);
+const filesystem = new LocalFilesystemService(config.fsRoots, rootGuard, new LocalWatchService());
 const git = new LocalGitService();
 
 const transport = new WsTransport(wsAdapter());
