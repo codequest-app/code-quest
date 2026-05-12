@@ -1,4 +1,4 @@
-import type { MenuItem } from './build-menu-items.ts';
+import { type MenuItem, SLASH_SECTION } from './menu-types.ts';
 
 const NAV_KEYS = ['ArrowDown', 'ArrowUp', 'Enter', 'Tab'] as const;
 
@@ -39,7 +39,7 @@ export function dispatchSelectedItem(
     close: () => void;
   },
 ): void {
-  if (!item.id.startsWith('slash-')) {
+  if (item.section !== SLASH_SECTION) {
     opts.selectItem(item);
     return;
   }

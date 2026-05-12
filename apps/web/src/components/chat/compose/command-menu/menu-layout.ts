@@ -1,4 +1,5 @@
-import type { MenuItem, MenuSections } from './build-menu-items.ts';
+import Fuse from 'fuse.js';
+import type { MenuItem, MenuSections } from './menu-types.ts';
 
 /**
  * Filtered + laid-out view of the menu, derived purely from the given
@@ -25,14 +26,21 @@ interface MenuLayout extends MenuSections {
   };
 }
 
+// 0.4: loose enough for "coder" → "/code-review", tight enough to reject unrelated tokens
+const FUSE_THRESHOLD = 0.4;
+const fuse = new Fuse<MenuItem>([], { keys: ['label'], threshold: FUSE_THRESHOLD });
+
 export function filterMenuItems(items: MenuItem[], filter: string): MenuItem[] {
   const f = filter.toLowerCase();
+  if (!f) return items.filter((i) => !i.filterOnly);
+
+  const firstToken = f.split(' ')[0] ?? '';
+  fuse.setCollection(items);
+  const matchedIds = new Set(fuse.search(f).map((r) => r.item.id));
+
   return items.filter((i) => {
-    if (i.filterOnly && !f) return false;
-    if (!f) return true;
-    const matchText = i.matchFirstToken ? (f.split(' ')[0] ?? '') : f;
-    if (i.matchFirstToken && !matchText) return false;
-    return i.label.toLowerCase().includes(matchText);
+    if (i.matchFirstToken) return !!firstToken && i.label.toLowerCase().includes(firstToken);
+    return matchedIds.has(i.id);
   });
 }
 

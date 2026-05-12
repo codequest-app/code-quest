@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest';
-import type { MenuItem } from '../build-menu-items.ts';
 import { computeMenuLayout, filterMenuItems } from '../menu-layout.ts';
+import type { MenuItem } from '../menu-types.ts';
 
 function item(overrides: Partial<MenuItem>): MenuItem {
   return {
@@ -51,6 +51,27 @@ describe('filterMenuItems', () => {
   it('matchFirstToken items still do not match unrelated filters', () => {
     const items = [item({ id: 'btw', label: '/btw', matchFirstToken: true })];
     expect(filterMenuItems(items, 'wiki').map((i) => i.id)).toEqual([]);
+  });
+
+  it('fuzzy-matches items whose label characters appear in order (subsequence)', () => {
+    const items = [
+      item({ id: 'code-review', label: '/code-review' }),
+      item({ id: 'compact', label: '/compact' }),
+      item({ id: 'unrelated', label: '/unrelated' }),
+    ];
+    // 'coder' is not a substring of '/code-review' but subsequence matches
+    expect(filterMenuItems(items, 'coder').map((i) => i.id)).toContain('code-review');
+    expect(filterMenuItems(items, 'coder').map((i) => i.id)).not.toContain('unrelated');
+  });
+
+  it('does not bleed results across calls with different item sets', () => {
+    const setA = [item({ id: 'alpha', label: '/alpha' })];
+    const setB = [item({ id: 'beta', label: '/beta' })];
+    filterMenuItems(setA, 'alpha');
+    // second call with entirely different items — setA items must not appear
+    const result = filterMenuItems(setB, 'beta').map((i) => i.id);
+    expect(result).toEqual(['beta']);
+    expect(result).not.toContain('alpha');
   });
 
   it('filterOnly items appear when filter is non-empty and match', () => {

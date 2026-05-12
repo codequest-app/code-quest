@@ -1,31 +1,12 @@
 import { renderMenuTrailing } from '@/lib/adapters/to-menu-item';
 import type { Feature, FeatureSection } from '@/lib/feature';
 import type { FeatureRegistry } from '@/lib/feature-registry';
-
-type DismissBehavior = 'close' | 'closeSilent' | 'none';
-
-export interface MenuItem {
-  id: string;
-  label: string;
-  description?: string;
-  section: string;
-  disabled?: boolean;
-  filterOnly?: boolean;
-  /** Match only the first word of the filter text (e.g. "/btw <question>" → match on "btw") */
-  matchFirstToken?: boolean;
-  trailing?: React.ReactNode;
-  dismissBehavior?: DismissBehavior;
-  onClick?: () => void;
-}
-
-export interface MenuSections {
-  context: MenuItem[];
-  model: MenuItem[];
-  customize: MenuItem[];
-  slash: MenuItem[];
-  settings: MenuItem[];
-  support: MenuItem[];
-}
+import {
+  type DismissBehavior,
+  type MenuItem,
+  type MenuSections,
+  SLASH_SECTION,
+} from './menu-types.ts';
 
 interface BuildMenuItemsParams {
   slashCommands: string[];
@@ -90,12 +71,12 @@ export function buildMenuItems(params: BuildMenuItemsParams): MenuSections {
     .map((cmd) => ({
       id: `slash-${cmd}`,
       label: `/${cmd}`,
-      section: 'Slash Commands',
+      section: SLASH_SECTION,
       dismissBehavior: 'close',
       onClick: () => compose.executeSlashCommand(`/${cmd}`),
     }));
 
-  const slash: MenuItem[] = [...section('Slash Commands'), ...cliSlashItems].sort((a, b) =>
+  const slash: MenuItem[] = [...section(SLASH_SECTION), ...cliSlashItems].sort((a, b) =>
     a.label.localeCompare(b.label),
   );
 

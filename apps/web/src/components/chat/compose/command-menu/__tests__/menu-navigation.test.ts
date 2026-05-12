@@ -1,9 +1,10 @@
-import { describe, expect, it } from 'vitest';
-import type { MenuItem } from '../build-menu-items.ts';
-import { isNavKey, navigateItems } from '../menu-navigation.ts';
+import { describe, expect, it, vi } from 'vitest';
+import { dispatchSelectedItem, isNavKey, navigateItems } from '../menu-navigation.ts';
+import type { MenuItem } from '../menu-types.ts';
+import { SLASH_SECTION } from '../menu-types.ts';
 
-function item(id: string): MenuItem {
-  return { id, label: id, section: 'test' };
+function item(id: string, section = 'test'): MenuItem {
+  return { id, label: id, section };
 }
 
 describe('isNavKey', () => {
@@ -47,5 +48,36 @@ describe('navigateItems', () => {
 
   it('Tab signals shouldSelect', () => {
     expect(navigateItems('Tab', items, 'b')).toEqual({ newActiveId: 'b', shouldSelect: true });
+  });
+});
+
+describe('dispatchSelectedItem', () => {
+  const opts = () => ({
+    insertSlash: vi.fn(),
+    executeSlash: vi.fn(),
+    shouldInsert: false,
+    selectItem: vi.fn(),
+    close: vi.fn(),
+  });
+
+  it('Tab on slash command item inserts text, not executes', () => {
+    const o = opts();
+    dispatchSelectedItem({ id: 'compact', label: '/compact', section: SLASH_SECTION }, 'Tab', o);
+    expect(o.insertSlash).toHaveBeenCalledWith('/compact ');
+    expect(o.selectItem).not.toHaveBeenCalled();
+  });
+
+  it('Tab on non-slash item (context/model) calls selectItem', () => {
+    const o = opts();
+    dispatchSelectedItem(item('add-file', 'Context'), 'Tab', o);
+    expect(o.selectItem).toHaveBeenCalled();
+    expect(o.insertSlash).not.toHaveBeenCalled();
+  });
+
+  it('Enter on slash command item executes and closes', () => {
+    const o = opts();
+    dispatchSelectedItem({ id: 'compact', label: '/compact', section: SLASH_SECTION }, 'Enter', o);
+    expect(o.executeSlash).toHaveBeenCalledWith('/compact');
+    expect(o.close).toHaveBeenCalled();
   });
 });

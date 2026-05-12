@@ -7,10 +7,11 @@ import { useFeatureRegistry } from '@/contexts/channel/FeatureRegistryContext';
 import { cn } from '@/utils/cn';
 import { findModel, getEffortLevels, isThinkingActive } from '@/utils/model-utils';
 import { buildLocalFeatures } from './build-local-features.ts';
-import { buildMenuItems, type MenuItem } from './build-menu-items.ts';
+import { buildMenuItems } from './build-menu-items.ts';
 import { MenuSection } from './menu-components.tsx';
 import { computeMenuLayout } from './menu-layout.ts';
 import { dispatchSelectedItem, isNavKey, navigateItems } from './menu-navigation.ts';
+import type { MenuItem } from './menu-types.ts';
 import { slashPaletteState } from './slash-palette-state.ts';
 
 interface CommandMenuProps {
