@@ -128,7 +128,11 @@ function setupSummonerMode() {
 
   wsTransport.route(
     SUMMONER_PATH,
-    [bearerAuth(summonerToken), heartbeat({ pingIntervalMs: 30_000, idleTimeoutMs: 60_000 })],
+    [
+      bearerAuth(summonerToken),
+      heartbeat({ pingIntervalMs: 30_000, idleTimeoutMs: 60_000 }),
+      resumable(),
+    ],
     (_socket, ctx) => {
       const rpc = new RpcChannel(ctx.socket as RpcChannelSocket);
       reconnectableRpc.replace(rpc);

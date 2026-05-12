@@ -52,7 +52,10 @@ const git = new LocalGitService();
 
 const transport = new WsTransport(wsAdapter());
 
-createConnectionLoop(transport, config.server, {
+const serverUrl = new URL(config.server);
+serverUrl.searchParams.set('sessionKey', crypto.randomUUID());
+
+createConnectionLoop(transport, serverUrl.toString(), {
   middleware: [bearerToken(config.token)],
   createAgent: (rpc) => new Agent(rpc, processProvider, filesystem, git),
   onConnect: () => logger.info(`[summoner] connected to ${config.server}`),

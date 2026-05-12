@@ -19,16 +19,27 @@ export interface SocketLike {
 export function createSocket(url?: string): TypedSocket | Promise<TypedSocket> {
   const target = url ?? config.serverUrl;
   if (config.transport === 'ws') {
-    const client = new WsClient(toWsUrl(target));
+    const client = new WsClient(toWsUrl(target, getOrCreateSessionKey()));
     return new WsSocketAdapter(client) as unknown as TypedSocket;
   }
   return import('socket.io-client').then(({ io }) => io(target, { autoConnect: false }));
 }
 
-/** http(s)://host[/path] → ws(s)://host/ws (or /ws appended). */
-function toWsUrl(httpUrl: string): string {
+const SESSION_KEY_STORAGE = 'ws-session-key';
+
+function getOrCreateSessionKey(): string {
+  const existing = sessionStorage.getItem(SESSION_KEY_STORAGE);
+  if (existing) return existing;
+  const key = crypto.randomUUID();
+  sessionStorage.setItem(SESSION_KEY_STORAGE, key);
+  return key;
+}
+
+/** http(s)://host[/path] → ws(s)://host/ws?sessionKey=<key> */
+function toWsUrl(httpUrl: string, sessionKey: string): string {
   const base = httpUrl || (typeof window !== 'undefined' ? window.location.origin : '');
   const url = new URL('/ws', base || 'http://localhost');
   url.protocol = url.protocol === 'https:' ? 'wss:' : 'ws:';
+  url.searchParams.set('sessionKey', sessionKey);
   return url.toString();
 }
