@@ -18,7 +18,7 @@ import { useChannelSocketRouter } from './ChannelSocketRouterContext.tsx';
 import { useFeatureRegistry } from './FeatureRegistryContext.tsx';
 import { composeHandlers } from './handlers/speech.ts';
 
-export interface AttachedFile {
+interface AttachedFile {
   id: string;
   file: File;
   objectUrl: string;

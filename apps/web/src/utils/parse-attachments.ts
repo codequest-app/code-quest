@@ -1,10 +1,10 @@
-export interface ParsedAttachment {
+interface ParsedAttachment {
   name: string;
   dataUrl: string;
   isImage: boolean;
 }
 
-export interface ParseAttachmentsResult {
+interface ParseAttachmentsResult {
   text: string;
   attachments: ParsedAttachment[];
 }
