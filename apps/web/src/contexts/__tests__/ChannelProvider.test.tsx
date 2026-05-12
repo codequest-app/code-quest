@@ -11,7 +11,7 @@ async function setupWithTurn(userMsg = 'go', assistantReply = 'hi') {
   await project.launchSession();
   await sendUserMessage(result.user, userMsg);
   await emitAssistantTurn(result.claude, assistantReply);
-  return result;
+  return { ...result, summoner: result.summoner };
 }
 
 describe('ChannelProvider', () => {
@@ -230,6 +230,29 @@ describe('ChannelProvider', () => {
     // App should not crash — contextUsage stored separately from stats
     await waitFor(() => {
       expect(screen.getByPlaceholderText(COMPOSE_PLACEHOLDER)).toBeInTheDocument();
+    });
+  });
+
+  // ── state:refresh_required ──
+
+  describe('state:refresh_required', () => {
+    it('re-joins session after state:refresh_required and restores history', async () => {
+      const { claude, summoner } = await setupWithTurn('hello', 'world');
+
+      expect(screen.getByText('world')).toBeInTheDocument();
+      const joinsBefore = summoner.sentEvents('session:join').length;
+
+      await act(async () => {
+        claude.pushServerEvent('state:refresh_required', {});
+      });
+
+      // session:join must be sent again (clear + rejoin cycle)
+      await waitFor(() => {
+        expect(summoner.sentEvents('session:join').length).toBeGreaterThan(joinsBefore);
+      });
+
+      // history is restored — messages visible again
+      expect(screen.getByText('world')).toBeInTheDocument();
     });
   });
 });
