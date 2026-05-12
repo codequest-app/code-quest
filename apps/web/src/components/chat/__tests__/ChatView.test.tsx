@@ -127,6 +127,7 @@ describe('ChatSession', () => {
         await claude.emitSegment(
           s.assistant({ toolUse: { id: 'toolu_1', name: 'Read', input: {} } }),
         );
+        await claude.emitSegment(s.messageStop());
         await claude.emitSegment(s.controlRequest('req-1', 'can_use_tool', 'Read', {}));
       });
 

@@ -1,4 +1,5 @@
 import { useEffect, useRef } from 'react';
+import { formatTokens } from '@/utils/format-number';
 
 const ICON_CYCLE_MS = 120;
 const SCRAMBLE_FRAME_MS = 40;
@@ -123,15 +124,42 @@ function runScramble(el: HTMLElement, padded: string): () => void {
 interface SpinnerVerbProps {
   statusText?: string | null;
   verbs?: string[];
+  startTime?: number;
+  tokens?: number;
 }
 
 // All animation writes go to DOM refs directly so React never re-renders on tick.
 export function SpinnerVerb({
   statusText,
   verbs = DEFAULT_VERBS,
+  startTime,
+  tokens,
 }: SpinnerVerbProps): React.JSX.Element {
   const iconRef = useRef<HTMLSpanElement | null>(null);
   const verbRef = useRef<HTMLSpanElement | null>(null);
+  const metaRef = useRef<HTMLSpanElement | null>(null);
+
+  useEffect(() => {
+    const el = metaRef.current;
+    if (!el) return;
+
+    const update = (elapsedSec: number) => {
+      const parts = [
+        elapsedSec > 0 ? `${elapsedSec}s` : null,
+        tokens != null && tokens > 0 ? `↑ ${formatTokens(tokens)} tokens` : null,
+      ].filter(Boolean);
+      el.textContent = parts.length > 0 ? `(${parts.join(' · ')})` : '';
+    };
+
+    if (startTime == null) {
+      update(0);
+      return;
+    }
+    const tick = () => update(Math.floor((Date.now() - startTime) / 1000));
+    tick();
+    const id = setInterval(tick, 1000);
+    return () => clearInterval(id);
+  }, [startTime, tokens]);
 
   useEffect(() => {
     let i = 0;
@@ -192,6 +220,12 @@ export function SpinnerVerb({
         role="status"
         aria-label="spinner-verb"
         className="text-xs text-text font-medium font-mono whitespace-pre"
+      />
+      <span
+        ref={metaRef}
+        className="text-xs text-text-muted font-mono ml-1"
+        role="status"
+        aria-label="spinner-meta"
       />
     </div>
   );

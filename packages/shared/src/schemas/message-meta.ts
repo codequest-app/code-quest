@@ -1,6 +1,7 @@
 import { z } from 'zod';
 import { chatStatsSchema } from './message-stats.ts';
-import { taskStatusSchema, taskTypeSchema, tokenUsageSchema } from './system.ts';
+import { tokenUsageSchema } from './system.ts';
+import { taskStatusSchema, taskTypeSchema } from './task.ts';
 
 // ── Shared primitives reused by UI layers ──
 
@@ -50,7 +51,9 @@ export const toolUseMetaSchema: z.ZodObject<
     taskStatus: z.ZodOptional<
       z.ZodEnum<{ running: 'running'; completed: 'completed'; failed: 'failed' }>
     >;
-    taskType: z.ZodOptional<z.ZodEnum<{ local_agent: 'local_agent'; subagent: 'subagent' }>>;
+    taskType: z.ZodOptional<
+      z.ZodEnum<{ local_agent: 'local_agent'; local_bash: 'local_bash'; subagent: 'subagent' }>
+    >;
     lastToolName: z.ZodOptional<z.ZodString>;
     taskSummary: z.ZodOptional<z.ZodString>;
     taskUsage: z.ZodOptional<typeof tokenUsageSchema>;

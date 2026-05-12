@@ -9,28 +9,27 @@ import {
   useState,
 } from 'react';
 import { useHotkeys } from 'react-hotkeys-hook';
-import { useCommandPaletteActions } from '@/contexts/CommandPaletteContext';
+import { useCommandPalette, useCommandPaletteActions } from '@/contexts/CommandPaletteContext';
 import {
   useChannelControl,
   useChannelId,
   useChannelMessages,
   useMessageVisibility,
 } from '@/contexts/channel';
-import type { ForkFn, RewindFn } from '@/types/ui';
+import { findStreamingTurn } from '@/contexts/channel/handlers/streaming';
+import { selectIsActive, useChannelStore } from '@/stores/ChannelStoreContext';
+import type { ForkFn, Message, RewindFn } from '@/types/ui';
 import { NO_FORM } from '@/utils/hotkey-options';
 import { isMessageVisible } from '@/utils/isMessageVisible';
 import {
-  buildMessageTree,
-  filterTree,
-  groupForTimeline,
-  type MessageNode,
+  buildChildrenIndex,
+  getGroupKey,
   type RenderGroup,
-} from '@/utils/message-tree';
+  renderableGroups,
+} from '@/utils/renderable-groups';
 import { SpinnerVerb } from '../SpinnerVerb.tsx';
-import { ChatMessage } from './ChatMessage.tsx';
 import { CollapsibleTimeline } from './CollapsibleTimeline.tsx';
-import { getGroupKey } from './getGroupKey.ts';
-import { SubagentChildren } from './SubagentChildren.tsx';
+import { NodeContent } from './NodeContent.tsx';
 
 const SCROLL_THRESHOLD_PX = 50;
 const SMOOTH_SCROLL_RESET_MS = 500;
@@ -61,12 +60,10 @@ function scrollToEnd(
 function spotlightElement(el: Element) {
   el.scrollIntoView({ behavior: 'smooth', block: 'center' });
   const bubble = (el.querySelector('[data-type]') ?? el) as HTMLElement;
-  bubble.classList.remove('spotlight-highlight');
+  delete bubble.dataset.highlighted;
   void bubble.offsetHeight;
-  bubble.classList.add('spotlight-highlight');
-  bubble.addEventListener('animationend', () => bubble.classList.remove('spotlight-highlight'), {
-    once: true,
-  });
+  bubble.dataset.highlighted = 'true';
+  bubble.addEventListener('animationend', () => delete bubble.dataset.highlighted, { once: true });
 }
 
 function expandCollapsedIfNeeded(container: Element, id: string): boolean {
@@ -77,15 +74,45 @@ function expandCollapsedIfNeeded(container: Element, id: string): boolean {
   return true;
 }
 
-function collectIds(node: MessageNode, topIndex: number, map: Map<string, number>) {
-  map.set(node.message.id, topIndex);
-  for (const child of node.children) collectIds(child, topIndex, map);
+function collectGroupIds(
+  group: RenderGroup,
+  topIndex: number,
+  map: Map<string, number>,
+  childrenIndex: Map<string, Message[]>,
+) {
+  if (group.kind === 'timeline') {
+    for (const msg of group.messages) {
+      map.set(msg.id, topIndex);
+      collectChildIds(msg, topIndex, map, childrenIndex);
+    }
+  } else {
+    map.set(group.message.id, topIndex);
+    collectChildIds(group.message, topIndex, map, childrenIndex);
+  }
+}
+
+function collectChildIds(
+  msg: Message,
+  topIndex: number,
+  map: Map<string, number>,
+  childrenIndex: Map<string, Message[]>,
+) {
+  const toolId = msg.type === 'tool_use' ? msg.toolId : undefined;
+  if (!toolId) return;
+  const children = childrenIndex.get(toolId);
+  if (!children) return;
+  for (const child of children) {
+    map.set(child.id, topIndex);
+    collectChildIds(child, topIndex, map, childrenIndex);
+  }
 }
 
 function VirtualGroupItem({
   group,
   item,
   virtualizer,
+  lastTurnId,
+  childrenIndex,
   onRewind,
   onFork,
   onStopTask,
@@ -94,6 +121,8 @@ function VirtualGroupItem({
   group: RenderGroup;
   item: VirtualItem;
   virtualizer: Pick<Virtualizer<HTMLDivElement, HTMLDivElement>, 'measureElement'>;
+  lastTurnId?: string;
+  childrenIndex?: Map<string, Message[]>;
   onRewind?: RewindFn;
   onFork?: ForkFn;
   onStopTask?: (taskId: string) => void;
@@ -113,31 +142,26 @@ function VirtualGroupItem({
     >
       {group.kind === 'timeline' ? (
         <CollapsibleTimeline
-          nodes={group.nodes}
+          messages={group.messages}
+          lastTurnId={lastTurnId}
+          childrenIndex={childrenIndex}
           onRewind={onRewind}
           onFork={onFork}
           onStopTask={onStopTask}
           onDiffRespond={onDiffRespond}
         />
       ) : (
-        <div data-message-id={group.node.message.id} className="animate-fade-in py-2">
-          <ChatMessage
-            message={group.node.message}
-            showAvatar={group.node.message.role !== group.prevRole}
+        <div data-message-id={group.message.id} className="animate-fade-in py-2">
+          <NodeContent
+            message={group.message}
+            childrenIndex={childrenIndex}
+            showAvatar={group.message.role !== group.prevRole}
+            isLastTurn={group.message.type === 'assistant_turn' && group.message.id === lastTurnId}
             onRewind={onRewind}
             onFork={onFork}
+            onStopTask={onStopTask}
             onDiffRespond={onDiffRespond}
           />
-          {group.node.children.length > 0 && (
-            <SubagentChildren
-              nodes={group.node.children}
-              onStopTask={onStopTask}
-              onDiffRespond={onDiffRespond}
-              parentToolId={
-                group.node.message.type === 'tool_use' ? group.node.message.meta.toolId : undefined
-              }
-            />
-          )}
         </div>
       )}
     </div>
@@ -151,16 +175,20 @@ export const MessageList: React.ForwardRefExoticComponent<
   ref,
 ) {
   const channelId = useChannelId();
-  const {
-    messages,
-    isProcessing,
-    statusText,
-    rewindToMessage: onRewind,
-    forkSession: onFork,
-  } = useChannelMessages();
+  const messages = useChannelStore((s) => s.messages);
+  const isProcessing = useChannelStore(selectIsActive);
+  const statusText = useChannelStore((s) => s.statusText);
+  const taskProgressText = useChannelStore((s) => {
+    for (const task of s.tasks.values()) {
+      if (task.status === 'running' && task.progressText) return task.progressText;
+    }
+    return undefined;
+  });
+  const { rewindToMessage: onRewind, forkSession: onFork } = useChannelMessages();
   const { stopTask: onStopTask, diffRespond: onDiffRespond } = useChannelControl();
   const { enabledTypes, registerUnknownType, unknownTypes } = useMessageVisibility();
   const { registerJumpTo, unregisterJumpTo, openPalette } = useCommandPaletteActions();
+  const { open: paletteOpen } = useCommandPalette();
   const scrollRef = useRef<HTMLDivElement | null>(null);
   const scrollContainerRef = useRef<HTMLDivElement | null>(null);
   const isAtBottomRef = useRef(true);
@@ -222,32 +250,38 @@ export const MessageList: React.ForwardRefExoticComponent<
     registeredCountRef.current = messages.length;
   }, [messages]);
 
+  const streamingTurn = useMemo(() => findStreamingTurn(messages), [messages]);
+
+  const lastTurnId = useMemo(() => {
+    for (let i = messages.length - 1; i >= 0; i--) {
+      if (messages[i]?.type === 'assistant_turn') return messages[i]?.id;
+    }
+    return undefined;
+  }, [messages]);
+
   const q = searchQuery.toLowerCase();
-  const visibleTree = useMemo(() => {
-    const fullTree = buildMessageTree(messages);
-    return filterTree(
-      fullTree,
+  const visibleMessages = useMemo(() => {
+    let filtered = messages.filter(
       (m) => isMessageVisible(m, enabledTypes) || unknownTypes.has(m.type),
     );
-  }, [messages, enabledTypes, unknownTypes]);
-  const tree = useMemo(
-    () => (q ? filterTree(visibleTree, (m) => m.content.toLowerCase().includes(q)) : visibleTree),
-    [visibleTree, q],
-  );
+    if (q) {
+      filtered = filtered.filter((m) => m.content.toLowerCase().includes(q));
+    }
+    return filtered;
+  }, [messages, enabledTypes, unknownTypes, q]);
 
-  const displayGroups = useMemo(() => groupForTimeline(tree, null), [tree]);
+  const childrenIndex = useMemo(() => buildChildrenIndex(messages), [messages]);
+
+  const displayGroups = useMemo(() => [...renderableGroups(visibleMessages)], [visibleMessages]);
 
   const idToIndex = useMemo(() => {
     const map = new Map<string, number>();
-    displayGroups.forEach((group, i) => {
-      if (group.kind === 'timeline') {
-        for (const node of group.nodes) collectIds(node, i, map);
-      } else {
-        collectIds(group.node, i, map);
-      }
-    });
+    for (let i = 0; i < displayGroups.length; i++) {
+      const g = displayGroups[i];
+      if (g) collectGroupIds(g, i, map, childrenIndex);
+    }
     return map;
-  }, [displayGroups]);
+  }, [displayGroups, childrenIndex]);
 
   const virtualizer = useVirtualizer({
     count: displayGroups.length,
@@ -269,6 +303,7 @@ export const MessageList: React.ForwardRefExoticComponent<
   useEffect(() => {
     const el = scrollContainerRef.current;
     if (!el) return;
+    if (paletteOpen) return;
     if (isAtBottomRef.current) {
       el.scrollTop = el.scrollHeight;
       return;
@@ -338,6 +373,8 @@ export const MessageList: React.ForwardRefExoticComponent<
                     group={group}
                     item={item}
                     virtualizer={virtualizer}
+                    lastTurnId={lastTurnId}
+                    childrenIndex={childrenIndex}
                     onRewind={onRewind}
                     onFork={onFork}
                     onStopTask={onStopTask}
@@ -346,7 +383,13 @@ export const MessageList: React.ForwardRefExoticComponent<
                 );
               })}
             </div>
-            {isProcessing && <SpinnerVerb statusText={statusText} />}
+            {isProcessing && (
+              <SpinnerVerb
+                statusText={statusText ?? taskProgressText}
+                startTime={streamingTurn?.timestamp}
+                tokens={streamingTurn?.usage?.outputTokens}
+              />
+            )}
             <section ref={scrollRef} aria-label="message-list-bottom" />
           </section>
         )}

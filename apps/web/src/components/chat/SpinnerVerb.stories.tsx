@@ -25,3 +25,11 @@ export const WithStatusText: Story = {
 export const CustomVerbs: Story = {
   args: { verbs: ['Hacking', 'Shipping', 'Deploying'] },
 };
+
+export const WithElapsedAndTokens: Story = {
+  args: { startTime: Date.now() - 42_000, tokens: 1200 },
+};
+
+export const WithElapsedOnly: Story = {
+  args: { startTime: Date.now() - 10_000 },
+};

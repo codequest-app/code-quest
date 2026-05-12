@@ -2,10 +2,12 @@ import { screen } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { describe, expect, it } from 'vitest';
 import { useChannelMessages } from '@/contexts/channel';
+import { useChannelStore } from '@/stores/ChannelStoreContext';
 import { renderWithChannel } from '@/test/render-with-channel';
 
 function ActionsTestUI() {
-  const { isCancelling, ...actions } = useChannelMessages();
+  const isCancelling = useChannelStore((s) => s.status === 'cancelling');
+  const actions = useChannelMessages();
   return (
     <div>
       <span role="status" aria-label="cancelling">

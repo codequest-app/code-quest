@@ -3,7 +3,7 @@ import { act, screen } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { afterEach, describe, expect, it } from 'vitest';
 import { CommandPaletteProvider, useCommandPalette } from '@/contexts/CommandPaletteContext';
-import { useMessageRegistryStore } from '@/stores/useMessageRegistryStore';
+import { useChannelsStore } from '@/stores/channels-store';
 import { usePreferencesStore } from '@/stores/usePreferencesStore';
 import { renderWithChannel } from '@/test/render-with-channel';
 import type { Message } from '@/types/ui';
@@ -17,6 +17,13 @@ const fakeMessage = (id: string, content: string, type = 'text'): Message =>
     content,
     timestamp: Date.now(),
   }) as Message;
+
+function seedChannel(
+  channelId: string,
+  { messages }: { projectCwd?: string; messages: Message[] },
+) {
+  useChannelsStore.getState().setChannelState(channelId, (prev) => ({ ...prev, messages }));
+}
 
 function OpenButton() {
   const { openPalette } = useCommandPalette();
@@ -205,7 +212,7 @@ describe('CommandPalette — Messages tab search', () => {
 
 describe('CommandPalette — cross-channel messages', () => {
   it('shows messages from registry channels', async () => {
-    useMessageRegistryStore.getState().register('other-ch', {
+    seedChannel('other-ch', {
       projectCwd: '/other',
       messages: [fakeMessage('ext-1', 'Message from other tab')],
     });
@@ -214,18 +221,18 @@ describe('CommandPalette — cross-channel messages', () => {
     await userEvent.click(screen.getByRole('tab', { name: /messages/i }));
     expect(screen.getByText(/Message from other tab/)).toBeInTheDocument();
 
-    useMessageRegistryStore.getState().unregister('other-ch');
+    useChannelsStore.getState().removeChannel('other-ch');
   });
 });
 
 describe('CommandPalette — visibility filtering', () => {
   afterEach(() => {
     usePreferencesStore.setState({ enabledTypes: null });
-    useMessageRegistryStore.getState().unregister('vis-ch');
+    useChannelsStore.getState().removeChannel('vis-ch');
   });
 
   it('hides messages whose type is disabled in visibility store', async () => {
-    useMessageRegistryStore.getState().register('vis-ch', {
+    seedChannel('vis-ch', {
       projectCwd: '/test',
       messages: [
         fakeMessage('v1', 'A user question', 'text'),
@@ -243,7 +250,7 @@ describe('CommandPalette — visibility filtering', () => {
   });
 
   it('shows all messages when visibility store is null (defaults)', async () => {
-    useMessageRegistryStore.getState().register('vis-ch', {
+    seedChannel('vis-ch', {
       projectCwd: '/test',
       messages: [
         fakeMessage('v1', 'A text msg', 'text'),
@@ -277,16 +284,16 @@ describe('CommandPalette — filter features', () => {
 
 describe('CommandPalette — source labels', () => {
   afterEach(() => {
-    useMessageRegistryStore.getState().unregister('ch-a');
-    useMessageRegistryStore.getState().unregister('ch-b');
+    useChannelsStore.getState().removeChannel('ch-a');
+    useChannelsStore.getState().removeChannel('ch-b');
   });
 
   it('shows source section headers when multiple channels are registered', async () => {
-    useMessageRegistryStore.getState().register('ch-a', {
+    seedChannel('ch-a', {
       projectCwd: '/projects/alpha',
       messages: [fakeMessage('sa-1', 'Alpha msg')],
     });
-    useMessageRegistryStore.getState().register('ch-b', {
+    seedChannel('ch-b', {
       projectCwd: '/projects/beta',
       messages: [fakeMessage('sb-1', 'Beta msg')],
     });
@@ -297,7 +304,7 @@ describe('CommandPalette — source labels', () => {
     const headers = screen.getAllByLabelText('source-header');
     expect(headers.length).toBeGreaterThanOrEqual(2);
     expect(headers.map((el) => el.textContent)).toEqual(
-      expect.arrayContaining([expect.stringContaining('alpha'), expect.stringContaining('beta')]),
+      expect.arrayContaining([expect.stringContaining('ch-a'), expect.stringContaining('ch-b')]),
     );
   });
 
@@ -310,11 +317,11 @@ describe('CommandPalette — source labels', () => {
 
   it('multi-channel results use simple recency, not bucket grouping', async () => {
     const msgs = Array.from({ length: 12 }, (_, i) => fakeMessage(`m${i}`, `msg ${i}`));
-    useMessageRegistryStore.getState().register('ch-a', {
+    seedChannel('ch-a', {
       projectCwd: '/projects/alpha',
       messages: msgs.slice(0, 6),
     });
-    useMessageRegistryStore.getState().register('ch-b', {
+    seedChannel('ch-b', {
       projectCwd: '/projects/beta',
       messages: msgs.slice(6),
     });

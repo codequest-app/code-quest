@@ -1,49 +1,30 @@
 import { describe, expect, it } from 'vitest';
 import { initialChannelState } from '@/types/chat';
+import type { AssistantTurn } from '@/types/ui';
 import { streamingHandlerOn } from '../streaming.ts';
 
 const onMessageAssistant = streamingHandlerOn['message:assistant'];
 
+function lastTurn(state: ReturnType<typeof initialChannelState>): AssistantTurn {
+  const last = state.messages[state.messages.length - 1];
+  if (!last || last.type !== 'assistant_turn') throw new Error('not assistant_turn');
+  return last as AssistantTurn;
+}
+
 describe('message:assistant handler', () => {
-  it('includes text block when wasStreamedViaDelta is false', () => {
-    const state = { ...initialChannelState('ch'), wasStreamedViaDelta: false };
+  it('replay: creates AssistantTurn with text block', () => {
+    const state = initialChannelState('ch');
     const p = { content: [{ type: 'text', text: 'hello' }], channelId: 'ch' };
     const next = onMessageAssistant(state, p as never);
     expect(next.messages).toHaveLength(1);
-    expect(next.messages[0]!.type).toBe('text');
-    expect(next.messages[0]!.content).toBe('hello');
+    const turn = lastTurn(next);
+    expect(turn.blocks).toHaveLength(1);
+    expect(turn.blocks[0]!.type).toBe('text');
+    expect(turn.blocks[0]!.content).toBe('hello');
   });
 
-  it('skips text block when wasStreamedViaDelta is true', () => {
-    const state = { ...initialChannelState('ch'), wasStreamedViaDelta: true };
-    const p = { content: [{ type: 'text', text: 'hello' }], channelId: 'ch' };
-    const next = onMessageAssistant(state, p as never);
-    expect(next.messages).toHaveLength(0);
-  });
-
-  it('skips thinking block when isThinkingStreaming is true', () => {
-    const state = { ...initialChannelState('ch'), isThinkingStreaming: true };
-    const p = { content: [{ type: 'thinking', thinking: 'hmm' }], channelId: 'ch' };
-    const next = onMessageAssistant(state, p as never);
-    expect(next.messages).toHaveLength(0);
-  });
-
-  it('resets all streaming flags after processing', () => {
-    const state = {
-      ...initialChannelState('ch'),
-      isTextStreaming: true,
-      isThinkingStreaming: true,
-      wasStreamedViaDelta: true,
-    };
-    const p = { content: [], channelId: 'ch' };
-    const next = onMessageAssistant(state, p as never);
-    expect(next.isTextStreaming).toBe(false);
-    expect(next.isThinkingStreaming).toBe(false);
-    expect(next.wasStreamedViaDelta).toBe(false);
-  });
-
-  it('history case: flags false → all blocks included, reset is no-op', () => {
-    const state = initialChannelState('ch'); // all flags false
+  it('replay: creates AssistantTurn with all blocks', () => {
+    const state = initialChannelState('ch');
     const p = {
       content: [
         { type: 'thinking', thinking: 'plan' },
@@ -52,8 +33,22 @@ describe('message:assistant handler', () => {
       channelId: 'ch',
     };
     const next = onMessageAssistant(state, p as never);
-    expect(next.messages).toHaveLength(2);
-    expect(next.isTextStreaming).toBe(false);
-    expect(next.wasStreamedViaDelta).toBe(false);
+    expect(next.messages).toHaveLength(1);
+    const turn = lastTurn(next);
+    expect(turn.blocks).toHaveLength(2);
+    expect(turn.blocks[0]!.type).toBe('thinking');
+    expect(turn.blocks[0]!.content).toBe('plan');
+    expect(turn.blocks[1]!.type).toBe('text');
+    expect(turn.blocks[1]!.content).toBe('result');
+    expect(turn.isStreaming).toBe(false);
+  });
+
+  it('replay: empty content creates AssistantTurn with no blocks', () => {
+    const state = initialChannelState('ch');
+    const p = { content: [], channelId: 'ch' };
+    const next = onMessageAssistant(state, p as never);
+    expect(next.messages).toHaveLength(1);
+    const turn = lastTurn(next);
+    expect(turn.blocks).toHaveLength(0);
   });
 });

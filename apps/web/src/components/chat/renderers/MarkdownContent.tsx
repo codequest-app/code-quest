@@ -1,11 +1,10 @@
 import * as ContextMenu from '@radix-ui/react-context-menu';
-import { isValidElement, lazy, Suspense, useRef } from 'react';
+import { isValidElement, lazy, Suspense } from 'react';
 import Markdown, { type Components } from 'react-markdown';
 import remarkGfm from 'remark-gfm';
 import { copyToClipboard } from '@/utils/clipboard';
-import { cn } from '@/utils/cn';
-import { CopyButton, HOVER_COPY_BASE } from '../tool-use/message-blocks/CopyButton.tsx';
-import { CodeBlock } from './CodeBlock.tsx';
+import { Highlight } from './Highlight.tsx';
+import { Pre } from './Pre.tsx';
 
 const MermaidDiagram = lazy(() =>
   import('./MermaidDiagram.tsx').then((m) => ({ default: m.MermaidDiagram })),
@@ -15,23 +14,6 @@ function isElementWithLanguageClass(node: React.ReactNode): boolean {
   if (!isValidElement<{ className?: string }>(node)) return false;
   const className = node.props.className;
   return typeof className === 'string' && /language-\w+/.test(className);
-}
-
-function FencedCodeWrapper({ children }: { children: React.ReactNode }) {
-  const ref = useRef<HTMLPreElement>(null);
-  return (
-    <div className="relative group/code">
-      <CopyButton
-        getText={() => ref.current?.textContent ?? ''}
-        className={cn(
-          HOVER_COPY_BASE,
-          'absolute top-2 right-2 z-sticky group-hover/code:opacity-100',
-        )}
-        title="Copy"
-      />
-      <pre ref={ref}>{children}</pre>
-    </div>
-  );
 }
 
 function LinkWithContextMenu({ href, children }: { href?: string; children: React.ReactNode }) {
@@ -67,7 +49,7 @@ const components: Components = {
           <MermaidDiagram code={code} />
         </Suspense>
       );
-    if (lang) return <CodeBlock code={code} language={lang} className={className} />;
+    if (lang) return <Highlight lang={lang}>{code}</Highlight>;
     return <code className={className}>{children}</code>;
   },
   pre({ children }) {
@@ -75,7 +57,7 @@ const components: Components = {
     // a CodeBlock (which owns its own <pre> layout + copy button).
     // Pass it through untouched to avoid double wrappers + duplicate copy.
     if (isElementWithLanguageClass(children)) return <>{children}</>;
-    return <FencedCodeWrapper>{children}</FencedCodeWrapper>;
+    return <Pre>{children}</Pre>;
   },
   a({ href, children }) {
     return (

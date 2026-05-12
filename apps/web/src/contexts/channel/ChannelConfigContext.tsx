@@ -22,7 +22,7 @@ import {
 } from 'react';
 import { useSession } from '../SessionContext.tsx';
 import { useSocket } from '../SocketContext.tsx';
-import { useChannelMessagesActions } from './ChannelMessagesContext.tsx';
+import { useChannelMessages } from './ChannelMessagesContext.tsx';
 import { useChannelId } from './ChannelMetaContext.tsx';
 import { useChannelSocketRouter } from './ChannelSocketRouterContext.tsx';
 import { configHandlers, createConfigActions, parseModels, toEffort } from './handlers/settings.ts';
@@ -124,7 +124,7 @@ export function ChannelConfigProvider({
   children: ReactNode;
 }): React.JSX.Element {
   const channelId = useChannelId();
-  const { addSystemMessage } = useChannelMessagesActions();
+  const { addSystemMessage } = useChannelMessages();
   const [configState, setConfigState] = useState<ConfigState>(() => ({
     ...INITIAL_CONFIG,
     ...initialConfig,

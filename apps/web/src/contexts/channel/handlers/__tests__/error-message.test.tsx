@@ -1,11 +1,11 @@
 import { segments as s } from '@code-quest/summoner/test';
 import { act, screen } from '@testing-library/react';
 import { describe, expect, it } from 'vitest';
-import { useChannelMessages } from '@/contexts/channel/index';
+import { useChannelStore } from '@/stores/ChannelStoreContext';
 import { renderWithChannel } from '@/test/render-with-channel';
 
 function ErrorProbe() {
-  const { messages } = useChannelMessages();
+  const messages = useChannelStore((s) => s.messages);
   const errs = messages.filter(
     (m) => m.role === 'system' && m.type === 'error' && m.content !== 'Session not found',
   );
@@ -17,7 +17,9 @@ function ErrorProbe() {
           role="status"
           aria-label={`err-${i}`}
           data-content={m.content}
-          data-detail={m.type === 'error' ? (m.meta?.detail ?? '') : ''}
+          data-detail={
+            m.type === 'error' ? (('detail' in m ? (m.detail as string) : undefined) ?? '') : ''
+          }
         />
       ))}
     </ul>

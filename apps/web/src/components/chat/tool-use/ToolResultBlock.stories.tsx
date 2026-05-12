@@ -1,0 +1,42 @@
+import type { Meta, StoryObj } from '@storybook/react-vite';
+import { ToolResultBlock } from './ToolResultBlock.tsx';
+
+const meta: Meta<typeof ToolResultBlock> = {
+  component: ToolResultBlock,
+  tags: ['autodocs'],
+  decorators: [
+    (Story: React.ComponentType): React.JSX.Element => (
+      <div className="bg-bg text-text max-w-xl p-4">
+        <Story />
+      </div>
+    ),
+  ],
+} satisfies Meta<typeof ToolResultBlock>;
+
+export default meta;
+type Story = StoryObj<typeof meta>;
+
+export const PlainTextResult: Story = {
+  args: {
+    content: 'File saved successfully.\n2 files changed, 15 insertions(+), 3 deletions(-).',
+    toolId: 'tr-1',
+    name: 'Bash',
+  },
+};
+
+export const DiffResult: Story = {
+  args: {
+    content:
+      '--- a/src/index.ts\n+++ b/src/index.ts\n@@ -1,3 +1,4 @@\n import { foo } from "./foo";\n+import { bar } from "./bar";\n \n export function main() {',
+    name: 'Edit',
+    toolId: 'tool-123',
+  },
+};
+
+export const AnsiResult: Story = {
+  args: {
+    content: '\x1b[32mPASS\x1b[0m src/index.test.ts\n  \x1b[32m\u2713\x1b[0m should work (2ms)',
+    toolId: 'tr-3',
+    name: 'Bash',
+  },
+};

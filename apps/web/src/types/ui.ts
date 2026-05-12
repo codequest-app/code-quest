@@ -1,12 +1,10 @@
 import type {
+  ChatStats,
   ForkConversationResponse,
   MessageAttachment,
   MessageRole,
-  ResultMeta,
   RewindResult,
   RpcResult,
-  ToolResultMeta,
-  ToolUseMeta,
 } from '@code-quest/shared';
 
 export type SessionStatus =
@@ -21,40 +19,22 @@ export type RewindFn = (messageId: string) => Promise<RpcResult<RewindResult>>;
 
 export type ForkFn = (messageId: string) => Promise<ForkConversationResponse>;
 
-// ── Client-only message meta types ──
-
-export interface TextMeta {
-  citations?: Array<{ url?: string; title?: string; citedText?: string }>;
-  history?: boolean;
-  renderAs?: 'markdown' | 'plain';
-}
-
-interface ThinkingMeta {
-  budget_tokens?: number;
-  durationMs?: number | null;
-  isStreaming?: boolean;
-}
-
-interface ErrorMeta {
-  detail?: string;
-}
-
 // ── UI-layer meta shapes (React prop types) ──
 
-export interface HookStartedMeta {
+interface HookStartedMeta {
   hookEvent?: string;
   hookId?: string;
   hookName?: string;
 }
 
-export interface HookResponseMeta {
+interface HookResponseMeta {
   output?: string;
   hookEvent?: string;
   hookId?: string;
   hookName?: string;
 }
 
-export interface HookDiagnosticsMeta {
+interface HookDiagnosticsMeta {
   diagnostics?: string;
 }
 
@@ -67,7 +47,7 @@ export interface DocumentMeta {
   source?: { type?: string; media_type?: string; data?: string };
 }
 
-export interface RateLimitMeta {
+interface RateLimitMeta {
   rateLimitInfo?: Record<string, unknown>;
 }
 
@@ -86,20 +66,6 @@ interface MessageBase {
   attachments?: MessageAttachment[];
 }
 
-/** Maps message types that carry required typed meta to their meta shape */
-interface MetaMap {
-  tool_use: ToolUseMeta;
-  tool_result: ToolResultMeta;
-  result: ResultMeta;
-}
-
-/** Maps message types with optional typed meta */
-interface OptionalMetaMap {
-  text: TextMeta;
-  thinking: ThinkingMeta;
-  error: ErrorMeta;
-}
-
 type MessageType =
   | 'text'
   | 'thinking'
@@ -111,6 +77,7 @@ type MessageType =
   | 'action_result'
   | 'task_started'
   | 'compact_boundary'
+  | 'post_turn_summary'
   | 'streamlined_text'
   | 'streamlined_tool_use_summary'
   | 'rate_limit_event'
@@ -129,11 +96,80 @@ type MessageType =
   | 'redacted_thinking'
   | 'slash_command_result';
 
-/** Typed message variant — meta is typed for known types, loose for others */
-export type Message = {
-  [T in MessageType]: T extends keyof MetaMap
-    ? MessageBase & { type: T; meta: MetaMap[T] }
-    : T extends keyof OptionalMetaMap
-      ? MessageBase & { type: T; meta?: OptionalMetaMap[T] }
-      : MessageBase & { type: T; meta?: Record<string, unknown> };
-}[MessageType];
+/** Maps message types to their top-level typed fields (migrating from meta) */
+interface TopLevelMap {
+  text: { renderAs?: 'markdown' | 'plain'; history?: boolean };
+  tool_use: {
+    toolId?: string;
+    input?: Record<string, unknown>;
+    model?: string;
+    partialInput?: string;
+    result?: { content?: string; is_error?: boolean };
+    taskStatus?: string;
+    taskType?: string;
+  };
+  tool_result: { toolId?: string; name?: string; is_error?: boolean; contentBlocks?: unknown[] };
+  thinking: { budget_tokens?: number; durationMs?: number | null; isStreaming?: boolean };
+  error: { detail?: string };
+  hook_started: HookStartedMeta;
+  hook_response: HookResponseMeta;
+  hook_diagnostics: HookDiagnosticsMeta;
+  image: ImageMeta;
+  document: DocumentMeta;
+  task_started: { taskType?: string };
+  rate_limit_event: RateLimitMeta;
+  content_block_start: { blockType?: string };
+  result: { stats?: ChatStats };
+  unknown_delta: { data?: unknown };
+  raw_event: { data?: unknown };
+  unhandled: { event?: unknown };
+  pending_action: { requestId?: string; input?: unknown };
+}
+
+type TopLevel<T> = T extends keyof TopLevelMap ? TopLevelMap[T] : unknown;
+
+/** Typed message variant — meta removed; all fields are top-level via TopLevelMap */
+export type Message =
+  | { [T in MessageType]: MessageBase & { type: T } & TopLevel<T> }[MessageType]
+  | AssistantTurn;
+
+// ── AssistantTurn (compound message) ──
+
+type BlockType = 'thinking' | 'text' | 'tool_use';
+
+export interface Block {
+  id: string;
+  type: BlockType;
+  content: string;
+  parentToolUseId?: string;
+  toolId?: string;
+  input?: Record<string, unknown>;
+  model?: string;
+  partialInput?: string;
+  isStreaming?: boolean;
+  durationMs?: number | null;
+  budget_tokens?: number;
+  citations?: Array<{ url?: string; title?: string; citedText?: string }>;
+}
+
+export interface AssistantTurn {
+  id: string;
+  cliUuid?: string;
+  role: 'assistant';
+  type: 'assistant_turn';
+  timestamp: number;
+  model?: string;
+  messageId?: string;
+  blocks: Block[];
+  usage?: {
+    inputTokens: number;
+    outputTokens: number;
+    cacheCreationInputTokens?: number;
+    cacheReadInputTokens?: number;
+  };
+  stopReason?: string;
+  isStreaming?: boolean;
+  content: string;
+  parentToolUseId?: string;
+  attachments?: MessageAttachment[];
+}

@@ -4,6 +4,7 @@ import type {
   ControlElicitationPayload,
   PlanCommentData,
 } from '@code-quest/shared';
+import type { Task } from './task.ts';
 import type { Message, SessionStatus } from './ui.ts';
 
 interface TerminalSession {
@@ -30,6 +31,20 @@ export interface ChannelState {
   isTextStreaming: boolean;
   isThinkingStreaming: boolean;
   wasStreamedViaDelta: boolean;
+  tokenUsage?: {
+    inputTokens: number;
+    outputTokens: number;
+    cacheCreationInputTokens?: number;
+    cacheReadInputTokens?: number;
+  };
+  streamingToolUseId?: string;
+  tasks: Map<string, Task>;
+  results: Map<string, ToolResult>;
+}
+
+export interface ToolResult {
+  content?: string;
+  is_error?: boolean;
 }
 
 export function initialChannelState(channelId: string): ChannelState {
@@ -47,6 +62,8 @@ export function initialChannelState(channelId: string): ChannelState {
     isTextStreaming: false,
     isThinkingStreaming: false,
     wasStreamedViaDelta: false,
+    tasks: new Map(),
+    results: new Map(),
   };
 }
 

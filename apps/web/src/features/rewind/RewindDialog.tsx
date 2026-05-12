@@ -1,7 +1,7 @@
 import { useEffect, useMemo, useRef, useState } from 'react';
 import { Dialog, DialogContent } from '@/components/ui/Dialog';
 import { Kbd } from '@/components/ui/Kbd';
-import { useChannelMessages } from '@/contexts/channel';
+import { useChannelStore } from '@/stores/ChannelStoreContext';
 import type { Message } from '@/types/ui';
 import { cn } from '@/utils/cn';
 import { formatRelativeDate } from '@/utils/format-relative-date';
@@ -63,7 +63,7 @@ interface RewindDialogProps {
 }
 
 export function RewindDialog({ open, onClose, onConfirm }: RewindDialogProps): React.JSX.Element {
-  const { messages } = useChannelMessages();
+  const messages = useChannelStore((s) => s.messages);
   const items = useMemo(() => getRewindableMessages(messages), [messages]);
   const [focusIndex, setFocusIndex] = useState(0);
   const [selected, setSelected] = useState<RewindItem | null>(null);

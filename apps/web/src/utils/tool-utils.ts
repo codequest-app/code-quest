@@ -1,7 +1,46 @@
+import type { AssistantTurn, Message } from '@/types/ui';
 import { basename } from '@/utils/basename';
-import type { MessageNode } from '@/utils/message-tree';
 
 export const AGENT_TOOLS: Set<string> = new Set(['Task', 'Agent']);
+
+function isToolUseMessage(message: Message): boolean {
+  if (message.type === 'tool_use') return true;
+  if (message.type === 'assistant_turn') {
+    const turn = message as AssistantTurn;
+    return turn.blocks.length > 0 && turn.blocks.every((b) => b.type === 'tool_use');
+  }
+  return false;
+}
+
+function getToolUseMeta(message: Message):
+  | {
+      content: string;
+      toolId?: string;
+      input?: Record<string, unknown>;
+      result?: { is_error?: boolean };
+    }
+  | undefined {
+  if (message.type === 'tool_use') {
+    return {
+      content: message.content,
+      toolId: message.toolId,
+      input: message.input,
+      result: message.result,
+    };
+  }
+  if (message.type === 'assistant_turn') {
+    const turn = message as AssistantTurn;
+    const toolBlock = turn.blocks.find((b) => b.type === 'tool_use');
+    if (toolBlock) {
+      return {
+        content: toolBlock.content,
+        toolId: toolBlock.toolId,
+        input: toolBlock.input,
+      };
+    }
+  }
+  return undefined;
+}
 
 const MCP_PREFIX = 'mcp__';
 
@@ -37,6 +76,13 @@ function lineRange(input: ToolInput): string | undefined {
   return undefined;
 }
 
+function bashSummary(command: string | undefined): string | undefined {
+  if (!command) return undefined;
+  const last = command.split('&&').pop()?.trim() ?? command;
+  const clean = last.replace(/\s+2>&1.*$/, '').trim();
+  return clean.length > 60 ? `${clean.slice(0, 57)}…` : clean;
+}
+
 function mcpHeader(toolName: string, input: ToolInput): ToolHeaderInfo {
   const { server, tool } = parseMcpToolName(toolName);
   const summary = input.query ?? input.command ?? input.message ?? '';
@@ -48,8 +94,11 @@ function mcpHeader(toolName: string, input: ToolInput): ToolHeaderInfo {
 
 export function getToolHeaderInfo(toolName: string, input: ToolInput): ToolHeaderInfo {
   switch (toolName) {
-    case 'Bash':
-      return { name: 'Bash', detail: input.description ? String(input.description) : undefined };
+    case 'Bash': {
+      const desc = input.description ? String(input.description) : undefined;
+      const cmd = typeof input.command === 'string' ? input.command : undefined;
+      return { name: 'Bash', detail: desc ?? bashSummary(cmd) };
+    }
     case 'Read':
       return { name: 'Read', detail: fileDetail(input), range: lineRange(input) };
     case 'Write':
@@ -73,8 +122,8 @@ export function getToolHeaderInfo(toolName: string, input: ToolInput): ToolHeade
 }
 
 export type TimelineRun =
-  | { kind: 'grouped'; nodes: MessageNode[] }
-  | { kind: 'solo'; node: MessageNode };
+  | { kind: 'grouped'; messages: Message[] }
+  | { kind: 'solo'; message: Message };
 
 export interface GroupChip {
   label: string;
@@ -82,30 +131,27 @@ export interface GroupChip {
   isError: boolean;
 }
 
-export function splitTimelineRuns(nodes: MessageNode[]): TimelineRun[] {
+function flushPending(pending: Message[]): TimelineRun[] {
+  if (pending.length === 0) return [];
+  if (pending.length === 1 && pending[0]) return [{ kind: 'solo', message: pending[0] }];
+  return [{ kind: 'grouped', messages: pending }];
+}
+
+export function splitTimelineRuns(messages: Message[]): TimelineRun[] {
   const runs: TimelineRun[] = [];
-  let pending: MessageNode[] = [];
-
-  const flush = () => {
-    if (pending.length === 0) return;
-    if (pending.length === 1) {
-      const node = pending[0];
-      if (node) runs.push({ kind: 'solo', node });
+  const pending: Message[] = [];
+  for (const message of messages) {
+    if (isToolUseMessage(message)) {
+      pending.push(message);
     } else {
-      runs.push({ kind: 'grouped', nodes: pending });
-    }
-    pending = [];
-  };
-
-  for (const node of nodes) {
-    if (node.message.type === 'tool_use') {
-      pending.push(node);
-    } else {
-      flush();
-      runs.push({ kind: 'solo', node });
+      if (pending.length > 0) {
+        runs.push(...flushPending(pending));
+        pending.length = 0;
+      }
+      runs.push({ kind: 'solo', message });
     }
   }
-  flush();
+  if (pending.length > 0) runs.push(...flushPending(pending));
   return runs;
 }
 
@@ -117,23 +163,27 @@ function stringInput(
   return typeof input?.[key] === 'string' ? (input[key] as string) : fallback;
 }
 
-export function buildGroupChips(nodes: MessageNode[]): GroupChip[] {
+function skillChipLabel(skillName: string): string {
+  const parts = skillName.split(':');
+  const shortName = parts.length > 1 ? (parts[parts.length - 1] ?? skillName) : skillName;
+  return `/${shortName}`;
+}
+
+export function buildGroupChips(messages: Message[]): GroupChip[] {
   const chips: GroupChip[] = [];
   const genericIndex = new Map<string, number>();
 
-  for (const node of nodes) {
-    if (node.message.type !== 'tool_use') continue;
-    const toolName = node.message.content;
-    const meta = node.message.meta;
-    const isError = meta.result?.is_error === true;
+  for (const message of messages) {
+    const toolInfo = getToolUseMeta(message);
+    if (!toolInfo) continue;
+    const toolName = toolInfo.content;
+    const isError = toolInfo.result?.is_error === true;
 
     if (toolName === 'Skill') {
-      const skillName = stringInput(meta.input, 'skill', 'skill');
-      const parts = skillName.split(':');
-      const shortName = parts.length > 1 ? (parts[parts.length - 1] ?? skillName) : skillName;
-      chips.push({ label: `/${shortName}`, isError });
+      const skillName = stringInput(toolInfo.input, 'skill', 'skill');
+      chips.push({ label: skillChipLabel(skillName), isError });
     } else if (AGENT_TOOLS.has(toolName)) {
-      const description = stringInput(meta.input, 'description', 'Agent');
+      const description = stringInput(toolInfo.input, 'description', 'Agent');
       chips.push({ label: description, isError });
     } else {
       const idx = genericIndex.get(toolName);

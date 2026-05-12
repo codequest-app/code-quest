@@ -1,32 +1,28 @@
-import { Prism as SyntaxHighlighter } from 'react-syntax-highlighter';
-import { oneLight, vscDarkPlus } from 'react-syntax-highlighter/dist/esm/styles/prism';
-import { useEffectiveColorTheme } from '@/hooks/useEffectiveColorTheme';
-import { cn } from '@/utils/cn';
-import { CopyButton, HOVER_COPY_BASE } from '../tool-use/message-blocks/CopyButton.tsx';
+import { Copyable } from './Copyable.tsx';
+import { Highlight } from './Highlight.tsx';
 
 interface CodeBlockProps {
   code: string;
   language?: string;
   className?: string;
+  wrapLongLines?: boolean;
 }
 
-export function CodeBlock({ code, language, className }: CodeBlockProps): React.JSX.Element {
-  const effective = useEffectiveColorTheme();
-  const style = effective === 'light' ? oneLight : vscDarkPlus;
-
+export function CodeBlock({
+  code,
+  language,
+  className,
+  wrapLongLines,
+}: CodeBlockProps): React.JSX.Element {
   if (!language) {
     return <code className={className}>{code}</code>;
   }
 
   return (
-    <div className="relative group/code">
-      <CopyButton
-        text={code}
-        className={cn(HOVER_COPY_BASE, 'absolute top-2 right-2 group-hover/code:opacity-100')}
-      />
-      <SyntaxHighlighter style={style} language={language} PreTag="div">
+    <Copyable text={code}>
+      <Highlight lang={language} wrap={wrapLongLines}>
         {code}
-      </SyntaxHighlighter>
-    </div>
+      </Highlight>
+    </Copyable>
   );
 }

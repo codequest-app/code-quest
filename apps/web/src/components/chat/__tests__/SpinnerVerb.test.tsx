@@ -66,6 +66,37 @@ describe('SpinnerVerb', () => {
     vi.useRealTimers();
   });
 
+  it('shows elapsed time when startTime is provided', () => {
+    vi.useFakeTimers({ now: 1000000 });
+    render(<SpinnerVerb startTime={1000000 - 42000} />);
+    const meta = screen.getByLabelText('spinner-meta');
+    expect(meta.textContent).toContain('42s');
+    vi.useRealTimers();
+  });
+
+  it('shows token count when tokens is provided', () => {
+    vi.useFakeTimers({ now: 1000000 });
+    render(<SpinnerVerb startTime={1000000 - 5000} tokens={1200} />);
+    const meta = screen.getByLabelText('spinner-meta');
+    expect(meta.textContent).toContain('1.2k tokens');
+    vi.useRealTimers();
+  });
+
+  it('shows both elapsed and tokens', () => {
+    vi.useFakeTimers({ now: 1000000 });
+    render(<SpinnerVerb startTime={1000000 - 10000} tokens={500} />);
+    const meta = screen.getByLabelText('spinner-meta');
+    expect(meta.textContent).toContain('10s');
+    expect(meta.textContent).toContain('500 tokens');
+    expect(meta.textContent).toContain('·');
+    vi.useRealTimers();
+  });
+
+  it('does not show meta when no startTime or tokens', () => {
+    render(<SpinnerVerb />);
+    expect(screen.getByLabelText('spinner-meta').textContent).toBe('');
+  });
+
   it('shows spinner verb after sendMessage while AI is processing', async () => {
     const { claude, user, addProject } = await renderWithWorkspace();
     const project = await addProject();

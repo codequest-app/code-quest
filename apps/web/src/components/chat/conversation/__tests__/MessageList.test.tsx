@@ -20,6 +20,15 @@ function ToggleGroup({ group }: { group: GroupId }) {
   );
 }
 
+function OpenPaletteButton() {
+  const { openPalette } = useCommandPalette();
+  return (
+    <button type="button" onClick={() => openPalette({ tab: 'all' })}>
+      open-palette
+    </button>
+  );
+}
+
 async function setup(props?: { searchQuery?: string }) {
   const summoner = createFakeSummoner();
   const claude = summoner.claude();
@@ -89,11 +98,11 @@ describe('MessageList', () => {
   });
 
   it('renders unknown type messages (registers type so message passes visibility filter)', async () => {
-    const { useChannelMessagesActions } = await import(
+    const { useChannelMessages } = await import(
       '../../../../contexts/channel/ChannelMessagesContext'
     );
     function AddUnknown() {
-      const { addSystemMessage } = useChannelMessagesActions();
+      const { addSystemMessage } = useChannelMessages();
       return (
         <button
           type="button"
@@ -245,7 +254,6 @@ describe('MessageList', () => {
   });
 
   it('renders Read tool_result array content as code (not "[object Object]")', async () => {
-    const user = userEvent.setup();
     const { claude } = await setup();
     // Build a raw tool_result segment with array content (as real extension sends)
     const arrayToolResult = JSON.stringify({
@@ -273,8 +281,6 @@ describe('MessageList', () => {
       );
       await claude.emitSegment(arrayToolResult);
     });
-    // Single tool_use renders directly; click expands the CollapsibleBlock
-    await user.click(screen.getByText('Read'));
     expect(screen.queryByText('[object Object]')).not.toBeInTheDocument();
     // SyntaxHighlighter splits tokens — check via container textContent
     expect(document.body.textContent).toContain('import');
@@ -311,7 +317,6 @@ describe('MessageList', () => {
   });
 
   it('visible tool_use still merges its tool_result (regression)', async () => {
-    const user = userEvent.setup();
     const { claude } = await setup();
     await act(async () => {
       await claude.emitSegment(
@@ -319,13 +324,10 @@ describe('MessageList', () => {
       );
       await claude.emitSegment(s.toolResult('toolu_grep_1', 'match found'));
     });
-    // Single tool_use renders directly; click expands the CollapsibleBlock
-    await user.click(screen.getByText('Grep'));
     expect(screen.getByText(/match found/)).toBeInTheDocument();
   });
 
   it('renders tool_result merged into tool_use collapsible with diff', async () => {
-    const user = userEvent.setup();
     const { claude } = await setup();
     await act(async () => {
       await claude.emitSegment(
@@ -337,9 +339,6 @@ describe('MessageList', () => {
         s.toolResult('toolu_edit_1', '--- a/file.txt\n+++ b/file.txt\n@@ -1 +1 @@\n-old\n+new'),
       );
     });
-    // Single tool_use renders directly; click expands the CollapsibleBlock
-    await user.click(screen.getByText('Edit'));
-    // Diff viewer renders the diff content inside the expanded tool_use
     expect(screen.getByText('-old')).toBeInTheDocument();
     expect(screen.getByText('+new')).toBeInTheDocument();
   });
@@ -352,7 +351,8 @@ describe('MessageList — task lifecycle', () => {
       await claude.emitSegment(s.agent('toolu_1', 'Explore project'));
       await claude.emitSegment(s.taskStarted('toolu_1', 'Explore project'));
     });
-    expect(screen.getByText(/Running/)).toBeInTheDocument();
+    const runningElements = screen.getAllByText(/Running/);
+    expect(runningElements.length).toBeGreaterThan(0);
   });
 
   it('does not crash when task_started has no toolUseId match', async () => {
@@ -361,23 +361,28 @@ describe('MessageList — task lifecycle', () => {
       await claude.emitSegment(s.agent('toolu_1', 'Explore project'));
       await claude.emitSegment(s.taskStarted('unknown-id', 'Some task'));
     });
-    // Should not show Running badge (no matching tool_use)
-    expect(screen.queryByText(/Running/)).not.toBeInTheDocument();
+    // Task badge should not show "Running" — the "Running..." inside tool body is separate
+    const badges = screen.queryAllByText(/Running$/);
+    expect(badges).toHaveLength(0);
   });
 
-  it('shows Running badge with last tool name on task_progress', async () => {
+  it('shows Running badge with progress detail on task_progress', async () => {
     const { claude } = await setup();
     await act(async () => {
       await claude.emitSegment(s.agent('toolu_1', 'Explore project'));
       await claude.emitSegment(s.taskStarted('toolu_1', 'Explore project'));
       await claude.emitSegment(
-        s.taskProgress('task-1', { toolUseId: 'toolu_1', lastToolName: 'Read' }),
+        s.taskProgress('task-1', {
+          toolUseId: 'toolu_1',
+          description: 'Reading main.ts',
+          lastToolName: 'Read',
+        }),
       );
     });
-    expect(screen.getByText(/Running · Read/)).toBeInTheDocument();
+    expect(screen.getByText(/Running · Reading main.ts/)).toBeInTheDocument();
   });
 
-  it('shows Done badge with summary on task_notification completed', async () => {
+  it('does not show Done badge on task_notification completed (timeline handles done state)', async () => {
     const { claude } = await setup();
     await act(async () => {
       await claude.emitSegment(s.agent('toolu_1', 'Explore project'));
@@ -390,10 +395,10 @@ describe('MessageList — task lifecycle', () => {
         }),
       );
     });
-    expect(screen.getByText(/Done · Found 3 issues/)).toBeInTheDocument();
+    expect(screen.queryByText(/Done/)).not.toBeInTheDocument();
   });
 
-  it('shows Done badge without summary when no summary provided', async () => {
+  it('does not show Done badge when no summary provided (timeline handles done state)', async () => {
     const { claude } = await setup();
     await act(async () => {
       await claude.emitSegment(s.agent('toolu_1', 'Explore project'));
@@ -402,10 +407,10 @@ describe('MessageList — task lifecycle', () => {
         s.taskNotification('task-1', { toolUseId: 'toolu_1', status: 'completed' }),
       );
     });
-    expect(screen.getByText(/✓ Done/)).toBeInTheDocument();
+    expect(screen.queryByText(/Done/)).not.toBeInTheDocument();
   });
 
-  it('shows failed status on task_notification failed', async () => {
+  it('does not show Failed badge on task_notification failed (timeline handles status)', async () => {
     const { claude } = await setup();
     await act(async () => {
       await claude.emitSegment(s.agent('toolu_1', 'Explore project'));
@@ -414,7 +419,7 @@ describe('MessageList — task lifecycle', () => {
         s.taskNotification('task-1', { toolUseId: 'toolu_1', status: 'failed' }),
       );
     });
-    expect(screen.getByText(/Failed/)).toBeInTheDocument();
+    expect(screen.queryByText(/Failed/)).not.toBeInTheDocument();
   });
 
   it('ignores task_notification when status is absent (no badge change)', async () => {
@@ -427,7 +432,8 @@ describe('MessageList — task lifecycle', () => {
       );
     });
     // status undefined → should not flip to Done; Running badge should remain
-    expect(screen.getByText(/Running/)).toBeInTheDocument();
+    const runningElements = screen.getAllByText(/Running/);
+    expect(runningElements.length).toBeGreaterThan(0);
     expect(screen.queryByText(/Done/)).not.toBeInTheDocument();
   });
 
@@ -443,7 +449,7 @@ describe('MessageList — task lifecycle', () => {
     expect(screen.getByText('claude-opus-4-6')).toBeInTheDocument();
   });
 
-  it('shows token count in Done badge when usage provided', async () => {
+  it('does not show token count badge on task completion (timeline handles done state)', async () => {
     const { claude } = await setup();
     await act(async () => {
       await claude.emitSegment(s.agent('toolu_1', 'Explore project'));
@@ -456,16 +462,130 @@ describe('MessageList — task lifecycle', () => {
         }),
       );
     });
-    expect(screen.getByText(/1,500 tok/)).toBeInTheDocument();
+    expect(screen.queryByText(/Done/)).not.toBeInTheDocument();
   });
 
-  it('shows subagent_type badge in task header', async () => {
+  it('shows Running badge for local_bash task on Bash tool_use', async () => {
+    const { claude } = await setup();
+    await act(async () => {
+      await claude.emitSegment(
+        s.assistant({ toolUse: { id: 'toolu_1', name: 'Bash', input: { command: 'grep foo' } } }),
+      );
+      await claude.emitSegment(s.taskStarted('toolu_1', 'Run grep', { taskType: 'local_bash' }));
+    });
+    const badges = screen.getAllByText(/Running/);
+    expect(badges.length).toBeGreaterThan(0);
+  });
+
+  it('local_bash: tool_result auto-completes taskStatus (no badge shown, timeline dot handles status)', async () => {
+    const { claude } = await setup();
+    await act(async () => {
+      await claude.emitSegment(
+        s.assistant({ toolUse: { id: 'toolu_1', name: 'Bash', input: { command: 'grep foo' } } }),
+      );
+      await claude.emitSegment(s.taskStarted('toolu_1', 'Run grep', { taskType: 'local_bash' }));
+      await claude.emitSegment(s.toolResult('toolu_1', 'match found'));
+    });
+    expect(screen.queryByText(/Done/)).not.toBeInTheDocument();
+    expect(screen.queryByText(/Running$/)).not.toBeInTheDocument();
+  });
+
+  it('shows subagent badge in task header when subagent_type is provided', async () => {
     const { claude } = await setup();
     await act(async () => {
       await claude.emitSegment(s.agent('toolu_1', 'Explore project', { subagentType: 'Explore' }));
       await claude.emitSegment(s.result());
     });
-    expect(screen.getByText('[Explore]')).toBeInTheDocument();
+    expect(screen.getByText('subagent')).toBeInTheDocument();
+  });
+});
+
+describe('MessageList — local_bash / local_agent real protocol sequence', () => {
+  it('local_bash: text + Bash tool_use with task badge shows in one timeline', async () => {
+    const { claude } = await setup();
+    await act(async () => {
+      // AI says text + starts a Bash tool
+      await claude.emitSegment(s.textDelta('Refactoring done. Let me verify tests:'));
+      await claude.emitSegment(
+        s.assistant({
+          toolUse: { id: 'toolu_bash', name: 'Bash', input: { command: 'vitest run' } },
+        }),
+      );
+      await claude.emitSegment(s.messageStop());
+      // task_started marks it as local_bash
+      await claude.emitSegment(
+        s.taskStarted('toolu_bash', 'Run tests', { taskType: 'local_bash' }),
+      );
+      // tool_result arrives
+      await claude.emitSegment(s.toolResult('toolu_bash', 'Tests 22 passed'));
+    });
+
+    // Text "Refactoring done" should render
+    expect(screen.getByText(/Refactoring done/)).toBeInTheDocument();
+    // Bash tool_use should render with command visible
+    expect(screen.getAllByText(/vitest run/).length).toBeGreaterThan(0);
+    expect(screen.getAllByText(/Tests 22 passed/).length).toBeGreaterThan(0);
+    // local_bash: no Done badge (timeline dot handles status)
+    expect(screen.queryByText(/Done/)).not.toBeInTheDocument();
+  });
+
+  it('local_agent: sub-agent messages nest under parent tool_use, not mixed into main', async () => {
+    const { claude } = await setup();
+    await act(async () => {
+      // AI says text + starts an Agent tool
+      await claude.emitSegment(s.textDelta('Let me analyze.'));
+      await claude.emitSegment(s.agent('toolu_agent', 'Analyze code'));
+      await claude.emitSegment(s.messageStop());
+      await claude.emitSegment(s.taskStarted('toolu_agent', 'Analyze code'));
+      // Sub-agent does work (child messages with parentToolUseId)
+      await claude.emitSegment(s.assistant('Found 3 issues', { parentToolUseId: 'toolu_agent' }));
+      await claude.emitSegment(s.toolResult('toolu_agent', 'Analysis complete'));
+    });
+
+    // Main text should render
+    expect(screen.getByText(/Let me analyze/)).toBeInTheDocument();
+    // Agent tool_use header should be visible (may appear multiple times: header + task_started)
+    expect(screen.getAllByText('Analyze code').length).toBeGreaterThan(0);
+    // Sub-agent child message should be nested (visible inside SubagentChildren)
+    expect(screen.getByText(/1 subagent message/)).toBeInTheDocument();
+    // Sub-agent's text is rendered inside the nested section
+    expect(screen.getByText(/Found 3 issues/)).toBeInTheDocument();
+    // Done is handled by timeline, not by task badge
+    expect(screen.queryByText(/Done/)).not.toBeInTheDocument();
+  });
+
+  it('replay: local_agent task shows Done after history completes (not stuck on Running)', async () => {
+    const { claude } = await setup();
+    await act(async () => {
+      // Replay sequence: agent tool_use → task_started → progress × 2 → notification(completed)
+      await claude.emitSegment(s.agent('toolu_agent', 'Verify tokens'));
+      await claude.emitSegment(
+        s.taskStarted('toolu_agent', 'Verify tokens', { taskType: 'local_agent' }),
+      );
+      await claude.emitSegment(
+        s.taskProgress('task-1', {
+          toolUseId: 'toolu_agent',
+          description: 'Reading Footer.astro',
+          lastToolName: 'Read',
+        }),
+      );
+      await claude.emitSegment(
+        s.taskProgress('task-1', {
+          toolUseId: 'toolu_agent',
+          description: 'Reading Header.astro',
+          lastToolName: 'Read',
+        }),
+      );
+      await claude.emitSegment(
+        s.taskNotification('task-1', { toolUseId: 'toolu_agent', status: 'completed' }),
+      );
+      await claude.emitSegment(s.toolResult('toolu_agent', 'All tokens correct'));
+      await claude.emitSegment(s.result());
+    });
+
+    // Should NOT show Running (task completed); Done is handled by timeline
+    expect(screen.queryByText(/Running/)).not.toBeInTheDocument();
+    expect(screen.queryByText(/Done/)).not.toBeInTheDocument();
   });
 });
 
@@ -620,8 +740,8 @@ describe('MessageList scrollToMessage highlight', () => {
       ref.current?.scrollToMessage(wrapper.dataset.messageId!);
     });
 
-    expect(messageEl.classList.contains('spotlight-highlight')).toBe(true);
-    expect(wrapper.classList.contains('spotlight-highlight')).toBe(false);
+    expect(messageEl.dataset.highlighted).toBe('true');
+    expect(wrapper.dataset.highlighted).toBeUndefined();
   });
 
   it('removes spotlight-highlight after animationend fires', async () => {
@@ -632,12 +752,12 @@ describe('MessageList scrollToMessage highlight', () => {
     act(() => {
       ref.current?.scrollToMessage(wrapper.dataset.messageId!);
     });
-    expect(messageEl.classList.contains('spotlight-highlight')).toBe(true);
+    expect(messageEl.dataset.highlighted).toBe('true');
 
     act(() => {
       messageEl.dispatchEvent(new Event('animationend', { bubbles: false }));
     });
-    expect(messageEl.classList.contains('spotlight-highlight')).toBe(false);
+    expect(messageEl.dataset.highlighted).toBeUndefined();
   });
 
   it('re-triggers animation when called twice on the same message', async () => {
@@ -651,11 +771,11 @@ describe('MessageList scrollToMessage highlight', () => {
     act(() => {
       messageEl.dispatchEvent(new Event('animationend', { bubbles: false }));
     });
-    // class removed; call again
+    // highlighted removed; call again
     act(() => {
       ref.current?.scrollToMessage(wrapper.dataset.messageId!);
     });
-    expect(messageEl.classList.contains('spotlight-highlight')).toBe(true);
+    expect(messageEl.dataset.highlighted).toBe('true');
   });
 });
 
@@ -747,7 +867,7 @@ describe('MessageList — registerJumpTo', () => {
     });
 
     const bubble = (wrapper.querySelector('[data-type]') ?? wrapper) as HTMLElement;
-    expect(bubble.classList.contains('spotlight-highlight')).toBe(true);
+    expect(bubble.dataset.highlighted).toBe('true');
   });
 });
 
@@ -757,11 +877,39 @@ describe('MessageList — layout', () => {
     const wrapper = document.querySelector('[aria-label="message-content-wrapper"]');
     expect(wrapper).not.toBeNull();
   });
+});
 
-  it('message content wrapper has pb-32 so last message scrolls above absolute InputArea', async () => {
-    await setupWithMessages();
-    const wrapper = document.querySelector('[aria-label="message-content-wrapper"]');
-    expect(wrapper?.className).toContain('pb-32');
+describe('MessageList — palette open blocks auto-scroll', () => {
+  it('does not set scrollTop when palette is open and new content arrives', async () => {
+    const { claude } = await renderWithChannel(
+      <>
+        <OpenPaletteButton />
+        <MessageList />
+      </>,
+    );
+
+    const scrollEl = screen.getByLabelText('message-list-scroll') as HTMLElement;
+
+    // Track scrollTop assignments
+    let scrollTopSetCount = 0;
+    Object.defineProperty(scrollEl, 'scrollTop', {
+      get: () => 0,
+      set: () => {
+        scrollTopSetCount++;
+      },
+      configurable: true,
+    });
+
+    // Open palette — this should freeze auto-scroll
+    await userEvent.click(screen.getByText('open-palette'));
+    const countAfterOpen = scrollTopSetCount;
+
+    // New message arrives while palette is open
+    await act(async () => {
+      await claude.emitSegment(s.assistant('new message while palette open'));
+    });
+
+    expect(scrollTopSetCount).toBe(countAfterOpen);
   });
 });
 

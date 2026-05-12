@@ -33,20 +33,18 @@ describe('MarkdownContent', () => {
     expect(wrapper.className).toContain('max-w-none');
   });
 
-  it('fenced code block without language still has copy button', () => {
+  it('fenced code block without language renders without copy button', () => {
     const { container } = render(<MarkdownContent content={'```\nhello\n```'} />);
     expect(container.textContent).toContain('hello');
-    expect(
-      container.querySelector('button[title="Copy"], button[title="Copy code"]'),
-    ).not.toBeNull();
+    expect(container.querySelector('button[title="Copy"], button[title="Copy code"]')).toBeNull();
   });
 
-  it('fenced code block with language shows exactly one copy button', () => {
+  it('fenced code block with language renders without copy button (Copyable wraps externally)', () => {
     const { container } = render(<MarkdownContent content={'```ts\nconst x = 1;\n```'} />);
     const copyButtons = container.querySelectorAll(
       'button[title="Copy"], button[title="Copy code"], button[title="Copied!"]',
     );
-    expect(copyButtons).toHaveLength(1);
+    expect(copyButtons).toHaveLength(0);
   });
 
   it('inline code does not get a copy button', () => {

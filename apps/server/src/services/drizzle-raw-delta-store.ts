@@ -5,6 +5,7 @@ import type { DrizzleDb } from './drizzle-types.ts';
 import type { RawDeltaEntry, RawDeltaStore } from './raw-delta-store.ts';
 
 const rowSchema = z.object({
+  id: z.string(),
   parentId: z.string(),
   sessionId: z.string(),
   dir: z.string(),
@@ -50,7 +51,7 @@ export class DrizzleRawDeltaStore implements RawDeltaStore {
       .select()
       .from(this.table)
       .where(eq(this.table.sessionId, sessionId))
-      .orderBy(asc(this.table.createdAt), asc(this.table.seq));
+      .orderBy(asc(this.table.createdAt), asc(this.table.id));
 
     return z
       .array(rowSchema)

@@ -2,8 +2,6 @@ import {
   EVENTS,
   type ForkConversationResponse,
   type FsSearchResponse,
-  fsReadResponseSchema,
-  isRecord,
   type PlanCommentData,
   type PluginReloadResult,
   type RawEventsResponse,
@@ -16,12 +14,12 @@ import {
   createContext,
   type ReactNode,
   type RefObject,
+  useCallback,
   useContext,
   useEffect,
   useLayoutEffect,
   useMemo,
   useRef,
-  useState,
 } from 'react';
 import { createBtwFeature } from '@/features/btw/btw-feature';
 import { createClearFeature } from '@/features/clear/clear-feature';
@@ -34,9 +32,10 @@ import { createRewindFeature } from '@/features/rewind/rewind-feature';
 import { createUsageFeature } from '@/features/usage/usage-feature';
 import { createFeatureRegistry, type FeatureRegistry } from '@/lib/feature-registry';
 import type { TypedSocket } from '@/socket/client';
-import { useMessageRegistryStore } from '@/stores/useMessageRegistryStore';
-import { type ChannelChangeUpdate, type ChannelState, initialChannelState } from '@/types/chat';
-import { msg, patchMeta, systemMessage } from '@/utils/message';
+import { useChannelsStore } from '@/stores/channels-store.ts';
+import type { ChannelChangeUpdate, ChannelState } from '@/types/chat';
+import { initialChannelState } from '@/types/chat';
+import { msg, systemMessage } from '@/utils/message';
 import { useSession } from '../SessionContext.tsx';
 import { useSocket } from '../SocketContext.tsx';
 import { useChannelId, useChannelMeta } from './ChannelMetaContext.tsx';
@@ -44,7 +43,7 @@ import { useChannelSocketRouter } from './ChannelSocketRouterContext.tsx';
 import { FeatureRegistryContext } from './FeatureRegistryContext.tsx';
 import { createFileActions } from './handlers/file.ts';
 import type { Payload } from './handlers/guard.ts';
-import { messageHandlers } from './handlers/handler-sets.ts';
+import { messageHandlers, replayHandlers } from './handlers/handler-sets.ts';
 import { applyHistoryBatch, shouldApplyBatch } from './handlers/history.ts';
 import { parseJoinResponse } from './handlers/join.ts';
 import { createMessageActions } from './handlers/message.ts';
@@ -62,46 +61,7 @@ const resetStreamingEvents = new Set<string>([
 
 type SetChannelState = (fn: (prev: ChannelState) => ChannelState) => void;
 
-function fetchOpenFileContent(
-  socket: TypedSocket,
-  block: { toolId?: string; input?: unknown },
-  setChannelState: SetChannelState,
-): void {
-  const filePath =
-    isRecord(block.input) && 'file_path' in block.input ? String(block.input.file_path) : undefined;
-  if (!filePath) return;
-  socket.emit(EVENTS.fs.read, { path: filePath }, (raw: unknown) => {
-    const parsed = fsReadResponseSchema.safeParse(raw);
-    if (!parsed.success) return;
-    const res = parsed.data;
-    setChannelState((prev) => {
-      const ms = [...prev.messages];
-      const idx = ms.findIndex(
-        (m) => (m.meta as { toolId?: string } | undefined)?.toolId === block.toolId,
-      );
-      const target = ms[idx];
-      if (idx < 0 || !target) return prev;
-      ms[idx] = patchMeta(target, {
-        fileContent: 'content' in res ? res.content : undefined,
-        fileError: 'error' in res ? res.error : undefined,
-      });
-      return { ...prev, messages: ms };
-    });
-  });
-}
-
-export interface ChannelMessagesValue {
-  messages: ChannelState['messages'];
-  historyMessages: ChannelState['historyMessages'];
-  status: ChannelState['status'];
-  stats: ChannelState['stats'];
-  isContextCompressed: boolean;
-  modifiedFiles: ChannelState['modifiedFiles'];
-  terminalSessions: ChannelState['terminalSessions'];
-  planComments: ChannelState['planComments'];
-  statusText: ChannelState['statusText'];
-  isProcessing: boolean;
-  isCancelling: boolean;
+export interface ChannelActionsValue {
   setChannelState: SetChannelState;
   sendMessage: (message: string) => void;
   abort: () => void;
@@ -123,53 +83,34 @@ export interface ChannelMessagesValue {
   reloadPlugins: () => Promise<PluginReloadResult>;
 }
 
-type MessagesStateValue = Pick<
-  ChannelMessagesValue,
-  | 'messages'
-  | 'historyMessages'
-  | 'status'
-  | 'stats'
-  | 'isContextCompressed'
-  | 'modifiedFiles'
-  | 'terminalSessions'
-  | 'planComments'
-  | 'statusText'
-  | 'isProcessing'
-  | 'isCancelling'
->;
-type MessagesActionsValue = Omit<ChannelMessagesValue, keyof MessagesStateValue>;
+const ChannelActionsContext = createContext<ChannelActionsValue | null>(null);
 
-const MessagesStateContext = createContext<MessagesStateValue | null>(null);
-const MessagesActionsContext = createContext<MessagesActionsValue | null>(null);
-
-export function useChannelMessages(): ChannelMessagesValue {
-  const state = useContext(MessagesStateContext);
-  const actions = useContext(MessagesActionsContext);
-  if (!state || !actions)
-    throw new Error('useChannelMessages must be used within a ChannelMessagesProvider');
-  return { ...state, ...actions };
-}
-
-export function useChannelMessagesActions(): MessagesActionsValue {
-  const actions = useContext(MessagesActionsContext);
-  if (!actions)
-    throw new Error('useChannelMessagesActions must be used within a ChannelMessagesProvider');
+export function useChannelMessages(): ChannelActionsValue {
+  const actions = useContext(ChannelActionsContext);
+  if (!actions) throw new Error('useChannelMessages must be used within a ChannelMessagesProvider');
   return actions;
 }
 
-function registerMessageFeatures(
-  registry: FeatureRegistry,
-  ctx: {
-    socket: TypedSocket;
-    channelId: string;
-    sessionActions: ReturnType<typeof createSessionActions>;
-    messageActions: ReturnType<typeof createMessageActions>;
-    clearMessages: () => void;
-    clearModifiedFiles: () => void;
-  },
-) {
-  const { socket, channelId, sessionActions, messageActions, clearMessages, clearModifiedFiles } =
-    ctx;
+function buildMessagesActions(ctx: {
+  socket: TypedSocket;
+  channelId: string;
+  cwd?: string;
+  setChannelState: SetChannelState;
+  statusRef: RefObject<string>;
+  messageQueueRef: RefObject<string[]>;
+  registry: FeatureRegistry;
+}): ChannelActionsValue {
+  const { socket, channelId, cwd, setChannelState, statusRef, messageQueueRef, registry } = ctx;
+  const sessionActions = createSessionActions({ socket, channelId });
+  const messageActions = createMessageActions({
+    socket,
+    channelId,
+    setChannelState,
+    statusRef,
+    messageQueueRef,
+  });
+  const clearMessages = () => setChannelState((prev) => ({ ...prev, messages: [] }));
+  const clearModifiedFiles = () => setChannelState((prev) => ({ ...prev, modifiedFiles: {} }));
   registry.register(createBtwFeature({ askSideQuestion: sessionActions.askSideQuestion }));
   registry.register(createReloadPluginsFeature(() => sessionActions.reloadPlugins()));
   registry.register(
@@ -196,36 +137,6 @@ function registerMessageFeatures(
       appendMessage: messageActions.appendMessage,
     }),
   );
-}
-
-function buildMessagesActions(ctx: {
-  socket: TypedSocket;
-  channelId: string;
-  cwd?: string;
-  setChannelState: SetChannelState;
-  statusRef: RefObject<string>;
-  messageQueueRef: RefObject<string[]>;
-  registry: FeatureRegistry;
-}): MessagesActionsValue {
-  const { socket, channelId, cwd, setChannelState, statusRef, messageQueueRef, registry } = ctx;
-  const sessionActions = createSessionActions({ socket, channelId });
-  const messageActions = createMessageActions({
-    socket,
-    channelId,
-    setChannelState,
-    statusRef,
-    messageQueueRef,
-  });
-  const clearMessages = () => setChannelState((prev) => ({ ...prev, messages: [] }));
-  const clearModifiedFiles = () => setChannelState((prev) => ({ ...prev, modifiedFiles: {} }));
-  registerMessageFeatures(registry, {
-    socket,
-    channelId,
-    sessionActions,
-    messageActions,
-    clearMessages,
-    clearModifiedFiles,
-  });
   const sendMessage = (message: string) => {
     const feature = registry.findSlashCommand(message);
     if (feature?.slash) {
@@ -297,11 +208,30 @@ export function ChannelMessagesProvider({
   const registryRef = useRef(createFeatureRegistry());
   const registry = registryRef.current;
 
-  // ── Own channelState ──
-  const [channelState, setChannelState] = useState<ChannelState>(() => ({
-    ...initialChannelState(channelId),
-    ...initialState,
-  }));
+  // ── Channel state from global channels store ──
+  // Keep a local ref as the source of truth before the store is initialized,
+  // so we never call store.setState during the render phase (which causes React warning).
+  const initialStateRef = useRef<ChannelState>(
+    useChannelsStore.getState().channels.get(channelId) ??
+      ({ ...initialChannelState(channelId), ...initialState } as ChannelState),
+  );
+
+  // Write the initial state into the store after mount, outside the render phase.
+  useLayoutEffect(() => {
+    if (!useChannelsStore.getState().channels.get(channelId)) {
+      useChannelsStore.getState().setChannelState(channelId, () => initialStateRef.current);
+    }
+  }, [channelId]);
+
+  const channelState =
+    useChannelsStore((s) => s.channels.get(channelId)) ?? initialStateRef.current;
+
+  const setChannelState: SetChannelState = useCallback(
+    (action) => {
+      useChannelsStore.getState().setChannelState(channelId, action);
+    },
+    [channelId],
+  );
 
   // ── Refs ──
   const dequeueMessageRef = useRef(dequeueMessage);
@@ -404,7 +334,7 @@ export function ChannelMessagesProvider({
       },
       sideEffects: { handlers: notificationHandlerEffects, ctx: { socket, channelId } },
     });
-  }, [channelId, socket, router]);
+  }, [channelId, socket, router, setChannelState]);
 
   // ── Special: session lifecycle events (excluded from messageHandlers to prevent replay) ──
   useEffect(() => {
@@ -419,18 +349,7 @@ export function ChannelMessagesProvider({
       off1();
       off2();
     };
-  }, [socket, router]);
-
-  // ── Special: message:assistant open_file side-effect ──
-  useEffect(() => {
-    if (!socket) return;
-    return router.on(EVENTS.message.assistant, (p: Payload<'message:assistant'>) => {
-      for (const block of p.content) {
-        if (block.type !== 'tool_use' || block.toolName !== 'open_file' || !block.input) continue;
-        fetchOpenFileContent(socket, block, setChannelState);
-      }
-    });
-  }, [socket, router]);
+  }, [socket, router, setChannelState]);
 
   // ── Special: message:result dequeue side-effect ──
   useEffect(() => {
@@ -441,7 +360,7 @@ export function ChannelMessagesProvider({
       socket.emit(EVENTS.chat.send, { channelId, message: next });
       setChannelState((prev) => ({ ...prev, status: 'processing' as const }));
     });
-  }, [channelId, socket, router]);
+  }, [channelId, socket, router, setChannelState]);
 
   // ── session:history: replay stored events through live handlers ──
   useEffect(() => {
@@ -453,10 +372,10 @@ export function ChannelMessagesProvider({
         // Skip first batch if live events already arrived (socket was already watching the channel).
         // Subsequent batches of the same replay are always applied.
         if (isFirstBatch && prev.messages.length > 0) return prev;
-        return applyHistoryBatch(prev, payload.events, messageHandlers);
+        return applyHistoryBatch(prev, payload.events, replayHandlers);
       });
     });
-  }, [socket, router]);
+  }, [socket, router, setChannelState]);
 
   // ── Ref for status used in actions ──
   const statusRef = useRef(channelState.status);
@@ -465,7 +384,7 @@ export function ChannelMessagesProvider({
   });
 
   // ── Actions (rebuilt when socket/channelId/cwd change) ──
-  const actions = useMemo<MessagesActionsValue>(
+  const actions = useMemo<ChannelActionsValue>(
     () =>
       buildMessagesActions({
         socket,
@@ -476,48 +395,17 @@ export function ChannelMessagesProvider({
         messageQueueRef,
         registry,
       }),
-    [socket, channelId, cwd, messageQueueRef, registry],
+    [socket, channelId, cwd, messageQueueRef, registry, setChannelState],
   );
 
-  // ── Message Registry: expose messages to workspace-level consumers ──
-  const registerToRegistry = useMessageRegistryStore((s) => s.register);
-  const updateRegistry = useMessageRegistryStore((s) => s.update);
-  const unregisterFromRegistry = useMessageRegistryStore((s) => s.unregister);
-
-  // biome-ignore lint/correctness/useExhaustiveDependencies: register on mount with initial messages; update effect handles subsequent changes
+  // ── Cleanup channel on unmount ──
   useEffect(() => {
-    registerToRegistry(channelId, { projectCwd: cwd ?? '', messages: channelState.messages });
-    return () => unregisterFromRegistry(channelId);
-  }, [channelId, cwd, registerToRegistry, unregisterFromRegistry]);
-
-  useEffect(() => {
-    updateRegistry(channelId, channelState.messages);
-  }, [channelId, channelState.messages, updateRegistry]);
+    return () => useChannelsStore.getState().removeChannel(channelId);
+  }, [channelId]);
 
   return (
     <FeatureRegistryContext.Provider value={registry}>
-      <MessagesActionsContext.Provider value={actions}>
-        <MessagesStateContext.Provider
-          value={{
-            messages: channelState.messages,
-            historyMessages: channelState.historyMessages,
-            status: channelState.status,
-            stats: channelState.stats,
-            isContextCompressed: channelState.isContextCompressed,
-            modifiedFiles: channelState.modifiedFiles,
-            terminalSessions: channelState.terminalSessions,
-            planComments: channelState.planComments,
-            statusText: channelState.statusText,
-            isProcessing:
-              channelState.status === 'processing' ||
-              channelState.status === 'busy' ||
-              channelState.status === 'cancelling',
-            isCancelling: channelState.status === 'cancelling',
-          }}
-        >
-          {children}
-        </MessagesStateContext.Provider>
-      </MessagesActionsContext.Provider>
+      <ChannelActionsContext.Provider value={actions}>{children}</ChannelActionsContext.Provider>
     </FeatureRegistryContext.Provider>
   );
 }

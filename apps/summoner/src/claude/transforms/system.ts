@@ -56,7 +56,7 @@ function handleStatus(raw: SystemStatus): ClientMessage {
 
 function handleHookStarted(raw: SystemHookStarted): ClientMessage {
   return {
-    name: 'system:hook_started',
+    name: 'hook:started',
     payload: {
       hook: {
         hookName: raw.hook_name,
@@ -69,7 +69,7 @@ function handleHookStarted(raw: SystemHookStarted): ClientMessage {
 
 function handleHookResponse(raw: SystemHookResponse): ClientMessage {
   return {
-    name: 'system:hook_response',
+    name: 'hook:response',
     payload: {
       hook: {
         hookName: raw.hook_name,
@@ -86,7 +86,7 @@ function handleHookResponse(raw: SystemHookResponse): ClientMessage {
 
 function handleTaskStarted(raw: SystemTaskStarted): ClientMessage {
   return {
-    name: 'system:task_started',
+    name: 'task:started',
     payload: {
       description: raw.description ?? '',
       taskType: raw.task_type,
@@ -97,7 +97,7 @@ function handleTaskStarted(raw: SystemTaskStarted): ClientMessage {
 
 function handleTaskNotification(raw: SystemTaskNotification): ClientMessage {
   return {
-    name: 'system:task_notification',
+    name: 'task:notification',
     payload: {
       taskId: raw.task_id,
       toolUseId: raw.tool_use_id,
@@ -111,7 +111,7 @@ function handleTaskNotification(raw: SystemTaskNotification): ClientMessage {
 
 function handleTaskProgress(raw: SystemTaskProgress): ClientMessage {
   return {
-    name: 'system:task_progress',
+    name: 'task:progress',
     payload: {
       taskId: raw.task_id,
       toolUseId: raw.tool_use_id,
@@ -122,9 +122,10 @@ function handleTaskProgress(raw: SystemTaskProgress): ClientMessage {
   };
 }
 
-// Skip: extension also ignores these
-function handlePostTurnSummary(): null {
-  return null;
+function handlePostTurnSummary(raw: ProtocolMessage): ClientMessage | null {
+  const summary = asString(raw.summary, '');
+  if (!summary) return null;
+  return { name: 'system:post_turn_summary', payload: { summary } };
 }
 
 function handleSessionStateChanged(): null {
@@ -192,8 +193,8 @@ const HANDLERS: Record<string, SystemHandler> = {
   task_started: handler(handleTaskStarted),
   task_notification: handler(handleTaskNotification),
   task_progress: handler(handleTaskProgress),
-  post_turn_summary: handlePostTurnSummary,
-  session_state_changed: handleSessionStateChanged,
+  post_turn_summary: handler(handlePostTurnSummary),
+  session_state_changed: handler(handleSessionStateChanged),
   api_retry: handler(handleApiRetry),
   bridge_state: handler(handleBridgeState),
   compact_boundary: handler(handleCompactBoundary),

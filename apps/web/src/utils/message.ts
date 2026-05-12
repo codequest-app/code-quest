@@ -14,14 +14,12 @@ export function mapSessionStats(s: SessionStats): ChatStats {
   };
 }
 
-export const msg = <T extends Message['type']>(
-  fields: Omit<Extract<Message, { type: T }>, 'id' | 'timestamp'>,
-): Extract<Message, { type: T }> =>
+export const msg = (fields: Omit<Message, 'id' | 'timestamp'> & Record<string, unknown>): Message =>
   ({
     id: crypto.randomUUID(),
     timestamp: Date.now(),
     ...fields,
-  }) as Extract<Message, { type: T }>;
+  }) as Message;
 
 /** Escape hatch for runtime-supplied `type` strings not in the Message union
  *  (e.g., forward-compat CLI events). UI has a fallback renderer. */
@@ -33,19 +31,10 @@ export function systemMessage(type: string, content: string): Message {
 export function addMessage(state: ChannelState, fields: Parameters<typeof msg>[0]): ChannelState {
   const m = msg(fields);
   const trimmed = m.content.trim();
-  const isHistory = trimmed && (m.meta as { history?: boolean } | undefined)?.history === true;
+  const isHistory = trimmed && m.type === 'text' && m.history === true;
   return {
     ...state,
     messages: [...state.messages, m],
     historyMessages: isHistory ? [...state.historyMessages, trimmed] : state.historyMessages,
   };
-}
-
-/**
- * Patch a message's meta without losing the discriminated union type.
- * Cast required: TypeScript cannot verify that spreading a discriminated union
- * member preserves the union — the result type widens to an intersection.
- */
-export function patchMeta(m: Message, patch: Record<string, unknown>): Message {
-  return { ...m, meta: { ...m.meta, ...patch } } as Message;
 }

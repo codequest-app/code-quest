@@ -45,8 +45,12 @@ function handleContentBlockDelta(
         },
       };
     case 'signature_delta':
-    case 'compaction_delta':
       return null;
+    case 'compaction_delta':
+      return {
+        name: 'stream:compaction',
+        payload: { content: ((delta as Record<string, unknown>).content as string) ?? '' },
+      };
     default:
       return {
         name: 'raw:event',
@@ -65,11 +69,8 @@ export function transformStreamlinedToolUseSummary(
   return { name: 'stream:tool_summary', payload: { toolSummary: raw.tool_summary } };
 }
 
-function hasContentFields(block: Record<string, unknown>): boolean {
-  for (const k in block) {
-    if (k !== 'type') return true;
-  }
-  return false;
+function hasBlockDetails(block: Record<string, unknown>): boolean {
+  return Object.keys(block).some((k) => k !== 'type');
 }
 
 export function transformStream(raw: StreamMessage): ClientMessage | null {
@@ -91,18 +92,54 @@ export function transformStream(raw: StreamMessage): ClientMessage | null {
         payload: {
           index: streamData.index ?? 0,
           blockType: block?.type ?? 'unknown',
-          ...(block && hasContentFields(block) ? { contentBlock: block } : {}),
+          ...(block && hasBlockDetails(block) ? { contentBlock: block } : {}),
           ...(parentToolUseId ? { parentToolUseId } : {}),
         },
       };
     }
     case 'content_block_stop':
-      return null;
+      return {
+        name: 'stream:block_stop',
+        payload: {
+          index: streamData.index ?? 0,
+          ...(parentToolUseId ? { parentToolUseId } : {}),
+        },
+      };
     case 'message_stop':
       return { name: 'stream:end', payload: {} };
-    case 'message_start':
-    case 'message_delta':
-      return null;
+    case 'message_start': {
+      const message = (streamData.message ?? {}) as Record<string, unknown>;
+      const usage = (message.usage ?? {}) as Record<string, unknown>;
+      return {
+        name: 'stream:message_start',
+        payload: {
+          model: (message.model as string) ?? 'unknown',
+          messageId: (message.id as string) ?? '',
+          usage: {
+            inputTokens: (usage.input_tokens as number) ?? 0,
+            ...(usage.cache_creation_input_tokens
+              ? { cacheCreationInputTokens: usage.cache_creation_input_tokens as number }
+              : {}),
+            ...(usage.cache_read_input_tokens
+              ? { cacheReadInputTokens: usage.cache_read_input_tokens as number }
+              : {}),
+          },
+        },
+      };
+    }
+    case 'message_delta': {
+      const delta = (streamData.delta ?? {}) as Record<string, unknown>;
+      const usage = (streamData.usage ?? {}) as Record<string, unknown>;
+      return {
+        name: 'stream:message_delta',
+        payload: {
+          stopReason: (delta.stop_reason as string) ?? null,
+          usage: {
+            outputTokens: (usage.output_tokens as number) ?? 0,
+          },
+        },
+      };
+    }
     default:
       return {
         name: 'raw:event',

@@ -13,6 +13,7 @@ import { IconButton } from '@/components/ui/IconButton';
 import { useAppInit } from '@/contexts/AppInitContext';
 import { useChannelCompose, useChannelConfig, useChannelMessages } from '@/contexts/channel';
 import { modelOpenSignal } from '@/features/model/model-feature';
+import { selectIsActive, useChannelStore } from '@/stores/ChannelStoreContext';
 import { cn } from '@/utils/cn';
 import { findModel, getEffortLevels } from '@/utils/model-utils';
 import { type ActiveDialog, ToolbarDialogs } from '../dialogs/ToolbarDialogs.tsx';
@@ -101,15 +102,11 @@ export function ComposeToolbar({
   containerRef,
   onAttachFile,
 }: ComposeToolbarProps): React.JSX.Element {
-  const {
-    isProcessing,
-    isCancelling,
-    stats,
-    isContextCompressed,
-    abort,
-    rewindToMessage,
-    forkSession,
-  } = useChannelMessages();
+  const isProcessing = useChannelStore(selectIsActive);
+  const isCancelling = useChannelStore((s) => s.status === 'cancelling');
+  const stats = useChannelStore((s) => s.stats);
+  const isContextCompressed = useChannelStore((s) => s.isContextCompressed);
+  const { abort, rewindToMessage, forkSession } = useChannelMessages();
   const {
     accountInfo,
     usageQuota,

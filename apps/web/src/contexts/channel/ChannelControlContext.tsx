@@ -12,7 +12,7 @@ import {
 import type { PendingDiffReview, PendingElicitation } from '@/types/chat';
 import { msg } from '@/utils/message';
 import { useSocket } from '../SocketContext.tsx';
-import { useChannelMessagesActions } from './ChannelMessagesContext.tsx';
+import { useChannelMessages } from './ChannelMessagesContext.tsx';
 import { useChannelId } from './ChannelMetaContext.tsx';
 import { useChannelSocketRouter } from './ChannelSocketRouterContext.tsx';
 import type { Payload } from './handlers/guard.ts';
@@ -67,7 +67,7 @@ export function ChannelControlProvider({
 }): React.JSX.Element {
   const channelId = useChannelId();
   const { socket } = useSocket();
-  const { setChannelState } = useChannelMessagesActions();
+  const { setChannelState } = useChannelMessages();
 
   // ── Own pending state ──
   const [controls, setControls] = useState<PendingControl[]>(initialPendingControls ?? []);
@@ -110,7 +110,8 @@ export function ChannelControlProvider({
           role: messageRole,
           type: 'pending_action',
           content: messageContent,
-          meta: { requestId: control.requestId, input: control.input },
+          requestId: control.requestId,
+          input: control.input,
         }),
       ],
     }));
@@ -176,16 +177,21 @@ export function ChannelControlProvider({
 
   // ── Stable actions (rebuilt when socket/channelId change) ──
   const actions = useMemo(
-    () =>
-      createControlActions({
+    () => ({
+      ...createControlActions({
         socket,
         channelId,
         controlsRef,
         setControls,
         setElicitation,
-        setDiffReview,
         setChannelState,
       }),
+      setPendingControls: setControls,
+      setPendingElicitation: setElicitation,
+      setPendingDiffReview: setDiffReview,
+      getPendingControls: (): PendingControl[] => controlsRef.current,
+      clearPendingDiffReview: () => setDiffReview(null),
+    }),
     [socket, channelId, setChannelState],
   );
 

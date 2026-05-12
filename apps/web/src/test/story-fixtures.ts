@@ -115,7 +115,8 @@ function makePermissionFlow(opts: {
         role: 'assistant',
         type: 'pending_action',
         content: opts.pendingToolName,
-        meta: { requestId: opts.requestId, input: opts.pendingInput },
+        requestId: opts.requestId,
+        input: opts.pendingInput,
         timestamp: 1_700_002_000_000,
       },
     ],
@@ -276,7 +277,17 @@ export function makeEditWithDiff(): Partial<ChannelState> {
     segments.user('Add null-check for the user parameter in the login function'),
     segments.assistant("I'll add an early return for null/undefined user input."),
     segments.assistant({
-      toolUse: { id: 'ed-t1', name: 'Edit', input: { file_path: '/src/auth/login.ts' } },
+      toolUse: {
+        id: 'ed-t1',
+        name: 'Edit',
+        input: {
+          file_path: '/src/auth/login.ts',
+          old_string:
+            '  const user = await db.users.findByEmail(email);\n  if (!user) throw new Error("User not found");',
+          new_string:
+            '  if (!email || !password) {\n    throw new Error("Email and password are required");\n  }\n  const user = await db.users.findByEmail(email);\n  if (!user) throw new Error("User not found");',
+        },
+      },
     }),
     segments.toolResult(
       'ed-t1',

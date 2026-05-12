@@ -1,12 +1,13 @@
 import { act, screen } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { describe, expect, it, vi } from 'vitest';
-import { useChannelConfig, useChannelMessages } from '@/contexts/channel/index';
+import { useChannelConfig } from '@/contexts/channel/index';
+import { useChannelStore } from '@/stores/ChannelStoreContext';
 import { renderWithChannel } from '@/test/render-with-channel';
 
 function TestUI() {
   const { setModel } = useChannelConfig();
-  const { messages } = useChannelMessages();
+  const messages = useChannelStore((s) => s.messages);
   const systemMsgs = messages.filter(
     (m) => m.role === 'system' && m.type === 'slash_command_result',
   );

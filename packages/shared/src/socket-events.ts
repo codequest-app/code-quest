@@ -54,6 +54,7 @@ import type {
   GitStatusByCwdResult,
   GitUpdateSkippedBranchPayload,
 } from './schemas/git.ts';
+import type { HookResponsePayload, HookStartedPayload } from './schemas/hook.ts';
 import type {
   DisableChromeMcpResponse,
   DisableJupyterMcpResponse,
@@ -84,8 +85,12 @@ import type {
 } from './schemas/message-payloads.ts';
 import type {
   StreamBlockStartPayload,
+  StreamBlockStopPayload,
   StreamChunkPayload,
+  StreamCompactionPayload,
   StreamEndPayload,
+  StreamMessageDeltaPayload,
+  StreamMessageStartPayload,
   StreamTextPayload,
   StreamToolSummaryPayload,
 } from './schemas/message-stream.ts';
@@ -196,15 +201,16 @@ import type {
   SystemAvailableModelsPayload,
   SystemCompactBoundaryPayload,
   SystemExperimentGatesPayload,
-  SystemHookResponsePayload,
-  SystemHookStartedPayload,
   SystemMirrorErrorPayload,
+  SystemPostTurnSummaryPayload,
   SystemRateLimitPayload,
   SystemRemoteControlPayload,
-  SystemTaskNotificationPayload,
-  SystemTaskProgressPayload,
-  SystemTaskStartedPayload,
 } from './schemas/system.ts';
+import type {
+  TaskNotificationPayload,
+  TaskProgressPayload,
+  TaskStartedPayload,
+} from './schemas/task.ts';
 import type {
   TerminalGetContentsPayload,
   TerminalGetContentsResponse,
@@ -691,6 +697,10 @@ export interface ServerToClientEvents {
   'stream:text': (payload: StreamTextPayload) => void;
   'stream:tool_summary': (payload: StreamToolSummaryPayload) => void;
   'stream:block_start': (payload: StreamBlockStartPayload) => void;
+  'stream:block_stop': (payload: StreamBlockStopPayload) => void;
+  'stream:message_start': (payload: StreamMessageStartPayload) => void;
+  'stream:message_delta': (payload: StreamMessageDeltaPayload) => void;
+  'stream:compaction': (payload: StreamCompactionPayload) => void;
 
   // ── Session (extends existing session:* pattern) ──
   'session:init': (payload: SessionInitPayload) => void;
@@ -709,12 +719,16 @@ export interface ServerToClientEvents {
   'control:cancel': (payload: ControlCancelPayload) => void;
   'control:hook_callback': (payload: ControlHookCallbackPayload) => void;
 
+  // ── Hook ──
+  'hook:started': (payload: HookStartedPayload) => void;
+  'hook:response': (payload: HookResponsePayload) => void;
+
+  // ── Task ──
+  'task:started': (payload: TaskStartedPayload) => void;
+  'task:progress': (payload: TaskProgressPayload) => void;
+  'task:notification': (payload: TaskNotificationPayload) => void;
+
   // ── System ──
-  'system:hook_started': (payload: SystemHookStartedPayload) => void;
-  'system:hook_response': (payload: SystemHookResponsePayload) => void;
-  'system:task_started': (payload: SystemTaskStartedPayload) => void;
-  'system:task_progress': (payload: SystemTaskProgressPayload) => void;
-  'system:task_notification': (payload: SystemTaskNotificationPayload) => void;
   'system:compact_boundary': (payload: SystemCompactBoundaryPayload) => void;
   'system:rate_limit': (payload: SystemRateLimitPayload) => void;
   'system:api_retry': (payload: SystemApiRetryPayload) => void;
@@ -722,6 +736,7 @@ export interface ServerToClientEvents {
   'app:models': (payload: SystemAvailableModelsPayload) => void;
   'system:remote_control': (payload: SystemRemoteControlPayload) => void;
   'system:mirror_error': (payload: SystemMirrorErrorPayload) => void;
+  'system:post_turn_summary': (payload: SystemPostTurnSummaryPayload) => void;
   'plugin:reloaded': (payload: PluginReloadPayload) => void;
 
   // ── Notifications ──
@@ -948,22 +963,31 @@ export const EVENTS = {
   },
   stream: {
     block_start: 'stream:block_start',
+    block_stop: 'stream:block_stop',
     chunk: 'stream:chunk',
+    compaction: 'stream:compaction',
     end: 'stream:end',
+    message_delta: 'stream:message_delta',
+    message_start: 'stream:message_start',
     text: 'stream:text',
     tool_summary: 'stream:tool_summary',
   },
   system: {
     api_retry: 'system:api_retry',
     compact_boundary: 'system:compact_boundary',
-    hook_response: 'system:hook_response',
-    hook_started: 'system:hook_started',
     mirror_error: 'system:mirror_error',
+    post_turn_summary: 'system:post_turn_summary',
     rate_limit: 'system:rate_limit',
     remote_control: 'system:remote_control',
-    task_notification: 'system:task_notification',
-    task_progress: 'system:task_progress',
-    task_started: 'system:task_started',
+  },
+  hook: {
+    started: 'hook:started',
+    response: 'hook:response',
+  },
+  task: {
+    started: 'task:started',
+    progress: 'task:progress',
+    notification: 'task:notification',
   },
   terminal: {
     open_claude: 'terminal:open_claude',

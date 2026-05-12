@@ -35,7 +35,7 @@ describe('transform — system events', () => {
   it('converts system/hook_started', () => {
     const result = toClientMessage(s.hookStarted('h1', 'pre-commit', 'commit'));
     expect(result).toMatchObject({
-      name: 'system:hook_started',
+      name: 'hook:started',
       payload: { hook: { hookName: 'pre-commit', hookId: 'h1' } },
     });
   });
@@ -45,7 +45,7 @@ describe('transform — system events', () => {
     base.additional_context = 'lint ok';
     const result = toClientMessage(JSON.stringify(base));
     expect(result).toMatchObject({
-      name: 'system:hook_response',
+      name: 'hook:response',
       payload: {
         hook: { hookName: 'pre-commit', output: 'passed', additionalContext: 'lint ok' },
       },
@@ -55,8 +55,18 @@ describe('transform — system events', () => {
   it('converts system/task_started', () => {
     const result = toClientMessage(s.taskStarted('tu-1', 'Running tests'));
     expect(result).toMatchObject({
-      name: 'system:task_started',
+      name: 'task:started',
       payload: { description: 'Running tests', taskType: 'local_agent' },
+    });
+  });
+
+  it('converts system/task_started with task_type=local_bash', () => {
+    const raw = JSON.parse(s.taskStarted('tu-1', 'Run grep'));
+    raw.task_type = 'local_bash';
+    const result = toClientMessage(JSON.stringify(raw));
+    expect(result).toMatchObject({
+      name: 'task:started',
+      payload: { description: 'Run grep', taskType: 'local_bash' },
     });
   });
 
@@ -80,15 +90,18 @@ describe('transform — system events', () => {
     });
   });
 
-  it('skips system/post_turn_summary', () => {
+  it('converts system/post_turn_summary to system:post_turn_summary', () => {
     const raw = JSON.stringify({
       type: 'system',
       subtype: 'post_turn_summary',
-      summary: 'test',
+      summary: 'User asked about auth. Assistant explained OAuth.',
       session_id: 'x',
       uuid: 'u',
     });
-    expect(toClientMessage(raw)).toBeNull();
+    expect(toClientMessage(raw)).toMatchObject({
+      name: 'system:post_turn_summary',
+      payload: { summary: 'User asked about auth. Assistant explained OAuth.' },
+    });
   });
 
   it('skips system/session_state_changed', () => {
@@ -144,7 +157,7 @@ describe('transform — system events', () => {
       }),
     );
     expect(result).toMatchObject({
-      name: 'system:task_notification',
+      name: 'task:notification',
       payload: {
         taskId: 'a6b3446e967260f60',
         toolUseId: 'toolu_01RgfPM8fAEPgezK6JinZ2pH',
@@ -161,7 +174,7 @@ describe('transform — system events', () => {
     delete base.summary;
     delete base.usage;
     const result = toClientMessage(JSON.stringify(base));
-    const msg = expectName(result, 'system:task_notification');
+    const msg = expectName(result, 'task:notification');
     expect(msg.payload.taskId).toBe('a6b3446e967260f60');
     expect(msg.payload.toolUseId).toBeUndefined();
     expect(msg.payload.status).toBeUndefined();
@@ -177,7 +190,7 @@ describe('transform — system events', () => {
       }),
     );
     expect(result).toMatchObject({
-      name: 'system:task_progress',
+      name: 'task:progress',
       payload: {
         taskId: 'a6b3446e967260f60',
         toolUseId: 'toolu_01RgfPM8fAEPgezK6JinZ2pH',
@@ -194,7 +207,7 @@ describe('transform — system events', () => {
     delete base.last_tool_name;
     delete base.usage;
     const result = toClientMessage(JSON.stringify(base));
-    const msg = expectName(result, 'system:task_progress');
+    const msg = expectName(result, 'task:progress');
     expect(msg.payload.taskId).toBe('a6b3446e967260f60');
     expect(msg.payload.description).toBeUndefined();
     expect(msg.payload.lastToolName).toBeUndefined();

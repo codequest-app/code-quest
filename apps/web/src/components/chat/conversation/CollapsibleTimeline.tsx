@@ -1,13 +1,15 @@
 import { useMemo, useState } from 'react';
-import type { ForkFn, RewindFn } from '@/types/ui';
-import type { MessageNode } from '@/utils/message-tree';
+import { useChannelStore } from '@/stores/ChannelStoreContext';
+import type { AssistantTurn, ForkFn, Message, RewindFn } from '@/types/ui';
+import { getToolId } from '@/utils/message-helpers';
 import { buildGroupChips, splitTimelineRuns, type TimelineRun } from '@/utils/tool-utils';
-import { ChatMessage } from './ChatMessage.tsx';
-import { SubagentChildren } from './SubagentChildren.tsx';
+import { NodeContent } from './NodeContent.tsx';
 import { type RowPosition, TimelineItem } from './TimelineItem.tsx';
 import { ToolGroupSummary } from './ToolGroupSummary.tsx';
 
 interface RunProps {
+  lastTurnId?: string;
+  childrenIndex?: Map<string, import('@/types/ui').Message[]>;
   onRewind?: RewindFn;
   onFork?: ForkFn;
   onStopTask?: (taskId: string) => void;
@@ -21,64 +23,75 @@ function positionOf(index: number, total: number): RowPosition {
   return 'middle';
 }
 
-function dotClass(node: MessageNode): string {
+function dotClass(
+  message: Message,
+  storeResult?: { content?: string; is_error?: boolean },
+): string {
   if (
-    node.message.type === 'text' ||
-    node.message.type === 'thinking' ||
-    node.message.type === 'streamlined_text'
+    message.type === 'text' ||
+    message.type === 'thinking' ||
+    message.type === 'streamlined_text'
   ) {
     return 'bg-text-muted/60';
   }
-  const result = node.message.type === 'tool_use' ? node.message.meta.result : undefined;
-  if (result?.is_error) return 'bg-danger';
-  if (result) return 'bg-success';
+  if (message.type === 'assistant_turn') {
+    const turn = message as AssistantTurn;
+    const hasToolUse = turn.blocks.some((b) => b.type === 'tool_use');
+    if (!hasToolUse) return 'bg-text-muted/60';
+  }
+  if (storeResult?.is_error) return 'bg-danger';
+  if (storeResult) return 'bg-success';
   return 'bg-accent animate-pulse';
 }
 
 function TimelineRow({
-  node,
+  message,
   position,
+  lastTurnId,
+  childrenIndex,
   onRewind,
   onFork,
   onStopTask,
   onDiffRespond,
 }: RunProps & {
-  node: MessageNode;
+  message: Message;
   position: RowPosition;
 }) {
+  const toolId = getToolId(message);
+  const storeResult = useChannelStore((s) => (toolId ? s.results.get(toolId) : undefined));
   return (
-    <TimelineItem position={position} dotClass={dotClass(node)} data-message-id={node.message.id}>
-      <ChatMessage
-        message={node.message}
+    <TimelineItem
+      position={position}
+      dotClass={dotClass(message, storeResult)}
+      data-message-id={message.id}
+    >
+      <NodeContent
+        message={message}
+        childrenIndex={childrenIndex}
         showAvatar={false}
+        isLastTurn={message.type === 'assistant_turn' && message.id === lastTurnId}
         onRewind={onRewind}
         onFork={onFork}
+        onStopTask={onStopTask}
         onDiffRespond={onDiffRespond}
       />
-      {node.children.length > 0 && (
-        <SubagentChildren
-          nodes={node.children}
-          onStopTask={onStopTask}
-          onDiffRespond={onDiffRespond}
-          parentToolId={node.message.type === 'tool_use' ? node.message.meta.toolId : undefined}
-          model={node.message.type === 'tool_use' ? node.message.meta.model : undefined}
-        />
-      )}
     </TimelineItem>
   );
 }
 
 function ToolGroup({
-  nodes,
+  messages,
   position,
+  lastTurnId,
+  childrenIndex,
   onRewind,
   onFork,
   onStopTask,
   onDiffRespond,
-}: RunProps & { nodes: MessageNode[]; position: RowPosition }) {
+}: RunProps & { messages: Message[]; position: RowPosition }) {
   const [expanded, setExpanded] = useState(false);
-  const chips = useMemo(() => buildGroupChips(nodes), [nodes]);
-  const collapsedIds = useMemo(() => nodes.map((n) => n.message.id).join(','), [nodes]);
+  const chips = useMemo(() => buildGroupChips(messages), [messages]);
+  const collapsedIds = useMemo(() => messages.map((m) => m.id).join(','), [messages]);
 
   return (
     <div data-collapsed-ids={collapsedIds}>
@@ -95,13 +108,15 @@ function ToolGroup({
         />
       </TimelineItem>
       {expanded &&
-        nodes.map((node, i) => {
-          const rowPosition = i === nodes.length - 1 ? position : positionOf(i, nodes.length);
+        messages.map((msg, i) => {
+          const rowPosition = i === messages.length - 1 ? position : positionOf(i, messages.length);
           return (
             <TimelineRow
-              key={node.message.id}
-              node={node}
+              key={msg.id}
+              message={msg}
               position={rowPosition}
+              lastTurnId={lastTurnId}
+              childrenIndex={childrenIndex}
               onRewind={onRewind}
               onFork={onFork}
               onStopTask={onStopTask}
@@ -116,6 +131,8 @@ function ToolGroup({
 function RunItem({
   run,
   position,
+  lastTurnId,
+  childrenIndex,
   onRewind,
   onFork,
   onStopTask,
@@ -124,8 +141,10 @@ function RunItem({
   if (run.kind === 'grouped') {
     return (
       <ToolGroup
-        nodes={run.nodes}
+        messages={run.messages}
         position={position}
+        lastTurnId={lastTurnId}
+        childrenIndex={childrenIndex}
         onRewind={onRewind}
         onFork={onFork}
         onStopTask={onStopTask}
@@ -135,8 +154,10 @@ function RunItem({
   }
   return (
     <TimelineRow
-      node={run.node}
+      message={run.message}
       position={position}
+      lastTurnId={lastTurnId}
+      childrenIndex={childrenIndex}
       onRewind={onRewind}
       onFork={onFork}
       onStopTask={onStopTask}
@@ -146,20 +167,24 @@ function RunItem({
 }
 
 export function CollapsibleTimeline({
-  nodes,
+  messages,
+  lastTurnId,
+  childrenIndex,
   onRewind,
   onFork,
   onStopTask,
   onDiffRespond,
-}: RunProps & { nodes: MessageNode[] }): React.JSX.Element {
-  const runs = useMemo(() => splitTimelineRuns(nodes), [nodes]);
+}: RunProps & { messages: Message[] }): React.JSX.Element {
+  const runs = useMemo(() => splitTimelineRuns(messages), [messages]);
   return (
     <div className="animate-fade-in mt-1">
       {runs.map((run, i) => (
         <RunItem
-          key={run.kind === 'grouped' ? run.nodes[0]?.message.id : run.node.message.id}
+          key={run.kind === 'grouped' ? run.messages[0]?.id : run.message.id}
           run={run}
           position={positionOf(i, runs.length)}
+          lastTurnId={lastTurnId}
+          childrenIndex={childrenIndex}
           onRewind={onRewind}
           onFork={onFork}
           onStopTask={onStopTask}

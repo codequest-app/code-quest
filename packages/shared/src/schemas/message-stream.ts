@@ -84,3 +84,65 @@ export const streamBlockStartPayloadSchema: z.ZodObject<
   parentToolUseId: z.string().optional(),
 });
 export type StreamBlockStartPayload = z.infer<typeof streamBlockStartPayloadSchema>;
+
+export const streamBlockStopPayloadSchema: z.ZodObject<
+  {
+    channelId: z.ZodString;
+    index: z.ZodNumber;
+    parentToolUseId: z.ZodOptional<z.ZodString>;
+  },
+  z.core.$strip
+> = channelIdBase.extend({
+  index: z.number(),
+  parentToolUseId: z.string().optional(),
+});
+export type StreamBlockStopPayload = z.infer<typeof streamBlockStopPayloadSchema>;
+
+export const streamMessageStartPayloadSchema: z.ZodObject<
+  {
+    channelId: z.ZodString;
+    model: z.ZodString;
+    messageId: z.ZodString;
+    usage: z.ZodObject<
+      {
+        inputTokens: z.ZodNumber;
+        cacheCreationInputTokens: z.ZodOptional<z.ZodNumber>;
+        cacheReadInputTokens: z.ZodOptional<z.ZodNumber>;
+      },
+      z.core.$strip
+    >;
+  },
+  z.core.$strip
+> = channelIdBase.extend({
+  model: z.string(),
+  messageId: z.string(),
+  usage: z.object({
+    inputTokens: z.number(),
+    cacheCreationInputTokens: z.number().optional(),
+    cacheReadInputTokens: z.number().optional(),
+  }),
+});
+export type StreamMessageStartPayload = z.infer<typeof streamMessageStartPayloadSchema>;
+
+export const streamMessageDeltaPayloadSchema: z.ZodObject<
+  {
+    channelId: z.ZodString;
+    stopReason: z.ZodNullable<z.ZodString>;
+    usage: z.ZodObject<{ outputTokens: z.ZodNumber }, z.core.$strip>;
+  },
+  z.core.$strip
+> = channelIdBase.extend({
+  stopReason: z.string().nullable(),
+  usage: z.object({
+    outputTokens: z.number(),
+  }),
+});
+export type StreamMessageDeltaPayload = z.infer<typeof streamMessageDeltaPayloadSchema>;
+
+export const streamCompactionPayloadSchema: z.ZodObject<
+  { channelId: z.ZodString; content: z.ZodString },
+  z.core.$strip
+> = channelIdBase.extend({
+  content: z.string(),
+});
+export type StreamCompactionPayload = z.infer<typeof streamCompactionPayloadSchema>;

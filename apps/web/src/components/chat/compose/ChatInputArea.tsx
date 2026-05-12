@@ -1,6 +1,7 @@
 import { toPermissionMode } from '@code-quest/shared';
 import { useRef } from 'react';
 import { useChannelComposeActions, useChannelConfig, useChannelMessages } from '@/contexts/channel';
+import { useChannelStore } from '@/stores/ChannelStoreContext';
 import { cn } from '@/utils/cn';
 import { ReviewUpsellBanner } from '../plan-review/ReviewUpsellBanner.tsx';
 import { PendingActionButtons } from '../tool-use/PendingActionButtons.tsx';
@@ -12,7 +13,8 @@ import { SpeechInputContainer } from './SpeechInputContainer.tsx';
 export function ChatInputArea(): React.JSX.Element {
   const { permissionMode } = useChannelConfig();
   const { focusTextarea, addAttachments, insertSlashCommand } = useChannelComposeActions();
-  const { modifiedFiles, removeModifiedFile } = useChannelMessages();
+  const modifiedFiles = useChannelStore((s) => s.modifiedFiles);
+  const { removeModifiedFile } = useChannelMessages();
 
   const modifiedFileEntries = Object.entries(modifiedFiles);
   const modifiedFileList: ModifiedFile[] = modifiedFileEntries.map(([path, entry]) => ({

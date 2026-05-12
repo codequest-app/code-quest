@@ -31,7 +31,7 @@ export function transformUser(raw: UserMessage): ClientMessage | null {
           toolUseId: asString(b.tool_use_id, ''),
           toolName: asString(b.name, undefined),
           content: b.content,
-          isError: b.is_error === true ? true : undefined,
+          isError: b.is_error ? true : undefined,
         });
         break;
     }
@@ -39,7 +39,7 @@ export function transformUser(raw: UserMessage): ClientMessage | null {
 
   const uuid = typeof raw.uuid === 'string' ? raw.uuid : undefined;
   const history = raw.isSynthetic !== true && !parentToolUseId;
-  const renderAs = raw.isSynthetic === true ? 'markdown' : 'plain';
+  const renderAs = raw.isSynthetic === true || !!parentToolUseId ? 'markdown' : 'plain';
   return {
     name: 'message:user',
     payload: { ...buildMessagePayload(blocks, parentToolUseId, uuid), history, renderAs },

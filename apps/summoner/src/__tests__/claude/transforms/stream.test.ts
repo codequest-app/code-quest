@@ -60,7 +60,37 @@ describe('transform — stream events', () => {
     expect(toClientMessage(s.signatureDelta('sig'))).toBeNull();
   });
 
-  it('skips compaction_delta', () => {
+  it('converts message_start to stream:message_start', () => {
+    const result = toClientMessage(s.messageStart());
+    expect(result).toMatchObject({
+      name: 'stream:message_start',
+      payload: {
+        model: 'claude-opus-4-6',
+        usage: { inputTokens: expect.any(Number) },
+      },
+    });
+  });
+
+  it('converts message_delta to stream:message_delta', () => {
+    const result = toClientMessage(s.messageDelta({ stopReason: 'tool_use' }));
+    expect(result).toMatchObject({
+      name: 'stream:message_delta',
+      payload: {
+        stopReason: 'tool_use',
+        usage: { outputTokens: expect.any(Number) },
+      },
+    });
+  });
+
+  it('converts content_block_stop to stream:block_stop', () => {
+    const result = toClientMessage(s.contentBlockStop(0));
+    expect(result).toMatchObject({
+      name: 'stream:block_stop',
+      payload: { index: 0 },
+    });
+  });
+
+  it('converts compaction_delta to stream:compaction', () => {
     const raw = JSON.stringify({
       type: 'stream_event',
       event: {
@@ -71,7 +101,10 @@ describe('transform — stream events', () => {
       session_id: 'x',
       uuid: 'u',
     });
-    expect(toClientMessage(raw)).toBeNull();
+    expect(toClientMessage(raw)).toMatchObject({
+      name: 'stream:compaction',
+      payload: { content: 'compressed' },
+    });
   });
 
   it('content_block_start omits contentBlock when block has only type', () => {

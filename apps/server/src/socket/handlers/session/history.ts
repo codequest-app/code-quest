@@ -17,7 +17,7 @@ import { typedJsonObjectSchema, userMessageInputSchema } from '../../schemas.ts'
 type RawEventDirection = RawEvent['direction'];
 
 /** Events excluded from history replay — control requests (handled separately) and transient state. */
-const HISTORY_EXCLUDE = new Set<string>([
+const HISTORY_EXCLUDE: Set<string> = new Set<string>([
   EVENTS.control.permission,
   EVENTS.control.elicitation,
   EVENTS.control.diff_review,
@@ -25,6 +25,12 @@ const HISTORY_EXCLUDE = new Set<string>([
   EVENTS.control.cancel,
   EVENTS.control.hook_callback,
   EVENTS.session.status,
+  EVENTS.stream.chunk,
+  EVENTS.stream.block_start,
+  EVENTS.stream.block_stop,
+  EVENTS.stream.end,
+  EVENTS.stream.message_start,
+  EVENTS.stream.message_delta,
 ]);
 
 /** Minimal surface SessionHistory needs from ChannelManager. */
@@ -211,7 +217,7 @@ export class SessionHistory {
     const pendingRequests = extractPendingControlRequests(messages, respondedRequestIds);
 
     for (const { message } of pendingRequests) {
-      (socket.emit as (event: string, ...args: unknown[]) => void)(message.name, {
+      socket.emit(message.name, {
         channelId,
         ...message.payload,
       });

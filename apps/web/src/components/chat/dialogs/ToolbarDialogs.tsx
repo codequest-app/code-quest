@@ -6,13 +6,14 @@ import { InitOptionsDialog } from '@/components/settings/InitOptionsDialog';
 import { ManageMcpDialog } from '@/components/settings/ManageMcpDialog';
 import { ManagePluginsDialog } from '@/components/settings/ManagePluginsDialog';
 import type { ChannelConfigValue } from '@/contexts/channel/ChannelConfigContext';
-import type { ChannelMessagesValue } from '@/contexts/channel/ChannelMessagesContext';
+import type { ChannelActionsValue } from '@/contexts/channel/ChannelMessagesContext';
 import { generalConfigSignal } from '@/features/general-config/general-config-feature';
 import { RewindDialog } from '@/features/rewind/RewindDialog';
 import { rewindOpenSignal } from '@/features/rewind/rewind-feature';
 import { switchAccountSignal } from '@/features/switch-account/switch-account-feature';
 import { AccountUsageDialog } from '@/features/usage/AccountUsageDialog';
 import { usageOpenSignal } from '@/features/usage/usage-feature';
+import type { ChannelState } from '@/types/chat';
 
 export type ActiveDialog = 'modelPicker' | 'manageMcp' | 'mcpStatus' | 'plugins' | null;
 
@@ -29,11 +30,11 @@ interface ToolbarDialogsProps {
   setInitOptions: (opts: Record<string, unknown>) => void;
   usageQuota: ChannelConfigValue['usageQuota'];
   contextUsage: ChannelConfigValue['contextUsage'];
-  stats: ChannelMessagesValue['stats'];
+  stats: ChannelState['stats'];
   accountInfo: ChannelConfigValue['accountInfo'];
   providerConfig: ProviderClientConfig | undefined;
-  rewindToMessage: ChannelMessagesValue['rewindToMessage'];
-  forkSession: ChannelMessagesValue['forkSession'];
+  rewindToMessage: ChannelActionsValue['rewindToMessage'];
+  forkSession: ChannelActionsValue['forkSession'];
   updateValue: (value: string) => void;
 }
 

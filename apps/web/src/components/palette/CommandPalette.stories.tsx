@@ -1,7 +1,7 @@
 import type { Meta, StoryObj } from '@storybook/react-vite';
 import { useEffect } from 'react';
 import { CommandPaletteProvider, useCommandPaletteActions } from '@/contexts/CommandPaletteContext';
-import { useMessageRegistryStore } from '@/stores/useMessageRegistryStore';
+import { useChannelsStore } from '@/stores/channels-store';
 import { withStoryChannel, withThemePreset } from '@/test/story-decorator';
 import type { Message } from '@/types/ui';
 import { CommandPalette } from './CommandPalette.tsx';
@@ -41,8 +41,8 @@ function AutoOpen({ tab }: { tab?: string }) {
 
 function SeedRegistry() {
   useEffect(() => {
-    useMessageRegistryStore.getState().register('story', { projectCwd: '/demo', messages });
-    return () => useMessageRegistryStore.getState().unregister('story');
+    useChannelsStore.getState().setChannelState('story', (prev) => ({ ...prev, messages }));
+    return () => useChannelsStore.getState().removeChannel('story');
   }, []);
   return null;
 }

@@ -316,11 +316,12 @@ function buildSegments(T: SegmentTemplates, ref: { seq: number }) {
       return JSON.stringify(line);
     },
 
-    taskStarted(toolUseId: string, description: string): string {
+    taskStarted(toolUseId: string, description: string, opts?: { taskType?: string }): string {
       const line = JSON.parse(T.TASK_STARTED) as Record<string, unknown>;
       line.tool_use_id = toolUseId;
       line.description = description;
       line.task_id = `fake-task-${next()}`;
+      if (opts?.taskType) line.task_type = opts.taskType;
       line.uuid = `fake-task-started-${getSeq()}`;
       return JSON.stringify(line);
     },
@@ -430,12 +431,20 @@ function buildSegments(T: SegmentTemplates, ref: { seq: number }) {
     contentBlockStart(
       index?: number,
       blockType?: string,
-      opts?: { parentToolUseId?: string },
+      opts?: { parentToolUseId?: string; toolId?: string; toolName?: string },
     ): string {
       const line = JSON.parse(T.STREAM_CONTENT_BLOCK_START ?? '{}') as Record<string, unknown>;
       const event = line.event as Record<string, unknown>;
       if (index !== undefined) event.index = index;
-      if (blockType !== undefined) event.content_block = { type: blockType };
+      if (blockType !== undefined) {
+        const cb: Record<string, unknown> = { type: blockType };
+        if (blockType === 'tool_use') {
+          cb.id = opts?.toolId ?? `toolu_fake_${next()}`;
+          cb.name = opts?.toolName ?? 'Unknown';
+          cb.input = {};
+        }
+        event.content_block = cb;
+      }
       if (opts?.parentToolUseId) line.parent_tool_use_id = opts.parentToolUseId;
       line.uuid = `fake-block-start-${next()}`;
       return JSON.stringify(line);

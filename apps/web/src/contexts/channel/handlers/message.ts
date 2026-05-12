@@ -1,4 +1,5 @@
-import { type ContentBlock, EVENTS } from '@code-quest/shared';
+import type { ContentBlock } from '@code-quest/shared';
+import { EVENTS } from '@code-quest/shared';
 import type { RefObject } from 'react';
 import type { TypedSocket } from '@/socket/client';
 import { channelEmit } from '@/socket/rpc';
@@ -8,9 +9,9 @@ import type { Payload } from './guard.ts';
 
 const MAX_QUEUED_MESSAGES = 10;
 
-type TextChunk = { type?: string; text?: string };
+type TextChunk = { type: string; text?: string };
 function isTextChunk(b: unknown): b is TextChunk {
-  return typeof b === 'object' && b !== null;
+  return typeof b === 'object' && b !== null && 'type' in (b as object);
 }
 
 // ── Helpers ──
@@ -46,116 +47,117 @@ function extractToolResultText(rawContent: unknown): string {
   return String(rawContent ?? '');
 }
 
-function applyUserContent(
+function processTextBlock(
+  block: ContentBlock & { type: 'text' },
+  messages: Message[],
+  historyMessages: string[],
+  uuid?: string,
+  history?: boolean,
+  renderAs?: 'markdown' | 'plain',
+  parentToolUseId?: string,
+): { messages: Message[]; historyMessages: string[] } {
+  // Search from the end for the most recent matching local user msg.
+  // Streaming events (assistant placeholder, etc.) often land between
+  // sendMessage and the CLI's user-replay echo, so the matching msg is
+  // not always last. Scan back to find it.
+  if (uuid) {
+    const result = deduplicateUserMessage(messages, uuid, block.text);
+    if (result.matched) return { messages: result.messages, historyMessages };
+    messages = result.messages;
+  }
+  const isInterrupt = block.text?.startsWith('[Request interrupted');
+  const m = isInterrupt
+    ? msg({ role: 'user', type: 'interrupt', content: block.text })
+    : msg({
+        role: 'user',
+        type: 'text',
+        content: block.text,
+        ...(history !== undefined ? { history } : {}),
+        ...(renderAs !== undefined ? { renderAs } : {}),
+        ...(parentToolUseId !== undefined ? { parentToolUseId } : {}),
+      });
+  const entry = uuid ? { ...m, cliUuid: uuid } : m;
+  messages = [...messages, entry];
+  if (!isInterrupt) {
+    const trimmed = block.text?.trim();
+    if (history === true && trimmed) {
+      historyMessages = [...historyMessages, trimmed];
+    }
+  }
+  return { messages, historyMessages };
+}
+
+function updateTaskStatus(
+  tasks: ChannelState['tasks'],
+  toolUseId: string,
+  isError: boolean | undefined,
+): ChannelState['tasks'] {
+  const existingTask = tasks.get(toolUseId);
+  if (existingTask?.status !== 'running') return tasks;
+  const next = new Map(tasks);
+  next.set(toolUseId, { ...existingTask, status: isError ? 'failed' : 'completed' });
+  return next;
+}
+
+function processToolResultBlock(
+  block: ContentBlock & { type: 'tool_result' },
+  messages: Message[],
+  results: ChannelState['results'],
+  tasks: ChannelState['tasks'],
+): { messages: Message[]; results: ChannelState['results']; tasks: ChannelState['tasks'] } {
+  const textContent = extractToolResultText(block.content);
+  messages = [
+    ...messages,
+    msg({
+      role: 'assistant',
+      type: 'tool_result',
+      content: textContent,
+      toolId: block.toolUseId,
+      name: block.toolName,
+      is_error: block.isError,
+      contentBlocks: Array.isArray(block.content) ? block.content : undefined,
+    }),
+  ];
+  results = new Map(results);
+  results.set(block.toolUseId, { content: textContent, is_error: block.isError });
+  tasks = updateTaskStatus(tasks, block.toolUseId, block.isError);
+  return { messages, results, tasks };
+}
+
+function applyContentBlocks(
   state: ChannelState,
   content: ContentBlock[],
   uuid?: string,
   history?: boolean,
   renderAs?: 'markdown' | 'plain',
+  parentToolUseId?: string,
 ): ChannelState {
   let messages = [...state.messages];
   let historyMessages = [...state.historyMessages];
+  let tasks = state.tasks;
+  let results = state.results;
   for (const block of content) {
     if (block.type === 'text') {
-      // Search from the end for the most recent matching local user msg.
-      // Streaming events (assistant placeholder, etc.) often land between
-      // sendMessage and the CLI's user-replay echo, so the matching msg is
-      // not always last. Scan back to find it.
-      if (uuid) {
-        const result = deduplicateUserMessage(messages, uuid, block.text);
-        messages = result.messages;
-        if (result.matched) continue;
-      }
-      const isInterrupt = block.text?.startsWith('[Request interrupted');
-      const m = isInterrupt
-        ? msg({ role: 'user', type: 'interrupt', content: block.text })
-        : msg({
-            role: 'user',
-            type: 'text',
-            content: block.text,
-            meta: {
-              ...(history !== undefined ? { history } : {}),
-              ...(renderAs !== undefined ? { renderAs } : {}),
-            },
-          });
-      const entry = uuid ? { ...m, cliUuid: uuid } : m;
-      messages = [...messages, entry];
-      if (!isInterrupt) {
-        const trimmed = block.text?.trim();
-        if (history === true && trimmed) {
-          historyMessages = [...historyMessages, trimmed];
-        }
-      }
+      ({ messages, historyMessages } = processTextBlock(
+        block,
+        messages,
+        historyMessages,
+        uuid,
+        history,
+        renderAs,
+        parentToolUseId,
+      ));
     } else if (block.type === 'tool_result') {
-      const textContent = extractToolResultText(block.content);
-      messages = [
-        ...messages,
-        msg({
-          role: 'assistant',
-          type: 'tool_result',
-          content: textContent,
-          meta: { toolId: block.toolUseId, name: block.toolName, is_error: block.isError },
-        }),
-      ];
+      ({ messages, results, tasks } = processToolResultBlock(block, messages, results, tasks));
     }
   }
-  return { ...state, messages, historyMessages };
+  return { ...state, messages, historyMessages, tasks, results };
 }
 
 // ── On handlers ──
 
-function applyAssistantBlock(
-  state: ChannelState,
-  block: ContentBlock,
-  parentToolUseId?: string,
-): ChannelState {
-  switch (block.type) {
-    case 'text':
-      return addMessage(state, {
-        role: 'assistant',
-        type: 'text',
-        content: block.text,
-        parentToolUseId,
-      });
-    case 'thinking':
-      return addMessage(state, {
-        role: 'assistant',
-        type: 'thinking',
-        content: block.thinking,
-        parentToolUseId,
-      });
-    case 'tool_use':
-      return addMessage(state, {
-        role: 'assistant',
-        type: 'tool_use',
-        content: block.toolName,
-        meta: {
-          toolId: block.toolId,
-          input: block.input as Record<string, unknown>,
-          ...(block.model ? { model: block.model } : {}),
-        },
-        parentToolUseId,
-      });
-    default:
-      return state;
-  }
-}
-
-export function onMessageAssistant(
-  state: ChannelState,
-  p: Payload<'message:assistant'>,
-  skipText = false,
-  skipThinking = false,
-): ChannelState {
-  return p.content.reduce((s, block) => {
-    if (block.type === 'text' && skipText) return s;
-    if (block.type === 'thinking' && skipThinking) return s;
-    return applyAssistantBlock(s, block, p.parentToolUseId);
-  }, state);
-}
-
 function onMessageUser(state: ChannelState, p: Payload<'message:user'>): ChannelState {
-  return applyUserContent(state, p.content, p.uuid, p.history, p.renderAs);
+  return applyContentBlocks(state, p.content, p.uuid, p.history, p.renderAs, p.parentToolUseId);
 }
 
 function onStreamText(state: ChannelState, p: Payload<'stream:text'>): ChannelState {
@@ -216,7 +218,8 @@ export function createMessageActions({
         role: 'user',
         type: 'text',
         content: message,
-        meta: { history: true, renderAs: 'plain' as const },
+        history: true,
+        renderAs: 'plain' as const,
       }),
       ...(s.status !== 'processing' ? { status: 'processing' as const } : {}),
     }));

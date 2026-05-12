@@ -7,16 +7,6 @@ import { msg } from '@/utils/message';
 import type { Payload } from './guard.ts';
 import type { EffectContext } from './notification.ts';
 
-function getFeedbackLabel(response: ControlPermissionResponse): string {
-  if ('continue' in response) {
-    return response.continue ? 'Approved' : 'Denied';
-  }
-  if (response.behavior === 'allow') {
-    return response.updatedPermissions ? 'Allowed Always' : 'Approved';
-  }
-  return response.interrupt ? 'Denied & Stopped' : 'Denied';
-}
-
 export interface ControlState {
   controls: PendingControl[];
   elicitation: PendingElicitation | null;
@@ -99,7 +89,6 @@ export function createControlActions({
   controlsRef,
   setControls,
   setElicitation,
-  setDiffReview,
   setChannelState,
 }: {
   socket: TypedSocket;
@@ -107,30 +96,32 @@ export function createControlActions({
   controlsRef: RefObject<PendingControl[]>;
   setControls: (fn: (prev: PendingControl[]) => PendingControl[]) => void;
   setElicitation: (v: PendingElicitation | null) => void;
-  setDiffReview: (v: PendingDiffReview | null) => void;
   setChannelState: (fn: (prev: ChannelState) => ChannelState) => void;
 }): {
-  setPendingControls: (fn: (prev: PendingControl[]) => PendingControl[]) => void;
-  setPendingElicitation: (v: PendingElicitation | null) => void;
-  setPendingDiffReview: (v: PendingDiffReview | null) => void;
-  getPendingControls: () => PendingControl[];
   respondToControl: (response: ControlPermissionResponse, requestId?: string) => void;
   diffRespond: (toolId: string, accepted: boolean) => void;
   stopTask: (taskId: string) => void;
-  clearPendingDiffReview: () => void;
   respondToElicitation: (requestId: string, answer: string) => void;
   cancelElicitation: (requestId: string) => void;
 } {
-  const emit = (event: string, payload: Record<string, unknown>, ...rest: unknown[]) =>
-    channelEmit(socket, channelId, event, payload, ...rest);
-
   function respondToControl(response: ControlPermissionResponse, requestId?: string): void {
     const ctrls = controlsRef.current;
     const target = requestId ? ctrls.find((c) => c.requestId === requestId) : ctrls[0];
     if (!target) return;
-    emit(EVENTS.chat.respond, { requestId: target.requestId, response });
+    channelEmit(socket, channelId, EVENTS.chat.respond, { requestId: target.requestId, response });
     const controlLabel = target.toolName ?? target.subtype;
-    const action = getFeedbackLabel(response);
+    const action =
+      'continue' in response
+        ? response.continue
+          ? 'Approved'
+          : 'Denied'
+        : response.behavior === 'allow'
+          ? response.updatedPermissions
+            ? 'Allowed Always'
+            : 'Approved'
+          : response.interrupt
+            ? 'Denied & Stopped'
+            : 'Denied';
     setControls((prev) => prev.filter((c) => c.requestId !== target.requestId));
     setChannelState((s) => ({
       ...s,
@@ -144,7 +135,7 @@ export function createControlActions({
   function diffRespond(toolId: string, accepted: boolean): void {
     const ctrl = controlsRef.current.find((c) => c.toolUseId === toolId);
     if (!ctrl) return;
-    emit(EVENTS.chat.respond, {
+    channelEmit(socket, channelId, EVENTS.chat.respond, {
       requestId: ctrl.requestId,
       response: accepted
         ? { behavior: 'allow' as const, updatedInput: {} }
@@ -153,11 +144,11 @@ export function createControlActions({
   }
 
   function stopTask(taskId: string): void {
-    emit(EVENTS.chat.stop_task, { taskId });
+    channelEmit(socket, channelId, EVENTS.chat.stop_task, { taskId });
   }
 
   function respondToElicitation(requestId: string, answer: string): void {
-    emit(EVENTS.chat.respond, {
+    channelEmit(socket, channelId, EVENTS.chat.respond, {
       requestId,
       response: { behavior: 'allow', updatedInput: { url: answer, value: answer } },
     });
@@ -165,24 +156,12 @@ export function createControlActions({
   }
 
   function cancelElicitation(requestId: string): void {
-    emit(EVENTS.chat.respond, { requestId, response: { behavior: 'deny' } });
+    channelEmit(socket, channelId, EVENTS.chat.respond, {
+      requestId,
+      response: { behavior: 'deny' },
+    });
     setElicitation(null);
   }
 
-  function clearPendingDiffReview(): void {
-    setDiffReview(null);
-  }
-
-  return {
-    setPendingControls: setControls,
-    setPendingElicitation: setElicitation,
-    setPendingDiffReview: setDiffReview,
-    getPendingControls: (): PendingControl[] => controlsRef.current,
-    respondToControl: respondToControl,
-    diffRespond: diffRespond,
-    stopTask: stopTask,
-    clearPendingDiffReview: clearPendingDiffReview,
-    respondToElicitation: respondToElicitation,
-    cancelElicitation: cancelElicitation,
-  };
+  return { respondToControl, diffRespond, stopTask, respondToElicitation, cancelElicitation };
 }

@@ -1,6 +1,6 @@
 import * as Collapsible from '@radix-ui/react-collapsible';
 import { MarkdownContent } from '../renderers/MarkdownContent.tsx';
-import { RotatableChevron } from '../tool-use/message-blocks/primitives.tsx';
+import { RotatableChevron } from '../renderers/primitives.tsx';
 
 interface ThinkingBlockProps {
   content: string;
