@@ -10,6 +10,8 @@ const resumePayloadSchema = z.object({ lastSeq: z.number() }).optional();
 export interface ResumableOptions {
   bufferSize?: number;
   ttlMs?: number;
+  onRebind?: (socket: TypedSocket, previousSocketId: string) => void;
+  onExpire?: (socketId: string) => void;
 }
 
 const DEFAULT_BUFFER_SIZE = 500;
@@ -31,6 +33,7 @@ function extractSessionKey(req?: IncomingMessage): string | undefined {
 export function resumable(opts?: ResumableOptions): Middleware {
   const bufferSize = opts?.bufferSize ?? DEFAULT_BUFFER_SIZE;
   const ttlMs = opts?.ttlMs ?? DEFAULT_TTL_MS;
+  const { onRebind, onExpire } = opts ?? {};
   const registry = new Map<string, ResumableSocket>();
   const ttlTimers = new Map<string, ReturnType<typeof setTimeout>>();
 
@@ -42,6 +45,7 @@ export function resumable(opts?: ResumableOptions): Middleware {
 
       const existing = sessionKey ? registry.get(sessionKey) : undefined;
       if (sessionKey && existing) {
+        const previousSocketId = existing.id;
         rs = existing;
         rs.rebind(typed);
         const timer = ttlTimers.get(sessionKey);
@@ -49,6 +53,7 @@ export function resumable(opts?: ResumableOptions): Middleware {
           clearTimeout(timer);
           ttlTimers.delete(sessionKey);
         }
+        onRebind?.(rs, previousSocketId);
       } else {
         rs = new ResumableSocket(typed, { bufferSize });
         if (sessionKey) registry.set(sessionKey, rs);
@@ -71,8 +76,10 @@ export function resumable(opts?: ResumableOptions): Middleware {
 
     if (sessionKey) {
       const timer = setTimeout(() => {
+        const rs = registry.get(sessionKey);
         registry.delete(sessionKey);
         ttlTimers.delete(sessionKey);
+        if (rs) onExpire?.(rs.id);
       }, ttlMs);
       ttlTimers.set(sessionKey, timer);
     }

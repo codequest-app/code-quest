@@ -78,6 +78,8 @@ if (config.transport.socketio) {
   handles.push(new SocketIoTransport({ authenticator, cors: { origin: '*' } }).attach(httpServer));
 }
 
+let channelEmitter: ChannelEmitter | null = null;
+
 const wsTransport = new WsTransport(wsAdapter(), logger);
 if (config.transport.ws) {
   wsTransport.route(
@@ -85,7 +87,11 @@ if (config.transport.ws) {
     [
       auth(authenticator),
       heartbeat({ pingIntervalMs: 25_000, idleTimeoutMs: 60_000 }),
-      resumable(),
+      resumable({
+        onRebind: (socket, previousSocketId) =>
+          channelEmitter?.reattachSocket(socket, previousSocketId),
+        onExpire: (socketId) => channelEmitter?.expireSocket(socketId),
+      }),
     ],
     () => {},
   );
@@ -108,6 +114,7 @@ if (config.summonerMode === 'local') {
     fsRoots: config.fsRoots,
     rawEvents: config.rawEvents,
   });
+  channelEmitter = container.get<ChannelEmitter>(TYPES.ChannelEventRouter);
   handles.push(wsTransport.attach(httpServer));
   registerTransports(container.get<SocketServer>(TYPES.SocketServer));
 }
@@ -142,6 +149,7 @@ function setupSummonerMode() {
     },
   );
 
+  channelEmitter = c.get<ChannelEmitter>(TYPES.ChannelEventRouter);
   handles.push(wsTransport.attach(httpServer));
   registerTransports(c.get<SocketServer>(TYPES.SocketServer));
   return c;

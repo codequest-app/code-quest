@@ -206,6 +206,99 @@ describe('resumable middleware', () => {
     expect(typed3.emit).toHaveBeenCalledWith('e', { data: 1 });
   });
 
+  describe('onRebind callback', () => {
+    it('fires onRebind with (newSocket, previousSocketId) when client reconnects within TTL', async () => {
+      const onRebind = vi.fn();
+      const mw = resumable({ ttlMs: 60_000, onRebind });
+
+      const ctx1 = makeContext('key-1');
+      const typed1 = makeTypedSocket('s-1');
+      const { disconnectFn: dc1, terminateResolve: tr1 } = await runMiddleware(mw, ctx1, typed1);
+
+      dc1?.();
+      tr1?.();
+      await vi.advanceTimersByTimeAsync(0);
+
+      const ctx2 = makeContext('key-1');
+      const typed2 = makeTypedSocket('s-2');
+      await runMiddleware(mw, ctx2, typed2);
+      // _wrapped is set by runMiddleware's next() call
+      const reboundSocket = (typed2 as { _wrapped?: TypedSocket })._wrapped;
+
+      expect(onRebind).toHaveBeenCalledOnce();
+      expect(onRebind).toHaveBeenCalledWith(reboundSocket, 's-1');
+    });
+
+    it('does not fire onRebind on first connection', async () => {
+      const onRebind = vi.fn();
+      const mw = resumable({ onRebind });
+      const ctx = makeContext('key-1');
+      const typed = makeTypedSocket('s-1');
+      await runMiddleware(mw, ctx, typed);
+
+      expect(onRebind).not.toHaveBeenCalled();
+    });
+
+    it('does not fire onRebind after TTL expires', async () => {
+      const onRebind = vi.fn();
+      const mw = resumable({ ttlMs: 5_000, onRebind });
+
+      const ctx1 = makeContext('key-1');
+      const typed1 = makeTypedSocket('s-1');
+      const { disconnectFn: dc1, terminateResolve: tr1 } = await runMiddleware(mw, ctx1, typed1);
+
+      dc1?.();
+      tr1?.();
+      await vi.advanceTimersByTimeAsync(5_001);
+
+      const ctx2 = makeContext('key-1');
+      const typed2 = makeTypedSocket('s-2');
+      await runMiddleware(mw, ctx2, typed2);
+
+      expect(onRebind).not.toHaveBeenCalled();
+    });
+  });
+
+  describe('onExpire callback', () => {
+    it('fires onExpire with socketId when TTL expires', async () => {
+      const onExpire = vi.fn();
+      const mw = resumable({ ttlMs: 5_000, onExpire });
+
+      const ctx1 = makeContext('key-1');
+      const typed1 = makeTypedSocket('s-1');
+      const { disconnectFn: dc1, terminateResolve: tr1 } = await runMiddleware(mw, ctx1, typed1);
+      const rs = (typed1 as { _wrapped?: TypedSocket })._wrapped;
+
+      dc1?.();
+      tr1?.();
+      await vi.advanceTimersByTimeAsync(5_001);
+
+      expect(onExpire).toHaveBeenCalledOnce();
+      expect(onExpire).toHaveBeenCalledWith(rs?.id ?? typed1.id);
+    });
+
+    it('does not fire onExpire if reconnect cancels the timer', async () => {
+      const onExpire = vi.fn();
+      const mw = resumable({ ttlMs: 5_000, onExpire });
+
+      const ctx1 = makeContext('key-1');
+      const typed1 = makeTypedSocket('s-1');
+      const { disconnectFn: dc1, terminateResolve: tr1 } = await runMiddleware(mw, ctx1, typed1);
+
+      dc1?.();
+      tr1?.();
+      await vi.advanceTimersByTimeAsync(2_000);
+
+      const ctx2 = makeContext('key-1');
+      const typed2 = makeTypedSocket('s-2');
+      await runMiddleware(mw, ctx2, typed2);
+
+      await vi.advanceTimersByTimeAsync(10_000);
+
+      expect(onExpire).not.toHaveBeenCalled();
+    });
+  });
+
   it('anonymous connection without sessionKey is not stored in registry', async () => {
     const mw = resumable();
     const ctx = makeContext();

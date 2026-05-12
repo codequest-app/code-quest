@@ -114,4 +114,64 @@ describe('ChannelEmitter', () => {
       expect(() => emitter.broadcastAll('e', {})).not.toThrow();
     });
   });
+
+  describe('reattachSocket / expireSocket (reconnect support)', () => {
+    function makeSocket(id: string) {
+      return { id, emit: vi.fn(), on: vi.fn() };
+    }
+
+    it('reattachSocket re-adds socket to all previously joined channels', () => {
+      const emitter = new ChannelEmitter();
+      const sock1 = makeSocket('s-1');
+      emitter.addSocketToChannel('ch-1', sock1);
+      emitter.addSocketToChannel('ch-2', sock1);
+      emitter.removeSocketFromAll('s-1');
+
+      const sock2 = makeSocket('s-2');
+      emitter.reattachSocket(sock2, 's-1');
+
+      sock2.emit.mockClear();
+      emitter.emit('ch-1', 'ping', {});
+      emitter.emit('ch-2', 'ping', {});
+
+      expect(sock2.emit).toHaveBeenCalledTimes(2);
+    });
+
+    it('reattachSocket is a no-op when previousSocketId has no stored channels', () => {
+      const emitter = new ChannelEmitter();
+      const sock = makeSocket('s-new');
+      expect(() => emitter.reattachSocket(sock, 's-unknown')).not.toThrow();
+      emitter.emit('ch-1', 'ping', {});
+      expect(sock.emit).not.toHaveBeenCalled();
+    });
+
+    it('removeSocketFromAll preserves socketChannels entry for potential reconnect', () => {
+      const emitter = new ChannelEmitter();
+      const sock = makeSocket('s-1');
+      emitter.addSocketToChannel('ch-1', sock);
+      emitter.removeSocketFromAll('s-1');
+
+      const sock2 = makeSocket('s-2');
+      emitter.reattachSocket(sock2, 's-1');
+
+      sock2.emit.mockClear();
+      emitter.emit('ch-1', 'ping', {});
+      expect(sock2.emit).toHaveBeenCalledTimes(1);
+    });
+
+    it('expireSocket cleans up socketChannels so reattach no longer works', () => {
+      const emitter = new ChannelEmitter();
+      const sock = makeSocket('s-1');
+      emitter.addSocketToChannel('ch-1', sock);
+      emitter.removeSocketFromAll('s-1');
+      emitter.expireSocket('s-1');
+
+      const sock2 = makeSocket('s-2');
+      emitter.reattachSocket(sock2, 's-1');
+
+      sock2.emit.mockClear();
+      emitter.emit('ch-1', 'ping', {});
+      expect(sock2.emit).not.toHaveBeenCalled();
+    });
+  });
 });

@@ -160,9 +160,30 @@ export class ChannelEmitter {
       }
     }
 
-    this.socketChannels.delete(socketId);
+    // Keep socketChannels entry so reattachSocket can restore channels on reconnect.
+    // expireSocket() removes it when the TTL truly expires.
     this.socketRefs.delete(socketId);
     return channelIds;
+  }
+
+  reattachSocket(newSocket: TypedSocket, previousSocketId: string): void {
+    const channelIds = this.socketChannels.get(previousSocketId);
+    if (!channelIds) return;
+    for (const channelId of channelIds) {
+      let sockets = this.channelSockets.get(channelId);
+      if (!sockets) {
+        sockets = new Set();
+        this.channelSockets.set(channelId, sockets);
+      }
+      sockets.add(newSocket);
+    }
+    this.socketChannels.delete(previousSocketId);
+    this.socketChannels.set(newSocket.id, new Set(channelIds));
+    this.socketRefs.set(newSocket.id, newSocket);
+  }
+
+  expireSocket(socketId: string): void {
+    this.socketChannels.delete(socketId);
   }
 
   getSocketCount(channelId: string): number {
