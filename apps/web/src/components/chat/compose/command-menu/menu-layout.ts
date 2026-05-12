@@ -1,5 +1,5 @@
 import Fuse from 'fuse.js';
-import type { MenuItem, MenuSections } from './menu-types.ts';
+import { type MenuItem, type MenuSections, SLASH_SECTION } from './menu-types.ts';
 
 /**
  * Filtered + laid-out view of the menu, derived purely from the given
@@ -35,12 +35,15 @@ export function filterMenuItems(items: MenuItem[], filter: string): MenuItem[] {
   if (!f) return items.filter((i) => !i.filterOnly);
 
   const firstToken = f.split(' ')[0] ?? '';
-  fuse.setCollection(items);
-  const matchedIds = new Set(fuse.search(f).map((r) => r.item.id));
+  const slashItems = items.filter((i) => i.section === SLASH_SECTION && !i.matchFirstToken);
+  fuse.setCollection(slashItems);
+  const fuzzyMatchedIds = new Set(fuse.search(f).map((r) => r.item.id));
 
   return items.filter((i) => {
     if (i.matchFirstToken) return !!firstToken && i.label.toLowerCase().includes(firstToken);
-    return matchedIds.has(i.id);
+    // fuzzy only for slash commands; other sections use substring match
+    if (i.section === SLASH_SECTION) return fuzzyMatchedIds.has(i.id);
+    return i.label.toLowerCase().includes(f);
   });
 }
 

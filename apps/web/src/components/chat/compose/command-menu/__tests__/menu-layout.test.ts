@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest';
 import { computeMenuLayout, filterMenuItems } from '../menu-layout.ts';
-import type { MenuItem } from '../menu-types.ts';
+import { type MenuItem, SLASH_SECTION } from '../menu-types.ts';
 
 function item(overrides: Partial<MenuItem>): MenuItem {
   return {
@@ -53,11 +53,11 @@ describe('filterMenuItems', () => {
     expect(filterMenuItems(items, 'wiki').map((i) => i.id)).toEqual([]);
   });
 
-  it('fuzzy-matches items whose label characters appear in order (subsequence)', () => {
+  it('fuzzy-matches slash command items whose label characters appear in order (subsequence)', () => {
     const items = [
-      item({ id: 'code-review', label: '/code-review' }),
-      item({ id: 'compact', label: '/compact' }),
-      item({ id: 'unrelated', label: '/unrelated' }),
+      item({ id: 'code-review', label: '/code-review', section: SLASH_SECTION }),
+      item({ id: 'compact', label: '/compact', section: SLASH_SECTION }),
+      item({ id: 'unrelated', label: '/unrelated', section: SLASH_SECTION }),
     ];
     // 'coder' is not a substring of '/code-review' but subsequence matches
     expect(filterMenuItems(items, 'coder').map((i) => i.id)).toContain('code-review');
@@ -65,8 +65,8 @@ describe('filterMenuItems', () => {
   });
 
   it('does not bleed results across calls with different item sets', () => {
-    const setA = [item({ id: 'alpha', label: '/alpha' })];
-    const setB = [item({ id: 'beta', label: '/beta' })];
+    const setA = [item({ id: 'alpha', label: '/alpha', section: SLASH_SECTION })];
+    const setB = [item({ id: 'beta', label: '/beta', section: SLASH_SECTION })];
     filterMenuItems(setA, 'alpha');
     // second call with entirely different items — setA items must not appear
     const result = filterMenuItems(setB, 'beta').map((i) => i.id);

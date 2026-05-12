@@ -92,3 +92,4 @@ apps/server/data/
 openspec/.vector-search.db*
 apps/data/
 tmp/
+data/
