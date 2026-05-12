@@ -1,3 +1,4 @@
+import { EVENTS } from '@code-quest/shared';
 import { segments as s } from '@code-quest/summoner/test';
 import { act, render, screen, waitFor } from '@testing-library/react';
 import { describe, expect, it } from 'vitest';
@@ -243,7 +244,7 @@ describe('ChannelProvider', () => {
       const joinsBefore = summoner.sentEvents('session:join').length;
 
       await act(async () => {
-        claude.pushServerEvent('state:refresh_required', {});
+        claude.pushServerEvent(EVENTS.state.refresh_required, {});
       });
 
       // session:join must be sent again (clear + rejoin cycle)

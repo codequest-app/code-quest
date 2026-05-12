@@ -1,5 +1,5 @@
 import { ClaudeAdapter, ProcessRunner } from '@code-quest/summoner';
-import { FakeProcessProvider } from '@code-quest/summoner/test';
+import { createFakeSocket, FakeProcessProvider } from '@code-quest/summoner/test';
 import { describe, expect, it, vi } from 'vitest';
 import { Channel } from '../socket/channel.ts';
 import { ChannelEmitter } from '../socket/channel-emitter.ts';
@@ -84,29 +84,39 @@ describe('ChannelEmitter', () => {
   });
 
   describe('broadcastAll', () => {
-    it('fans out to every tracked socket via per-socket emit', () => {
+    it('fans out to every tracked socket via per-socket emit', async () => {
       const emitter = new ChannelEmitter();
-      const sockA = { id: 's-a', emit: vi.fn(), on: vi.fn() };
-      const sockB = { id: 's-b', emit: vi.fn(), on: vi.fn() };
-      emitter.addSocketToChannel('ch-1', sockA);
-      emitter.addSocketToChannel('ch-2', sockB);
+      const fakeA = createFakeSocket();
+      const fakeB = createFakeSocket();
+      emitter.addSocketToChannel('ch-1', fakeA.serverSocket);
+      emitter.addSocketToChannel('ch-2', fakeB.serverSocket);
+
+      const receivedA = vi.fn();
+      const receivedB = vi.fn();
+      fakeA.on('system:announcement', receivedA);
+      fakeB.on('system:announcement', receivedB);
 
       emitter.broadcastAll('system:announcement', { msg: 'hello' });
+      await Promise.resolve();
 
-      expect(sockA.emit).toHaveBeenCalledWith('system:announcement', { msg: 'hello' });
-      expect(sockB.emit).toHaveBeenCalledWith('system:announcement', { msg: 'hello' });
+      expect(receivedA).toHaveBeenCalledWith({ msg: 'hello' });
+      expect(receivedB).toHaveBeenCalledWith({ msg: 'hello' });
     });
 
-    it('does not double-send when a socket joined multiple channels', () => {
+    it('does not double-send when a socket joined multiple channels', async () => {
       const emitter = new ChannelEmitter();
-      const sock = { id: 's-1', emit: vi.fn(), on: vi.fn() };
-      emitter.addSocketToChannel('ch-1', sock);
-      emitter.addSocketToChannel('ch-2', sock);
+      const fake = createFakeSocket();
+      emitter.addSocketToChannel('ch-1', fake.serverSocket);
+      emitter.addSocketToChannel('ch-2', fake.serverSocket);
+
+      const received = vi.fn();
+      fake.on('e', received);
 
       emitter.broadcastAll('e', { x: 1 });
+      await Promise.resolve();
 
-      expect(sock.emit).toHaveBeenCalledTimes(1);
-      expect(sock.emit).toHaveBeenCalledWith('e', { x: 1 });
+      expect(received).toHaveBeenCalledTimes(1);
+      expect(received).toHaveBeenCalledWith({ x: 1 });
     });
 
     it('is a no-op when no sockets are tracked', () => {
@@ -115,63 +125,133 @@ describe('ChannelEmitter', () => {
     });
   });
 
-  describe('reattachSocket / expireSocket (reconnect support)', () => {
-    function makeSocket(id: string) {
-      return { id, emit: vi.fn(), on: vi.fn() };
-    }
-
-    it('reattachSocket re-adds socket to all previously joined channels', () => {
+  describe('handleConnection', () => {
+    it('dispatches handler when channelId is a valid string', () => {
       const emitter = new ChannelEmitter();
-      const sock1 = makeSocket('s-1');
-      emitter.addSocketToChannel('ch-1', sock1);
-      emitter.addSocketToChannel('ch-2', sock1);
-      emitter.removeSocketFromAll('s-1');
+      const handler = vi.fn();
+      emitter.on('chat:send', handler);
 
-      const sock2 = makeSocket('s-2');
-      emitter.reattachSocket(sock2, 's-1');
+      const ch = makeChannel('ch-1');
+      const fake = createFakeSocket();
+      emitter.handleConnection(fake.serverSocket, (id) => (id === 'ch-1' ? ch : undefined));
 
-      sock2.emit.mockClear();
+      fake.emit('chat:send', { channelId: 'ch-1', message: 'hello' });
+
+      expect(handler).toHaveBeenCalledWith(
+        ch,
+        { channelId: 'ch-1', message: 'hello' },
+        fake.serverSocket,
+        undefined,
+      );
+    });
+
+    it('does not call resolveChannel when channelId is null', () => {
+      const emitter = new ChannelEmitter();
+      emitter.on('chat:send', vi.fn());
+
+      const resolveChannel = vi.fn(() => undefined);
+      const fake = createFakeSocket();
+      emitter.handleConnection(fake.serverSocket, resolveChannel);
+
+      fake.emit('chat:send', { channelId: null, message: 'hello' });
+
+      expect(resolveChannel).not.toHaveBeenCalled();
+    });
+
+    it('does not call resolveChannel when channelId is undefined', () => {
+      const emitter = new ChannelEmitter();
+      emitter.on('chat:send', vi.fn());
+
+      const resolveChannel = vi.fn(() => undefined);
+      const fake = createFakeSocket();
+      emitter.handleConnection(fake.serverSocket, resolveChannel);
+
+      fake.emit('chat:send', { channelId: undefined, message: 'hello' });
+
+      expect(resolveChannel).not.toHaveBeenCalled();
+    });
+
+    it('does not call resolveChannel when channelId is missing from payload', () => {
+      const emitter = new ChannelEmitter();
+      emitter.on('chat:send', vi.fn());
+
+      const resolveChannel = vi.fn(() => undefined);
+      const fake = createFakeSocket();
+      emitter.handleConnection(fake.serverSocket, resolveChannel);
+
+      fake.emit('chat:send', { message: 'hello' });
+
+      expect(resolveChannel).not.toHaveBeenCalled();
+    });
+  });
+
+  describe('reattachSocket / expireSocket (reconnect support)', () => {
+    it('reattachSocket re-adds socket to all previously joined channels', async () => {
+      const emitter = new ChannelEmitter();
+      const fake1 = createFakeSocket();
+      emitter.addSocketToChannel('ch-1', fake1.serverSocket);
+      emitter.addSocketToChannel('ch-2', fake1.serverSocket);
+      emitter.removeSocketFromAll(fake1.serverSocket.id);
+
+      const fake2 = createFakeSocket();
+      emitter.reattachSocket(fake2.serverSocket, fake1.serverSocket.id);
+
+      const received = vi.fn();
+      fake2.on('ping', received);
+
       emitter.emit('ch-1', 'ping', {});
       emitter.emit('ch-2', 'ping', {});
+      await Promise.resolve();
 
-      expect(sock2.emit).toHaveBeenCalledTimes(2);
+      expect(received).toHaveBeenCalledTimes(2);
     });
 
-    it('reattachSocket is a no-op when previousSocketId has no stored channels', () => {
+    it('reattachSocket is a no-op when previousSocketId has no stored channels', async () => {
       const emitter = new ChannelEmitter();
-      const sock = makeSocket('s-new');
-      expect(() => emitter.reattachSocket(sock, 's-unknown')).not.toThrow();
+      const fake = createFakeSocket();
+      expect(() => emitter.reattachSocket(fake.serverSocket, 's-unknown')).not.toThrow();
+
+      const received = vi.fn();
+      fake.on('ping', received);
       emitter.emit('ch-1', 'ping', {});
-      expect(sock.emit).not.toHaveBeenCalled();
+      await Promise.resolve();
+
+      expect(received).not.toHaveBeenCalled();
     });
 
-    it('removeSocketFromAll preserves socketChannels entry for potential reconnect', () => {
+    it('removeSocketFromAll preserves socketChannels entry for potential reconnect', async () => {
       const emitter = new ChannelEmitter();
-      const sock = makeSocket('s-1');
-      emitter.addSocketToChannel('ch-1', sock);
-      emitter.removeSocketFromAll('s-1');
+      const fake1 = createFakeSocket();
+      emitter.addSocketToChannel('ch-1', fake1.serverSocket);
+      emitter.removeSocketFromAll(fake1.serverSocket.id);
 
-      const sock2 = makeSocket('s-2');
-      emitter.reattachSocket(sock2, 's-1');
+      const fake2 = createFakeSocket();
+      emitter.reattachSocket(fake2.serverSocket, fake1.serverSocket.id);
 
-      sock2.emit.mockClear();
+      const received = vi.fn();
+      fake2.on('ping', received);
       emitter.emit('ch-1', 'ping', {});
-      expect(sock2.emit).toHaveBeenCalledTimes(1);
+      await Promise.resolve();
+
+      expect(received).toHaveBeenCalledTimes(1);
     });
 
-    it('expireSocket cleans up socketChannels so reattach no longer works', () => {
+    it('expireSocket cleans up socketChannels so reattach no longer works', async () => {
       const emitter = new ChannelEmitter();
-      const sock = makeSocket('s-1');
-      emitter.addSocketToChannel('ch-1', sock);
-      emitter.removeSocketFromAll('s-1');
-      emitter.expireSocket('s-1');
+      const fake1 = createFakeSocket();
+      emitter.addSocketToChannel('ch-1', fake1.serverSocket);
+      emitter.removeSocketFromAll(fake1.serverSocket.id);
+      emitter.expireSocket(fake1.serverSocket.id);
 
-      const sock2 = makeSocket('s-2');
-      emitter.reattachSocket(sock2, 's-1');
+      const fake2 = createFakeSocket();
+      emitter.reattachSocket(fake2.serverSocket, fake1.serverSocket.id);
 
-      sock2.emit.mockClear();
+      const received = vi.fn();
+      fake2.on('ping', received);
       emitter.emit('ch-1', 'ping', {});
-      expect(sock2.emit).not.toHaveBeenCalled();
+      await Promise.resolve();
+
+      expect(received).not.toHaveBeenCalled();
     });
   });
 });

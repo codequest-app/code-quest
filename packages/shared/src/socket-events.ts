@@ -761,6 +761,9 @@ export interface ServerToClientEvents {
   // ── State (replaces request-based state updates) ──
   'settings:update': (payload: UpdateStatePayload) => void;
   'settings:usage': (payload: StateUsagePayload) => void;
+
+  // ── Transport ──
+  'state:refresh_required': (payload: Record<string, never>) => void;
 }
 
 /**
@@ -999,5 +1002,8 @@ export const EVENTS = {
     added: 'worktree:added',
     branchChanged: 'worktree:branchChanged',
     removed: 'worktree:removed',
+  },
+  state: {
+    refresh_required: 'state:refresh_required',
   },
 } as const;

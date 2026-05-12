@@ -351,8 +351,8 @@ export function ChannelMessagesProvider({
     };
   }, [socket, router, setChannelState]);
 
-  // ── state:refresh_required: WS buffer expired, do a full history rejoin ──
-  // biome-ignore lint/correctness/useExhaustiveDependencies: joinSession uses socket+channelId already in deps; setChannelState is stable
+  // Uses socket.on directly: this event has no channelId, so the router would discard it.
+  // biome-ignore lint/correctness/useExhaustiveDependencies: joinSession uses socket+channelId already in deps; setChannelState and onJoinSettled are stable
   useEffect(() => {
     if (!socket) return;
     function onRefreshRequired() {
@@ -361,9 +361,9 @@ export function ChannelMessagesProvider({
       historyReplayIdRef.current = null;
       joinSession();
     }
-    socket.on('state:refresh_required' as never, onRefreshRequired as never);
+    socket.on(EVENTS.state.refresh_required, onRefreshRequired);
     return () => {
-      socket.off('state:refresh_required' as never, onRefreshRequired as never);
+      socket.off(EVENTS.state.refresh_required, onRefreshRequired);
     };
   }, [socket]);
 

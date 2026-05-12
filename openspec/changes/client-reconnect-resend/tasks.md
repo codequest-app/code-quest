@@ -19,15 +19,14 @@
 - [x] 3.5 `ChannelEmitter.expireSocket(socketId)` TTL 到期時清掉 socketChannels
 - [x] 3.6 `server.ts` 接上 `onRebind` / `onExpire` callback
 
-## 4. Client — state:refresh_required 處理
+## 4. Client — state:refresh_required 處理 ✅
 
-- [ ] 4.1 `ChannelMessagesContext` 監聽 `state:refresh_required`
-- [ ] 4.2 收到後：清 messages、reset joinedRef / historyReplayIdRef、重打 joinSession
-- [ ] 4.3 測試（renderWithWorkspace + FakeSummoner）：
-       - 收到 state:refresh_required 後，舊訊息被清掉
+- [x] 4.1 `ChannelMessagesContext` 監聽 `state:refresh_required`
+- [x] 4.2 收到後：清 messages、reset joinedRef / historyReplayIdRef、重打 joinSession
+- [x] 4.3 測試（renderWithWorkspace + FakeSummoner）：
        - joinSession 重打，server 回 session:history，畫面正確補回
 
 ## 5. 驗證
 
-- [ ] 5.1 全部 tests green
+- [x] 5.1 全部 tests green
 - [ ] 5.2 手動驗證：手機待機後回來，streaming 內容正確補回

@@ -169,17 +169,10 @@ export class ChannelEmitter {
   reattachSocket(newSocket: TypedSocket, previousSocketId: string): void {
     const channelIds = this.socketChannels.get(previousSocketId);
     if (!channelIds) return;
-    for (const channelId of channelIds) {
-      let sockets = this.channelSockets.get(channelId);
-      if (!sockets) {
-        sockets = new Set();
-        this.channelSockets.set(channelId, sockets);
-      }
-      sockets.add(newSocket);
-    }
     this.socketChannels.delete(previousSocketId);
-    this.socketChannels.set(newSocket.id, new Set(channelIds));
-    this.socketRefs.set(newSocket.id, newSocket);
+    for (const channelId of channelIds) {
+      this.addSocketToChannel(channelId, newSocket);
+    }
   }
 
   expireSocket(socketId: string): void {
@@ -206,7 +199,9 @@ export class ChannelEmitter {
       socket.on(event, (...args: unknown[]) => {
         const { payload, cb } = extractPayloadAndCb(args);
         const channelId =
-          isRecord(payload) && 'channelId' in payload ? String(payload.channelId) : undefined;
+          isRecord(payload) && typeof payload.channelId === 'string' && payload.channelId
+            ? payload.channelId
+            : undefined;
         const ch = channelId ? (resolveChannel(channelId) ?? null) : null;
         return this.dispatch(event, ch, payload, socket, cb);
       });

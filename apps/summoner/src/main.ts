@@ -33,7 +33,7 @@ if (config.showHelp) {
 }
 
 if (!config.token) {
-  logger.error('[summoner] Token required. Use --token <token> or set SUMMONER_TOKEN env var.');
+  logger.error('Token required. Use --token <token> or set SUMMONER_TOKEN env var.');
   process.exit(1);
 }
 
