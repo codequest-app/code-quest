@@ -35,6 +35,7 @@ export default defineConfig({
       // This is a known happy-dom behaviour, not a test or application bug.
       if (error instanceof DOMException && error.name === 'AbortError') return 'skip';
     },
+    pool: 'threads',
     passWithNoTests: false,
     include: ['src/**/*.test.{ts,tsx}'],
     exclude: ['node_modules', 'dist'],
