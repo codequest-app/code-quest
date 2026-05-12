@@ -1,6 +1,6 @@
 #!/bin/sh
 DIR="$(dirname "$0")"
-NODE="$DIR/node"
+NODE="$DIR/runtime/node"
 if [ ! -x "$NODE" ]; then
   NODE="$(command -v node)"
 fi

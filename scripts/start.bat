@@ -1,6 +1,6 @@
 @echo off
 set "DIR=%~dp0"
-set "NODE=%DIR%node.exe"
+set "NODE=%DIR%runtime\node.exe"
 if not exist "%NODE%" set "NODE=node"
 cd /d "%DIR%server"
 if exist .env (
