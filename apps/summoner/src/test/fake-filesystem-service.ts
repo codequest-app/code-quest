@@ -65,6 +65,10 @@ export class FakeFilesystemService implements FilesystemService {
     this.files.clear();
   }
 
+  private async ensureWithinRoots(path: string): Promise<void> {
+    if (!(await this.rootGuard.isWithinRoots(path))) throw new PathOutsideRootsError(path);
+  }
+
   // ── FilesystemService interface ──
 
   async browseDirectories(path?: string): Promise<DirectoryEntry[]> {
@@ -72,7 +76,7 @@ export class FakeFilesystemService implements FilesystemService {
       return this.rootGuard.getRoots().map((r) => ({ name: basename(r), path: r }));
     }
 
-    if (!(await this.rootGuard.isWithinRoots(path))) throw new PathOutsideRootsError(path);
+    await this.ensureWithinRoots(path);
 
     const children = this.dirs.get(path);
     if (!children) return [];
@@ -132,8 +136,7 @@ export class FakeFilesystemService implements FilesystemService {
   }
 
   async readFileAbsolute(absolutePath: string): Promise<ReadFileAbsoluteResult> {
-    if (!(await this.rootGuard.isWithinRoots(absolutePath)))
-      throw new PathOutsideRootsError(absolutePath);
+    await this.ensureWithinRoots(absolutePath);
     const content = this.files.get(absolutePath);
     if (content === undefined) return { error: `File not found: ${absolutePath}` };
     const { contentType, encoding } = mimeForPath(absolutePath);
@@ -142,8 +145,7 @@ export class FakeFilesystemService implements FilesystemService {
   }
 
   async writeFileAbsolute(absolutePath: string, content: string): Promise<WriteFileResult> {
-    if (!(await this.rootGuard.isWithinRoots(absolutePath)))
-      throw new PathOutsideRootsError(absolutePath);
+    await this.ensureWithinRoots(absolutePath);
     this.files.set(absolutePath, content);
     return { ok: true };
   }
@@ -178,7 +180,7 @@ export class FakeFilesystemService implements FilesystemService {
   }
 
   async statKind(path: string): Promise<'file' | 'directory' | null> {
-    if (!(await this.rootGuard.isWithinRoots(path))) throw new PathOutsideRootsError(path);
+    await this.ensureWithinRoots(path);
     if (this.files.has(path)) return 'file';
     if (this.dirs.has(path)) return 'directory';
     if (this.rootGuard.getRoots().includes(path)) return 'directory';
@@ -193,8 +195,7 @@ export class FakeFilesystemService implements FilesystemService {
   // ── Mutations ──
 
   async create(absolutePath: string, kind: 'file' | 'directory'): Promise<FsMutationResult> {
-    if (!(await this.rootGuard.isWithinRoots(absolutePath)))
-      throw new PathOutsideRootsError(absolutePath);
+    await this.ensureWithinRoots(absolutePath);
     if (await this.exists(absolutePath)) return { error: 'exists' };
     if (kind === 'directory') {
       this.dirs.set(absolutePath, []);
@@ -206,8 +207,7 @@ export class FakeFilesystemService implements FilesystemService {
   }
 
   async delete(absolutePath: string): Promise<FsMutationResult> {
-    if (!(await this.rootGuard.isWithinRoots(absolutePath)))
-      throw new PathOutsideRootsError(absolutePath);
+    await this.ensureWithinRoots(absolutePath);
     this.files.delete(absolutePath);
     this.dirs.delete(absolutePath);
     // Remove descendants
@@ -220,8 +220,8 @@ export class FakeFilesystemService implements FilesystemService {
   }
 
   async rename(from: string, to: string): Promise<FsMutationResult> {
-    if (!(await this.rootGuard.isWithinRoots(from)) || !(await this.rootGuard.isWithinRoots(to)))
-      throw new PathOutsideRootsError(from);
+    await this.ensureWithinRoots(from);
+    await this.ensureWithinRoots(to);
     if (await this.exists(to)) return { error: 'exists' };
     if (this.files.has(from)) {
       this.files.set(to, this.files.get(from) ?? '');
@@ -253,8 +253,8 @@ export class FakeFilesystemService implements FilesystemService {
   }
 
   async copy(from: string, to: string): Promise<FsMutationResult> {
-    if (!(await this.rootGuard.isWithinRoots(from)) || !(await this.rootGuard.isWithinRoots(to)))
-      throw new PathOutsideRootsError(from);
+    await this.ensureWithinRoots(from);
+    await this.ensureWithinRoots(to);
     if (await this.exists(to)) return { error: 'exists' };
     if (this.files.has(from)) {
       this.files.set(to, this.files.get(from) ?? '');

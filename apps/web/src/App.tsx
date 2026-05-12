@@ -25,17 +25,21 @@ export function App(): React.JSX.Element {
 
   useEffect(() => {
     let cancelled = false;
+    let resolved: TypedSocket | null = null;
     const result = createSocket();
     if (result instanceof Promise) {
       result.then((s) => {
+        resolved = s;
         if (!cancelled) setSocket(s);
+        else s.disconnect();
       });
     } else {
+      resolved = result;
       setSocket(result);
     }
     return () => {
       cancelled = true;
-      if (!(result instanceof Promise)) result.disconnect();
+      resolved?.disconnect();
     };
   }, []);
 

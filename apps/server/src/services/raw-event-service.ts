@@ -52,7 +52,9 @@ export class RawEventService {
   }
 
   async deleteBySession(sessionId: string): Promise<void> {
-    await this.eventStore.deleteBySession(sessionId);
-    await this.deltaStore.deleteBySession(sessionId);
+    await Promise.all([
+      this.eventStore.deleteBySession(sessionId),
+      this.deltaStore.deleteBySession(sessionId),
+    ]);
   }
 }
