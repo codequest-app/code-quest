@@ -10,29 +10,28 @@ on:
 jobs:
   release:
     if: github.event_name == 'workflow_dispatch' || github.event.workflow_run.conclusion == 'success'
+    runs-on: self-hosted
+    permissions:
+      contents: write
+
     strategy:
       matrix:
         include:
-          - os: ubuntu-latest
-            platform: linux-x64
+          - platform: linux-x64
             summoner: summoner-linux-x64
             bun-target: bun-linux-x64
-          - os: ubuntu-24.04-arm
-            platform: linux-arm64
+          - platform: linux-arm64
             summoner: summoner-linux-arm64
             bun-target: bun-linux-arm64
-          - os: macos-latest
-            platform: darwin-arm64
+          - platform: darwin-arm64
             summoner: summoner-darwin-arm64
             bun-target: bun-darwin-arm64
-          - os: windows-latest
-            platform: windows-x64
+          - platform: darwin-x64
+            summoner: summoner-darwin-x64
+            bun-target: bun-darwin-x64
+          - platform: windows-x64
             summoner: summoner-windows-x64.exe
             bun-target: bun-windows-x64
-
-    runs-on: ${{ matrix.os }}
-    permissions:
-      contents: write
 
     env:
       PLATFORM: ${{ matrix.platform }}
@@ -58,40 +57,33 @@ jobs:
       - name: Build release
         run: pnpm build:release
 
-      - name: Compile summoner for current platform
+      - name: Cross-compile summoner
         working-directory: apps/summoner
-        shell: bash
         run: bun build dist/main.js --compile --target $BUN_TARGET --outfile "dist/$SUMMONER_BIN"
 
       - name: Package release (unix)
-        if: runner.os != 'Windows'
+        if: ${{ !startsWith(matrix.platform, 'windows') }}
         run: |
           mkdir -p release/server
           cp -r apps/server/dist/* release/server/
           cp apps/server/.env.example release/server/.env.example
-          mkdir -p release/runtime
-          cp "$(which node)" release/runtime/node
           cp scripts/start.sh release/start.sh
-          chmod +x release/start.sh release/runtime/node
+          chmod +x release/start.sh
           cp "apps/summoner/dist/$SUMMONER_BIN" release/summoner
           chmod +x release/summoner
           cd release && tar czf "../code-quest-$PLATFORM.tar.gz" .
 
       - name: Package release (windows)
-        if: runner.os == 'Windows'
-        shell: pwsh
+        if: ${{ startsWith(matrix.platform, 'windows') }}
         run: |
-          New-Item -ItemType Directory -Force -Path release/server
-          Copy-Item -Recurse apps/server/dist/* release/server/
-          Copy-Item apps/server/.env.example release/server/.env.example
-          New-Item -ItemType Directory -Force -Path release/runtime
-          Copy-Item (Get-Command node).Source release/runtime/node.exe
-          Copy-Item scripts/start.bat release/start.bat
-          Copy-Item "apps/summoner/dist/$env:SUMMONER_BIN" release/summoner.exe
-          Compress-Archive -Path release/* -DestinationPath "code-quest-$env:PLATFORM.zip"
+          mkdir -p release/server
+          cp -r apps/server/dist/* release/server/
+          cp apps/server/.env.example release/server/.env.example
+          cp scripts/start.bat release/start.bat
+          cp "apps/summoner/dist/$SUMMONER_BIN" release/summoner.exe
+          cd release && zip -r "../code-quest-$PLATFORM.zip" .
 
       - name: Generate checksums
-        shell: bash
         run: |
           for f in code-quest-*; do
             sha256sum "$f" >> "checksums-$PLATFORM.txt"
@@ -109,3 +101,7 @@ jobs:
             code-quest-*.zip
             checksums-*.txt
           make_latest: true
+
+      - name: Cleanup
+        if: always()
+        run: rm -rf release code-quest-* checksums-*
