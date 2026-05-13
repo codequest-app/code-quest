@@ -250,6 +250,36 @@ await new Promise<void>((r) => setImmediate(r));
 - Hooks inside `describe` only apply to that block; global `beforeEach` applies to the entire file
 - ESM + `vi.mock`: factory functions must not reference variables defined outside the factory (temporal dead zone)
 
+---
+
+## Vitest v4 Breaking Changes
+
+> Reference: https://vitest.dev/guide/migration.html
+
+### Type Signature Changes
+
+| v1/v3 | v4 |
+|-------|----|
+| `vi.fn<TArgs extends unknown[], TReturn>()` | `vi.fn<T extends (...args: any[]) => any>()` — pass the **full function type** |
+| `Mock<TArgs, TReturn>` | `Mock<T>` — same shape, one type param |
+
+```ts
+// v3
+const fn = vi.fn<[string, number], boolean>();
+// v4
+const fn = vi.fn<(s: string, n: number) => boolean>();
+```
+
+### Spy / Mock Behaviour
+
+- **`getMockName()`** now returns `'vi.fn()'` instead of `'spy'` when no name was set — update any snapshot / assertion that matches the old string.
+- **`vi.restoreAllMocks()`** only restores **manually created spies** (`vi.spyOn`). Automock replacements are **not** restored by this call; use `vi.resetModules()` or re-import if needed.
+- **`mock.invocationCallOrder`** now starts at **1** (was 0). Assertions comparing the raw index need +1 adjustment.
+
+### New API
+
+- **`mock.settledResults`** — array of `{ type: 'fulfilled' | 'rejected', value }` entries for each call, mirroring `mock.results` but for async return values after settlement.
+
 ## 相關 skill
 
 - Server 端 FakeSummoner harness → `fake-summoner-server`

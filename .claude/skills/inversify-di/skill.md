@@ -96,3 +96,36 @@ Key test methods:
 2. If constructor-injectable: add `@injectable()` + `@inject()` decorators
 3. If constant-bound: instantiate and `.bind(TYPES.X).toConstantValue(instance)`
 4. Add to test container if tests need it
+
+---
+
+## Inversify v8 Breaking Changes
+
+> Reference: https://inversify.io/docs/guides/migrating-from-v7/
+
+### API Renames
+
+| v7 | v8 |
+|----|----|
+| `container.loadSync(module)` | `container.load(module)` |
+| `container.load(module)` | `container.loadAsync(module)` |
+| `container.rebindSync<T>(id)` | `container.rebind<T>(id)` (now sync by default) |
+| `container.isBoundNamed(id, name)` | `container.isBound({ serviceIdentifier: id, named: name })` |
+| `container.isBoundTagged(id, key, val)` | `container.isBound({ serviceIdentifier: id, tag: { key, value: val } })` |
+
+### Removed APIs
+
+- **`rebindSync`** is gone — `rebind` is now synchronous by default in v8; update all call sites.
+- **`toProvider()`** is removed — replace with `toFactory()` using an async inner function if you need a promise-returning factory.
+
+### Module System
+
+- v8 is **ESM-only**. CommonJS (`require`) is no longer supported.
+
+### Service Identifiers
+
+- **Plain functions are no longer valid service identifiers.** Use `string` or `Symbol` (e.g., `Symbol.for('MyService')`) instead. Abstract classes are still valid.
+
+### Migration Tip for This Project
+
+The test container currently calls `container.rebindSync` (v7). When upgrading to v8, rename all `rebindSync` calls to `rebind`.

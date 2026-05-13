@@ -312,6 +312,120 @@ Component composition 放心用 `className` prop override，不用擔心 CSS 順
 | `@utility` | Custom utility with modifier support |
 | `@layer base/components/utilities` | Custom CSS in cascade layers |
 
+## Tailwind CSS v4.3 新功能
+
+### Scrollbar Utilities（內建，不需自訂 `@utility`）
+
+```html
+<div class="scrollbar-auto">   <!-- 預設捲軸行為 -->
+<div class="scrollbar-thin">   <!-- 細捲軸（OS-native thin scrollbar） -->
+<div class="scrollbar-none">   <!-- 隱藏捲軸 -->
+```
+
+> 升級提示：`@utility scrollbar-hidden { &::-webkit-scrollbar { display: none } }` 可改用內建 `scrollbar-none`。
+
+### Container Size Queries（`@container-size`）
+
+v4.3 支援 container size queries，可依容器實際尺寸套用 utility：
+
+```html
+<div class="@container-size">
+  <div class="@sm:text-lg @lg:text-2xl">...</div>
+</div>
+```
+
+### New Color Palettes
+
+v4.3 新增四組色盤，可直接用 `bg-mauve-500`、`text-olive-300` 等：
+
+- `mauve` — 帶紫灰調的中性色
+- `olive` — 橄欖灰綠色
+- `mist` — 帶藍的霧灰色
+- `taupe` — 灰褐暖調
+
+```css
+/* 覆蓋 / 延伸新色盤到專案 token */
+@theme {
+  --color-surface: var(--color-mist-50);
+  --color-muted-bg: var(--color-taupe-100);
+}
+```
+
+### Logical Properties
+
+v4.3 新增邏輯屬性 utility，讓 RTL/LTR 排版不需分別寫 `pl-`/`pr-`：
+
+| Utility 前綴 | CSS 屬性 |
+|---|---|
+| `pbs-*` | `padding-block-start` |
+| `pbe-*` | `padding-block-end` |
+| `pis-*` / `pie-*` | `padding-inline-start/end` |
+| `mbs-*` | `margin-block-start` |
+| `inline-*` | inline 方向（水平） |
+| `block-*` | block 方向（垂直） |
+
+```html
+<div class="pbs-4 pis-6">   <!-- block-start 16px, inline-start 24px -->
+```
+
+### Font Features（`font-features-*`）
+
+細控 OpenType features：
+
+```html
+<span class="font-features-tnum">   <!-- tabular-nums -->
+<span class="font-features-kern">   <!-- kerning -->
+<span class="font-features-liga">   <!-- standard ligatures -->
+```
+
+或用 `@theme` 組合成 token：
+
+```css
+@theme {
+  --font-feature-settings-mono: "tnum" 1, "zero" 1;
+}
+```
+
+### New Utilities
+
+```html
+<!-- Zoom -->
+<div class="zoom-50">    <!-- transform: scale(0.5) -->
+<div class="zoom-100">
+<div class="zoom-150">
+
+<!-- Tab size（code blocks） -->
+<pre class="tab-size-2">
+<pre class="tab-size-4">
+```
+
+### Better `@variant` Support
+
+v4.3 `@variant` 可組合多個 selector，簡化複雜 hover/focus 狀態：
+
+```css
+@utility card-interactive {
+  @variant hover focus-within {
+    box-shadow: var(--shadow-card-hover);
+    border-color: var(--color-accent);
+  }
+}
+```
+
+> 舊寫法 `&:hover, &:focus-within { ... }` 可改用 `@variant` 統一管理。
+
+### Webpack Plugin Support
+
+v4.3 新增 `@tailwindcss/webpack` 官方插件（專案目前用 Vite，備查）：
+
+```js
+// webpack.config.js
+const tailwindcss = require('@tailwindcss/webpack')
+module.exports = {
+  plugins: [new tailwindcss()]
+}
+```
+
 ## 相關 skill
 
 - Component / hook 慣例（useRef / useEffect 影響 class 計算）→ `react-hooks`
