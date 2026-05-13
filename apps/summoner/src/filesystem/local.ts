@@ -119,7 +119,6 @@ export class LocalFilesystemService implements FilesystemService {
   // ── listFiles ──
 
   async listFiles(cwd: string, pattern: string): Promise<FileResult[]> {
-    await this.guardPath(cwd);
     const entry = await this.getOrBuildListCache(cwd);
 
     if (!pattern) {
@@ -142,6 +141,7 @@ export class LocalFilesystemService implements FilesystemService {
   }
 
   private async buildListCacheEntry(cwd: string): Promise<ListCacheEntry> {
+    await this.guardPath(cwd);
     const files = await this.getAllFiles(cwd);
     const dirs = this.extractDirectories(files);
     const unsubscribe: Unsubscribe = this.watch

@@ -1,5 +1,5 @@
 import { ERROR_CODES, EVENTS, isRecord } from '@code-quest/shared';
-import type { SocketCallback, TypedSocket } from '@code-quest/shared/node';
+import { errMsg, type SocketCallback, type TypedSocket } from '@code-quest/shared/node';
 import { logger } from '../logger.ts';
 import type { Channel } from './channel.ts';
 
@@ -88,7 +88,7 @@ export class ChannelEmitter {
         promises.push(
           result.catch((err) => {
             logger.error({ err, event }, 'Unhandled error in async handler');
-            cb?.({ ok: false, error: err instanceof Error ? err.message : String(err) });
+            cb?.({ ok: false, error: errMsg(err) });
           }),
         );
       }
