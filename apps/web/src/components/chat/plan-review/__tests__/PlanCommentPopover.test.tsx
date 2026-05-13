@@ -1,9 +1,10 @@
+import type { PlanCommentData } from '@code-quest/shared';
 import { fireEvent, render, screen } from '@testing-library/react';
 import { useRef } from 'react';
 import { describe, expect, it, vi } from 'vitest';
 import { PlanCommentPopover } from '../PlanCommentPopover.tsx';
 
-function Wrapper({ onAddComment }: { onAddComment: ReturnType<typeof vi.fn> }) {
+function Wrapper({ onAddComment }: { onAddComment: (comment: PlanCommentData) => void }) {
   const ref = useRef<HTMLDivElement>(null);
   return (
     <div ref={ref} style={{ position: 'relative' }}>
@@ -15,14 +16,14 @@ function Wrapper({ onAddComment }: { onAddComment: ReturnType<typeof vi.fn> }) {
 
 describe('PlanCommentPopover', () => {
   it('renders without crashing', () => {
-    const onAddComment = vi.fn();
+    const onAddComment = vi.fn<(comment: PlanCommentData) => void>();
     const { container } = render(<Wrapper onAddComment={onAddComment} />);
     // No comment overlay shown by default (no selection)
     expect(container.querySelector('textarea')).toBeNull();
   });
 
   it('does not show overlay when no selection', () => {
-    const onAddComment = vi.fn();
+    const onAddComment = vi.fn<(comment: PlanCommentData) => void>();
     render(<Wrapper onAddComment={onAddComment} />);
     // Trigger mouseup without selection
     fireEvent.mouseUp(screen.getByText('Some plan content to select'));

@@ -1,14 +1,16 @@
+import type { RpcResult, SideQuestionResult } from '@code-quest/shared';
 import { describe, expect, it, vi } from 'vitest';
+import type { msg } from '@/utils/message';
 import { createRecapFeature, RECAP_PROMPT } from '../recap-feature.ts';
 
-function setup(overrides?: {
-  askSideQuestion?: ReturnType<typeof vi.fn>;
-  appendMessage?: ReturnType<typeof vi.fn>;
-}) {
+type AskSideQuestion = (question: string) => Promise<RpcResult<SideQuestionResult>>;
+type AppendMessage = (fields: Parameters<typeof msg>[0]) => void;
+
+function setup(overrides?: { askSideQuestion?: AskSideQuestion; appendMessage?: AppendMessage }) {
   const askSideQuestion =
     overrides?.askSideQuestion ??
-    vi.fn().mockResolvedValue({ ok: true, data: { answer: 'recap text' } });
-  const appendMessage = overrides?.appendMessage ?? vi.fn();
+    vi.fn<AskSideQuestion>().mockResolvedValue({ ok: true, data: { answer: 'recap text' } });
+  const appendMessage = overrides?.appendMessage ?? vi.fn<AppendMessage>();
   const feature = createRecapFeature({ askSideQuestion, appendMessage });
   return { feature, askSideQuestion, appendMessage };
 }
@@ -53,7 +55,9 @@ describe('createRecapFeature', () => {
   });
 
   it('on failure appends an error assistant message locally', async () => {
-    const askSideQuestion = vi.fn().mockResolvedValue({ ok: false, error: 'boom' });
+    const askSideQuestion = vi
+      .fn<AskSideQuestion>()
+      .mockResolvedValue({ ok: false, error: 'boom' });
     const { feature, appendMessage } = setup({ askSideQuestion });
     feature.slash?.invoke('/recap');
     await vi.waitFor(() =>

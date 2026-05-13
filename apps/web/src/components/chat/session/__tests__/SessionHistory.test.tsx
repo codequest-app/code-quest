@@ -1,19 +1,32 @@
-import type { SessionSummary } from '@code-quest/shared';
+import type { Ack, SessionSummary } from '@code-quest/shared';
 import { render, screen, waitFor } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { describe, expect, it, vi } from 'vitest';
 import { SessionHistory } from '../SessionHistory.tsx';
 
 // Helper: render with mutable sessions prop
-function renderWithSessions(initialSessions: SessionSummary[], onDelete: ReturnType<typeof vi.fn>) {
+function renderWithSessions(
+  initialSessions: SessionSummary[],
+  onDelete: (id: string) => Promise<Ack>,
+) {
   let currentSessions = initialSessions;
   const { rerender } = render(
-    <SessionHistory sessions={currentSessions} onSelect={vi.fn()} onDelete={onDelete} />,
+    <SessionHistory
+      sessions={currentSessions}
+      onSelect={vi.fn<(id: string) => void>()}
+      onDelete={onDelete}
+    />,
   );
   return {
     rerender: (sessions: SessionSummary[]) => {
       currentSessions = sessions;
-      rerender(<SessionHistory sessions={sessions} onSelect={vi.fn()} onDelete={onDelete} />);
+      rerender(
+        <SessionHistory
+          sessions={sessions}
+          onSelect={vi.fn<(id: string) => void>()}
+          onDelete={onDelete}
+        />,
+      );
     },
   };
 }
@@ -35,24 +48,24 @@ const makeSessions = (n: number): SessionSummary[] =>
 
 describe('SessionHistory', () => {
   it('renders search box', () => {
-    render(<SessionHistory sessions={[]} onSelect={vi.fn()} />);
+    render(<SessionHistory sessions={[]} onSelect={vi.fn<(id: string) => void>()} />);
     expect(screen.getByPlaceholderText('Search sessions...')).toBeInTheDocument();
   });
 
   it('renders session list', () => {
-    render(<SessionHistory sessions={makeSessions(3)} onSelect={vi.fn()} />);
+    render(<SessionHistory sessions={makeSessions(3)} onSelect={vi.fn<(id: string) => void>()} />);
     expect(screen.getByText('Session 0')).toBeInTheDocument();
     expect(screen.getByText('Session 1')).toBeInTheDocument();
     expect(screen.getByText('Session 2')).toBeInTheDocument();
   });
 
   it('shows "No sessions" when empty', () => {
-    render(<SessionHistory sessions={[]} onSelect={vi.fn()} />);
+    render(<SessionHistory sessions={[]} onSelect={vi.fn<(id: string) => void>()} />);
     expect(screen.getByText('No sessions')).toBeInTheDocument();
   });
 
   it('shows loading state', () => {
-    render(<SessionHistory sessions={[]} loading onSelect={vi.fn()} />);
+    render(<SessionHistory sessions={[]} loading onSelect={vi.fn<(id: string) => void>()} />);
     expect(screen.getByText('Loading...')).toBeInTheDocument();
   });
 
@@ -62,7 +75,7 @@ describe('SessionHistory', () => {
       { ...makeSessions(1)[0]!, title: 'Fix login bug' },
       { ...makeSessions(1)[0]!, channelId: 's-1', title: 'Add dark mode' },
     ];
-    render(<SessionHistory sessions={sessions} onSelect={vi.fn()} />);
+    render(<SessionHistory sessions={sessions} onSelect={vi.fn<(id: string) => void>()} />);
 
     await user.type(screen.getByPlaceholderText('Search sessions...'), 'login');
 
@@ -97,12 +110,16 @@ describe('SessionHistory', () => {
 
   describe('semantic HTML / a11y roles', () => {
     it('session list container has role="listbox"', () => {
-      render(<SessionHistory sessions={makeSessions(2)} onSelect={vi.fn()} />);
+      render(
+        <SessionHistory sessions={makeSessions(2)} onSelect={vi.fn<(id: string) => void>()} />,
+      );
       expect(screen.getByRole('listbox')).toBeInTheDocument();
     });
 
     it('each session row has role="option"', () => {
-      render(<SessionHistory sessions={makeSessions(2)} onSelect={vi.fn()} />);
+      render(
+        <SessionHistory sessions={makeSessions(2)} onSelect={vi.fn<(id: string) => void>()} />,
+      );
       const options = screen.getAllByRole('option');
       expect(options).toHaveLength(2);
     });
@@ -127,7 +144,13 @@ describe('SessionHistory', () => {
   it('does not hide session via local state — deletion is parent-driven', async () => {
     const user = userEvent.setup();
     const onDelete = vi.fn().mockResolvedValue({ ok: true, data: {} });
-    render(<SessionHistory sessions={makeSessions(2)} onSelect={vi.fn()} onDelete={onDelete} />);
+    render(
+      <SessionHistory
+        sessions={makeSessions(2)}
+        onSelect={vi.fn<(id: string) => void>()}
+        onDelete={onDelete}
+      />,
+    );
 
     await user.click(screen.getAllByTitle('Delete')[0]!);
 

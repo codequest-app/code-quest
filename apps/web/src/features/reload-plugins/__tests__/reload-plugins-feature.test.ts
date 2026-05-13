@@ -1,11 +1,12 @@
+import type { PluginReloadResult } from '@code-quest/shared';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 import { createReloadPluginsFeature } from '../reload-plugins-feature.ts';
 
 describe('createReloadPluginsFeature', () => {
-  let reloadPlugins: ReturnType<typeof vi.fn>;
+  let reloadPlugins: () => Promise<PluginReloadResult>;
 
   beforeEach(() => {
-    reloadPlugins = vi.fn().mockResolvedValue({ success: true });
+    reloadPlugins = vi.fn<() => Promise<PluginReloadResult>>().mockResolvedValue({ success: true });
   });
 
   it('slash invoke calls reloadPlugins', () => {
