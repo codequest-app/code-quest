@@ -54,28 +54,26 @@ export function createTestContainer(overrides: TestContainerOverrides = {}): Con
   });
 
   // Use in-memory settings in tests to avoid file system state leaking between runs
-  container
-    .rebindSync<SettingsStore>(TYPES.SettingsStore)
-    .toConstantValue(new InMemorySettingsStore());
+  container.rebind<SettingsStore>(TYPES.SettingsStore).toConstantValue(new InMemorySettingsStore());
 
   container
-    .rebindSync<FilesystemService>(TYPES.FilesystemService)
+    .rebind<FilesystemService>(TYPES.FilesystemService)
     .toConstantValue(overrides.filesystemService ?? new FakeFilesystemService());
 
   container
-    .rebindSync<GitService>(TYPES.GitService)
+    .rebind<GitService>(TYPES.GitService)
     .toConstantValue(overrides.gitService ?? new FakeGitService());
 
   container
-    .rebindSync<OpenspecService>(TYPES.OpenspecService)
+    .rebind<OpenspecService>(TYPES.OpenspecService)
     .toConstantValue(overrides.openspecService ?? new FakeOpenspecService());
 
   container
-    .rebindSync<PluginCliService>(TYPES.PluginCliService)
+    .rebind<PluginCliService>(TYPES.PluginCliService)
     .toConstantValue(overrides.pluginCli ?? new FakePluginCliService());
 
   container
-    .rebindSync<DiffFileService>(TYPES.DiffFileService)
+    .rebind<DiffFileService>(TYPES.DiffFileService)
     .toConstantValue(overrides.diffFileService ?? new FakeDiffFileService());
 
   return container;

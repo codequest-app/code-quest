@@ -254,7 +254,7 @@ describe('ChatHandler > settings', () => {
         },
       };
       const container = createTestContainer();
-      container.rebindSync(TYPES.SettingsStore).toConstantValue(failingStore);
+      container.rebind(TYPES.SettingsStore).toConstantValue(failingStore);
       const server = createFakeServer(container);
       const summoner = createFakeSummoner(server);
       const claude = summoner.claude();
