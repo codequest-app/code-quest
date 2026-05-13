@@ -10,7 +10,7 @@
     "./columns": "./src/schema-columns.ts"
   },
   "dependencies": {
-    "drizzle-orm": "^0.45.1"
+    "drizzle-orm": "^0.45.2"
   },
   "scripts": {
     "db:generate:sqlite": "drizzle-kit generate --config=drizzle-sqlite.config.ts",
@@ -21,11 +21,11 @@
   },
   "devDependencies": {
     "@types/better-sqlite3": "^7.6.13",
-    "@types/node": "^20.11.5",
-    "better-sqlite3": "^12.6.2",
-    "drizzle-kit": "^0.31.9",
-    "knip": "^6.11.0",
-    "mysql2": "^3.17.4",
+    "@types/node": "^25.7.0",
+    "better-sqlite3": "^12.10.0",
+    "drizzle-kit": "^0.31.10",
+    "knip": "^6.13.1",
+    "mysql2": "^3.22.3",
     "typescript": "6.0.3"
   }
 }

@@ -24,23 +24,23 @@
     "@code-quest/shared": "workspace:*",
     "@types/ws": "^8.18.1",
     "chokidar": "^5.0.0",
-    "dotenv": "^17.3.1",
-    "fuse.js": "^7.1.0",
+    "dotenv": "^17.4.2",
+    "fuse.js": "^7.3.0",
     "glob": "^13.0.6",
     "pino": "^10.3.1",
-    "simple-git": "^3.33.0",
-    "ws": "^8.20.0",
-    "zod": "^4.3.6"
+    "simple-git": "^3.36.0",
+    "ws": "^8.20.1",
+    "zod": "^4.4.3"
   },
   "devDependencies": {
-    "@types/node": "^20.11.5",
+    "@types/node": "^25.7.0",
     "javascript-obfuscator": "^5.4.2",
-    "knip": "^6.11.0",
+    "knip": "^6.13.1",
     "memfs": "^4.57.2",
     "rimraf": "^6.1.3",
     "tsup": "^8.5.1",
     "tsx": "^4.21.0",
     "typescript": "6.0.3",
-    "vitest": "^3.2.4"
+    "vitest": "^4.1.6"
   }
 }

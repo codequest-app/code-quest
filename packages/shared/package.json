@@ -14,13 +14,13 @@
     "lint": "biome check src"
   },
   "dependencies": {
-    "ws": "^8.20.0",
-    "zod": "^4.3.6"
+    "ws": "^8.20.1",
+    "zod": "^4.4.3"
   },
   "devDependencies": {
     "@types/ws": "^8.18.1",
-    "knip": "^6.11.0",
+    "knip": "^6.13.1",
     "typescript": "6.0.3",
-    "vitest": "^3.2.4"
+    "vitest": "^4.1.6"
   }
 }
