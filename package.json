@@ -13,7 +13,8 @@
     "dev:server:mock": "MOCK_CLI=true pnpm --filter @code-quest/server dev",
     "dev:web": "pnpm --filter @code-quest/web dev",
     "build": "pnpm --filter @code-quest/summoner build && pnpm --filter @code-quest/web build && pnpm --filter @code-quest/server build",
-    "build:release": "pnpm --filter @code-quest/summoner build && pnpm --filter @code-quest/web build && pnpm --filter @code-quest/server build:release",
+    "build:release": "pnpm --filter @code-quest/summoner build:release && pnpm --filter @code-quest/web build:release && pnpm --filter @code-quest/server build:release",
+    "release": "pnpm build:release && node scripts/pack-dist.js",
     "start": "pnpm --filter @code-quest/server start",
     "start:summoner": "node apps/summoner/dist/main.js",
     "test": "pnpm -r --parallel run test",
@@ -36,6 +37,7 @@
     "clean": "pnpm --recursive clean",
     "prepare": "lefthook install"
   },
+  "type": "module",
   "keywords": [
     "claude",
     "rpg",

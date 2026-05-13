@@ -34,8 +34,8 @@ download_node() {
   mkdir -p "$DIR/runtime"
   TMP=$(mktemp -d)
   URL="https://nodejs.org/dist/v$NODE_VERSION/node-v$NODE_VERSION-$OS_NAME-$ARCH_NAME.tar.gz"
-  curl --progress-bar -f -o "$TMP/node.tar.gz" "$URL"
-  tar xz -C "$TMP" -f "$TMP/node.tar.gz"
+  curl -fL --progress-bar -o "$TMP/node.tar.gz" "$URL"
+  tar -xzf "$TMP/node.tar.gz" -C "$TMP"
   cp "$TMP/node-v$NODE_VERSION-$OS_NAME-$ARCH_NAME/bin/node" "$DIR/runtime/node"
   chmod +x "$DIR/runtime/node"
   rm -rf "$TMP"
@@ -50,8 +50,8 @@ download_sqlite() {
   mkdir -p "$DIR/node_modules/better-sqlite3/build/Release"
   TMP=$(mktemp -d)
   URL="https://github.com/WiseLibs/better-sqlite3/releases/download/v$SQLITE_VERSION/better-sqlite3-v$SQLITE_VERSION-node-v$NAPI-$OS_NAME-$ARCH_NAME.tar.gz"
-  curl --progress-bar -f -o "$TMP/sqlite.tar.gz" "$URL"
-  tar xz -C "$TMP" -f "$TMP/sqlite.tar.gz"
+  curl -fL --progress-bar -o "$TMP/sqlite.tar.gz" "$URL"
+  tar -xzf "$TMP/sqlite.tar.gz" -C "$TMP"
   cp "$TMP/build/Release/better_sqlite3.node" "$SQLITE_NODE"
   rm -rf "$TMP"
   echo "[setup] better-sqlite3 downloaded."

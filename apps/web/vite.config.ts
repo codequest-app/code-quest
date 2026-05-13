@@ -1,8 +1,8 @@
 import babel from '@rolldown/plugin-babel';
 import tailwindcss from '@tailwindcss/vite';
 import react, { reactCompilerPreset } from '@vitejs/plugin-react';
+import JavaScriptObfuscator from 'javascript-obfuscator';
 import { defineConfig } from 'vite';
-import JavaScriptObfuscator from 'vite-plugin-javascript-obfuscator';
 import tsconfigPaths from 'vite-tsconfig-paths';
 
 // https://vitejs.dev/config/
@@ -17,17 +17,23 @@ export default defineConfig({
         presets: [reactCompilerPreset()],
       },
     }),
-    JavaScriptObfuscator({
+    {
+      name: 'obfuscate-source',
       apply: 'build',
-      options: {
-        compact: true,
-        controlFlowFlattening: true,
-        controlFlowFlatteningThreshold: 0.5,
-        stringArray: true,
-        stringArrayEncoding: ['rc4'],
-        stringArrayThreshold: 0.5,
+      generateBundle(_, bundle) {
+        const SKIP = /vendor|mermaid|pdf\.worker|rolldown-runtime|katex/;
+        for (const [name, chunk] of Object.entries(bundle)) {
+          if (chunk.type !== 'chunk' || SKIP.test(name)) continue;
+          chunk.code = JavaScriptObfuscator.obfuscate(chunk.code, {
+            compact: true,
+            controlFlowFlattening: false,
+            stringArray: true,
+            stringArrayEncoding: ['rc4'],
+            stringArrayThreshold: 0.5,
+          }).getObfuscatedCode();
+        }
       },
-    }),
+    },
   ],
   server: {
     port: 5173,

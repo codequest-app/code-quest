@@ -32,8 +32,8 @@ download_node() {
   mkdir -p "$DIR/runtime"
   TMP=$(mktemp -d)
   URL="https://nodejs.org/dist/v$NODE_VERSION/node-v$NODE_VERSION-$OS_NAME-$ARCH_NAME.tar.gz"
-  curl --progress-bar -f -o "$TMP/node.tar.gz" "$URL"
-  tar xz -C "$TMP" -f "$TMP/node.tar.gz"
+  curl -fL --progress-bar -o "$TMP/node.tar.gz" "$URL"
+  tar -xzf "$TMP/node.tar.gz" -C "$TMP"
   cp "$TMP/node-v$NODE_VERSION-$OS_NAME-$ARCH_NAME/bin/node" "$DIR/runtime/node"
   chmod +x "$DIR/runtime/node"
   rm -rf "$TMP"

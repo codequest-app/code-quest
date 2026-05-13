@@ -12,7 +12,7 @@ export default defineConfig({
   target: 'node22',
   outDir: 'dist',
   clean: false,
-  splitting: true,
+  splitting: false,
   sourcemap: process.env.BUILD_SOURCEMAP === 'true',
   noExternal: [/^(?!better-sqlite3|bindings|file-uri-to-path).*/],
   external: ['better-sqlite3', 'bindings', 'file-uri-to-path'],

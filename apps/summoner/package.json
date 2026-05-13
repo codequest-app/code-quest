@@ -13,8 +13,9 @@
   },
   "scripts": {
     "dev": "bun run --env-file=.env src/main.ts",
-    "build": "pnpm clean && bun run build.ts && bun build dist/main.js --compile --outfile dist/summoner",
-    "build:release": "pnpm clean && bun run build.ts && bun run compile.ts",
+    "build": "pnpm clean && bun run build.ts",
+    "build:release": "pnpm clean && tsup && tsx obfuscate.ts",
+    "compile": "bun build dist/main.js --compile --outfile dist/summoner",
     "test": "vitest run",
     "lint": "biome check src",
     "clean": "rimraf --glob \"dist/*\" \"!dist/.env\""
@@ -37,6 +38,8 @@
     "knip": "^6.11.0",
     "memfs": "^4.57.2",
     "rimraf": "^6.1.3",
+    "tsup": "^8.5.1",
+    "tsx": "^4.21.0",
     "typescript": "6.0.3",
     "vitest": "^3.2.4"
   }

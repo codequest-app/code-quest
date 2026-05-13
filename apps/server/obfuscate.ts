@@ -12,7 +12,11 @@ if (level === 'none') {
 
 const distDir = 'dist';
 const jsFiles = readdirSync(distDir, { recursive: true }).filter(
-  (f): f is string => typeof f === 'string' && f.endsWith('.js') && !f.includes('node_modules'),
+  (f): f is string =>
+    typeof f === 'string' &&
+    f.endsWith('.js') &&
+    !f.includes('node_modules') &&
+    !f.includes('public'),
 );
 
 // encodeURIComponent (used by javascript-obfuscator's btoa) throws URIError on
