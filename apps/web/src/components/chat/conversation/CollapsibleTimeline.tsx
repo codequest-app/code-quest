@@ -2,14 +2,14 @@ import { useMemo, useState } from 'react';
 import { useChannelStore } from '@/stores/ChannelStoreContext';
 import type { AssistantTurn, ForkFn, Message, RewindFn } from '@/types/ui';
 import { getToolId } from '@/utils/message-helpers';
-import { buildGroupChips, splitTimelineRuns, type TimelineRun } from '@/utils/tool-utils';
+import { buildGroupChips, splitTimelineRuns, type TimelineRun } from '@/utils/timeline-utils';
 import { NodeContent } from './NodeContent.tsx';
 import { type RowPosition, TimelineItem } from './TimelineItem.tsx';
 import { ToolGroupSummary } from './ToolGroupSummary.tsx';
 
 interface RunProps {
   lastTurnId?: string;
-  childrenIndex?: Map<string, import('@/types/ui').Message[]>;
+  childrenIndex?: Map<string, Message[]>;
   onRewind?: RewindFn;
   onFork?: ForkFn;
   onStopTask?: (taskId: string) => void;

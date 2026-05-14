@@ -1,14 +1,13 @@
 import { ChevronRightIcon } from '@heroicons/react/24/outline';
 import * as Collapsible from '@radix-ui/react-collapsible';
 import AnsiModule from 'ansi-to-react';
+import { copyToClipboard } from '@/utils/clipboard';
+import { cn } from '@/utils/cn';
 
 const Ansi =
   typeof AnsiModule === 'function'
     ? AnsiModule
     : (AnsiModule as { default: typeof AnsiModule }).default;
-
-import { copyToClipboard } from '@/utils/clipboard';
-import { cn } from '@/utils/cn';
 
 export function RotatableChevron({
   open,
@@ -32,23 +31,24 @@ export function CollapsibleBlock({
   header,
   icon,
   label,
-  labelDetail,
-  labelRange,
-  labelSuffix,
   defaultOpen,
+  open,
+  onOpenChange,
   children,
 }: {
   header?: React.ReactNode;
   icon?: React.ReactNode;
   label?: string;
-  labelDetail?: string;
-  labelRange?: string;
-  labelSuffix?: React.ReactNode;
   defaultOpen?: boolean;
+  open?: boolean;
+  onOpenChange?: (open: boolean) => void;
   children?: React.ReactNode;
 }): React.JSX.Element {
+  const controlled = open !== undefined;
   return (
-    <Collapsible.Root defaultOpen={defaultOpen ?? false}>
+    <Collapsible.Root
+      {...(controlled ? { open, onOpenChange } : { defaultOpen: defaultOpen ?? false })}
+    >
       <Collapsible.Trigger asChild>
         <button
           type="button"
@@ -58,9 +58,6 @@ export function CollapsibleBlock({
             <>
               <span className="inline-flex items-center">{icon}</span>
               <span className="font-semibold text-text-bright">{label}</span>
-              {labelDetail && <span className="opacity-70 truncate max-w-75">{labelDetail}</span>}
-              {labelRange && <span className="opacity-50 text-xs">{labelRange}</span>}
-              {labelSuffix}
             </>
           )}
           <ChevronRightIcon
@@ -141,12 +138,12 @@ export function OutputContent({
     <AnsiContent content={content} />
   ) : (
     <pre className={cn('whitespace-pre-wrap', isError && 'text-danger')}>
-      {parseFilePathsInContent(content)}
+      {renderFilePathsWithCopyButtons(content)}
     </pre>
   );
 }
 
-export function parseFilePathsInContent(text: string): React.ReactNode[] {
+export function renderFilePathsWithCopyButtons(text: string): React.ReactNode[] {
   const parts: React.ReactNode[] = [];
   let lastIndex = 0;
 

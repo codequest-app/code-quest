@@ -21,8 +21,6 @@ export const Collapsed: Story = {
   args: {
     icon: '📄',
     label: 'example.ts',
-    labelDetail: 'src/utils',
-    labelRange: '1-42',
     children: (
       <pre className="bg-code-block p-3 rounded text-xs font-mono">
         {`function hello() {\n  return 'world';\n}`}
@@ -41,22 +39,11 @@ export const DefaultOpen: Story = {
   args: {
     icon: '✏️',
     label: 'main.ts',
-    labelDetail: 'src',
-    labelRange: '10-25',
     defaultOpen: true,
     children: (
       <pre className="bg-code-block p-3 rounded text-xs font-mono">
         {`const x = 42;\nconsole.log(x);`}
       </pre>
     ),
-  },
-};
-
-export const WithSuffix: Story = {
-  args: {
-    icon: '🔧',
-    label: 'config.json',
-    labelSuffix: <span className="text-xs text-success ml-1">saved</span>,
-    children: <pre className="bg-code-block p-3 rounded text-xs font-mono">{'{ "key": 1 }'}</pre>,
   },
 };

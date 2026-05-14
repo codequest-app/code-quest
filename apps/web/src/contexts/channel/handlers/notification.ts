@@ -27,7 +27,7 @@ function onRawEvent(state: ChannelState, p: Payload<'raw:event'>): ChannelState 
           msg({
             role: 'assistant',
             type: 'tool_use',
-            content: typeof p.data.name === 'string' ? p.data.name : '',
+            content: typeof p.data.name === 'string' && p.data.name ? p.data.name : 'Unknown',
             toolId: p.data.id,
             input: p.data.input,
           }),
@@ -71,7 +71,7 @@ export const notificationHandlerOn: {
 } = {
   'notification:show': onNotificationShow,
   'raw:event': onRawEvent,
-} satisfies Record<string, (state: ChannelState, payload: never) => ChannelState>;
+};
 
 // ── Effect handlers (side effects) ──
 
@@ -115,10 +115,8 @@ function showInteractiveNotification(
 }
 
 function showSeverityToast(p: Payload<'notification:show'>): void {
-  const severity = p.severity ?? 'info';
-  const showToast =
-    severity === 'error' ? toast.error : severity === 'warning' ? toast.warning : toast.info;
-  showToast(p.message ?? '');
+  const toastFn = { error: toast.error, warning: toast.warning, info: toast.info };
+  toastFn[p.severity ?? 'info'](p.message ?? '');
 }
 
 function onNotificationShowEffect(
@@ -170,4 +168,4 @@ export const notificationHandlerEffects: {
   'raw:event': onRawEventEffect,
   'system:mirror_error': onMirrorError,
   disconnect: onDisconnectEffect,
-} satisfies Record<string, (ctx: EffectContext, payload: never) => void>;
+};

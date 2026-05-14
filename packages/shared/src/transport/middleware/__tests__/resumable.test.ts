@@ -4,13 +4,14 @@ import type { ConnectionContext, Middleware } from '../../ws-transport.ts';
 import { resumable } from '../resumable.ts';
 
 function makeTypedSocket(id = 's-1'): TypedSocket & {
-  emit: ReturnType<typeof vi.fn>;
+  emit: ReturnType<typeof vi.fn> & TypedSocket['emit'];
   listeners: Map<string, (...args: unknown[]) => void>;
 } {
   const listeners = new Map<string, (...args: unknown[]) => void>();
+  const emit = vi.fn() as ReturnType<typeof vi.fn> & TypedSocket['emit'];
   return {
     id,
-    emit: vi.fn(),
+    emit,
     on: vi.fn((event: string, fn: (...args: unknown[]) => void) => {
       listeners.set(event, fn);
     }),

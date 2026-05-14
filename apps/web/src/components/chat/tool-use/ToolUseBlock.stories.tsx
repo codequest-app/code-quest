@@ -48,13 +48,7 @@ export const TaskRunning: Story = {
   args: {
     toolName: 'Task',
     input: { description: 'Analyse protocol.md', subagent_type: 'Explore' },
-    task: {
-      toolUseId: 'tu-5',
-      taskType: 'subagent',
-      status: 'running',
-      description: 'Analyse protocol.md',
-      lastToolName: 'Bash',
-    },
+    taskType: 'subagent',
   },
 };
 
@@ -62,14 +56,8 @@ export const TaskDone: Story = {
   args: {
     toolName: 'Task',
     input: { description: 'Analyse protocol.md', subagent_type: 'Explore' },
-    task: {
-      toolUseId: 'tu-7',
-      taskType: 'subagent',
-      status: 'completed',
-      description: 'Analyse protocol.md',
-      summary: 'Found 3 issues',
-      usage: { inputTokens: 18432, outputTokens: 2048 },
-    },
+    taskType: 'subagent',
+    result: { content: 'Found 3 issues' },
   },
 };
 
@@ -77,12 +65,8 @@ export const TaskFailed: Story = {
   args: {
     toolName: 'Task',
     input: { description: 'Analyse protocol.md' },
-    task: {
-      toolUseId: 'tu-8',
-      taskType: 'subagent',
-      status: 'failed',
-      description: 'Analyse protocol.md',
-    },
+    taskType: 'subagent',
+    result: { content: 'Failed to analyse.', is_error: true },
   },
 };
 
@@ -111,12 +95,6 @@ export const LocalAgentRunning: Story = {
   args: {
     toolName: 'Task',
     input: { description: 'Run local checks' },
-    task: {
-      toolUseId: 'tu-9',
-      taskType: 'local_agent',
-      status: 'running',
-      description: 'Run local checks',
-      lastToolName: 'Read',
-    },
+    taskType: 'local_agent',
   },
 };

@@ -1,17 +1,17 @@
 ---
-name: cc-office-review
+name: code-quest-review
 description: >
-  cc-office project-specific code review checks covering import order,
+  Code Quest project-specific code review checks covering import order,
   zod schema placement, cross-package event-name alignment, server
   handler middleware, channel / emitter semantics, client handler
   organization, React Compiler compatibility, icon facade convention,
   and FakeSummoner test patterns. Pairs with generic `code-review`
-  skill. Use when reviewing cc-office code, discussing refactor,
+  skill. Use when reviewing Code Quest code, discussing refactor,
   checking a PR for protocol/handler/zod alignment, or verifying that
   recent changes match project conventions.
 ---
 
-# cc-office 專案特定 Code Review
+# Code Quest 專案特定 Code Review
 
 除通用 `/code-review` skill 的審查維度外，本專案額外檢查以下項目。
 
@@ -107,6 +107,8 @@ summoner package 開啟了 `isolatedDeclarations: true`，影響：
 
 ## 測試
 
+**測試寫法慣例**
+- Summoner 相關測試應使用 `FakeSummonerClient` / `FakeSummonerServer` 建立 test double，詳見 `fake-summoner-client` / `fake-summoner-server` skill
 - 使用 FakeSummoner + real JSON segments（`@code-quest/summoner/test` 的 `s.*()` builder）
 - 驗證 action 發 socket event 用完整 pipeline + `claude.received(...)`，不 spy emit
 - client 測試用 `renderWithChannel` / `renderWithWorkspace` + testing-library

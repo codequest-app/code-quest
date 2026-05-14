@@ -1076,11 +1076,11 @@ describe('NodeContent', () => {
     expect(inner.style.maxHeight).toBe('');
   });
 
-  it('Expandable is collapsed when isLastTurn={false} for text message', () => {
+  it('Expandable is expanded even when isLastTurn={false} for text message (every completed turn shows answer)', () => {
     render(
       <NodeContent message={{ ...base, type: 'text', content: 'Hello' }} isLastTurn={false} />,
     );
     const inner = screen.getByLabelText('truncated-inner');
-    expect(inner.style.maxHeight).not.toBe('');
+    expect(inner.style.maxHeight).toBe('');
   });
 });

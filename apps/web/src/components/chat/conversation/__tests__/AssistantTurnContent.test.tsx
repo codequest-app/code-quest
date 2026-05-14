@@ -30,8 +30,13 @@ describe('AssistantTurnContent', () => {
     expect(screen.getByLabelText('truncated-inner')).toHaveAttribute('data-expanded', 'true');
   });
 
-  it('Expandable is collapsed when isLastTurn={false}', () => {
+  it('Expandable is expanded even when isLastTurn={false} (every completed turn shows its answer)', () => {
     render(<AssistantTurnContent message={makeAssistantTurn('Hello world')} isLastTurn={false} />);
-    expect(screen.getByLabelText('truncated-inner')).toHaveAttribute('data-expanded', 'false');
+    expect(screen.getByLabelText('truncated-inner')).toHaveAttribute('data-expanded', 'true');
+  });
+
+  it('Expandable is expanded when isLastTurn is omitted', () => {
+    render(<AssistantTurnContent message={makeAssistantTurn('Hello world')} />);
+    expect(screen.getByLabelText('truncated-inner')).toHaveAttribute('data-expanded', 'true');
   });
 });

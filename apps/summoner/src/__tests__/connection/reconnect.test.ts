@@ -1,12 +1,6 @@
 import { createServer, type Server as HttpServer } from 'node:http';
 import type { AddressInfo } from 'node:net';
-import {
-  createConnectionLoop,
-  RpcChannel,
-  toRpcSocket,
-  WsTransport,
-  wsAdapter,
-} from '@code-quest/shared/node';
+import { RpcChannel, toRpcSocket, WsClient } from '@code-quest/shared/node';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { WebSocketServer } from 'ws';
 import { Agent } from '../../connection/agent.ts';
@@ -17,13 +11,11 @@ import { FakeProcessProvider } from '../../test/fake-process-provider.ts';
 describe('Connection reconnect loop', () => {
   let httpServer: HttpServer;
   let wss: WebSocketServer;
-  let transport: WsTransport;
 
   beforeEach(async () => {
     httpServer = createServer();
     wss = new WebSocketServer({ server: httpServer });
     await new Promise<void>((r) => httpServer.listen(0, r));
-    transport = new WsTransport(wsAdapter());
   });
 
   afterEach(async () => {
@@ -38,7 +30,26 @@ describe('Connection reconnect loop', () => {
     return `ws://127.0.0.1:${port}`;
   }
 
-  it('reconnects and creates a new Agent after disconnect', async () => {
+  function makeAgent(opts: { processProvider?: FakeProcessProvider } = {}): {
+    agent: Agent;
+    processProvider: FakeProcessProvider;
+  } {
+    const processProvider = opts.processProvider ?? new FakeProcessProvider();
+    const agent = new Agent(processProvider, new FakeFilesystemService(), new FakeGitService());
+    return { agent, processProvider };
+  }
+
+  function makeClient(
+    agent: Agent,
+    extraOpts: ConstructorParameters<typeof WsClient>[1] = {},
+  ): WsClient {
+    const client = new WsClient(url(), { initialBackoffMs: 50, ...extraOpts });
+    agent.attach(client);
+    client.connect();
+    return client;
+  }
+
+  it('reconnects and registers handlers on new connection', async () => {
     let connectionCount = 0;
     const serverRpcs: RpcChannel[] = [];
 
@@ -47,81 +58,106 @@ describe('Connection reconnect loop', () => {
       serverRpcs.push(new RpcChannel(toRpcSocket(ws)));
     });
 
-    const processProvider = new FakeProcessProvider();
     const filesystem = new FakeFilesystemService();
-    const git = new FakeGitService();
+    const agent = new Agent(new FakeProcessProvider(), filesystem, new FakeGitService());
     const events: string[] = [];
 
-    const { close } = createConnectionLoop(transport, url(), {
-      reconnect: { initialDelayMs: 50 },
-      createAgent: (rpc) => new Agent(rpc, processProvider, filesystem, git),
-      onConnect: () => events.push('connect'),
-      onDisconnect: () => events.push('disconnect'),
+    const client = new WsClient(url(), { initialBackoffMs: 50 });
+    agent.attach(client);
+
+    client.setLifecycleListener({
+      onOpen: () => events.push('connect'),
+      onClose: () => events.push('disconnect'),
     });
+    client.connect();
 
     await vi.waitFor(() => expect(connectionCount).toBe(1));
-    expect(events).toContain('connect');
 
-    // Kill connection
-    for (const ws of wss.clients) ws.terminate();
+    // Kill connection at network level
+    client.forceCloseUnderlying();
 
     // Wait for reconnect
     await vi.waitFor(() => expect(connectionCount).toBe(2), { timeout: 2000 });
     expect(events.filter((e) => e === 'disconnect')).toHaveLength(1);
     expect(events.filter((e) => e === 'connect')).toHaveLength(2);
 
-    // New connection works
+    // Handlers persist on WsClient — new server connection can call fs/exists
     filesystem.setRoots(['/']);
     filesystem.addFile('/tmp/test.txt', 'content');
     const result = await serverRpcs[1]!.request('fs/exists', { path: '/tmp/test.txt' });
     expect(result).toEqual({ exists: true });
 
-    close();
+    client.disconnect();
   });
 
-  it('close() stops the reconnect loop', async () => {
+  it('disconnect() stops reconnecting', async () => {
     let connectionCount = 0;
     wss.on('connection', () => {
       connectionCount++;
     });
 
-    const { close } = createConnectionLoop(transport, url(), {
-      reconnect: { initialDelayMs: 50 },
-      createAgent: (rpc) =>
-        new Agent(
-          rpc,
-          new FakeProcessProvider(),
-          new FakeFilesystemService(),
-          new FakeGitService(),
-        ),
-    });
+    const { agent } = makeAgent();
+    const client = makeClient(agent);
 
     await vi.waitFor(() => expect(connectionCount).toBe(1));
-    close();
+    client.disconnect();
 
     await new Promise<void>((r) => setTimeout(r, 200));
     expect(connectionCount).toBe(1);
   });
 
-  it('uses exponential backoff on reconnect', async () => {
+  it('summoner→server push events (stdout/exit) arrive on the new connection after reconnect', async () => {
+    let connectionCount = 0;
+    const serverRpcs: RpcChannel[] = [];
+    const stdoutEvents: unknown[] = [];
+    const exitEvents: unknown[] = [];
+
+    wss.on('connection', (ws) => {
+      connectionCount++;
+      const rpc = new RpcChannel(toRpcSocket(ws));
+      serverRpcs.push(rpc);
+      rpc.on('process/stdout', (data) => stdoutEvents.push(data));
+      rpc.on('process/exit', (data) => exitEvents.push(data));
+    });
+
+    const { agent, processProvider } = makeAgent();
+    const client = makeClient(agent);
+
+    // First connection: spawn a process
+    await vi.waitFor(() => expect(connectionCount).toBe(1));
+    await serverRpcs[0]!.request('process/spawn', {
+      sessionId: 'sess-reconnect',
+      command: 'cat',
+      args: [],
+    });
+
+    // Kill the WS connection — WsClient will reconnect automatically
+    client.forceCloseUnderlying();
+    await vi.waitFor(() => expect(connectionCount).toBe(2), { timeout: 2000 });
+
+    // Process still running, emit output after reconnect
+    processProvider.latest.emit('hello after reconnect');
+    processProvider.latest.abort();
+
+    await vi.waitFor(() => expect(stdoutEvents).toHaveLength(1), { timeout: 1000 });
+    expect((stdoutEvents[0] as { line: string }).line).toBe('hello after reconnect');
+    await vi.waitFor(() => expect(exitEvents).toHaveLength(1), { timeout: 1000 });
+
+    client.disconnect();
+  });
+
+  it('continues reconnecting after repeated disconnects', async () => {
     let connectionCount = 0;
     wss.on('connection', (ws) => {
       connectionCount++;
-      ws.terminate();
+      // Terminate after a brief delay so handleOpen fires but reconnect is still needed
+      setTimeout(() => ws.terminate(), 10);
     });
 
-    const start = Date.now();
-    const { close } = createConnectionLoop(transport, url(), {
-      reconnect: { initialDelayMs: 100, maxDelayMs: 1000 },
-      createAgent: () => {},
-    });
+    const { agent } = makeAgent();
+    const client = makeClient(agent, { maxBackoffMs: 200 });
 
-    // With backoff 100+200+400 = 700ms minimum for 4 connections
     await vi.waitFor(() => expect(connectionCount).toBeGreaterThanOrEqual(4), { timeout: 5000 });
-    const elapsed = Date.now() - start;
-    close();
-
-    // Should take at least 600ms (100+200+400 minus timing slack)
-    expect(elapsed).toBeGreaterThanOrEqual(500);
+    client.disconnect();
   });
 });

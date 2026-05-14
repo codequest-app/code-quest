@@ -1,43 +1,15 @@
-import {
-  CommandLineIcon,
-  CpuChipIcon,
-  DocumentMagnifyingGlassIcon,
-  DocumentPlusIcon,
-  MagnifyingGlassIcon,
-  PencilSquareIcon,
-  ServerIcon,
-  WrenchIcon,
-} from '@heroicons/react/24/outline';
+import { PencilSquareIcon } from '@heroicons/react/24/outline';
 import { Copyable } from '@/components/chat/renderers/Copyable';
 import { DiffViewer } from '@/components/chat/renderers/DiffViewer';
 import { Highlight } from '@/components/chat/renderers/Highlight';
 import { Labeled } from '@/components/chat/renderers/Labeled';
 import { MarkdownContent } from '@/components/chat/renderers/MarkdownContent';
-import type { Task } from '@/types/task';
 import { cn } from '@/utils/cn';
 import { generateUnifiedDiff } from '@/utils/diff';
-import { AGENT_TOOLS, getToolHeaderInfo, isMcpTool } from '@/utils/tool-utils';
-import { CODE_BLOCK_CLASS, CollapsibleBlock } from '../renderers/primitives.tsx';
+import { CODE_BLOCK_CLASS } from '../renderers/primitives.tsx';
 import { AlertBanner } from './AlertBanner.tsx';
 import { ContentRenderer } from './ContentRenderer.tsx';
-import { TaskBadge } from './TaskBadge.tsx';
 import { ToolBlock } from './ToolBlock.tsx';
-import { ToolUseHeader } from './ToolUseHeader.tsx';
-
-const TOOL_ICON_CLASS = 'w-4 h-4 shrink-0';
-
-function getToolIcon(toolName: string): React.ReactNode {
-  if (toolName === 'Bash') return <CommandLineIcon className={TOOL_ICON_CLASS} />;
-  if (toolName === 'Read') return <DocumentMagnifyingGlassIcon className={TOOL_ICON_CLASS} />;
-  if (toolName === 'Write') return <DocumentPlusIcon className={TOOL_ICON_CLASS} />;
-  if (toolName === 'Edit' || toolName === 'MultiEdit')
-    return <PencilSquareIcon className={TOOL_ICON_CLASS} />;
-  if (toolName === 'WebSearch') return <MagnifyingGlassIcon className={TOOL_ICON_CLASS} />;
-  if (toolName === 'Agent' || toolName === 'Task')
-    return <CpuChipIcon className={TOOL_ICON_CLASS} />;
-  if (isMcpTool(toolName)) return <ServerIcon className={TOOL_ICON_CLASS} />;
-  return <WrenchIcon className={TOOL_ICON_CLASS} />;
-}
 
 function PartialInputPlaceholder({ content }: { content: string }) {
   return <pre className={cn(CODE_BLOCK_CLASS, 'text-text-muted/60 animate-pulse')}>{content}</pre>;
@@ -309,39 +281,17 @@ export function ToolUseBlock({
   toolName,
   input = {},
   result,
-  task,
   partialInput,
-  defaultOpen,
+  taskType,
 }: {
   toolName: string;
   input?: Record<string, unknown>;
   result?: { content?: string; is_error?: boolean };
-  task?: Task;
   partialInput?: string;
-  defaultOpen?: boolean;
+  taskType?: string;
 }): React.JSX.Element {
-  const taskType = task?.taskType;
-
-  const headerInfo = getToolHeaderInfo(toolName, input);
-  const detail = task?.description && !headerInfo.detail ? task.description : headerInfo.detail;
-
   return (
-    <CollapsibleBlock
-      header={
-        <ToolUseHeader
-          icon={getToolIcon(toolName)}
-          name={headerInfo.name}
-          detail={detail}
-          range={headerInfo.range}
-          badge={
-            AGENT_TOOLS.has(toolName) || taskType ? (
-              <TaskBadge toolName={toolName} input={input} task={task} />
-            ) : undefined
-          }
-        />
-      }
-      defaultOpen={defaultOpen}
-    >
+    <>
       {result?.is_error && result.content && <ToolErrorBanner message={result.content} />}
       <ToolBody
         toolName={toolName}
@@ -353,6 +303,6 @@ export function ToolUseBlock({
       {!partialInput && !result && (
         <div className="text-xs text-text-muted/60 animate-pulse mt-1">Running...</div>
       )}
-    </CollapsibleBlock>
+    </>
   );
 }

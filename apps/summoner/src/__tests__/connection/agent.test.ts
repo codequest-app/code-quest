@@ -21,10 +21,10 @@ function makeSetup() {
     httpServer = createServer();
     wss = new WebSocketServer({ noServer: true });
 
-    let agent: Agent | undefined;
+    const agent = new Agent(processProvider, filesystem, git);
     httpServer.on('upgrade', (req, socket, head) => {
       wss.handleUpgrade(req, socket, head, (ws) => {
-        agent = new Agent(new RpcChannel(toRpcSocket(ws)), processProvider, filesystem, git);
+        agent.attach(new RpcChannel(toRpcSocket(ws)));
       });
     });
 
@@ -51,16 +51,7 @@ function makeSetup() {
       });
     }
 
-    return {
-      processProvider,
-      filesystem,
-      git,
-      client,
-      rpc,
-      get agent() {
-        return agent!;
-      },
-    };
+    return { processProvider, filesystem, git, client, rpc, agent };
   }
 
   async function teardown() {

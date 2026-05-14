@@ -22,8 +22,10 @@ export type {
 } from './socket-events.ts';
 export { EVENTS } from './socket-events.ts';
 export { TopicEmitter } from './topic-emitter.ts';
-// Transport — only browser-safe schema/type re-exports; runtime lives in ./node.ts
+export type { AgentTransport } from './transport/agent-transport.ts';
+// Transport — browser-safe exports; node-only runtime lives in ./node.ts
 export { type Envelope, EnvelopeSchema } from './transport/envelope.ts';
+export { WsClient } from './transport/ws-client.ts';
 export { type BannerItem, formatBanner } from './utils/banner.ts';
 // Utils
 export { getOrSet } from './utils/get-or-set.ts';

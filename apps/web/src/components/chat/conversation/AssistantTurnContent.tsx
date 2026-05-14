@@ -4,10 +4,10 @@ import type { AssistantTurn, Block } from '@/types/ui';
 import { Expandable } from '../renderers/Expandable.tsx';
 import { MarkdownContent } from '../renderers/MarkdownContent.tsx';
 import { CitationsPanel } from '../session/CitationsPanel.tsx';
-import { ToolUseBlock } from '../tool-use/ToolUseBlock.tsx';
+import { ToolUseCollapsible } from '../tool-use/ToolUseCollapsible.tsx';
 import { ThinkingBlock } from './ThinkingBlock.tsx';
 
-function ToolUseBlockWithStore({
+function ToolUseBlockCollapsible({
   block,
   isLastTurn,
 }: {
@@ -22,13 +22,14 @@ function ToolUseBlockWithStore({
     })),
   );
   return (
-    <ToolUseBlock
+    <ToolUseCollapsible
       toolName={block.content}
-      input={block.input}
-      result={result}
+      input={block.input ?? {}}
+      toolId={toolId}
       task={task}
+      result={result}
       partialInput={block.partialInput}
-      defaultOpen={isLastTurn}
+      isLastTurn={isLastTurn}
     />
   );
 }
@@ -50,12 +51,13 @@ export function AssistantTurnContent({
           budgetTokens={block.budget_tokens}
           durationMs={block.durationMs}
           isStreaming={block.isStreaming}
+          blockId={block.id}
         />
       );
     }
     if (block.type === 'text') {
       return (
-        <Expandable key={block.id} maxHeight={600} defaultOpen={isLastTurn ?? false}>
+        <Expandable key={block.id} maxHeight={600} defaultOpen={true}>
           <div className="leading-relaxed">
             <MarkdownContent content={block.content} />
             {block.citations && <CitationsPanel citations={block.citations} />}
@@ -64,7 +66,7 @@ export function AssistantTurnContent({
       );
     }
     if (block.type === 'tool_use' && block.toolId) {
-      return <ToolUseBlockWithStore key={block.id} block={block} isLastTurn={isLastTurn} />;
+      return <ToolUseBlockCollapsible key={block.id} block={block} isLastTurn={isLastTurn} />;
     }
     return <p key={block.id}>{block.content}</p>;
   });

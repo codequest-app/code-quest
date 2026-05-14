@@ -40,8 +40,12 @@ export class ChildProcessProvider implements ProcessProvider {
     };
 
     const abort = (): void => {
+      if (controller.signal.aborted) return;
       controller.abort();
       proc.kill('SIGTERM');
+      setTimeout(() => {
+        if (!proc.killed) proc.kill('SIGKILL');
+      }, 5_000).unref();
     };
 
     return { lines, stderr, send, signal: controller.signal, abort };
@@ -52,9 +56,13 @@ export class ChildProcessProvider implements ProcessProvider {
     signal: AbortSignal,
   ): AsyncIterable<string> {
     const rl = createInterface({ input: stream });
-    for await (const line of rl) {
-      if (signal.aborted) break;
-      yield line;
+    try {
+      for await (const line of rl) {
+        if (signal.aborted) break;
+        yield line;
+      }
+    } finally {
+      rl.close();
     }
   }
 

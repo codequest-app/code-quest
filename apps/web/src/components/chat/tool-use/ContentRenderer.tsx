@@ -5,7 +5,7 @@ import {
   AnsiContent,
   CODE_BLOCK_CLASS,
   hasAnsi,
-  parseFilePathsInContent,
+  renderFilePathsWithCopyButtons,
 } from '../renderers/primitives.tsx';
 
 interface ContentRendererProps {
@@ -42,7 +42,7 @@ export function ContentRenderer({
         bare && 'whitespace-pre-wrap font-mono text-xs',
       )}
     >
-      {parseFilePathsInContent(content)}
+      {renderFilePathsWithCopyButtons(content)}
     </pre>
   );
 }

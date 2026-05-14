@@ -21,7 +21,10 @@ export function* renderableGroups(messages: Message[]): Generator<RenderGroup> {
     if (msg.type === 'tool_result') continue;
     if (msg.parentToolUseId) continue;
 
-    const isTimeline = msg.role === 'assistant' && TIMELINE_TYPES.has(msg.type);
+    const isTimeline =
+      (msg.role === 'assistant' && TIMELINE_TYPES.has(msg.type)) ||
+      msg.type === 'action_result' ||
+      msg.type === 'pending_action';
     if (isTimeline) {
       if (timelineGroup.length === 0) groupPrevRole = prevRole;
       timelineGroup.push(msg);
@@ -36,7 +39,6 @@ export function* renderableGroups(messages: Message[]): Generator<RenderGroup> {
   }
   if (timelineGroup.length > 0) {
     yield { kind: 'timeline', messages: timelineGroup, prevRole: groupPrevRole };
-    timelineGroup = [];
   }
 }
 

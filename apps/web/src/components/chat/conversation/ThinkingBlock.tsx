@@ -1,6 +1,5 @@
-import * as Collapsible from '@radix-ui/react-collapsible';
 import { MarkdownContent } from '../renderers/MarkdownContent.tsx';
-import { RotatableChevron } from '../renderers/primitives.tsx';
+import { BlockCollapsible } from '../tool-use/BlockCollapsible.tsx';
 
 interface ThinkingBlockProps {
   content: string;
@@ -9,6 +8,7 @@ interface ThinkingBlockProps {
   durationMs?: number | null;
   /** Whether the thinking block is currently streaming */
   isStreaming?: boolean;
+  blockId: string;
 }
 
 function thinkingLabel(
@@ -27,20 +27,16 @@ export function ThinkingBlock({
   budgetTokens,
   durationMs,
   isStreaming = false,
+  blockId,
 }: ThinkingBlockProps): React.ReactNode {
   if (!content.trim()) return null;
 
   const label = thinkingLabel(isStreaming, durationMs, budgetTokens);
-
   return (
-    <Collapsible.Root className="text-sm">
-      <Collapsible.Trigger className="group flex items-center gap-2 cursor-pointer select-none text-text-muted hover:text-text transition-colors">
-        <span>{label}</span>
-        <RotatableChevron className="opacity-40 shrink-0 group-data-[state=open]:rotate-90 group-data-[state=open]:opacity-50" />
-      </Collapsible.Trigger>
-      <Collapsible.Content className="mt-2 pl-3 border-l-2 border-border/50 text-sm text-text-muted/60">
+    <BlockCollapsible blockId={blockId} label={label}>
+      <div className="pl-3 border-l-2 border-border/50 text-sm text-text-muted/60">
         <MarkdownContent content={content} />
-      </Collapsible.Content>
-    </Collapsible.Root>
+      </div>
+    </BlockCollapsible>
   );
 }

@@ -1,8 +1,19 @@
+import {
+  CommandLineIcon,
+  CpuChipIcon,
+  DocumentMagnifyingGlassIcon,
+  DocumentPlusIcon,
+  MagnifyingGlassIcon,
+  PencilSquareIcon,
+  ServerIcon,
+  WrenchIcon,
+} from '@heroicons/react/24/outline';
 import { render, screen } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { describe, expect, it } from 'vitest';
 import { Expandable } from '@/components/chat/renderers/Expandable';
 import { MarkdownContent } from '@/components/chat/renderers/MarkdownContent';
+import { CollapsibleBlock } from '@/components/chat/renderers/primitives';
 import {
   CompactBoundaryContent,
   ControlResponseContent,
@@ -17,12 +28,75 @@ import {
   StreamlinedToolSummaryContent,
   ToolResultBlock,
 } from '@/components/chat/tool-use/index';
+import { TaskBadge } from '@/components/chat/tool-use/TaskBadge';
 import { ToolUseBlock } from '@/components/chat/tool-use/ToolUseBlock';
+import { ToolUseHeader } from '@/components/chat/tool-use/ToolUseHeader';
+import { AGENT_TOOLS, getToolHeaderInfo, isMcpTool } from '@/utils/tool-utils';
+
+const TOOL_ICON_CLASS = 'w-4 h-4 shrink-0';
+
+function getToolIcon(toolName: string): React.ReactNode {
+  if (toolName === 'Bash') return <CommandLineIcon className={TOOL_ICON_CLASS} />;
+  if (toolName === 'Read') return <DocumentMagnifyingGlassIcon className={TOOL_ICON_CLASS} />;
+  if (toolName === 'Write') return <DocumentPlusIcon className={TOOL_ICON_CLASS} />;
+  if (toolName === 'Edit' || toolName === 'MultiEdit')
+    return <PencilSquareIcon className={TOOL_ICON_CLASS} />;
+  if (toolName === 'WebSearch') return <MagnifyingGlassIcon className={TOOL_ICON_CLASS} />;
+  if (toolName === 'Agent' || toolName === 'Task')
+    return <CpuChipIcon className={TOOL_ICON_CLASS} />;
+  if (isMcpTool(toolName)) return <ServerIcon className={TOOL_ICON_CLASS} />;
+  return <WrenchIcon className={TOOL_ICON_CLASS} />;
+}
+
+function WrappedToolUseBlock({
+  toolName,
+  input = {},
+  result,
+  defaultOpen,
+  task,
+}: {
+  toolName: string;
+  input?: Record<string, unknown>;
+  result?: { content?: string; is_error?: boolean };
+  defaultOpen?: boolean;
+  task?: {
+    toolUseId: string;
+    taskType: 'local_agent' | 'local_bash' | 'subagent';
+    status: 'running' | 'completed' | 'failed' | 'stopped';
+    description: string;
+    progressText?: string;
+    lastToolName?: string;
+  };
+}) {
+  const headerInfo = getToolHeaderInfo(toolName, input);
+  const taskType = task?.taskType;
+  const detail = task?.description && !headerInfo.detail ? task.description : headerInfo.detail;
+  const header = (
+    <ToolUseHeader
+      icon={getToolIcon(toolName)}
+      name={headerInfo.name}
+      detail={detail}
+      range={headerInfo.range}
+      badge={
+        AGENT_TOOLS.has(toolName) || taskType ? (
+          <TaskBadge toolName={toolName} input={input} task={task} />
+        ) : undefined
+      }
+    />
+  );
+  return (
+    <CollapsibleBlock header={header} defaultOpen={defaultOpen ?? false}>
+      <ToolUseBlock toolName={toolName} input={input} result={result} taskType={taskType} />
+    </CollapsibleBlock>
+  );
+}
 
 describe('tool-use', () => {
   describe('ToolUseBlock', () => {
     it('Bash renders with a heroicon SVG (not emoji)', () => {
-      const { container } = render(<ToolUseBlock toolName="Bash" input={{ command: 'ls' }} />);
+      const { container } = render(
+        <WrappedToolUseBlock toolName="Bash" input={{ command: 'ls' }} />,
+      );
       const button = container.querySelector('button')!;
       expect(button.querySelector('svg')).toBeInTheDocument();
       expect(button.textContent).not.toContain('⚙');
@@ -30,7 +104,7 @@ describe('tool-use', () => {
 
     it('Read renders with a heroicon SVG', () => {
       const { container } = render(
-        <ToolUseBlock toolName="Read" input={{ file_path: '/src/index.ts' }} />,
+        <WrappedToolUseBlock toolName="Read" input={{ file_path: '/src/index.ts' }} />,
       );
       const button = container.querySelector('button')!;
       expect(button.querySelector('svg')).toBeInTheDocument();
@@ -38,14 +112,18 @@ describe('tool-use', () => {
     });
 
     it('renders tool_use with tool name', () => {
-      render(<ToolUseBlock toolName="Bash" input={{ command: 'ls -la' }} />);
+      render(<WrappedToolUseBlock toolName="Bash" input={{ command: 'ls -la' }} />);
       expect(screen.getByText('Bash')).toBeInTheDocument();
     });
 
     it('Bash IN/OUT are in a single combined block (one bg-code-block container)', async () => {
       const user = userEvent.setup();
       const { container } = render(
-        <ToolUseBlock toolName="Bash" input={{ command: 'ls' }} result={{ content: 'file.txt' }} />,
+        <WrappedToolUseBlock
+          toolName="Bash"
+          input={{ command: 'ls' }}
+          result={{ content: 'file.txt' }}
+        />,
       );
       await user.click(screen.getByText('Bash'));
       const blocks = container.querySelectorAll('.bg-code-block');
@@ -54,7 +132,7 @@ describe('tool-use', () => {
 
     it('copy icon is solid (title="Copy"), changes to check after click, reverts after timeout', async () => {
       const user = userEvent.setup({ delay: null });
-      render(<ToolUseBlock toolName="Bash" input={{ command: 'echo hi' }} defaultOpen />);
+      render(<WrappedToolUseBlock toolName="Bash" input={{ command: 'echo hi' }} defaultOpen />);
       const copyBtn = screen.getByTitle('Copy');
       expect(copyBtn).toBeInTheDocument();
 
@@ -64,7 +142,7 @@ describe('tool-use', () => {
     });
 
     it('copy button uses heroicons svg, not emoji', async () => {
-      render(<ToolUseBlock toolName="Bash" input={{ command: 'echo hi' }} defaultOpen />);
+      render(<WrappedToolUseBlock toolName="Bash" input={{ command: 'echo hi' }} defaultOpen />);
       const copyBtn = screen.getByTitle('Copy');
       expect(copyBtn.querySelector('svg')).toBeInTheDocument();
       expect(copyBtn.textContent).not.toContain('📋');
@@ -72,7 +150,7 @@ describe('tool-use', () => {
 
     it('Bash content wraps long lines (whitespace-pre-wrap)', async () => {
       const { container } = render(
-        <ToolUseBlock
+        <WrappedToolUseBlock
           toolName="Bash"
           input={{ command: 'echo hi' }}
           result={{ content: 'hello world' }}
@@ -86,19 +164,19 @@ describe('tool-use', () => {
     });
 
     it('copy button appears as overlay inside Copyable wrapper in IN row', async () => {
-      render(<ToolUseBlock toolName="Bash" input={{ command: 'echo hi' }} defaultOpen />);
+      render(<WrappedToolUseBlock toolName="Bash" input={{ command: 'echo hi' }} defaultOpen />);
       const copyBtn = screen.getByTitle('Copy');
       expect(copyBtn.closest('.group\\/copyable')).toBeInTheDocument();
     });
 
     it('renders IN label for bash tool input when expanded', async () => {
-      render(<ToolUseBlock toolName="Bash" input={{ command: 'echo hello' }} defaultOpen />);
+      render(<WrappedToolUseBlock toolName="Bash" input={{ command: 'echo hello' }} defaultOpen />);
       expect(screen.getByText('IN')).toBeInTheDocument();
     });
 
     it('renders IN/OUT labels for default tool with input and result when expanded', async () => {
       render(
-        <ToolUseBlock
+        <WrappedToolUseBlock
           toolName="Grep"
           input={{ pattern: 'foo', path: '/src' }}
           result={{ content: 'found 3 matches' }}
@@ -111,7 +189,7 @@ describe('tool-use', () => {
 
     it('default tool (Grep) IN/OUT share one bordered box, labels are inside', async () => {
       const { container } = render(
-        <ToolUseBlock
+        <WrappedToolUseBlock
           toolName="Grep"
           input={{ pattern: 'foo', path: '/src' }}
           result={{ content: 'found 3 matches' }}
@@ -127,7 +205,7 @@ describe('tool-use', () => {
 
     it('Read tool result renders with syntax highlighting (no plain pre.bg-code-block)', async () => {
       const { container } = render(
-        <ToolUseBlock
+        <WrappedToolUseBlock
           toolName="Read"
           input={{ file_path: '/src/Foo.tsx' }}
           result={{ content: 'import React from "react";\nexport function Foo() {}' }}
@@ -140,7 +218,7 @@ describe('tool-use', () => {
     });
 
     it('renders TodoRead tool_use (visibility controlled by MessageVisibilityContext, not ToolUseBlock)', () => {
-      const { container } = render(<ToolUseBlock toolName="TodoRead" input={{}} />);
+      const { container } = render(<WrappedToolUseBlock toolName="TodoRead" input={{}} />);
       expect(container.innerHTML).not.toBe('');
       expect(container.textContent).toContain('TodoRead');
     });
@@ -292,14 +370,14 @@ describe('tool-use', () => {
 
   describe('Task/Agent tool badge', () => {
     it('renders no badge when Task tool has no status and no subagent_type', () => {
-      const { container } = render(<ToolUseBlock toolName="Task" input={{}} />);
+      const { container } = render(<WrappedToolUseBlock toolName="Task" input={{}} />);
       expect(container.querySelector('.font-mono')).not.toBeInTheDocument();
       expect(container.querySelector('.animate-pulse')).not.toBeInTheDocument();
     });
 
     it('renders running badge when taskStatus is running', () => {
       render(
-        <ToolUseBlock
+        <WrappedToolUseBlock
           toolName="Task"
           input={{}}
           task={{
@@ -315,7 +393,7 @@ describe('tool-use', () => {
 
     it('does not show Done badge when taskStatus is completed (timeline handles done state)', () => {
       render(
-        <ToolUseBlock
+        <WrappedToolUseBlock
           toolName="Task"
           input={{}}
           task={{
@@ -330,7 +408,7 @@ describe('tool-use', () => {
     });
 
     it('renders subagent chip when subagent_type is provided even without taskStatus', () => {
-      render(<ToolUseBlock toolName="Task" input={{ subagent_type: 'general-purpose' }} />);
+      render(<WrappedToolUseBlock toolName="Task" input={{ subagent_type: 'general-purpose' }} />);
       expect(screen.getByText('subagent')).toBeInTheDocument();
     });
   });

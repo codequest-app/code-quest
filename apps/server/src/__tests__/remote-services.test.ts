@@ -34,7 +34,7 @@ function makeSetup() {
 
     httpServer.on('upgrade', (req, socket, head) => {
       wss.handleUpgrade(req, socket, head, (ws) => {
-        new Agent(new RpcChannel(wrapWs(ws)), new FakeProcessProvider(), filesystem, git);
+        new Agent(new FakeProcessProvider(), filesystem, git).attach(new RpcChannel(wrapWs(ws)));
       });
     });
 

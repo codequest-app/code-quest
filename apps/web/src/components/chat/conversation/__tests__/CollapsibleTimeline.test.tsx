@@ -20,6 +20,10 @@ function textNode(content = 'hi'): Message {
   return msg({ role: 'assistant', type: 'text', content });
 }
 
+function actionResultNode(content = 'Approved: Bash'): Message {
+  return msg({ role: 'user', type: 'action_result', content });
+}
+
 describe('TimelineItem', () => {
   it('renders children', () => {
     render(
@@ -102,6 +106,39 @@ describe('CollapsibleTimeline', () => {
     const nodes = [toolNode('Read'), textNode('between'), toolNode('Read'), toolNode('Read')];
     render(<CollapsibleTimeline messages={nodes} />);
     expect(screen.getByText(/×2/)).toBeInTheDocument();
+  });
+
+  it('[tool, action_result, tool] → single group with both tool chips', () => {
+    const nodes = [toolNode('Bash'), actionResultNode('Approved: Bash'), toolNode('Read')];
+    render(<CollapsibleTimeline messages={nodes} />);
+    // Both tools in one group (ToolGroupSummary shows chips)
+    expect(document.querySelector('[data-collapsed-ids]')).toBeInTheDocument();
+    expect(screen.getByText('Bash')).toBeInTheDocument();
+    expect(screen.getByText('Read')).toBeInTheDocument();
+    // action_result text NOT shown in collapsed chip row
+    expect(screen.queryByText('Approved: Bash')).not.toBeInTheDocument();
+  });
+
+  it('[tool, action_result, tool, action_result, tool] → single group with three chips', () => {
+    const nodes = [
+      toolNode('Bash'),
+      actionResultNode('Approved: Bash'),
+      toolNode('Read'),
+      actionResultNode('Approved: Read'),
+      toolNode('Write'),
+    ];
+    render(<CollapsibleTimeline messages={nodes} />);
+    expect(document.querySelector('[data-collapsed-ids]')).toBeInTheDocument();
+    expect(screen.getByText('Bash')).toBeInTheDocument();
+    expect(screen.getByText('Read')).toBeInTheDocument();
+    expect(screen.getByText('Write')).toBeInTheDocument();
+  });
+
+  it('group with all-empty tool names shows fallback label instead of bare chevron', () => {
+    const nodes = [toolNode(''), toolNode('')];
+    render(<CollapsibleTimeline messages={nodes} />);
+    expect(screen.getByRole('button').textContent?.trim()).not.toBe('>');
+    expect(screen.getByRole('button').textContent?.trim()).not.toBe('');
   });
 
   it('group can be expanded to show individual tool rows', async () => {
