@@ -1,6 +1,7 @@
 import { useState } from 'react';
 import { Button } from '../ui/Button.tsx';
 import { Dialog, DialogContent } from '../ui/Dialog.tsx';
+import { DialogFooter } from '../ui/DialogFooter.tsx';
 
 const VALID_NAME = /^[\w./-]+$/;
 
@@ -58,14 +59,14 @@ export function RenameWorktreeDialog({
             />
           </label>
           {error && <p className="text-xs text-warn">{error}</p>}
-          <div className="flex justify-end gap-2 pt-2 border-t border-border">
+          <DialogFooter>
             <Button variant="secondary" size="sm" onClick={onClose}>
               Cancel
             </Button>
             <Button variant="primary" size="sm" onClick={submit}>
               Rename
             </Button>
-          </div>
+          </DialogFooter>
         </div>
       </DialogContent>
     </Dialog>

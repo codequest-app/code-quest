@@ -1,4 +1,4 @@
-import { Copyable } from './Copyable.tsx';
+import { Copyable } from '@/components/chat/ui/Copyable';
 import { Highlight } from './Highlight.tsx';
 
 interface CodeBlockProps {

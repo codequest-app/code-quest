@@ -3,7 +3,7 @@
 import type { Meta, StoryObj } from '@storybook/react-vite';
 import { ErrorBoundary } from 'react-error-boundary';
 import { Toaster } from 'sonner';
-import { ErrorFallback } from './components/workspace/ErrorFallback.tsx';
+import { ErrorFallback } from './components/ui/ErrorFallback.tsx';
 import { WorkspaceLayout } from './components/workspace/WorkspaceLayout.tsx';
 import { makeSession } from './test/story-fixtures.ts';
 import { withStoryWorkspaceFixtures } from './test/story-workspace-decorator.tsx';

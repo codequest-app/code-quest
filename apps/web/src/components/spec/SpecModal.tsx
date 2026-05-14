@@ -8,6 +8,7 @@ import {
 import * as Tabs from '@radix-ui/react-tabs';
 import { useEffect, useState } from 'react';
 import { toast } from 'sonner';
+import { TaskChecklist } from '@/components/ui/TaskChecklist';
 import { useOpenspecActions } from '@/contexts/OpenspecContext';
 import { useSocket } from '@/contexts/SocketContext';
 import { rpc } from '@/socket/rpc';
@@ -15,7 +16,6 @@ import { MarkdownContent } from '../chat/renderers/MarkdownContent.tsx';
 import { tabTriggerCompact } from '../ui/_tokens.ts';
 import { Button } from '../ui/Button.tsx';
 import { Dialog, DialogContent } from '../ui/Dialog.tsx';
-import { TaskChecklist } from './TaskChecklist.tsx';
 
 interface SpecModalProps {
   cwd: string;

@@ -1,6 +1,9 @@
 import { useState } from 'react';
+import { TextField } from '@/components/chat/ui/TextField';
 import { Button } from '../ui/Button.tsx';
 import { Dialog, DialogContent } from '../ui/Dialog.tsx';
+import { DialogFooter } from '../ui/DialogFooter.tsx';
+import { InlineCode } from '../ui/InlineCode.tsx';
 
 const VALID_SLUG = /^[a-z0-9-]+$/;
 
@@ -55,35 +58,37 @@ export function NewChangeDialog({
     >
       <DialogContent title="New OpenSpec change" size="md">
         <div className="flex flex-col gap-3">
-          <label className="text-xs text-text-muted">
+          <label className="text-xs text-text-muted" htmlFor="new-change-name">
             Change name (slug)
-            <input
+            <TextField
+              id="new-change-name"
               type="text"
               value={name}
               autoFocus
+              mono
               placeholder="e.g. add-dark-mode"
-              onChange={(e) => {
-                setName(e.target.value);
+              onChange={(value) => {
+                setName(value);
                 setError(null);
               }}
               onKeyDown={(e) => {
                 if (e.key === 'Enter') void submit();
               }}
-              className="mt-1 w-full px-2 py-1 rounded border border-border bg-bg/40 text-sm text-text font-mono"
+              className="mt-1 w-full"
             />
           </label>
           <p className="text-xs text-text-dim">
-            Runs <code className="font-mono">openspec change new &lt;name&gt;</code>.
+            Runs <InlineCode subtle>openspec change new &lt;name&gt;</InlineCode>.
           </p>
           {error && <p className="text-xs text-warn">{error}</p>}
-          <div className="flex justify-end gap-2 pt-2 border-t border-border">
+          <DialogFooter>
             <Button variant="secondary" size="sm" onClick={onClose}>
               Cancel
             </Button>
             <Button variant="primary" size="sm" disabled={submitting} onClick={() => void submit()}>
               {submitting ? 'Creating…' : 'Create'}
             </Button>
-          </div>
+          </DialogFooter>
         </div>
       </DialogContent>
     </Dialog>

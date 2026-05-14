@@ -1,4 +1,5 @@
 import { useState } from 'react';
+import { TextField } from '@/components/chat/ui/TextField';
 import type { InitOptions } from '@/types/chat';
 import { Button } from '../ui/Button.tsx';
 import { Dialog, DialogContent } from '../ui/Dialog.tsx';
@@ -11,10 +12,6 @@ interface InitOptionsDialogProps {
 }
 
 const LABEL_CLASS = 'flex flex-col gap-1 text-xs text-text-muted';
-const TEXTAREA_LG =
-  'bg-code-block border border-border rounded p-2 text-sm text-text font-mono resize-y min-h-15';
-const TEXTAREA_SM =
-  'bg-code-block border border-border rounded p-2 text-sm text-text font-mono resize-y min-h-10';
 
 const HOOK_DEFS = [
   { key: 'captureBaseline', label: 'captureBaseline (PreToolUse)', section: 'PreToolUse' },
@@ -85,20 +82,26 @@ export function InitOptionsDialog({
     <Dialog open={open} onOpenChange={(isOpen) => !isOpen && onClose()}>
       <DialogContent title="Init Options" className="max-w-md w-full">
         <div className="flex flex-col gap-3">
-          <label className={LABEL_CLASS}>
+          <label className={LABEL_CLASS} htmlFor="init-system-prompt">
             System Prompt
-            <textarea
+            <TextField
+              id="init-system-prompt"
+              as="textarea"
+              mono
               value={systemPrompt}
-              onChange={(e) => setSystemPrompt(e.target.value)}
-              className={TEXTAREA_LG}
+              onChange={setSystemPrompt}
+              className="resize-y min-h-15"
             />
           </label>
-          <label className={LABEL_CLASS}>
+          <label className={LABEL_CLASS} htmlFor="init-append-system-prompt">
             Append System Prompt
-            <textarea
+            <TextField
+              id="init-append-system-prompt"
+              as="textarea"
+              mono
               value={appendSystemPrompt}
-              onChange={(e) => setAppendSystemPrompt(e.target.value)}
-              className={TEXTAREA_LG}
+              onChange={setAppendSystemPrompt}
+              className="resize-y min-h-15"
             />
           </label>
           <details
@@ -109,22 +112,30 @@ export function InitOptionsDialog({
               Advanced
             </summary>
             <div className="flex flex-col gap-3 mt-2">
-              <label className={LABEL_CLASS}>
+              <label className={LABEL_CLASS} htmlFor="init-json-schema">
                 JSON Schema
-                <textarea
+                <TextField
+                  id="init-json-schema"
+                  as="textarea"
+                  mono
+                  size="sm"
                   value={jsonSchema}
-                  onChange={(e) => setJsonSchema(e.target.value)}
+                  onChange={setJsonSchema}
                   placeholder="JSON schema object"
-                  className={TEXTAREA_SM}
+                  className="resize-y min-h-10"
                 />
               </label>
-              <label className={LABEL_CLASS}>
+              <label className={LABEL_CLASS} htmlFor="init-agents">
                 Agents
-                <textarea
+                <TextField
+                  id="init-agents"
+                  as="textarea"
+                  mono
+                  size="sm"
                   value={agents}
-                  onChange={(e) => setAgents(e.target.value)}
+                  onChange={setAgents}
                   placeholder="JSON array of agent configs"
-                  className={TEXTAREA_SM}
+                  className="resize-y min-h-10"
                 />
               </label>
               <fieldset className="flex flex-col gap-1">
@@ -143,7 +154,7 @@ export function InitOptionsDialog({
             </div>
           </details>
         </div>
-        <p className="text-xs text-text-muted/60 mt-3">Takes effect on next session creation.</p>
+        <p className="text-xs text-subtle mt-3">Takes effect on next session creation.</p>
         <div className="flex justify-end gap-2 mt-4">
           <Button variant="secondary" size="xs" onClick={onClose}>
             Cancel

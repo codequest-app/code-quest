@@ -1,15 +1,31 @@
 import type { ChatStats } from '@code-quest/shared';
-import { Expandable } from '@/components/chat/renderers/Expandable';
 import { MarkdownContent } from '@/components/chat/renderers/MarkdownContent';
+import { Expandable } from '@/components/chat/ui/Expandable';
+import { Badge } from '@/components/ui/Badge';
 import type { DocumentMeta, ImageMeta } from '@/types/ui';
 import { cn } from '@/utils/cn';
-import {
-  CenterDivider,
-  CODE_BLOCK_CLASS,
-  CollapsibleBlock,
-  StatusLine,
-} from '../renderers/primitives.tsx';
-import { AlertBanner } from './AlertBanner.tsx';
+import { CODE_BLOCK_CLASS } from '../renderers/ansi.tsx';
+import { AlertBanner } from '../ui/AlertBanner';
+import { CenterDivider } from '../ui/CenterDivider';
+import { CollapsibleBlock } from '../ui/CollapsibleBlock';
+
+function StatusLine({
+  icon,
+  children,
+  className,
+}: {
+  icon: React.ReactNode;
+  children: React.ReactNode;
+  className?: string;
+}) {
+  return (
+    <div className={cn('flex items-center gap-2 text-xs', className)}>
+      <span className="inline-flex items-center">{icon}</span>
+      {children}
+    </div>
+  );
+}
+
 import { renderIcon } from './message-type-icons.tsx';
 
 const SET_MODEL_PREFIX = /^Set model to /;
@@ -27,7 +43,7 @@ const CONTROL_RESPONSE_STYLES = [
 
 const CONTROL_RESPONSE_DEFAULT = {
   icon: '↩',
-  colorClass: 'text-text-muted bg-muted/10 border-l-text-muted',
+  colorClass: 'text-text-muted tint-5 border-l-text-muted',
 };
 
 export function PendingActionContent({ content }: { content: string }): React.ReactNode {
@@ -54,7 +70,7 @@ export function ResultContent({ stats }: { stats?: ChatStats }): React.ReactNode
   return (
     <CenterDivider data-type="result">
       {stats && (
-        <div className="flex gap-3 font-mono text-xs text-text-muted/60">
+        <div className="flex gap-3 font-mono text-xs text-subtle">
           {stats.costUsd != null && <span>${stats.costUsd.toFixed(4)}</span>}
           {stats.durationMs != null && <span>{(stats.durationMs / 1000).toFixed(1)}s</span>}
           {stats.inputTokens != null && <span>↑{stats.inputTokens}</span>}
@@ -92,7 +108,7 @@ export function InterruptContent(): React.ReactNode {
 
 export function MetaContent({ content }: { content: string }): React.ReactNode {
   if (!content) return null;
-  return <div className="text-xs text-text-muted/60 italic">{content}</div>;
+  return <div className="text-xs text-subtle italic">{content}</div>;
 }
 
 export function SlashCommandResultContent({ content }: { content: string }): React.ReactNode {
@@ -155,9 +171,9 @@ export function TaskStartedContent({
     <StatusLine icon={renderIcon('task_started')} className="text-text-muted">
       <span>{content}</span>
       {taskType != null && (
-        <span className="px-1.5 py-0.5 rounded bg-accent/20 text-accent text-xs font-mono">
+        <Badge variant="accent" mono>
           {taskType}
-        </span>
+        </Badge>
       )}
     </StatusLine>
   );
@@ -173,9 +189,7 @@ export function StreamlinedTextContent({
   return (
     <Expandable maxHeight={600} defaultOpen={defaultOpen}>
       <div className="relative">
-        <span className="absolute -top-1 right-0 text-xs text-text-muted/60 font-mono">
-          fast mode
-        </span>
+        <span className="absolute -top-1 right-0 text-xs text-subtle font-mono">fast mode</span>
         <MarkdownContent content={content} />
       </div>
     </Expandable>
@@ -240,11 +254,9 @@ export function DocumentContent({
 export function ContentBlockStart({ blockType }: { blockType?: string }): React.ReactNode {
   return (
     <div role="status" aria-label="block-placeholder" className="flex items-center gap-2 py-2">
-      <div className="h-4 w-32 bg-muted/20 rounded animate-pulse" />
-      <div className="h-4 w-20 bg-muted/10 rounded animate-pulse" />
-      {blockType != null && (
-        <span className="text-xs text-text-muted/60 font-mono">{blockType}...</span>
-      )}
+      <div className="h-4 w-32 tint-10 rounded animate-pulse" />
+      <div className="h-4 w-20 tint-5 rounded animate-pulse" />
+      {blockType != null && <span className="text-xs text-subtle font-mono">{blockType}...</span>}
     </div>
   );
 }

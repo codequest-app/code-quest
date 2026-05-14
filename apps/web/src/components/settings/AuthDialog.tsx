@@ -1,4 +1,5 @@
 import { useEffect, useState } from 'react';
+import { TextField } from '@/components/chat/ui/TextField';
 import { useChannelConfig } from '@/contexts/channel';
 import { useSession } from '@/contexts/SessionContext';
 import { Button } from '../ui/Button.tsx';
@@ -71,24 +72,22 @@ export function AuthDialog({ open, onClose }: AuthDialogProps): React.JSX.Elemen
               <label htmlFor="auth-code" className="text-xs text-text-muted">
                 Authorization Code
               </label>
-              <input
+              <TextField
                 id="auth-code"
                 type="text"
                 value={code}
-                onChange={(e) => setCode(e.target.value)}
+                onChange={setCode}
                 placeholder="Paste code here"
-                className="bg-input-bg border border-border rounded px-3 py-1.5 text-sm text-text"
               />
               <label htmlFor="auth-state" className="text-xs text-text-muted">
                 State (if provided)
               </label>
-              <input
+              <TextField
                 id="auth-state"
                 type="text"
                 value={state}
-                onChange={(e) => setState(e.target.value)}
+                onChange={setState}
                 placeholder="State parameter"
-                className="bg-input-bg border border-border rounded px-3 py-1.5 text-sm text-text"
               />
             </div>
             <Button size="md" onClick={() => submitOAuthCode(code, state)} disabled={!code}>

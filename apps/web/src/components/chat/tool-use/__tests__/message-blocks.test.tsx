@@ -11,26 +11,25 @@ import {
 import { render, screen } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { describe, expect, it } from 'vitest';
-import { Expandable } from '@/components/chat/renderers/Expandable';
 import { MarkdownContent } from '@/components/chat/renderers/MarkdownContent';
-import { CollapsibleBlock } from '@/components/chat/renderers/primitives';
+import { HookResponseContent, HookStartedContent } from '@/components/chat/tool-use/HookBlocks';
 import {
   CompactBoundaryContent,
   ControlResponseContent,
   DocumentContent,
   ErrorContent,
-  HookResponseContent,
-  HookStartedContent,
   ImageContent,
   InterruptContent,
   ResultContent,
   SlashCommandResultContent,
   StreamlinedToolSummaryContent,
-  ToolResultBlock,
-} from '@/components/chat/tool-use/index';
+} from '@/components/chat/tool-use/SystemBlocks';
 import { TaskBadge } from '@/components/chat/tool-use/TaskBadge';
+import { ToolResultBlock } from '@/components/chat/tool-use/ToolResultBlock';
 import { ToolUseBlock } from '@/components/chat/tool-use/ToolUseBlock';
 import { ToolUseHeader } from '@/components/chat/tool-use/ToolUseHeader';
+import { CollapsibleBlock } from '@/components/chat/ui/CollapsibleBlock';
+import { Expandable } from '@/components/chat/ui/Expandable';
 import { AGENT_TOOLS, getToolHeaderInfo, isMcpTool } from '@/utils/tool-utils';
 
 const TOOL_ICON_CLASS = 'w-4 h-4 shrink-0';

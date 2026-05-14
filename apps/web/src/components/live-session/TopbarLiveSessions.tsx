@@ -1,19 +1,20 @@
 import type { SessionStateSummary } from '@code-quest/shared';
 import { toast } from 'sonner';
+import { StatusDot } from '@/components/ui/StatusDot';
 import { basename } from '@/utils/basename';
-import { cn } from '@/utils/cn';
 import { LiveSessionPopover } from './LiveSessionPopover.tsx';
 
 const MAX_VISIBLE = 5;
 
 const LIVE_STATES = new Set(['busy', 'launching', 'idle']);
 
-const DOT_CLASS: Record<string, string> = {
-  busy: 'bg-success animate-pulse',
-  launching: 'bg-warning animate-pulse',
-  idle: 'bg-text-dim',
-  exited: 'bg-text-dim',
-  disconnected: 'bg-danger',
+type DotColor = 'success' | 'warning' | 'muted' | 'danger';
+const DOT_COLOR: Record<string, { color: DotColor; pulse?: boolean }> = {
+  busy: { color: 'success', pulse: true },
+  launching: { color: 'warning', pulse: true },
+  idle: { color: 'muted' },
+  exited: { color: 'muted' },
+  disconnected: { color: 'danger' },
 };
 
 interface TopbarLiveSessionsProps {
@@ -46,9 +47,7 @@ export function TopbarLiveSessions({
               onClick={() => onActivate(s.channelId)}
               title={s.title ?? label}
             >
-              <span
-                className={cn('w-1.5 h-1.5 rounded-full', DOT_CLASS[s.state] ?? 'bg-text-dim')}
-              />
+              <StatusDot {...(DOT_COLOR[s.state] ?? { color: 'muted' })} />
               <span className="font-mono truncate max-w-32">{label}</span>
             </button>
             <LiveSessionPopover

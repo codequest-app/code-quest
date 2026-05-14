@@ -1,5 +1,6 @@
 import type { ControlPermissionResponse, PendingControl } from '@code-quest/shared';
-import { OptionButton } from './OptionButton.tsx';
+import { FloatingCard } from '@/components/chat/ui/FloatingCard';
+import { OptionButton } from '../ui/OptionButton';
 
 export function HookCallbackCard({
   pending,
@@ -9,7 +10,7 @@ export function HookCallbackCard({
   onRespond: (response: ControlPermissionResponse) => void;
 }): React.JSX.Element {
   return (
-    <div className="bg-surface border border-border rounded-lg shadow-floating px-4 py-3">
+    <FloatingCard className="px-4 py-3">
       <p className="text-sm font-semibold mb-2">{pending.toolName ?? pending.subtype}</p>
       <div className="flex gap-2">
         <OptionButton
@@ -20,6 +21,6 @@ export function HookCallbackCard({
         />
         <OptionButton index={2} label="Cancel" onClick={() => onRespond({ continue: false })} />
       </div>
-    </div>
+    </FloatingCard>
   );
 }

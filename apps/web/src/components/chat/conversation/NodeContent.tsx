@@ -1,28 +1,28 @@
-import { memo, useState } from 'react';
+import { memo } from 'react';
 import { useShallow } from 'zustand/react/shallow';
+import { Copyable } from '@/components/chat/ui/Copyable';
+import { JsonViewer } from '@/components/chat/ui/JsonViewer';
 import { useChannelStore } from '@/stores/ChannelStoreContext';
 import type { ToolResult } from '@/types/chat';
 import type { Task } from '@/types/task';
 import type { AssistantTurn, ForkFn, Message, RewindFn } from '@/types/ui';
 import { basename } from '@/utils/basename';
 import { getModel, getToolId } from '@/utils/message-helpers';
-import { parseAttachments } from '@/utils/parse-attachments';
-import { ContentErrorBoundary } from '../renderers/ContentErrorBoundary.tsx';
-import { Copyable } from '../renderers/Copyable.tsx';
-import { Expandable } from '../renderers/Expandable.tsx';
-import { JsonViewer } from '../renderers/JsonViewer.tsx';
+import { Badge } from '../../ui/Badge.tsx';
+import { CODE_BLOCK_CLASS } from '../renderers/ansi.tsx';
 import { MarkdownContent } from '../renderers/MarkdownContent.tsx';
-import { CollapsibleBlock } from '../renderers/primitives.tsx';
-import { ImagePreviewModal } from '../tool-use/ImagePreviewModal.tsx';
+import {
+  HookDiagnosticsContent,
+  HookResponseContent,
+  HookStartedContent,
+} from '../tool-use/HookBlocks.tsx';
+import { renderIcon } from '../tool-use/message-type-icons.tsx';
 import {
   CompactBoundaryContent,
   ContentBlockStart,
   ControlResponseContent,
   DocumentContent,
   ErrorContent,
-  HookDiagnosticsContent,
-  HookResponseContent,
-  HookStartedContent,
   ImageContent,
   InterruptContent,
   MetaContent,
@@ -33,17 +33,17 @@ import {
   StreamlinedTextContent,
   StreamlinedToolSummaryContent,
   TaskStartedContent,
-  ToolResultBlock,
-} from '../tool-use/index.ts';
-import { renderIcon } from '../tool-use/message-type-icons.tsx';
+} from '../tool-use/SystemBlocks.tsx';
+import { ToolResultBlock } from '../tool-use/ToolResultBlock.tsx';
 import { ToolUseCollapsible } from '../tool-use/ToolUseCollapsible.tsx';
+import { CollapsibleBlock } from '../ui/CollapsibleBlock';
+import { Expandable } from '../ui/Expandable';
 import { AssistantTurnContent } from './AssistantTurnContent.tsx';
+import { ContentErrorBoundary } from './ContentErrorBoundary';
 import { MessageActions } from './MessageActions.tsx';
 import { SubagentChildren } from './SubagentChildren.tsx';
 import { ThinkingBlock } from './ThinkingBlock.tsx';
-
-const JSON_VIEWER_CLASS =
-  'bg-code-block p-3 rounded-lg overflow-x-auto text-xs border border-border';
+import { UserTextContent } from './UserTextContent.tsx';
 
 const NO_COPY_TYPES = new Set([
   'tool_use',
@@ -123,13 +123,10 @@ export const NodeContent: React.MemoExoticComponent<
                   ? `:${att.startLine}${att.endLine != null ? `-${att.endLine}` : ''}`
                   : '';
               return (
-                <span
-                  key={`${att.filename}-${att.startLine}`}
-                  className="inline-flex items-center gap-1 text-xs text-text-muted bg-surface border border-border/50 rounded px-2 py-0.5"
-                >
+                <Badge key={`${att.filename}-${att.startLine}`} size="xs">
                   {fileName}
                   {range}
-                </span>
+                </Badge>
               );
             })}
           </div>
@@ -159,47 +156,6 @@ export const NodeContent: React.MemoExoticComponent<
     </div>
   );
 });
-
-function UserTextContent({ content }: { content: string }): React.JSX.Element {
-  const [preview, setPreview] = useState<{ src: string; alt: string } | null>(null);
-  const { text, attachments } = parseAttachments(content);
-
-  return (
-    <>
-      <Expandable maxHeight={600} defaultOpen={true}>
-        <div className="leading-relaxed whitespace-pre-wrap">
-          {text}
-          {attachments.length > 0 && (
-            <div className="flex flex-wrap gap-2 mt-2">
-              {attachments.map((att) =>
-                att.isImage ? (
-                  // biome-ignore lint/a11y/useKeyWithClickEvents: keyboard handled by ImagePreviewModal's Escape listener
-                  <img
-                    key={att.name}
-                    src={att.dataUrl}
-                    alt={att.name}
-                    className="max-h-32 rounded cursor-pointer"
-                    onClick={() => setPreview({ src: att.dataUrl, alt: att.name })}
-                  />
-                ) : (
-                  <span
-                    key={att.name}
-                    className="inline-flex items-center gap-1 text-xs text-text-muted bg-surface border border-border/50 rounded px-2 py-0.5"
-                  >
-                    {att.name}
-                  </span>
-                ),
-              )}
-            </div>
-          )}
-        </div>
-      </Expandable>
-      {preview && (
-        <ImagePreviewModal src={preview.src} alt={preview.alt} onClose={() => setPreview(null)} />
-      )}
-    </>
-  );
-}
 
 function resolveTask(
   message: NodeContentProps['message'],
@@ -309,13 +265,13 @@ function renderContent(
   if (message.type === 'unknown_delta' || message.type === 'raw_event')
     return (
       <CollapsibleBlock icon={renderIcon(message.type)} label={message.content}>
-        {message.data != null && <JsonViewer data={message.data} className={JSON_VIEWER_CLASS} />}
+        {message.data != null && <JsonViewer data={message.data} className={CODE_BLOCK_CLASS} />}
       </CollapsibleBlock>
     );
   if (message.type === 'unhandled')
     return (
       <CollapsibleBlock icon={renderIcon('unknown_delta')} label={message.content}>
-        {message.event != null && <JsonViewer data={message.event} className={JSON_VIEWER_CLASS} />}
+        {message.event != null && <JsonViewer data={message.event} className={CODE_BLOCK_CLASS} />}
       </CollapsibleBlock>
     );
   if (message.type === 'redacted_thinking')

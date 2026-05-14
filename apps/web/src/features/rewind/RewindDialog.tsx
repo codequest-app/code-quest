@@ -1,6 +1,10 @@
 import { useEffect, useMemo, useRef, useState } from 'react';
 import { Dialog, DialogContent } from '@/components/ui/Dialog';
-import { Kbd } from '@/components/ui/Kbd';
+
+function Kbd({ children }: { children: React.ReactNode }) {
+  return <kbd className="px-1 py-0.5 bg-surface-hover rounded text-xs">{children}</kbd>;
+}
+
 import { useChannelStore } from '@/stores/ChannelStoreContext';
 import type { Message } from '@/types/ui';
 import { cn } from '@/utils/cn';

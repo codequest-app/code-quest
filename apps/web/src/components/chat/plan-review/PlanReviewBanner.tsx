@@ -6,6 +6,7 @@ import type {
 import { planInputSchema } from '@code-quest/shared';
 import { ClipboardDocumentListIcon } from '@heroicons/react/24/outline';
 import { useEffect, useMemo, useRef, useState } from 'react';
+import { FloatingCard } from '@/components/chat/ui/FloatingCard';
 import { useChannelMessages } from '@/contexts/channel';
 import { useChannelStore } from '@/stores/ChannelStoreContext';
 import { cn } from '@/utils/cn';
@@ -82,7 +83,7 @@ export function PlanReviewBanner({ pending, onRespond }: PlanReviewBannerProps):
       ];
 
   return (
-    <div className="relative bg-surface border border-border rounded-lg overflow-hidden mb-1.5 p-2">
+    <FloatingCard className="relative overflow-hidden mb-1.5 px-2 py-2">
       <div className="absolute inset-0 bg-bg rounded-lg" />
 
       <div className="relative z-raised text-text">
@@ -153,6 +154,6 @@ export function PlanReviewBanner({ pending, onRespond }: PlanReviewBannerProps):
           </button>
         ))}
       </div>
-    </div>
+    </FloatingCard>
   );
 }

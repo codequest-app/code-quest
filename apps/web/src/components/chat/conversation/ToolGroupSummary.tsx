@@ -1,6 +1,6 @@
-import { cn } from '@/utils/cn';
+import { RotatableChevron } from '@/components/ui/Icons';
 import type { GroupChip } from '@/utils/timeline-utils';
-import { RotatableChevron } from '../renderers/primitives.tsx';
+import { Badge } from '../../ui/Badge.tsx';
 
 interface ToolGroupSummaryProps {
   chips: GroupChip[];
@@ -21,23 +21,17 @@ export function ToolGroupSummary({
     >
       <span className="flex items-center gap-1 flex-wrap">
         {chips.length === 0 ? (
-          <span className="inline-flex items-center gap-0.5 rounded px-1.5 py-0.5 font-medium bg-surface text-text-muted">
+          <Badge variant="muted" size="xs">
             Tools
-          </span>
+          </Badge>
         ) : (
           chips.map((chip) => (
-            <span
-              key={chip.label}
-              className={cn(
-                'inline-flex items-center gap-0.5 rounded px-1.5 py-0.5 font-medium',
-                chip.isError ? 'bg-danger/15 text-danger' : 'bg-surface text-text-muted',
-              )}
-            >
+            <Badge key={chip.label} variant={chip.isError ? 'danger' : 'muted'} size="xs">
               {chip.label}
               {chip.count !== undefined && chip.count > 1 && (
                 <span className="opacity-60">×{chip.count}</span>
               )}
-            </span>
+            </Badge>
           ))
         )}
       </span>

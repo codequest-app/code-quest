@@ -5,6 +5,8 @@ import type { Project } from '@/contexts/ProjectContext';
 import { basename } from '@/utils/basename';
 import { cn } from '@/utils/cn';
 import { focusRing } from '../ui/_tokens.ts';
+import { MenuItem } from '../ui/MenuItem.tsx';
+import { SectionLabel } from '../ui/SectionLabel.tsx';
 
 function displayName(p: Project): string {
   if (p.name.includes('/')) return basename(p.name);
@@ -103,9 +105,7 @@ export function TopScopeSwitcher({
 
               {pinned.length > 0 && (
                 <>
-                  <div className="px-3 pt-1 pb-0.5 text-xs font-semibold uppercase tracking-wider text-text-muted">
-                    Pinned
-                  </div>
+                  <SectionLabel className="px-3 pt-1 pb-0.5">Pinned</SectionLabel>
                   {pinned.map((p) => (
                     <ScopeItem
                       key={p.cwd}
@@ -119,9 +119,7 @@ export function TopScopeSwitcher({
 
               {recent.length > 0 && (
                 <>
-                  <div className="px-3 pt-2 pb-0.5 text-xs font-semibold uppercase tracking-wider text-text-muted">
-                    Recent
-                  </div>
+                  <SectionLabel className="px-3 pt-2 pb-0.5">Recent</SectionLabel>
                   {recent.map((p) => (
                     <ScopeItem
                       key={p.cwd}
@@ -161,17 +159,16 @@ function ScopeItem({
   onSelect: (cwd: string) => void;
 }) {
   return (
-    <button
-      type="button"
+    <MenuItem
       onClick={() => onSelect(project.cwd)}
       title={project.cwd}
       className={cn(
-        'w-full text-left px-3 py-1 text-sm flex items-center gap-1.5',
-        active ? 'text-accent bg-accent/10' : 'text-text hover:bg-hover-tint',
+        'flex items-center gap-1.5 py-1',
+        active ? 'text-accent bg-accent/10 hover:bg-accent/10' : '',
       )}
     >
       <FolderIcon className="w-3.5 h-3.5 shrink-0 text-text-muted" />
       <span className="truncate flex-1">{displayName(project)}</span>
-    </button>
+    </MenuItem>
   );
 }

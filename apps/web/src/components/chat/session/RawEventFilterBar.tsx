@@ -1,5 +1,5 @@
-import type { FilterEntry } from '@/components/live-session/FilterPopover';
 import { cn } from '@/utils/cn';
+import type { FilterEntry } from './FilterPopover';
 
 interface RawEventFilterBarProps {
   entries: FilterEntry[];
@@ -64,7 +64,7 @@ export function RawEventFilterBar({
               className={cn(
                 'relative flex items-center gap-1 px-1.5 py-0.5 rounded-sm flex-shrink-0 overflow-hidden cursor-pointer transition-[border-color,background] duration-150',
                 active
-                  ? 'border border-accent/50 bg-accent/[0.08]'
+                  ? 'border border-accent/50 bg-accent/10'
                   : 'border border-border/20 bg-transparent',
               )}
             >
@@ -72,7 +72,7 @@ export function RawEventFilterBar({
               <div
                 className={cn(
                   'absolute left-0 bottom-0 top-0 transition-[width] duration-300 pointer-events-none',
-                  active ? 'bg-accent/[0.06]' : 'bg-transparent',
+                  active ? 'bg-accent/10' : 'bg-transparent',
                 )}
                 style={{ width: `${Math.max(barRatio * 100, 8)}%` }}
               />

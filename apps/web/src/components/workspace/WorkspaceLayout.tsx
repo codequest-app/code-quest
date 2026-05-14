@@ -2,6 +2,8 @@ import { FolderOpenIcon } from '@heroicons/react/24/outline';
 import { useCallback, useEffect, useMemo, useState } from 'react';
 import { useHotkeys } from 'react-hotkeys-hook';
 import { toast } from 'sonner';
+import { DrawerAside } from '@/components/ui/DrawerAside';
+import { EmptyState } from '@/components/ui/EmptyState';
 import { CommandPaletteProvider, useCommandPaletteActions } from '@/contexts/CommandPaletteContext';
 import { useNavigationState } from '@/contexts/NavigationContext';
 import { useProjectActions, useProjectState } from '@/contexts/ProjectContext';
@@ -15,8 +17,6 @@ import { AddProjectDialog } from '../project/AddProjectDialog.tsx';
 import { ProjectTree } from '../project/ProjectTree.tsx';
 import { TopScopeSwitcher } from '../project/TopScopeSwitcher.tsx';
 import { SettingsDialog } from '../settings/SettingsDialog.tsx';
-import { DrawerAside } from './DrawerAside.tsx';
-import { EmptyState } from './EmptyState.tsx';
 import { TabContainer } from './TabContainer.tsx';
 import { WorkspaceTopbar } from './WorkspaceTopbar.tsx';
 

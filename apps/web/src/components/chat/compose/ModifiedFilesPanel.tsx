@@ -3,9 +3,8 @@ import type { FileSnapshot } from '@/types/chat';
 import { cn } from '@/utils/cn';
 import { generateUnifiedDiff } from '@/utils/diff';
 import { pluralize } from '@/utils/pluralize';
+import { Button } from '../../ui/Button.tsx';
 import { DiffViewer } from '../renderers/DiffViewer.tsx';
-
-const ACTION_BTN = 'text-xs px-2 py-1 rounded-lg cursor-pointer font-medium transition-colors';
 
 export interface ModifiedFile {
   path: string;
@@ -77,21 +76,13 @@ function ModifiedFileItem({
             </pre>
           )}
           <div className="flex gap-2 mt-1">
-            <button
-              type="button"
-              onClick={() => onAccept(file.path)}
-              className={cn(ACTION_BTN, 'bg-accent text-selected-text hover:bg-accent/80')}
-            >
+            <Button variant="primary" size="xs" onClick={() => onAccept(file.path)}>
               Accept
-            </button>
+            </Button>
             {onRewind && (
-              <button
-                type="button"
-                onClick={() => onRewind(file.path)}
-                className={cn(ACTION_BTN, 'border border-border hover:tint-5')}
-              >
+              <Button variant="secondary" size="xs" onClick={() => onRewind(file.path)}>
                 Rewind
-              </button>
+              </Button>
             )}
           </div>
         </div>

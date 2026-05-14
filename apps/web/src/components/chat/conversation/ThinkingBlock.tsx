@@ -1,5 +1,5 @@
 import { MarkdownContent } from '../renderers/MarkdownContent.tsx';
-import { BlockCollapsible } from '../tool-use/BlockCollapsible.tsx';
+import { BlockCollapsible } from '../tool-use/BlockCollapsible';
 
 interface ThinkingBlockProps {
   content: string;
@@ -34,7 +34,7 @@ export function ThinkingBlock({
   const label = thinkingLabel(isStreaming, durationMs, budgetTokens);
   return (
     <BlockCollapsible blockId={blockId} label={label}>
-      <div className="pl-3 border-l-2 border-border/50 text-sm text-text-muted/60">
+      <div className="pl-3 border-l-2 border-border-subtle text-sm text-subtle">
         <MarkdownContent content={content} />
       </div>
     </BlockCollapsible>

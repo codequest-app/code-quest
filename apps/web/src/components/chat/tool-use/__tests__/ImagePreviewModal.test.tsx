@@ -1,7 +1,7 @@
 import { fireEvent, render, screen } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { describe, expect, it, vi } from 'vitest';
-import { ImagePreviewModal } from '../ImagePreviewModal.tsx';
+import { ImagePreviewModal } from '@/components/chat/ui/ImagePreviewModal';
 
 describe('ImagePreviewModal', () => {
   it('renders the image when open', () => {

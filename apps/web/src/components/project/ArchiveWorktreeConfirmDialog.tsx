@@ -1,5 +1,6 @@
 import { Button } from '../ui/Button.tsx';
 import { Dialog, DialogContent } from '../ui/Dialog.tsx';
+import { DialogFooter } from '../ui/DialogFooter.tsx';
 
 interface ArchiveWorktreeConfirmDialogProps {
   open: boolean;
@@ -33,7 +34,7 @@ export function ArchiveWorktreeConfirmDialog({
               Worktree has uncommitted changes. Force-archive will discard them.
             </p>
           )}
-          <div className="flex justify-end gap-2 pt-2 border-t border-border">
+          <DialogFooter>
             <Button variant="secondary" size="sm" onClick={onClose}>
               Cancel
             </Button>
@@ -46,7 +47,7 @@ export function ArchiveWorktreeConfirmDialog({
                 Archive
               </Button>
             )}
-          </div>
+          </DialogFooter>
         </div>
       </DialogContent>
     </Dialog>

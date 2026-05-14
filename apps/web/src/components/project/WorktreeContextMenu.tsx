@@ -1,11 +1,11 @@
 import * as ContextMenu from '@radix-ui/react-context-menu';
 import * as DropdownMenu from '@radix-ui/react-dropdown-menu';
 import type { ReactNode } from 'react';
+import { menuContentClass as MENU_CONTENT_CLASS } from '../ui/MenuContent.tsx';
 import {
-  DANGER_MENU_ITEM_CLASS,
-  MENU_CONTENT_CLASS,
-  MENU_ITEM_CLASS,
-} from './context-menu-styles.ts';
+  dangerMenuItemClass as DANGER_MENU_ITEM_CLASS,
+  menuItemClass as MENU_ITEM_CLASS,
+} from '../ui/MenuItem.tsx';
 
 interface WorktreeMenuCallbacks {
   onOpenHere?: () => void;

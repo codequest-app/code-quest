@@ -1,6 +1,24 @@
 import { cn } from '@/utils/cn';
-import { CODE_BLOCK_CLASS, CollapsibleBlock, StatusLine } from '../renderers/primitives.tsx';
+import { CODE_BLOCK_CLASS } from '../renderers/ansi.tsx';
+import { CollapsibleBlock } from '../ui/CollapsibleBlock';
 import { renderIcon } from './message-type-icons.tsx';
+
+function StatusLine({
+  icon,
+  children,
+  className,
+}: {
+  icon: React.ReactNode;
+  children: React.ReactNode;
+  className?: string;
+}) {
+  return (
+    <div className={cn('flex items-center gap-2 text-xs', className)}>
+      <span className="inline-flex items-center">{icon}</span>
+      {children}
+    </div>
+  );
+}
 
 export function HookStartedContent({
   content,
@@ -12,7 +30,7 @@ export function HookStartedContent({
   return (
     <StatusLine icon={renderIcon('hook_started')} className="text-text-muted">
       <span>Running hook: {content}</span>
-      {hookEvent ? <span className="text-text-muted/60">({hookEvent})</span> : null}
+      {hookEvent ? <span className="text-subtle">({hookEvent})</span> : null}
     </StatusLine>
   );
 }
@@ -32,7 +50,7 @@ export function HookResponseContent({
     );
   return (
     <CollapsibleBlock icon={renderIcon('hook_response')} label={`Hook done: ${content}`}>
-      <pre className={cn(CODE_BLOCK_CLASS, 'text-text-muted/60')}>{output}</pre>
+      <pre className={cn(CODE_BLOCK_CLASS, 'text-subtle')}>{output}</pre>
     </CollapsibleBlock>
   );
 }

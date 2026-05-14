@@ -2,6 +2,8 @@ import { useState } from 'react';
 import { ActionButton } from '../ui/ActionButton.tsx';
 import { Button } from '../ui/Button.tsx';
 import { Dialog, DialogContent } from '../ui/Dialog.tsx';
+import { DialogFooter } from '../ui/DialogFooter.tsx';
+import { InlineCode } from '../ui/InlineCode.tsx';
 
 interface ArchiveChangeDialogProps {
   open: boolean;
@@ -38,8 +40,8 @@ export function ArchiveChangeDialog({
             Archive <span className="font-mono text-text">{name}</span>?
           </p>
           <p className="text-xs text-text-dim leading-relaxed">
-            This moves the change to <code className="font-mono">openspec/changes/archive/</code>{' '}
-            and (unless you tick the box below) propagates its delta specs into the main specs tree.
+            This moves the change to <InlineCode subtle>openspec/changes/archive/</InlineCode> and
+            (unless you tick the box below) propagates its delta specs into the main specs tree.
           </p>
           <label className="flex items-start gap-2 text-xs text-text-muted">
             <input
@@ -49,18 +51,18 @@ export function ArchiveChangeDialog({
               className="mt-0.5"
             />
             <span>
-              Skip spec update (<code className="font-mono">--skip-specs</code>) — for
-              infrastructure / tooling / doc-only changes that don't modify specs.
+              Skip spec update (<InlineCode subtle>--skip-specs</InlineCode>) — for infrastructure /
+              tooling / doc-only changes that don't modify specs.
             </span>
           </label>
-          <div className="flex justify-end gap-2 pt-2 border-t border-border">
+          <DialogFooter>
             <Button variant="secondary" size="sm" onClick={onClose}>
               Cancel
             </Button>
             <ActionButton onClick={() => onSubmit({ skipSpecs })} variant="danger" size="sm">
               Archive
             </ActionButton>
-          </div>
+          </DialogFooter>
         </div>
       </DialogContent>
     </Dialog>

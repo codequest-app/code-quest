@@ -1,6 +1,7 @@
 import { useState } from 'react';
 import { Button } from '../ui/Button.tsx';
 import { Dialog, DialogContent } from '../ui/Dialog.tsx';
+import { DialogFooter } from '../ui/DialogFooter.tsx';
 
 interface DeleteEntryConfirmDialogProps {
   open: boolean;
@@ -40,14 +41,14 @@ export function DeleteEntryConfirmDialog({
         <div className="flex flex-col gap-3">
           <p className="text-sm text-text">{message}</p>
           <p className="text-xs text-text-dim">This cannot be undone.</p>
-          <div className="flex justify-end gap-2 pt-2 border-t border-border">
+          <DialogFooter>
             <Button variant="secondary" size="sm" onClick={onClose}>
               Cancel
             </Button>
             <Button variant="danger" size="sm" disabled={submitting} onClick={() => void submit()}>
               {submitting ? 'Deleting…' : 'Delete'}
             </Button>
-          </div>
+          </DialogFooter>
         </div>
       </DialogContent>
     </Dialog>

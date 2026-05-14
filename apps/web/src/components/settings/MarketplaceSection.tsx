@@ -1,6 +1,8 @@
 import type { MarketplaceInfo } from '@code-quest/shared';
+import { TextField } from '@/components/chat/ui/TextField';
 import { Button } from '../ui/Button.tsx';
 import { BorderedIconButton, RefreshIcon, TrashIcon } from '../ui/Icons.tsx';
+import { SurfaceCard } from '../ui/SurfaceCard.tsx';
 
 interface MarketplaceSectionProps {
   marketplaces: MarketplaceInfo[];
@@ -24,13 +26,13 @@ export function MarketplaceSection({
   return (
     <>
       <div className="flex gap-2 mb-3">
-        <input
+        <TextField
           type="text"
           value={newSource}
-          onChange={(e) => onNewSourceChange(e.target.value)}
+          onChange={onNewSourceChange}
           onKeyDown={(e) => e.key === 'Enter' && onAdd()}
           placeholder="Marketplace source URL…"
-          className="flex-1 border border-border bg-input text-text placeholder:text-text-muted rounded-md px-3 py-2 text-sm outline-none focus:border-accent"
+          className="flex-1 placeholder:text-text-muted"
         />
         <Button
           variant="info"
@@ -44,7 +46,7 @@ export function MarketplaceSection({
       </div>
 
       {marketplaces.length === 0 ? (
-        <p className="text-center text-text-muted/60 py-8 text-sm">No marketplaces configured.</p>
+        <p className="text-center text-subtle py-8 text-sm">No marketplaces configured.</p>
       ) : (
         <ul className="list-none m-0 p-0">
           {marketplaces.map((mp) => {
@@ -61,9 +63,10 @@ export function MarketplaceSection({
                       ? src.path
                       : undefined;
             return (
-              <li
+              <SurfaceCard
+                as="li"
                 key={mp.name}
-                className="flex items-start justify-between bg-surface border border-border rounded-md mb-2 p-3"
+                className="flex items-start justify-between rounded-md mb-2"
               >
                 <div className="flex-1 min-w-0">
                   <div className="flex items-center gap-2 mb-1">
@@ -87,7 +90,7 @@ export function MarketplaceSection({
                     <TrashIcon className="w-3.5 h-3.5" />
                   </BorderedIconButton>
                 </div>
-              </li>
+              </SurfaceCard>
             );
           })}
         </ul>

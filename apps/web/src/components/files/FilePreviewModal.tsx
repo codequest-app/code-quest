@@ -167,11 +167,7 @@ function PreviewBody({
       </div>
     );
   }
-  return <NumberedPlaintext content={state.content} />;
-}
-
-function NumberedPlaintext({ content }: { content: string }) {
-  const lines = content.split('\n');
+  const lines = state.content.split('\n');
   return (
     <div className="bg-bg/40 border border-border rounded overflow-auto max-h-dialog-body font-mono text-xs leading-relaxed">
       <table className="w-full">

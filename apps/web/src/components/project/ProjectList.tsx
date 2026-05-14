@@ -1,4 +1,6 @@
 import type { Project } from '@/contexts/ProjectContext';
+import { GhostAddButton } from '../ui/GhostAddButton.tsx';
+import { GroupHeader } from '../ui/GroupHeader.tsx';
 import { SectionHeader } from '../ui/SectionHeader.tsx';
 import { ProjectCard } from './ProjectCard.tsx';
 
@@ -30,11 +32,7 @@ export function ProjectList({
       <div className="flex-1 overflow-auto px-2">
         {pinned.length > 0 && (
           <>
-            {showPinnedHeader && (
-              <div className="px-1 pt-2 pb-1 text-xs font-semibold uppercase tracking-wider text-text-muted">
-                Pinned
-              </div>
-            )}
+            {showPinnedHeader && <GroupHeader>Pinned</GroupHeader>}
             {pinned.map((p) => (
               <ProjectCard
                 key={p.cwd}
@@ -49,11 +47,7 @@ export function ProjectList({
         )}
         {recent.length > 0 && (
           <>
-            {showRecentHeader && (
-              <div className="px-1 pt-3 pb-1 text-xs font-semibold uppercase tracking-wider text-text-muted">
-                Recent
-              </div>
-            )}
+            {showRecentHeader && <GroupHeader>Recent</GroupHeader>}
             {recent.map((p) => (
               <ProjectCard
                 key={p.cwd}
@@ -67,13 +61,9 @@ export function ProjectList({
           </>
         )}
       </div>
-      <button
-        type="button"
-        className="mx-2 my-2 px-3 py-1.5 text-xs text-center rounded border border-dashed border-border bg-transparent text-text-muted hover:text-text hover:border-accent"
-        onClick={onAdd}
-      >
+      <GhostAddButton onClick={onAdd} className="mx-2 my-2 px-3 py-1.5 text-center">
         + Add Project
-      </button>
+      </GhostAddButton>
     </div>
   );
 }

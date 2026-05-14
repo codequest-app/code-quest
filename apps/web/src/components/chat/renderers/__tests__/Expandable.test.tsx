@@ -1,7 +1,7 @@
 import { render, screen } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { describe, expect, it, vi } from 'vitest';
-import { Expandable } from '../Expandable.tsx';
+import { Expandable } from '@/components/chat/ui/Expandable';
 
 function simulateOverflow() {
   vi.spyOn(HTMLElement.prototype, 'scrollHeight', 'get').mockReturnValue(1000);

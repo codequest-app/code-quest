@@ -2,6 +2,7 @@ import { useState } from 'react';
 import { FileTree } from '../files/FileTree.tsx';
 import { Button } from '../ui/Button.tsx';
 import { Dialog, DialogClose, DialogContent } from '../ui/Dialog.tsx';
+import { DialogFooter } from '../ui/DialogFooter.tsx';
 import { XIcon } from '../ui/Icons.tsx';
 
 export function AddProjectDialog({
@@ -63,7 +64,7 @@ export function AddProjectDialog({
             }}
           />
         </div>
-        <div className="flex justify-end gap-2 -mx-4 -mb-4 px-4 py-3 border-t border-border mt-3">
+        <DialogFooter variant="bleed" className="mt-3">
           <DialogClose asChild>
             <Button variant="secondary" size="md">
               Cancel
@@ -72,7 +73,7 @@ export function AddProjectDialog({
           <Button size="md" disabled={!selectedPath} onClick={handleAdd}>
             Add
           </Button>
-        </div>
+        </DialogFooter>
       </DialogContent>
     </Dialog>
   );

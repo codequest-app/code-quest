@@ -1,7 +1,7 @@
 import { ChatBubbleLeftRightIcon, FolderOpenIcon } from '@heroicons/react/24/outline';
 import type { Meta, StoryObj } from '@storybook/react-vite';
 import { fn } from 'storybook/test';
-import { EmptyState } from './EmptyState.tsx';
+import { EmptyState } from '@/components/ui/EmptyState';
 
 const meta: Meta<typeof EmptyState> = {
   component: EmptyState,

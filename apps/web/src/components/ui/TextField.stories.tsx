@@ -1,7 +1,7 @@
 import type { Meta, StoryObj } from '@storybook/react-vite';
 import { fn } from 'storybook/test';
+import { TextField } from '@/components/chat/ui/TextField';
 import { withThemePreset } from '@/test/story-decorator';
-import { TextField } from './TextField.tsx';
 
 // biome-ignore lint/suspicious/noExplicitAny: discriminated-union Meta inference resolves args to `never`; explicit any keeps stories simple
 const meta: Meta<any> = {

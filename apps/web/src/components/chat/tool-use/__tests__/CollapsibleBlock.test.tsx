@@ -1,7 +1,7 @@
 import { render, screen } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { describe, expect, it } from 'vitest';
-import { CollapsibleBlock } from '../../renderers/primitives.tsx';
+import { CollapsibleBlock } from '../../ui/CollapsibleBlock';
 
 describe('CollapsibleBlock', () => {
   it('accepts a ReactNode icon (SVG element)', () => {

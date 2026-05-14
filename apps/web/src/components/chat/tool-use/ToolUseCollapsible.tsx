@@ -1,8 +1,8 @@
+import { BlockCollapsible } from '@/components/chat/tool-use/BlockCollapsible';
 import type { ToolResult } from '@/types/chat';
 import type { Task } from '@/types/task';
 import { AGENT_TOOLS, getToolHeaderInfo } from '@/utils/tool-utils';
-import { CollapsibleBlock } from '../renderers/primitives.tsx';
-import { BlockCollapsible } from './BlockCollapsible.tsx';
+import { CollapsibleBlock } from '../ui/CollapsibleBlock';
 import { TaskBadge } from './TaskBadge.tsx';
 import { ToolUseBlock } from './ToolUseBlock.tsx';
 import { getToolIcon, ToolUseHeader } from './ToolUseHeader.tsx';

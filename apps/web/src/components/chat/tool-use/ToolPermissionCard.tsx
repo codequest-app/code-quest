@@ -1,5 +1,6 @@
 import type { ControlPermissionResponse, PendingControl, Question } from '@code-quest/shared';
 import { useEffect, useLayoutEffect, useRef, useState } from 'react';
+import { FloatingCard } from '@/components/chat/ui/FloatingCard';
 import { ChevronDown } from '@/components/ui/Icons';
 import { useChannelConfig } from '@/contexts/channel';
 import { cn } from '@/utils/cn';
@@ -120,10 +121,11 @@ export function ToolPermissionCard({
   }, []);
 
   return (
-    <fieldset
+    <FloatingCard
+      as="fieldset"
       ref={containerRef}
       aria-label="Permission request"
-      className="relative bg-surface border border-border rounded-lg overflow-hidden mb-1.5 p-2 outline-none focus-within:border-accent/50"
+      className="relative overflow-hidden mb-1.5 px-2 py-2 outline-none focus-within:border-accent/50"
       data-focused-index={focusedIdx}
     >
       {/* Background overlay */}
@@ -155,7 +157,7 @@ export function ToolPermissionCard({
                   {input.command}
                 </div>
                 {typeof input.description === 'string' && (
-                  <p className="text-xs text-text-muted/60 mt-1">{input.description}</p>
+                  <p className="text-xs text-subtle mt-1">{input.description}</p>
                 )}
               </div>
             )}
@@ -218,7 +220,7 @@ export function ToolPermissionCard({
                     }
                   }}
                   className={cn(
-                    'w-full text-xs bg-transparent rounded px-2 py-1.5 text-text placeholder:text-text-muted/60 focus:outline-none',
+                    'w-full text-xs bg-transparent rounded px-2 py-1.5 text-text placeholder:text-subtle focus:outline-none',
                     focusedIdx === options.length
                       ? 'border border-accent/50'
                       : 'border border-transparent inset-border',
@@ -231,7 +233,7 @@ export function ToolPermissionCard({
       </div>
 
       {/* Keyboard hint */}
-      <div className="relative z-raised text-xs text-text-muted/60 mt-2">Esc to cancel</div>
-    </fieldset>
+      <div className="relative z-raised text-xs text-subtle mt-2">Esc to cancel</div>
+    </FloatingCard>
   );
 }

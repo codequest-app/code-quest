@@ -1,4 +1,6 @@
 import type { Project } from '@/contexts/ProjectContext';
+import { GhostAddButton } from '../ui/GhostAddButton.tsx';
+import { GroupHeader } from '../ui/GroupHeader.tsx';
 import { SectionHeader } from '../ui/SectionHeader.tsx';
 import { ProjectRow } from './ProjectRow.tsx';
 
@@ -45,17 +47,9 @@ export function ProjectTree({
           />
         ))}
       </div>
-      <button
-        type="button"
-        className="mx-2 my-2 px-3 py-1.5 text-xs text-center rounded border border-dashed border-border bg-transparent text-text-muted hover:text-text hover:border-accent"
-        onClick={onAdd}
-      >
+      <GhostAddButton onClick={onAdd} className="mx-2 my-2 px-3 py-1.5 text-center">
         + Add Project
-      </button>
+      </GhostAddButton>
     </div>
   );
-}
-
-function GroupHeader({ children }: { children: React.ReactNode }) {
-  return <div className="section-label px-1 pt-2 pb-1">{children}</div>;
 }

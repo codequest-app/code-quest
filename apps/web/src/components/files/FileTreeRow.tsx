@@ -1,6 +1,7 @@
 import { ChevronRightIcon } from '@heroicons/react/24/outline';
 import { Icon } from '@iconify/react';
 import { forwardRef, type HTMLAttributes, type MouseEvent } from 'react';
+import { TextField } from '@/components/chat/ui/TextField';
 import { cn } from '@/utils/cn';
 import { getFileIcon } from '@/utils/getFileIcon';
 
@@ -104,11 +105,12 @@ export const FileTreeRow: React.ForwardRefExoticComponent<
         )}
       </span>
       {rename ? (
-        <input
-          // biome-ignore lint/a11y/noAutofocus: focus the inline-rename input on render
+        <TextField
           autoFocus
+          size="sm"
+          mono
           value={rename.value}
-          onChange={(e) => rename.onChange(e.target.value)}
+          onChange={rename.onChange}
           onClick={(e) => e.stopPropagation()}
           onKeyDown={(e) => {
             e.stopPropagation();
@@ -116,7 +118,7 @@ export const FileTreeRow: React.ForwardRefExoticComponent<
             if (e.key === 'Escape') rename.onCancel();
           }}
           onBlur={() => rename.onSubmit()}
-          className="flex-1 px-1 py-0 text-sm font-mono bg-bg/60 border border-accent rounded outline-none"
+          className="flex-1 border-accent"
         />
       ) : (
         <span className="flex-1 truncate">{item.getItemName()}</span>

@@ -1,5 +1,5 @@
 import type { Meta, StoryObj } from '@storybook/react-vite';
-import { OutputContent } from '../renderers/primitives.tsx';
+import { OutputContent } from '../renderers/ansi.tsx';
 
 const meta: Meta<typeof OutputContent> = {
   component: OutputContent,

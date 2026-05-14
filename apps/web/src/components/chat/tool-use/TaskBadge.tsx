@@ -1,4 +1,5 @@
 import type { TaskType } from '@code-quest/shared';
+import { Badge } from '@/components/ui/Badge';
 import type { Task } from '@/types/task';
 import { AGENT_TOOLS } from '@/utils/tool-utils';
 
@@ -43,9 +44,9 @@ export function TaskBadge({
   return (
     <span className="flex items-center gap-1.5">
       {resolvedType && (
-        <span className="px-1.5 py-0.5 rounded bg-accent/20 text-accent text-xs font-mono">
+        <Badge variant="accent" mono>
           {resolvedType}
-        </span>
+        </Badge>
       )}
       <TaskStatusBadge
         taskStatus={taskStatus === 'stopped' ? 'failed' : taskStatus}

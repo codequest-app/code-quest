@@ -1,7 +1,7 @@
 import { render, screen } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { describe, expect, it, vi } from 'vitest';
-import { FilterPopover } from '../FilterPopover.tsx';
+import { FilterPopover } from '@/components/chat/session/FilterPopover';
 
 const entries = [
   { type: 'tool_use', count: 42 },

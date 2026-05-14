@@ -1,6 +1,6 @@
 import { useEffect } from 'react';
 import { useSpeechToText } from '@/hooks/useSpeechToText';
-import { SpeechInputButton } from './SpeechInputButton.tsx';
+import { SpeechInputButton } from './SpeechInputButton';
 
 interface SpeechInputContainerProps {
   onFinal: (text: string) => void;

@@ -6,7 +6,7 @@ import {
   CODE_BLOCK_CLASS,
   hasAnsi,
   renderFilePathsWithCopyButtons,
-} from '../renderers/primitives.tsx';
+} from '../renderers/ansi.tsx';
 
 interface ContentRendererProps {
   content: string;

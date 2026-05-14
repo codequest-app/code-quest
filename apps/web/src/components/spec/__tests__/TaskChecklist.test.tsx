@@ -1,7 +1,7 @@
 import { render, screen } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { describe, expect, it, vi } from 'vitest';
-import { TaskChecklist } from '../TaskChecklist.tsx';
+import { TaskChecklist } from '@/components/ui/TaskChecklist';
 
 describe('TaskChecklist', () => {
   it('renders a checkbox per `- [ ]` / `- [x]` line with correct checked state', () => {

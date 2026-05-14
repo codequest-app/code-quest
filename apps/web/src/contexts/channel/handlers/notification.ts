@@ -1,6 +1,6 @@
 import { EVENTS } from '@code-quest/shared';
 import { toast } from 'sonner';
-import { showNotificationToast } from '@/components/workspace/NotificationToast';
+import { showNotificationToast } from '@/components/chat/ui/NotificationToast';
 import type { TypedSocket } from '@/socket/client';
 import { channelEmit } from '@/socket/rpc';
 import type { ChannelState } from '@/types/chat';

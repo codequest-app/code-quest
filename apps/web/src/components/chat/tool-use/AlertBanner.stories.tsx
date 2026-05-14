@@ -1,6 +1,6 @@
 import type { Meta, StoryObj } from '@storybook/react-vite';
+import { AlertBanner } from '@/components/chat/ui/AlertBanner';
 import { withThemePreset } from '@/test/story-decorator';
-import { AlertBanner } from './AlertBanner.tsx';
 
 const meta: Meta<typeof AlertBanner> = {
   component: AlertBanner,

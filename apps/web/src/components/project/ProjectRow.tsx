@@ -9,6 +9,7 @@ import {
 } from '@/contexts/GitContext';
 import type { Project } from '@/contexts/ProjectContext';
 import { usePreferencesStore } from '@/stores/usePreferencesStore';
+import { GhostAddButton } from '../ui/GhostAddButton.tsx';
 import { ProjectCard } from './ProjectCard.tsx';
 import { WorktreeChildList } from './WorktreeChildList.tsx';
 
@@ -100,15 +101,9 @@ export function ProjectRow({
       {expanded && isGit(entry) && <WorktreeChildList worktrees={entry} projectCwd={project.cwd} />}
       {nonGit && (
         <div className="ml-5 pl-2">
-          <button
-            type="button"
-            onClick={() => {
-              void initRepo(project.cwd);
-            }}
-            className="my-1 px-3 py-1 text-xs rounded border border-dashed border-border bg-transparent text-text-muted hover:text-text hover:border-accent"
-          >
+          <GhostAddButton onClick={() => void initRepo(project.cwd)} className="my-1 px-3 py-1">
             + Initialize as git repo
-          </button>
+          </GhostAddButton>
         </div>
       )}
     </div>

@@ -1,6 +1,8 @@
 import { useState } from 'react';
+import { TextField } from '@/components/chat/ui/TextField';
 import { Button } from '../ui/Button.tsx';
 import { Dialog, DialogContent } from '../ui/Dialog.tsx';
+import { DialogFooter } from '../ui/DialogFooter.tsx';
 
 const VALID_NAME = /^[\w.\-+]+$/;
 
@@ -64,31 +66,33 @@ export function NewEntryDialog({
           <p className="text-xs text-text-dim">
             In <span className="font-mono text-text">{parentLabel}</span>
           </p>
-          <label className="text-xs text-text-muted">
+          <label className="text-xs text-text-muted" htmlFor="new-entry-name">
             Name
-            <input
+            <TextField
+              id="new-entry-name"
               type="text"
               value={name}
               autoFocus
-              onChange={(e) => {
-                setName(e.target.value);
+              mono
+              onChange={(value) => {
+                setName(value);
                 setError(null);
               }}
               onKeyDown={(e) => {
                 if (e.key === 'Enter') void submit();
               }}
-              className="mt-1 w-full px-2 py-1 rounded border border-border bg-bg/40 text-sm text-text font-mono"
+              className="mt-1 w-full"
             />
           </label>
           {error && <p className="text-xs text-warn">{error}</p>}
-          <div className="flex justify-end gap-2 pt-2 border-t border-border">
+          <DialogFooter>
             <Button variant="secondary" size="sm" onClick={onClose}>
               Cancel
             </Button>
             <Button variant="primary" size="sm" disabled={submitting} onClick={() => void submit()}>
               {submitting ? 'Creating…' : 'Create'}
             </Button>
-          </div>
+          </DialogFooter>
         </div>
       </DialogContent>
     </Dialog>

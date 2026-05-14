@@ -1,7 +1,7 @@
 import { useLayoutEffect } from 'react';
 import { useShallow } from 'zustand/react/shallow';
 import { useBlockOpenStore } from '@/stores/useBlockOpenStore.ts';
-import { CollapsibleBlock } from '../renderers/primitives.tsx';
+import { CollapsibleBlock } from '../ui/CollapsibleBlock';
 
 type BlockCollapsibleProps = {
   blockId: string;

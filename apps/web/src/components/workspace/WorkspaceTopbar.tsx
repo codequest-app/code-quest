@@ -5,7 +5,7 @@ import { cn } from '@/utils/cn';
 import { TopbarLiveSessions } from '../live-session/TopbarLiveSessions.tsx';
 import { IconButton } from '../ui/IconButton.tsx';
 
-const ACTION_CLASS = 'w-8 h-8 text-text-muted hover:text-text hover:bg-hover-tint';
+const topbarBtnClass = 'w-8 h-8 text-text-muted hover:text-text hover:bg-hover-tint';
 
 type Mode = 'desktop' | 'mobile';
 
@@ -56,7 +56,7 @@ export function WorkspaceTopbar({
           variant="plain"
           aria-label="Toggle sidebar"
           onClick={onToggleLeft}
-          className={ACTION_CLASS}
+          className={topbarBtnClass}
         >
           <Bars3Icon className="w-5 h-5" />
         </IconButton>
@@ -72,7 +72,7 @@ export function WorkspaceTopbar({
           variant="plain"
           aria-label="Search"
           onClick={onOpenSearch}
-          className={cn('ml-auto', ACTION_CLASS)}
+          className={cn('ml-auto', topbarBtnClass)}
         >
           <MagnifyingGlassIcon className="w-5 h-5" />
         </IconButton>
@@ -81,7 +81,7 @@ export function WorkspaceTopbar({
         variant="plain"
         aria-label="Settings"
         onClick={onOpenSettings}
-        className={cn(!onOpenSearch && 'ml-auto', ACTION_CLASS)}
+        className={cn(!onOpenSearch && 'ml-auto', topbarBtnClass)}
       >
         <Cog6ToothIcon className="w-5 h-5" />
       </IconButton>

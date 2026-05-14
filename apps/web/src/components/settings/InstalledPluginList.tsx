@@ -1,10 +1,12 @@
 import type { AvailablePlugin, MarketplaceInfo, PluginInfo } from '@code-quest/shared';
 import { useState } from 'react';
+import { InlineAction } from '@/components/chat/ui/InlineAction';
 import { useChannelConfig } from '@/contexts/channel';
-import { cn } from '@/utils/cn';
 import { Button } from '../ui/Button.tsx';
+import { GroupHeader } from '../ui/GroupHeader.tsx';
 import { BorderedIconButton, TrashIcon } from '../ui/Icons.tsx';
-import { InlineAction } from '../ui/InlineAction.tsx';
+import { StatusDot } from '../ui/StatusDot.tsx';
+import { SurfaceCard } from '../ui/SurfaceCard.tsx';
 import { ToggleSwitch } from '../ui/ToggleSwitch.tsx';
 
 function pluginDisplayName(id: string): string {
@@ -14,25 +16,6 @@ function pluginDisplayName(id: string): string {
 function formatInstallCount(n: number): string {
   if (n >= 1000) return `${(n / 1000).toFixed(1)}k installs`;
   return `${n} installs`;
-}
-
-function StatusDot({ enabled }: { enabled: boolean }) {
-  return (
-    <span
-      className={cn(
-        'inline-block w-2 h-2 rounded-full shrink-0 mr-2',
-        enabled ? 'bg-success' : 'bg-text/30',
-      )}
-    />
-  );
-}
-
-function SectionHeader({ children }: { children: React.ReactNode }) {
-  return (
-    <div className="text-xs font-semibold uppercase tracking-wider text-text-muted border-b border-border mt-3 mb-2 pb-1 first:mt-0">
-      {children}
-    </div>
-  );
 }
 
 interface InstalledPluginListProps {
@@ -86,15 +69,19 @@ export function InstalledPluginList({
 
       {filteredInstalled.length > 0 && (
         <>
-          <SectionHeader>Installed</SectionHeader>
+          <GroupHeader>Installed</GroupHeader>
           <ul className="list-none m-0 p-0">
             {filteredInstalled.map((plugin) => (
-              <li
+              <SurfaceCard
+                as="li"
                 key={plugin.id}
-                className="flex items-center justify-between bg-surface border border-border rounded-md mb-2 p-3"
+                className="flex items-center justify-between rounded-md mb-2"
               >
                 <div className="flex items-center min-w-0 flex-1">
-                  <StatusDot enabled={plugin.enabled ?? false} />
+                  <StatusDot
+                    color={plugin.enabled ? 'success' : 'muted'}
+                    className="w-2 h-2 inline-block mr-2"
+                  />
                   <span className="text-text font-medium text-sm truncate">
                     {pluginDisplayName(plugin.id)}
                   </span>
@@ -112,7 +99,7 @@ export function InstalledPluginList({
                     <TrashIcon className="w-3.5 h-3.5" />
                   </BorderedIconButton>
                 </div>
-              </li>
+              </SurfaceCard>
             ))}
           </ul>
         </>
@@ -120,7 +107,7 @@ export function InstalledPluginList({
 
       {filteredAvailable.length > 0 && (
         <>
-          <SectionHeader>Available</SectionHeader>
+          <GroupHeader>Available</GroupHeader>
           <ul className="list-none m-0 p-0">
             {filteredAvailable.map((plugin) => (
               <AvailablePluginCard
@@ -144,7 +131,7 @@ export function InstalledPluginList({
       )}
 
       {filteredInstalled.length === 0 && filteredAvailable.length === 0 && (
-        <p className="text-center text-text-muted/60 py-8 text-sm">No plugins found.</p>
+        <p className="text-center text-subtle py-8 text-sm">No plugins found.</p>
       )}
     </>
   );
@@ -187,7 +174,7 @@ function AvailablePluginCard({
     marketplace.config.source.repo === 'anthropics/claude-plugins-official';
 
   return (
-    <li className="bg-surface border border-border rounded-md mb-2 p-3">
+    <SurfaceCard as="li" className="rounded-md mb-2">
       <div className="flex items-start justify-between gap-2">
         <div className="flex-1 min-w-0">
           <div className="flex items-center gap-2 mb-0.5">
@@ -244,6 +231,6 @@ function AvailablePluginCard({
           </InlineAction>
         </div>
       )}
-    </li>
+    </SurfaceCard>
   );
 }

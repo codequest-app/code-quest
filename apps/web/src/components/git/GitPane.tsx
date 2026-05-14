@@ -11,6 +11,7 @@ import {
 } from '@code-quest/shared';
 import { useCallback, useState } from 'react';
 import { toast } from 'sonner';
+import { EmptyState } from '@/components/ui/EmptyState';
 import { useGitActions, useGitStatus } from '@/contexts/GitContext';
 import { useSocket } from '@/contexts/SocketContext';
 import { useKeepFsWatcherAlive } from '@/hooks/useKeepFsWatcherAlive';
@@ -22,7 +23,6 @@ import { ActionButton } from '../ui/ActionButton.tsx';
 import { CommandHint } from '../ui/CommandHint.tsx';
 import { PaneStatusFooter } from '../ui/PaneStatusFooter.tsx';
 import { Spinner } from '../ui/Spinner.tsx';
-import { EmptyState } from '../workspace/EmptyState.tsx';
 import { CommitComposer } from './CommitComposer.tsx';
 import { DiffModal } from './DiffModal.tsx';
 
@@ -200,7 +200,8 @@ export function GitPane({ cwd }: GitPaneProps): React.JSX.Element {
 
         {/* Changes section — flows naturally; pane scrolls as one. */}
         <section className="px-3 py-2 border-b border-border text-sm">
-          <SectionHeader title={`Changes (${changedCount})`}>
+          <div className="flex items-center justify-between mb-1">
+            <h4 className="section-label m-0">Changes ({changedCount})</h4>
             {hasChanges && (
               <ActionButton
                 onClick={stageAll}
@@ -211,7 +212,7 @@ export function GitPane({ cwd }: GitPaneProps): React.JSX.Element {
                 Stage all
               </ActionButton>
             )}
-          </SectionHeader>
+          </div>
           <ChangedFiles files={status.changedFiles} onPick={openDiff} />
           {hasChanges && (
             <CommitComposer onCommit={(msg) => void commit(msg)} count={changedCount} />
@@ -220,7 +221,7 @@ export function GitPane({ cwd }: GitPaneProps): React.JSX.Element {
 
         {/* Actions section — sits right under Changes content, not pinned. */}
         <section className="px-3 py-2">
-          <SectionHeader title="Actions" />
+          <h4 className="section-label m-0 mb-1">Actions</h4>
           <div className="flex gap-2 text-xs">
             <ActionButton onClick={runFetch} variant="secondary" size="xs">
               Fetch
@@ -264,15 +265,6 @@ export function GitPane({ cwd }: GitPaneProps): React.JSX.Element {
         />
       )}
     </section>
-  );
-}
-
-function SectionHeader({ title, children }: { title: string; children?: React.ReactNode }) {
-  return (
-    <div className="flex items-center justify-between mb-1">
-      <h4 className="section-label m-0">{title}</h4>
-      {children}
-    </div>
   );
 }
 

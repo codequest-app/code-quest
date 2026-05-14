@@ -4,6 +4,7 @@ import { useChannelConfig } from '@/contexts/channel';
 import { usePlugins } from '@/contexts/PluginContext';
 import { cn } from '@/utils/cn';
 import { tabTrigger } from '../ui/_tokens.ts';
+import { Badge } from '../ui/Badge.tsx';
 import { Button } from '../ui/Button.tsx';
 import { Dialog, DialogContent } from '../ui/Dialog.tsx';
 import { InstalledPluginList } from './InstalledPluginList.tsx';
@@ -88,9 +89,7 @@ export function ManagePluginsDialog({
               >
                 {label}
                 {count > 0 && (
-                  <span className="ml-1.5 bg-button text-selected-text rounded-lg px-1.5 py-0.5 text-xs">
-                    {count}
-                  </span>
+                  <Badge className="ml-1.5 bg-button text-selected-text rounded-lg">{count}</Badge>
                 )}
               </Tabs.Trigger>
             ))}

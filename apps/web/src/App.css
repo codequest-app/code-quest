@@ -28,6 +28,7 @@
   --color-surface: #252526;
   --color-surface-hover: #2a2d2e;
   --color-border: #3e3e42;
+  --color-border-subtle: color-mix(in srgb, var(--color-border) 50%, transparent);
 
   --color-text: #cccccc;
   --color-text-muted: #9d9d9d;

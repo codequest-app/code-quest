@@ -1,5 +1,5 @@
 import type { Meta, StoryObj } from '@storybook/react-vite';
-import { ContextPieChart } from './ContextPieChart.tsx';
+import { ContextPieChart } from './ContextPieChart';
 
 const meta: Meta<typeof ContextPieChart> = {
   component: ContextPieChart,

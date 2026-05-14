@@ -1,9 +1,9 @@
 import { type MouseEvent, useEffect, useMemo, useState } from 'react';
 import { toast } from 'sonner';
+import { EmptyState } from '@/components/ui/EmptyState';
 import { useFsActions } from '@/contexts/FsContext';
 import { useGitStatus } from '@/contexts/GitContext';
 import { useKeepFsWatcherAlive } from '@/hooks/useKeepFsWatcherAlive';
-import { EmptyState } from '../workspace/EmptyState.tsx';
 import { FilePreviewModal } from './FilePreviewModal.tsx';
 import { FileTree } from './FileTree.tsx';
 

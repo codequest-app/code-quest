@@ -1,8 +1,8 @@
 import { useState } from 'react';
-import { InlineAction } from '@/components/ui/InlineAction';
+import { InlineAction } from '@/components/chat/ui/InlineAction';
+import { RotatableChevron } from '@/components/ui/Icons';
 import type { Message } from '@/types/ui';
 import { pluralize } from '@/utils/pluralize';
-import { RotatableChevron } from '../renderers/primitives.tsx';
 import { CollapsibleTimeline } from './CollapsibleTimeline.tsx';
 
 export function SubagentChildren({
@@ -28,12 +28,12 @@ export function SubagentChildren({
         <button
           type="button"
           onClick={() => setExpanded((v) => !v)}
-          className="text-xs text-text-muted/60 hover:text-text-muted cursor-pointer select-none flex items-center gap-1 py-0.5"
+          className="text-xs text-subtle hover:text-text-muted cursor-pointer select-none flex items-center gap-1 py-0.5"
         >
           <RotatableChevron open={expanded} />
           <span>{pluralize(messages.length, 'subagent message')}</span>
         </button>
-        {model && <span className="text-xs text-text-muted/40 font-mono">{model}</span>}
+        {model && <span className="text-xs text-dim font-mono">{model}</span>}
         {onStopTask && parentToolId && (
           <InlineAction
             variant="danger"

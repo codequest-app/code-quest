@@ -1,9 +1,9 @@
 import { useVirtualizer } from '@tanstack/react-virtual';
 import { memo, useCallback, useEffect, useMemo, useRef, useState } from 'react';
-import { PanelHeader } from '@/components/ui/PanelHeader';
+import { JsonViewer } from '@/components/chat/ui/JsonViewer';
+import { IconButton } from '@/components/ui/IconButton';
 import { cn } from '@/utils/cn';
-import { SearchBar } from '../conversation/SearchBar.tsx';
-import { JsonViewer } from '../renderers/JsonViewer.tsx';
+import { PanelHeader } from '../ui/PanelHeader';
 import { RawEventFilterBar } from './RawEventFilterBar.tsx';
 import {
   addVisibleTypes,
@@ -12,8 +12,8 @@ import {
   filterEvents,
   getEventType,
 } from './raw-event-utils.ts';
+import { SearchBar } from './SearchBar';
 
-const ICON_BTN = 'text-text-muted hover:text-text text-sm';
 const SCROLL_THRESHOLD_PX = 50;
 const MAX_EVENTS = 5000;
 
@@ -133,41 +133,43 @@ export function RawEventPanel({
         actions={
           <div className="flex gap-2">
             {onSubscribe && (
-              <button
-                type="button"
+              <IconButton
                 title="Auto-scroll"
                 onClick={() => {
                   setAutoScroll(true);
                   userScrolledRef.current = false;
                   scrollToBottom();
                 }}
-                className={cn(ICON_BTN, autoScroll && 'text-accent')}
+                className={cn('text-text-muted hover:text-text', autoScroll && 'text-accent')}
               >
                 ⤓
-              </button>
+              </IconButton>
             )}
             {onFetch && (
-              <button type="button" title="Refresh" onClick={handleRefresh} className={ICON_BTN}>
+              <IconButton
+                title="Refresh"
+                onClick={handleRefresh}
+                className="text-text-muted hover:text-text"
+              >
                 ↻
-              </button>
+              </IconButton>
             )}
             {events.length > 0 && (
-              <button
-                type="button"
+              <IconButton
                 title="Clear"
                 onClick={() => {
                   setEvents([]);
                   seenTypesRef.current = new Set();
                   setVisibleTypes(new Set());
                 }}
-                className={ICON_BTN}
+                className="text-text-muted hover:text-text"
               >
                 ⌀
-              </button>
+              </IconButton>
             )}
-            <button type="button" title="Close" onClick={onClose} className={ICON_BTN}>
+            <IconButton title="Close" onClick={onClose} className="text-text-muted hover:text-text">
               ✕
-            </button>
+            </IconButton>
           </div>
         }
       />

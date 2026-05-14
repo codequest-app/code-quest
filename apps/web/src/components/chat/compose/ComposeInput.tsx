@@ -6,12 +6,12 @@ export type SearchStatus = 'idle' | 'loading' | 'done';
 import { type ClipboardEvent, type KeyboardEvent, useEffect, useRef, useState } from 'react';
 import { useDebouncedCallback } from 'use-debounce';
 import { slashPaletteState } from '@/components/chat/compose/command-menu/slash-palette-state';
+import { ImagePreviewModal } from '@/components/chat/ui/ImagePreviewModal';
 import { useChannelCompose, useChannelConfig, useChannelMessages } from '@/contexts/channel';
 import { selectIsActive, useChannelStore } from '@/stores/ChannelStoreContext';
 import { cn } from '@/utils/cn';
 import { getMentionQuery, MENTION_REGEX } from '@/utils/slash-query';
 import { sortEntriesDirsFirst } from '@/utils/sort-entries';
-import { ImagePreviewModal } from '../tool-use/ImagePreviewModal.tsx';
 import { MentionDropdown } from './MentionDropdown.tsx';
 
 const DEFAULT_PERMISSION_MODES = ['normal', 'acceptEdits', 'plan', 'bypassPermissions'];

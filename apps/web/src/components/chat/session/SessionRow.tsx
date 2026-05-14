@@ -1,6 +1,8 @@
 import type { Ack, SessionSummary } from '@code-quest/shared';
 import { useEffect, useRef, useState } from 'react';
 import { toast } from 'sonner';
+import { HighlightText } from '@/components/chat/ui/HighlightText';
+import { IconButton } from '@/components/ui/IconButton';
 import { cn } from '@/utils/cn';
 import { formatRelativeDate } from '@/utils/format-relative-date';
 
@@ -13,21 +15,6 @@ interface SessionRowProps {
   onRename?: (id: string, title: string) => Promise<Ack>;
   onDelete?: (id: string) => Promise<Ack>;
   searchQuery?: string;
-}
-
-function HighlightText({ text, query }: { text: string; query?: string }) {
-  if (!query) return <>{text}</>;
-  const idx = text.toLowerCase().indexOf(query.toLowerCase());
-  if (idx === -1) return <>{text}</>;
-  return (
-    <>
-      {text.slice(0, idx)}
-      <mark className="bg-accent/30 text-inherit rounded-sm">
-        {text.slice(idx, idx + query.length)}
-      </mark>
-      {text.slice(idx + query.length)}
-    </>
-  );
 }
 
 export function SessionRow({
@@ -122,24 +109,22 @@ export function SessionRow({
         {(onRename || onDelete) && (
           <span className="hidden group-hover:flex items-center gap-1">
             {onRename && (
-              <button
-                type="button"
+              <IconButton
                 title="Rename"
                 onClick={handleRenameStart}
-                className="text-text-muted hover:text-text text-xs p-0.5"
+                className="text-text-muted hover:text-text"
               >
                 ✏
-              </button>
+              </IconButton>
             )}
             {onDelete && (
-              <button
-                type="button"
+              <IconButton
                 title="Delete"
                 onClick={handleDelete}
-                className="text-text-muted hover:text-danger text-xs p-0.5"
+                className="text-text-muted hover:text-danger"
               >
                 🗑
-              </button>
+              </IconButton>
             )}
           </span>
         )}

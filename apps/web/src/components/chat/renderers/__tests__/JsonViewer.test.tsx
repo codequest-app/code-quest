@@ -1,8 +1,7 @@
 import { render, screen } from '@testing-library/react';
 import { describe, expect, it } from 'vitest';
 
-// JsonViewer doesn't exist yet — TDD red phase
-import { JsonViewer } from '../JsonViewer.tsx';
+import { JsonViewer } from '@/components/chat/ui/JsonViewer';
 
 describe('JsonViewer', () => {
   it('renders object properties', () => {

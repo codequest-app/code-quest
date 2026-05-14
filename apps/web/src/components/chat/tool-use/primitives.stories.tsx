@@ -1,5 +1,24 @@
 import type { Meta, StoryObj } from '@storybook/react-vite';
-import { CenterDivider, RotatableChevron, StatusLine } from '../renderers/primitives.tsx';
+import { RotatableChevron } from '@/components/ui/Icons';
+import { cn } from '@/utils/cn';
+import { CenterDivider } from '../ui/CenterDivider';
+
+function StatusLine({
+  icon,
+  children,
+  className,
+}: {
+  icon: React.ReactNode;
+  children: React.ReactNode;
+  className?: string;
+}) {
+  return (
+    <div className={cn('flex items-center gap-2 text-xs', className)}>
+      <span className="inline-flex items-center">{icon}</span>
+      {children}
+    </div>
+  );
+}
 
 const meta: Meta = {
   title: 'tool-use/primitives',

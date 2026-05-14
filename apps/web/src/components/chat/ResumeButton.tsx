@@ -2,11 +2,10 @@ import type { SessionSummary } from '@code-quest/shared';
 import { ClockIcon } from '@heroicons/react/24/outline';
 import * as Popover from '@radix-ui/react-popover';
 import { useSyncExternalStore } from 'react';
+import { IconButton } from '@/components/ui/IconButton';
 import { useProjectState } from '@/contexts/ProjectContext';
 import { resumeOpenSignal } from '@/features/resume/resume-feature';
 import { SessionHistoryPopover } from './session/SessionHistoryPopover.tsx';
-
-const HDR_BTN = 'text-text-muted hover:text-text text-xs transition-colors cursor-pointer';
 
 interface ResumeButtonProps {
   onResumed: (spawnedId: string, picked: SessionSummary) => void;
@@ -23,14 +22,13 @@ export function ResumeButton({ onResumed }: ResumeButtonProps): React.JSX.Elemen
   return (
     <Popover.Root open={resumeIsOpen} onOpenChange={(open) => resumeOpenSignal.setOpen(open)}>
       <Popover.Trigger asChild>
-        <button
-          type="button"
+        <IconButton
           title="Session history"
           aria-label="Session history"
-          className={HDR_BTN}
+          className="text-text-muted hover:text-text"
         >
           <ClockIcon className="w-4 h-4" aria-hidden="true" />
-        </button>
+        </IconButton>
       </Popover.Trigger>
       <SessionHistoryPopover
         cwd={activeProjectCwd ?? undefined}

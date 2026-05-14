@@ -1,6 +1,6 @@
 import { act, fireEvent, render, screen } from '@testing-library/react';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
-import { CopyButton } from '../../renderers/CopyButton.tsx';
+import { CopyButton } from '@/components/ui/CopyButton';
 
 describe('CopyButton', () => {
   beforeEach(() => {

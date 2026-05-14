@@ -5,6 +5,7 @@ import { useGitActions } from '@/contexts/GitContext';
 import { useNavigationActions, useNavigationState } from '@/contexts/NavigationContext';
 import { useProjectActions } from '@/contexts/ProjectContext';
 import { useSession } from '@/contexts/SessionContext';
+import { GhostAddButton } from '../ui/GhostAddButton.tsx';
 import { ArchiveWorktreeConfirmDialog } from './ArchiveWorktreeConfirmDialog.tsx';
 import { BranchPopover } from './BranchPopover.tsx';
 import { CreateWorktreeDialog } from './CreateWorktreeDialog.tsx';
@@ -179,13 +180,12 @@ export function WorktreeChildList({
           onClose={closeDialog}
         />
       )}
-      <button
-        type="button"
+      <GhostAddButton
         onClick={() => setDialog({ kind: 'create' })}
-        className="my-1 ml-2 px-2 py-1 text-xs text-left rounded border border-dashed border-border bg-transparent text-text-muted hover:text-text hover:border-accent"
+        className="my-1 ml-2 px-2 py-1 text-left"
       >
         + New worktree…
-      </button>
+      </GhostAddButton>
       {dialog?.kind === 'create' && (
         <CreateWorktreeDialog open cwd={projectCwd} onClose={closeDialog} />
       )}

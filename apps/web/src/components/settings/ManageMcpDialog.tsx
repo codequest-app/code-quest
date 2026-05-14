@@ -1,11 +1,14 @@
 import type { Ack, McpServerInfo, ProviderClientConfig, RpcResult } from '@code-quest/shared';
 import { useState } from 'react';
+import { InlineAction } from '@/components/chat/ui/InlineAction';
 import { useChannelConfig } from '@/contexts/channel';
 import { cn } from '@/utils/cn';
 import { Button } from '../ui/Button.tsx';
 import { Dialog, DialogClose, DialogContent } from '../ui/Dialog.tsx';
 import { XIcon } from '../ui/Icons.tsx';
-import { InlineAction } from '../ui/InlineAction.tsx';
+import { InlineCode } from '../ui/InlineCode.tsx';
+import { SurfaceCard } from '../ui/SurfaceCard.tsx';
+import { McpStatusBadge } from './McpStatusBadge.tsx';
 
 const SCOPE_ORDER = ['project', 'local', 'user', 'claudeai', 'managed', 'enterprise'];
 
@@ -54,36 +57,6 @@ function groupByScope(
   return result;
 }
 
-interface StatusMeta {
-  icon?: string;
-  label?: string;
-  badge?: string;
-}
-
-const STATUS_CONFIG: Record<string, StatusMeta> = {
-  connected: { icon: '✓', label: 'Connected', badge: 'bg-success text-selected-text' },
-  failed: { icon: '✗', label: 'Failed', badge: 'bg-danger text-selected-text' },
-  error: { badge: 'bg-danger text-selected-text' },
-  'needs-auth': { icon: '⚠', label: 'Needs Auth', badge: 'bg-warning text-bg' },
-  pending: { icon: '◐', label: 'Connecting…', badge: 'bg-muted/60 text-selected-text' },
-  connecting: { label: 'Connecting…', badge: 'bg-muted/60 text-selected-text' },
-  disabled: { icon: '○', label: 'Disabled', badge: 'bg-border text-text-muted' },
-};
-
-const DEFAULT_BADGE = 'bg-border text-text-muted';
-
-const statusIcon = (status: string): string => STATUS_CONFIG[status]?.icon ?? '?';
-const statusLabel = (status: string): string => STATUS_CONFIG[status]?.label ?? status;
-const statusBadgeCls = (status: string): string => STATUS_CONFIG[status]?.badge ?? DEFAULT_BADGE;
-
-function StatusBadge({ status, rich = false }: { status: string; rich?: boolean }) {
-  return (
-    <span className={cn('shrink-0 rounded px-2 py-1 text-xs font-medium', statusBadgeCls(status))}>
-      {rich ? `${statusIcon(status)} ${statusLabel(status)}` : status}
-    </span>
-  );
-}
-
 function McpReadOnlyList({ servers }: { servers: McpServerInfo[] }) {
   return (
     <>
@@ -92,22 +65,23 @@ function McpReadOnlyList({ servers }: { servers: McpServerInfo[] }) {
       ) : (
         <ul className="my-2">
           {servers.map((s) => (
-            <li
+            <SurfaceCard
+              as="li"
               key={s.name}
               className={cn(
-                'flex items-center justify-between gap-3 bg-surface border border-border rounded p-3 mb-2 last:mb-0',
+                'flex items-center justify-between gap-3 mb-2 last:mb-0',
                 s.status === 'disabled' && 'opacity-60',
               )}
             >
               <span className="font-mono text-xs font-medium text-text truncate">{s.name}</span>
-              <StatusBadge status={s.status} />
-            </li>
+              <McpStatusBadge status={s.status} />
+            </SurfaceCard>
           ))}
         </ul>
       )}
       <div className="text-xs text-text-muted mt-4">
-        You can use the <code className="font-mono bg-surface px-1 rounded">claude mcp add</code>{' '}
-        command-line tool to configure system-wide or private servers.
+        You can use the <InlineCode>claude mcp add</InlineCode> command-line tool to configure
+        system-wide or private servers.
         <br />
         <a
           href="https://code.claude.com/docs/en/mcp"
@@ -143,18 +117,19 @@ function McpGroupedList({
                 {scopeLabel(scope, mcpScopes)} ({group.length})
               </div>
               {group.map((s) => (
-                <button
+                <SurfaceCard
+                  as="button"
                   type="button"
                   key={s.name}
                   onClick={() => onSelect(s.name)}
                   className={cn(
-                    'w-full flex items-center justify-between gap-3 bg-surface border border-border rounded p-3 mb-2 last:mb-0 cursor-pointer hover:bg-surface/60',
+                    'w-full flex items-center justify-between gap-3 mb-2 last:mb-0 cursor-pointer hover:bg-surface/60',
                     s.status === 'disabled' && 'opacity-60',
                   )}
                 >
                   <span className="font-mono text-xs font-medium text-text truncate">{s.name}</span>
-                  <StatusBadge status={s.status} rich />
-                </button>
+                  <McpStatusBadge status={s.status} rich />
+                </SurfaceCard>
               ))}
             </div>
           ))}
@@ -199,10 +174,10 @@ function McpDetailView({
 }) {
   return (
     <div className="space-y-3">
-      <div className="flex items-center justify-between bg-surface border border-border rounded p-3">
+      <SurfaceCard className="flex items-center justify-between">
         <span className="font-mono text-xs font-medium text-text">{detail.name}</span>
-        <StatusBadge status={detail.status} rich />
-      </div>
+        <McpStatusBadge status={detail.status} rich />
+      </SurfaceCard>
 
       {feedback && (
         <p className={cn('text-xs', feedback.ok ? 'text-success' : 'text-danger')}>

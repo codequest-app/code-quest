@@ -3,6 +3,7 @@ import { ChatBubbleLeftRightIcon } from '@heroicons/react/24/outline';
 import * as Tabs from '@radix-ui/react-tabs';
 import { memo, useCallback, useEffect, useState } from 'react';
 import { toast } from 'sonner';
+import { EmptyState } from '@/components/ui/EmptyState';
 import { ChannelProvider } from '@/contexts/channel';
 import { useGitState } from '@/contexts/GitContext';
 import { useNavigationActions } from '@/contexts/NavigationContext';
@@ -13,7 +14,6 @@ import { useBreakpoint } from '@/hooks/useBreakpoint';
 import { basename } from '@/utils/basename';
 import { cn } from '@/utils/cn';
 import { ChatView } from '../chat/ChatView.tsx';
-import { EmptyState } from './EmptyState.tsx';
 import { RightPane } from './RightPane.tsx';
 import { TabBar } from './TabBar.tsx';
 

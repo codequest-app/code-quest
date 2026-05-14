@@ -2,12 +2,14 @@ import type { OpenspecKind } from '@code-quest/shared';
 import { ClipboardDocumentListIcon } from '@heroicons/react/24/outline';
 import { useState } from 'react';
 import { toast } from 'sonner';
+import { InlineAction } from '@/components/chat/ui/InlineAction';
+import { EmptyState } from '@/components/ui/EmptyState';
 import { useOpenspecActions, useOpenspecList } from '@/contexts/OpenspecContext';
+import { Badge } from '../ui/Badge.tsx';
 import { CommandHint } from '../ui/CommandHint.tsx';
-import { InlineAction } from '../ui/InlineAction.tsx';
 import { PaneStatusFooter } from '../ui/PaneStatusFooter.tsx';
+import { SectionLabel } from '../ui/SectionLabel.tsx';
 import { SkeletonRows } from '../ui/SkeletonRows.tsx';
-import { EmptyState } from '../workspace/EmptyState.tsx';
 import { ArchiveChangeDialog } from './ArchiveChangeDialog.tsx';
 import { NewChangeDialog } from './NewChangeDialog.tsx';
 import { SpecModal } from './SpecModal.tsx';
@@ -117,13 +119,17 @@ export function SpecPane({ cwd }: SpecPaneProps): React.JSX.Element {
                       <span className="font-mono text-xs truncate flex-1">{c.name}</span>
                     </button>
                     {ready && (
-                      <span
+                      <Badge
+                        variant="success"
+                        mono
+                        size="xs"
+                        border
                         role="status"
                         aria-label={`spec-ready-badge-${c.name}`}
-                        className="shrink-0 px-1.5 py-px rounded border border-success/30 bg-success/10 text-success font-mono text-2xs uppercase tracking-wide"
+                        className="uppercase tracking-wide"
                       >
                         Ready
-                      </span>
+                      </Badge>
                     )}
                     {ready && (
                       <button
@@ -136,13 +142,16 @@ export function SpecPane({ cwd }: SpecPaneProps): React.JSX.Element {
                       </button>
                     )}
                     {c.tasks && (
-                      <span
+                      <Badge
+                        variant="muted"
+                        mono
+                        size="xs"
+                        border
                         role="status"
                         aria-label={`spec-task-pill-${c.name}`}
-                        className="shrink-0 px-1.5 py-px rounded border border-border text-text-muted font-mono text-2xs"
                       >
                         {c.tasks.done}/{c.tasks.total}
-                      </span>
+                      </Badge>
                     )}
                   </li>
                 );
@@ -216,17 +225,17 @@ function Section({
   children,
 }: {
   title: string;
-  scope?: 'worktree' | 'project';
+  scope?: string;
   action?: React.ReactNode;
   children: React.ReactNode;
 }) {
   return (
     <div className="mb-3">
-      <h3 className="section-label px-1 mb-1 flex items-baseline gap-1">
+      <SectionLabel as="h3" className="px-1 mb-1 flex items-baseline gap-1">
         <span>{title}</span>
         {scope && <span className="text-xs text-text-dim normal-case">({scope})</span>}
         {action && <span className="ml-auto">{action}</span>}
-      </h3>
+      </SectionLabel>
       {children}
     </div>
   );

@@ -1,6 +1,7 @@
 import { effortLevelSchema } from '@code-quest/shared';
 import * as Popover from '@radix-ui/react-popover';
 import { useState } from 'react';
+import { FloatingCard } from '@/components/chat/ui/FloatingCard';
 import { EffortIcon, PERMISSION_MODE_ICONS } from '@/components/icons/PermissionModeIcons';
 import { EffortSwitch, effortLabel } from '@/components/ui/EffortSwitch';
 import { CheckMark } from '@/components/ui/Icons';
@@ -103,65 +104,67 @@ export function PermissionModePicker({
           avoidCollisions={false}
           onOpenAutoFocus={(e) => e.preventDefault()}
           onFocusOutside={(e) => e.preventDefault()}
-          className="bg-surface border border-border rounded-lg shadow-floating z-modal w-80 max-w-[calc(100vw-2rem)] py-1"
+          className="z-modal"
         >
-          <div className="px-3 py-1.5 text-xs text-text-muted flex items-center justify-between">
-            <span className="font-semibold">Modes</span>
-            <span className="opacity-60 flex items-center gap-1">
-              <kbd className="tint-10 rounded px-1 text-xs">⇧</kbd> +{' '}
-              <kbd className="tint-10 rounded px-1 text-xs">tab</kbd> to switch
-            </span>
-          </div>
-          {permissionModes.map((m) => (
-            <button
-              key={m.id}
-              type="button"
-              onClick={() => {
-                onSetPermissionMode?.(m.id);
-                setOpen(false);
-              }}
-              className={cn(
-                'w-full text-left px-3 py-2 flex items-center gap-3 cursor-pointer transition-colors',
-                m.id === mode ? 'bg-selected text-selected-text' : 'hover:tint-5',
-              )}
-            >
-              <span className="w-5 h-5 shrink-0">
-                {PERMISSION_MODE_ICONS[m.id as keyof typeof PERMISSION_MODE_ICONS]}
+          <FloatingCard className="w-80 max-w-[calc(100vw-2rem)] py-1 px-0">
+            <div className="px-3 py-1.5 text-xs text-text-muted flex items-center justify-between">
+              <span className="font-semibold">Modes</span>
+              <span className="opacity-60 flex items-center gap-1">
+                <kbd className="tint-10 rounded px-1 text-xs">⇧</kbd> +{' '}
+                <kbd className="tint-10 rounded px-1 text-xs">tab</kbd> to switch
               </span>
-              <div className="flex-1 min-w-0">
-                <div className="text-xs">{m.label}</div>
-                <div className="text-xs opacity-70">{m.description}</div>
-              </div>
-              <span className="w-4 shrink-0">
-                {m.id === mode && <CheckMark className="w-4 h-4" />}
-              </span>
-            </button>
-          ))}
-          {onSetEffort && (
-            <>
-              <div className="border-t border-border/50" />
+            </div>
+            {permissionModes.map((m) => (
               <button
+                key={m.id}
                 type="button"
-                className="w-full text-left px-3 py-2.5 flex items-center justify-between hover:tint-5 cursor-pointer"
                 onClick={() => {
-                  const idx = effort ? effortLevels.indexOf(effort) : -1;
-                  const next = effortLevels[(idx + 1) % effortLevels.length];
-                  if (next) onSetEffort?.(next);
+                  onSetPermissionMode?.(m.id);
+                  setOpen(false);
                 }}
-                title="Click to cycle effort level"
+                className={cn(
+                  'w-full text-left px-3 py-2 flex items-center gap-3 cursor-pointer transition-colors',
+                  m.id === mode ? 'bg-selected text-selected-text' : 'hover:tint-5',
+                )}
               >
-                <span className="text-xs text-text-muted flex items-center gap-2">
-                  <span className="w-5 h-5 shrink-0">
-                    <EffortIcon />
-                  </span>
-                  <span>
-                    Effort <span className="opacity-70">({effortLabel(effort)})</span>
-                  </span>
+                <span className="w-5 h-5 shrink-0">
+                  {PERMISSION_MODE_ICONS[m.id as keyof typeof PERMISSION_MODE_ICONS]}
                 </span>
-                <EffortSwitch level={effort} levels={effortLevels} onSelect={onSetEffort} />
+                <div className="flex-1 min-w-0">
+                  <div className="text-xs">{m.label}</div>
+                  <div className="text-xs opacity-70">{m.description}</div>
+                </div>
+                <span className="w-4 shrink-0">
+                  {m.id === mode && <CheckMark className="w-4 h-4" />}
+                </span>
               </button>
-            </>
-          )}
+            ))}
+            {onSetEffort && (
+              <>
+                <div className="border-t border-border-subtle" />
+                <button
+                  type="button"
+                  className="w-full text-left px-3 py-2.5 flex items-center justify-between hover:tint-5 cursor-pointer"
+                  onClick={() => {
+                    const idx = effort ? effortLevels.indexOf(effort) : -1;
+                    const next = effortLevels[(idx + 1) % effortLevels.length];
+                    if (next) onSetEffort?.(next);
+                  }}
+                  title="Click to cycle effort level"
+                >
+                  <span className="text-xs text-text-muted flex items-center gap-2">
+                    <span className="w-5 h-5 shrink-0">
+                      <EffortIcon />
+                    </span>
+                    <span>
+                      Effort <span className="opacity-70">({effortLabel(effort)})</span>
+                    </span>
+                  </span>
+                  <EffortSwitch level={effort} levels={effortLevels} onSelect={onSetEffort} />
+                </button>
+              </>
+            )}
+          </FloatingCard>
         </Popover.Content>
       )}
     </Popover.Root>

@@ -1,6 +1,6 @@
 import type { Meta, StoryObj } from '@storybook/react-vite';
 import { expect } from 'storybook/test';
-import { Expandable } from './Expandable.tsx';
+import { Expandable } from '@/components/chat/ui/Expandable';
 
 const meta: Meta<typeof Expandable> = {
   component: Expandable,

@@ -2,6 +2,7 @@ import type { SessionStateSummary } from '@code-quest/shared';
 import * as Popover from '@radix-ui/react-popover';
 import type { ReactNode } from 'react';
 import { basename } from '@/utils/basename';
+import { Button } from '../ui/Button.tsx';
 
 export interface LiveSessionPopoverProps {
   session: SessionStateSummary;
@@ -53,32 +54,25 @@ export function LiveSessionPopover({
           {session.title && <div className="text-xs text-text-muted truncate">{session.title}</div>}
           <div className="flex gap-2 pt-2 border-t border-border">
             <Popover.Close asChild>
-              <button
-                type="button"
-                className="px-2 py-1 rounded text-xs bg-accent text-selected-text hover:bg-accent/80"
-                onClick={() => onOpen(session.channelId)}
-              >
+              <Button size="xs" variant="primary" onClick={() => onOpen(session.channelId)}>
                 Open
-              </button>
+              </Button>
             </Popover.Close>
             <Popover.Close asChild>
-              <button
-                type="button"
-                className="px-2 py-1 rounded text-xs border border-border text-text-muted hover:text-text"
-                onClick={() => onSplit(session.channelId)}
-              >
+              <Button size="xs" variant="secondary" onClick={() => onSplit(session.channelId)}>
                 Split
-              </button>
+              </Button>
             </Popover.Close>
             {session.state === 'busy' && (
               <Popover.Close asChild>
-                <button
-                  type="button"
-                  className="ml-auto px-2 py-1 rounded text-xs text-danger border border-danger/40 hover:bg-danger/10"
+                <Button
+                  size="xs"
+                  variant="danger"
+                  className="ml-auto"
                   onClick={() => onStop(session.channelId)}
                 >
                   Stop
-                </button>
+                </Button>
               </Popover.Close>
             )}
           </div>

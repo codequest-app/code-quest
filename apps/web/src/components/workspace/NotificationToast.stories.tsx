@@ -1,6 +1,6 @@
 import type { Meta, StoryObj } from '@storybook/react-vite';
 import { expect, fn } from 'storybook/test';
-import { NotificationToast } from './NotificationToast.tsx';
+import { NotificationToast } from '@/components/chat/ui/NotificationToast';
 
 const meta: Meta<typeof NotificationToast> = {
   component: NotificationToast,

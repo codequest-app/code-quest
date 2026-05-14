@@ -1,8 +1,8 @@
 import type { PlanCommentData } from '@code-quest/shared';
 import * as Popover from '@radix-ui/react-popover';
 import { useEffect, useRef, useState } from 'react';
+import { InlineAction } from '@/components/chat/ui/InlineAction';
 import { Button } from '@/components/ui/Button';
-import { InlineAction } from '@/components/ui/InlineAction';
 
 interface PlanCommentPopoverProps {
   containerRef: React.RefObject<HTMLElement | null>;

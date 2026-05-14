@@ -1,5 +1,5 @@
 import type { Meta, StoryObj } from '@storybook/react-vite';
-import { JsonViewer } from './JsonViewer.tsx';
+import { JsonViewer } from '@/components/chat/ui/JsonViewer';
 
 const meta: Meta<typeof JsonViewer> = {
   component: JsonViewer,

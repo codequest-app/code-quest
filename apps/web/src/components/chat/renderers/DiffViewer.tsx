@@ -1,6 +1,6 @@
 import type React from 'react';
 import { useState } from 'react';
-import { InlineAction } from '@/components/ui/InlineAction';
+import { InlineAction } from '@/components/chat/ui/InlineAction';
 import { cn } from '@/utils/cn';
 import { extractNewContent, parseDiffFileName, parseHunkStart } from '@/utils/diff';
 
@@ -146,7 +146,7 @@ export function DiffViewer({
           </InlineAction>
           <InlineAction
             variant="muted"
-            className="font-medium hover:text-text-muted/60"
+            className="font-medium hover:text-subtle"
             onClick={() => setIsEditing(false)}
           >
             Cancel
@@ -192,7 +192,7 @@ export function DiffViewer({
         {annotated.map(({ cls, diffType, gutter, text }, i) => (
           // biome-ignore lint/suspicious/noArrayIndexKey: diff lines render once, never reorder
           <div key={`${i}-${gutter ?? ''}`} className={cls} data-diff-type={diffType}>
-            {gutter && <span className="text-text-muted/40 select-none mr-2">{gutter}</span>}
+            {gutter && <span className="text-dim select-none mr-2">{gutter}</span>}
             {text}
           </div>
         ))}

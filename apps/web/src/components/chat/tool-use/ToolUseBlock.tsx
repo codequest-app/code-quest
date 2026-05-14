@@ -1,18 +1,41 @@
 import { PencilSquareIcon } from '@heroicons/react/24/outline';
-import { Copyable } from '@/components/chat/renderers/Copyable';
 import { DiffViewer } from '@/components/chat/renderers/DiffViewer';
 import { Highlight } from '@/components/chat/renderers/Highlight';
-import { Labeled } from '@/components/chat/renderers/Labeled';
 import { MarkdownContent } from '@/components/chat/renderers/MarkdownContent';
+import { Copyable } from '@/components/chat/ui/Copyable';
 import { cn } from '@/utils/cn';
 import { generateUnifiedDiff } from '@/utils/diff';
-import { CODE_BLOCK_CLASS } from '../renderers/primitives.tsx';
-import { AlertBanner } from './AlertBanner.tsx';
-import { ContentRenderer } from './ContentRenderer.tsx';
+import { CODE_BLOCK_CLASS } from '../renderers/ansi.tsx';
+import { AlertBanner } from '../ui/AlertBanner';
+import { ContentRenderer } from './ContentRenderer';
+
+function Labeled({
+  label,
+  divider,
+  children,
+  className,
+}: {
+  label: string;
+  divider?: boolean;
+  children: React.ReactNode;
+  className?: string;
+}) {
+  return (
+    <div
+      className={cn('flex items-baseline gap-3', divider && 'border-b border-border', className)}
+    >
+      <span className="text-xs font-mono text-subtle select-none shrink-0 pl-3 py-2 min-w-14">
+        {label}
+      </span>
+      <div className="flex-1 min-w-0 overflow-x-auto py-2">{children}</div>
+    </div>
+  );
+}
+
 import { ToolBlock } from './ToolBlock.tsx';
 
 function PartialInputPlaceholder({ content }: { content: string }) {
-  return <pre className={cn(CODE_BLOCK_CLASS, 'text-text-muted/60 animate-pulse')}>{content}</pre>;
+  return <pre className={cn(CODE_BLOCK_CLASS, 'text-subtle animate-pulse')}>{content}</pre>;
 }
 
 function ToolErrorBanner({ message }: { message: string }) {
@@ -104,7 +127,7 @@ function EditStreamingPreview({ partialInput }: { partialInput: string }) {
     );
   }
   return (
-    <div className="flex items-center gap-2 py-2 text-xs text-text-muted/60 animate-pulse">
+    <div className="flex items-center gap-2 py-2 text-xs text-subtle animate-pulse">
       <PencilSquareIcon className="w-4 h-4" />
       <span>Editing…</span>
     </div>
@@ -301,7 +324,7 @@ export function ToolUseBlock({
         taskType={taskType}
       />
       {!partialInput && !result && (
-        <div className="text-xs text-text-muted/60 animate-pulse mt-1">Running...</div>
+        <div className="text-xs text-subtle animate-pulse mt-1">Running...</div>
       )}
     </>
   );

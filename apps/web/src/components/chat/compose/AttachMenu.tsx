@@ -1,6 +1,7 @@
 import { ArrowUpTrayIcon } from '@heroicons/react/24/outline';
 import * as Popover from '@radix-ui/react-popover';
 import { useState } from 'react';
+import { FloatingCard } from '@/components/chat/ui/FloatingCard';
 import { AddContextIcon } from '@/components/icons/MentionIcons';
 import { IconButton } from '@/components/ui/IconButton';
 import { PlusIcon } from '@/components/ui/Icons';
@@ -62,22 +63,24 @@ export function AttachMenu({
           sideOffset={4}
           onOpenAutoFocus={(e) => e.preventDefault()}
           onFocusOutside={(e) => e.preventDefault()}
-          className="bg-surface border border-border rounded-lg shadow-floating overflow-hidden z-modal min-w-50"
+          className="z-modal"
         >
-          {items.map((item) => (
-            <button
-              key={item.id}
-              type="button"
-              title={item.title}
-              onClick={item.onClick}
-              className="w-full text-left px-3 py-2 text-xs text-text hover:tint-5 flex items-center gap-2"
-            >
-              <span className="w-4 h-4 flex items-center justify-center text-text-muted opacity-70">
-                {item.icon}
-              </span>
-              {item.label}
-            </button>
-          ))}
+          <FloatingCard className="min-w-50 overflow-hidden px-0 py-1">
+            {items.map((item) => (
+              <button
+                key={item.id}
+                type="button"
+                title={item.title}
+                onClick={item.onClick}
+                className="w-full text-left px-3 py-2 text-xs text-text hover:tint-5 flex items-center gap-2"
+              >
+                <span className="w-4 h-4 flex items-center justify-center text-text-muted opacity-70">
+                  {item.icon}
+                </span>
+                {item.label}
+              </button>
+            ))}
+          </FloatingCard>
         </Popover.Content>
       )}
     </Popover.Root>

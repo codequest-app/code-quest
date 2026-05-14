@@ -1,5 +1,7 @@
 import type { WorktreeInfo } from '@code-quest/shared';
 import { forwardRef, type HTMLAttributes, type ReactElement, type ReactNode } from 'react';
+import { Badge } from '@/components/ui/Badge';
+import { StatusDot } from '@/components/ui/StatusDot';
 import { cn } from '@/utils/cn';
 import { pluralize } from '@/utils/pluralize';
 
@@ -99,21 +101,23 @@ export const WorktreeRow: React.ForwardRefExoticComponent<
         {wrapBranchTrigger ? wrapBranchTrigger(branchBadge) : branchBadge}
       </span>
       {liveSessions > 0 && (
-        <span
+        <Badge
+          variant="success"
           role="status"
           aria-label={pluralize(liveSessions, 'active session')}
-          className="relative z-10 shrink-0 flex items-center gap-1 px-1.5 py-0.5 rounded text-xs bg-success/20 text-success"
+          className="relative z-10 gap-1 bg-success/20"
         >
-          <span className="w-1.5 h-1.5 rounded-full bg-success animate-pulse" />
+          <StatusDot color="success" pulse />
           {liveSessions}
-        </span>
+        </Badge>
       )}
       {changes > 0 && (
-        <span
+        <StatusDot
+          color="warning"
+          className="relative z-10 w-2 h-2"
           role="status"
           aria-label={pluralize(changes, 'change')}
           title={pluralize(changes, 'change')}
-          className="relative z-10 w-2 h-2 rounded-full bg-warning shrink-0"
         />
       )}
       {wrapMoreTrigger ? wrapMoreTrigger(moreButton) : moreButton}

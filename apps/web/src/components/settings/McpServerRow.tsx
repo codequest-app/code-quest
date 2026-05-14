@@ -1,19 +1,10 @@
 import type { Ack, McpServerInfo, McpTool, RpcResult } from '@code-quest/shared';
 import { useState } from 'react';
+import { InlineAction } from '@/components/chat/ui/InlineAction';
+import { TextField } from '@/components/chat/ui/TextField';
 import { cn } from '@/utils/cn';
 import { Button } from '../ui/Button.tsx';
-import { InlineAction } from '../ui/InlineAction.tsx';
-
-const MCP_STATUS_BADGE: Partial<Record<McpServerInfo['status'], string>> & { _default: string } = {
-  connected: 'bg-success text-selected-text',
-  failed: 'bg-danger text-selected-text',
-  error: 'bg-danger text-selected-text',
-  'needs-auth': 'bg-warning text-bg',
-  connecting: 'bg-warning text-bg',
-  disabled: 'bg-muted/30 text-text-muted',
-  disconnected: 'bg-muted/30 text-text-muted',
-  _default: 'bg-muted/30 text-text-muted',
-};
+import { McpStatusBadge } from './McpStatusBadge.tsx';
 
 interface McpServerRowProps {
   server: McpServerInfo;
@@ -53,14 +44,7 @@ export function McpServerRow({
   return (
     <div className="border-b border-border">
       <div className="flex items-center gap-3 px-4 py-3">
-        <span
-          className={cn(
-            'text-xs px-1.5 py-0.5 rounded font-mono shrink-0',
-            MCP_STATUS_BADGE[s.status] ?? MCP_STATUS_BADGE._default,
-          )}
-        >
-          {s.status}
-        </span>
+        <McpStatusBadge status={s.status} />
         <span className="flex-1 text-xs font-mono text-text truncate">{s.name}</span>
         {onListTools && (
           <InlineAction
@@ -185,12 +169,14 @@ function McpAuthSection({
       </a>
       {onOAuthCallback && (
         <div className="flex gap-1 mt-2">
-          <input
+          <TextField
             type="text"
             placeholder="Callback URL"
             value={callbackInput}
-            onChange={(e) => setCallbackInput(e.target.value)}
-            className="flex-1 bg-code-block border border-border rounded px-2 py-1 text-xs font-mono text-text"
+            onChange={setCallbackInput}
+            mono
+            size="sm"
+            className="flex-1"
           />
           <Button
             variant="primary"

@@ -4,7 +4,7 @@ import { describe, expect, it } from 'vitest';
 import type { Message } from '@/types/ui';
 import { msg } from '@/utils/message';
 import { CollapsibleTimeline } from '../CollapsibleTimeline.tsx';
-import { TimelineItem } from '../TimelineItem.tsx';
+import { TimelineItem } from '../TimelineItem';
 
 function toolNode(name = 'Read'): Message {
   return msg({

@@ -1,7 +1,7 @@
 import { render, screen } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { describe, expect, it, vi } from 'vitest';
-import { NotificationToast } from '../NotificationToast.tsx';
+import { NotificationToast } from '@/components/chat/ui/NotificationToast';
 
 describe('NotificationToast', () => {
   const buttons = [

@@ -1,5 +1,7 @@
 import * as Popover from '@radix-ui/react-popover';
 import { type ReactNode, useEffect, useMemo, useRef, useState } from 'react';
+import { MenuItem } from '@/components/ui/MenuItem';
+import { SectionLabel } from '@/components/ui/SectionLabel';
 
 interface Props {
   /** Element that opens the popover when clicked. Wrapped in `Popover.Trigger asChild`. */
@@ -115,9 +117,7 @@ function BranchPopoverBody({ branches, current, onSelect, onCreateBranch }: Body
   return (
     // biome-ignore lint/a11y/noStaticElementInteractions: forwards arrow/enter keys from the filter input + menuitems; the wrapper is a layout div
     <div onKeyDown={onKeyDown}>
-      <div className="px-3 py-1 text-xs font-semibold uppercase tracking-wider text-text-muted">
-        Branches
-      </div>
+      <SectionLabel className="px-3 py-1">Branches</SectionLabel>
       <div className="px-2 pb-1">
         <input
           ref={inputRef}
@@ -139,36 +139,32 @@ function BranchPopoverBody({ branches, current, onSelect, onCreateBranch }: Body
             const isCursor = i === cursor;
             return (
               <Popover.Close asChild key={b}>
-                <button
-                  type="button"
+                <MenuItem
                   role="menuitem"
                   data-kind="branch"
                   data-cursor={isCursor || undefined}
                   onClick={() => onSelect(b)}
-                  className={`flex items-center gap-2 w-full text-left px-3 py-1.5 text-sm text-text hover:bg-hover-tint ${
-                    isCursor ? 'bg-hover-tint' : ''
-                  }`}
+                  className={`flex items-center gap-2 ${isCursor ? 'bg-hover-tint' : ''}`}
                 >
                   <span className="w-3 text-text-subtle">{isCurrent ? '✓' : ''}</span>
                   <span className="truncate">{b}</span>
-                </button>
+                </MenuItem>
               </Popover.Close>
             );
           })
         ) : onCreateBranch ? (
           <Popover.Close asChild>
-            <button
-              type="button"
+            <MenuItem
               role="menuitem"
               data-kind="create-from-filter"
               onClick={() => onCreateBranch(trimmedFilter)}
-              className="flex items-center gap-2 w-full text-left px-3 py-2 text-sm text-text-muted hover:text-text hover:bg-hover-tint"
+              className="flex items-center gap-2 py-2 text-text-muted hover:text-text"
             >
               <span className="w-3">+</span>
               <span>
                 Create <span className="font-mono text-text">"{trimmedFilter}"</span> as new branch
               </span>
-            </button>
+            </MenuItem>
           </Popover.Close>
         ) : (
           <div className="px-3 py-2 text-xs text-text-muted">No match</div>
@@ -178,16 +174,15 @@ function BranchPopoverBody({ branches, current, onSelect, onCreateBranch }: Body
         <>
           <div className="my-1 border-t border-border" />
           <Popover.Close asChild>
-            <button
-              type="button"
+            <MenuItem
               role="menuitem"
               data-kind="create-new"
               onClick={() => onCreateBranch()}
-              className="flex items-center gap-2 w-full text-left px-3 py-1.5 text-sm text-text-muted hover:text-text hover:bg-hover-tint"
+              className="flex items-center gap-2 text-text-muted hover:text-text"
             >
               <span className="w-3">+</span>
               <span>New branch (worktree)…</span>
-            </button>
+            </MenuItem>
           </Popover.Close>
         </>
       )}

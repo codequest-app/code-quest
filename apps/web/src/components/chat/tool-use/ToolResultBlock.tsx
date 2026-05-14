@@ -1,6 +1,6 @@
 import { CheckIcon } from '@heroicons/react/24/solid';
-import { CollapsibleBlock } from '../renderers/primitives.tsx';
-import { ContentRenderer } from './ContentRenderer.tsx';
+import { ContentRenderer } from '@/components/chat/tool-use/ContentRenderer';
+import { CollapsibleBlock } from '../ui/CollapsibleBlock';
 
 function extractTextFromArray(arr: unknown): string | null {
   if (!Array.isArray(arr)) return null;

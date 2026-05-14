@@ -1,7 +1,7 @@
 import { render, screen } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { describe, expect, it, vi } from 'vitest';
-import { SearchBar } from '../SearchBar.tsx';
+import { SearchBar } from '@/components/chat/session/SearchBar';
 
 describe('SearchBar', () => {
   it('calls setSearchQuery on input change', async () => {

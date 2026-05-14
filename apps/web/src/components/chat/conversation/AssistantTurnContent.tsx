@@ -1,10 +1,10 @@
 import { useShallow } from 'zustand/react/shallow';
 import { useChannelStore } from '@/stores/ChannelStoreContext';
 import type { AssistantTurn, Block } from '@/types/ui';
-import { Expandable } from '../renderers/Expandable.tsx';
 import { MarkdownContent } from '../renderers/MarkdownContent.tsx';
-import { CitationsPanel } from '../session/CitationsPanel.tsx';
 import { ToolUseCollapsible } from '../tool-use/ToolUseCollapsible.tsx';
+import { Expandable } from '../ui/Expandable';
+import { CitationsPanel } from './CitationsPanel.tsx';
 import { ThinkingBlock } from './ThinkingBlock.tsx';
 
 function ToolUseBlockCollapsible({

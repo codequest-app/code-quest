@@ -1,7 +1,7 @@
 import { useState } from 'react';
+import { TextField } from '@/components/chat/ui/TextField';
 import { Button } from '@/components/ui/Button';
 import { Dialog, DialogContent } from '@/components/ui/Dialog';
-import { TextField } from '@/components/ui/TextField';
 
 interface ElicitationDialogProps {
   requestId: string;

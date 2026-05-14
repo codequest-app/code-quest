@@ -1,7 +1,7 @@
 import { render, screen } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { describe, expect, it, vi } from 'vitest';
-import { EmptyState } from '../EmptyState.tsx';
+import { EmptyState } from '@/components/ui/EmptyState';
 
 describe('EmptyState', () => {
   it('renders message and action button', () => {

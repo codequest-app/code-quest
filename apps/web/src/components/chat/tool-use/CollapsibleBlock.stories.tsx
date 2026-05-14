@@ -1,6 +1,6 @@
 import type { Meta, StoryObj } from '@storybook/react-vite';
 import { expect, userEvent } from 'storybook/test';
-import { CollapsibleBlock } from '../renderers/primitives.tsx';
+import { CollapsibleBlock } from '../ui/CollapsibleBlock';
 
 const meta: Meta<typeof CollapsibleBlock> = {
   component: CollapsibleBlock,

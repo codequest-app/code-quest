@@ -1,4 +1,5 @@
 import type { FsSearchResult } from '@code-quest/shared';
+import { HighlightText } from '@/components/chat/ui/HighlightText';
 import { FileIcon, FolderIcon } from '@/components/icons/MentionIcons';
 import { cn } from '@/utils/cn';
 import { slugify } from '@/utils/slugify';
@@ -7,15 +8,13 @@ import type { SearchStatus } from './ComposeInput.tsx';
 const noop = () => {};
 
 function HighlightMatch({ text, query }: { text: string; query: string }) {
-  if (!query) return <>{text}</>;
-  const idx = text.toLowerCase().indexOf(query.toLowerCase());
-  if (idx === -1) return <>{text}</>;
   return (
-    <>
-      {text.slice(0, idx)}
-      <span className="text-accent font-semibold">{text.slice(idx, idx + query.length)}</span>
-      {text.slice(idx + query.length)}
-    </>
+    <HighlightText
+      text={text}
+      query={query}
+      as="span"
+      highlightClassName="text-accent font-semibold"
+    />
   );
 }
 

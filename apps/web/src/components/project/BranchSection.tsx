@@ -1,5 +1,6 @@
 import type { GitStatusResult } from '@code-quest/shared';
-import { InlineAction } from '../ui/InlineAction.tsx';
+import { InlineAction } from '@/components/chat/ui/InlineAction';
+import { SectionLabel } from '../ui/SectionLabel.tsx';
 import { BranchPopover } from './BranchPopover.tsx';
 
 interface BranchSectionProps {
@@ -20,7 +21,9 @@ export function BranchSection({
   return (
     <section className="px-3 py-2 border-b border-border">
       <div className="flex items-center justify-between mb-1">
-        <h4 className="section-label m-0">Branch</h4>
+        <SectionLabel as="h4" className="m-0">
+          Branch
+        </SectionLabel>
         <BranchPopover
           trigger={
             <InlineAction variant="accent" aria-label="Switch branch" className="hover:underline">

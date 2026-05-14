@@ -4,6 +4,8 @@ import type { SessionStatus } from '@/types/ui';
 import { cn } from '@/utils/cn';
 import { Button } from '../ui/Button.tsx';
 import { Dialog, DialogClose, DialogContent } from '../ui/Dialog.tsx';
+import { IconButton } from '../ui/IconButton.tsx';
+import { StatusDot } from '../ui/StatusDot.tsx';
 
 export interface TabInfo {
   sessionId: string;
@@ -34,13 +36,14 @@ interface TabBarProps {
   onOpenHistory?: () => void;
 }
 
-const statusDot: Record<SessionStatus, string> = {
-  disconnected: 'bg-danger',
-  idle: 'bg-success',
-  processing: 'bg-accent animate-pulse',
-  connecting: 'bg-accent animate-pulse',
-  busy: 'bg-accent animate-pulse',
-  cancelling: 'bg-warning animate-pulse',
+type DotColor = 'success' | 'warning' | 'danger' | 'accent' | 'muted';
+const statusDot: Record<SessionStatus, { color: DotColor; pulse?: boolean }> = {
+  disconnected: { color: 'danger' },
+  idle: { color: 'success' },
+  processing: { color: 'accent', pulse: true },
+  connecting: { color: 'accent', pulse: true },
+  busy: { color: 'accent', pulse: true },
+  cancelling: { color: 'warning', pulse: true },
 };
 
 /** Renders the chat tab strip via Radix `Tabs.List` + `Tabs.Trigger`.
@@ -94,7 +97,7 @@ export function TabBar({
                   onClick={() => onSelectTab(tab.sessionId)}
                   title={tab.worktree?.path}
                 >
-                  <span className={cn('w-1.5 h-1.5 rounded-full', statusDot[tab.status])} />
+                  <StatusDot {...statusDot[tab.status]} />
                   <span className="truncate max-w-30">
                     {tab.title || tab.sessionId.slice(0, 8)}
                   </span>
@@ -127,25 +130,23 @@ export function TabBar({
           );
         })}
         {onNewTab && (
-          <button
-            type="button"
-            className="flex items-center justify-center w-6 h-6 rounded text-xs text-text-muted hover:text-text hover:bg-hover-tint shrink-0"
+          <IconButton
             onClick={onNewTab}
             aria-label="New tab"
+            className="text-text-muted hover:text-text hover:tint-5 shrink-0"
           >
             +
-          </button>
+          </IconButton>
         )}
         {onOpenHistory && (
-          <button
-            type="button"
-            className="flex items-center justify-center w-6 h-6 rounded text-xs text-text-muted hover:text-text hover:bg-hover-tint shrink-0 ml-auto"
+          <IconButton
             onClick={onOpenHistory}
             aria-label="Session history"
             title="Session history"
+            className="text-text-muted hover:text-text hover:tint-5 shrink-0 ml-auto"
           >
             ☰
-          </button>
+          </IconButton>
         )}
         <Dialog
           open={confirmingId !== null}

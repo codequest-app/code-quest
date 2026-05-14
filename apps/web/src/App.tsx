@@ -1,7 +1,7 @@
 import { useEffect, useState } from 'react';
 import { ErrorBoundary } from 'react-error-boundary';
 import { Toaster } from 'sonner';
-import { ErrorFallback } from './components/workspace/ErrorFallback.tsx';
+import { ErrorFallback } from './components/ui/ErrorFallback.tsx';
 import { WorkspaceLayout } from './components/workspace/WorkspaceLayout.tsx';
 import { AppInitProvider } from './contexts/AppInitContext.tsx';
 import { FsProvider } from './contexts/FsContext.tsx';

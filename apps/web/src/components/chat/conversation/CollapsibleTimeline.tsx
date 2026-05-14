@@ -4,7 +4,7 @@ import type { AssistantTurn, ForkFn, Message, RewindFn } from '@/types/ui';
 import { getToolId } from '@/utils/message-helpers';
 import { buildGroupChips, splitTimelineRuns, type TimelineRun } from '@/utils/timeline-utils';
 import { NodeContent } from './NodeContent.tsx';
-import { type RowPosition, TimelineItem } from './TimelineItem.tsx';
+import { type RowPosition, TimelineItem } from './TimelineItem';
 import { ToolGroupSummary } from './ToolGroupSummary.tsx';
 
 interface RunProps {
@@ -23,21 +23,17 @@ function positionOf(index: number, total: number): RowPosition {
   return 'middle';
 }
 
-function dotClass(
+const MUTED_DOT_TYPES = new Set<Message['type']>(['text', 'thinking', 'streamlined_text']);
+
+export function dotClass(
   message: Message,
   storeResult?: { content?: string; is_error?: boolean },
 ): string {
-  if (
-    message.type === 'text' ||
-    message.type === 'thinking' ||
-    message.type === 'streamlined_text'
-  ) {
-    return 'bg-muted/60';
-  }
+  if (MUTED_DOT_TYPES.has(message.type)) return 'bg-border';
   if (message.type === 'assistant_turn') {
     const turn = message as AssistantTurn;
     const hasToolUse = turn.blocks.some((b) => b.type === 'tool_use');
-    if (!hasToolUse) return 'bg-muted/60';
+    if (!hasToolUse) return 'bg-border';
   }
   if (storeResult?.is_error) return 'bg-danger';
   if (storeResult) return 'bg-success';
@@ -97,7 +93,7 @@ function ToolGroup({
     <div data-collapsed-ids={collapsedIds}>
       <TimelineItem
         position={expanded ? 'first' : position}
-        dotClass="bg-muted/40"
+        dotClass="tint-10"
         showDot={!expanded}
         py="py-1.5"
       >

@@ -1,5 +1,6 @@
 import * as Popover from '@radix-ui/react-popover';
 import { useEffect, useLayoutEffect, useRef, useState } from 'react';
+import { MenuSection } from '@/components/chat/ui/MenuSection';
 import { IconButton } from '@/components/ui/IconButton.tsx';
 import { SlashCommandIcon } from '@/components/ui/Icons.tsx';
 import { useChannelCompose, useChannelConfig } from '@/contexts/channel';
@@ -8,7 +9,6 @@ import { cn } from '@/utils/cn';
 import { findModel, getEffortLevels, isThinkingActive } from '@/utils/model-utils';
 import { buildLocalFeatures } from './build-local-features.ts';
 import { buildMenuItems } from './build-menu-items.ts';
-import { MenuSection } from './menu-components.tsx';
 import { computeMenuLayout } from './menu-layout.ts';
 import { dispatchSelectedItem, isNavKey, navigateItems } from './menu-navigation.ts';
 import type { MenuItem } from './menu-types.ts';

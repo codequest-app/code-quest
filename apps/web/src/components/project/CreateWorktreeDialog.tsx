@@ -4,7 +4,7 @@ import { useGitActions } from '@/contexts/GitContext';
 import { tabTriggerCompact } from '../ui/_tokens.ts';
 import { Button } from '../ui/Button.tsx';
 import { Dialog, DialogContent } from '../ui/Dialog.tsx';
-import { CommandPreview } from './worktree-dialog/CommandPreview.tsx';
+import { DialogFooter } from '../ui/DialogFooter.tsx';
 import { ExistingPane } from './worktree-dialog/ExistingPane.tsx';
 import { NewPane } from './worktree-dialog/NewPane.tsx';
 import { autoDerivePath, buildWorktreeCommand } from './worktree-dialog-helpers.ts';
@@ -135,10 +135,15 @@ export function CreateWorktreeDialog({
             </Tabs.Content>
           </Tabs.Root>
 
-          <CommandPreview command={previewCommand} />
+          <div className="flex items-center gap-2 px-2 py-1.5 text-xs font-mono rounded bg-bg/40 border border-border">
+            <span className="text-text-muted">command</span>
+            <span role="status" aria-label="worktree-command-preview" className="truncate">
+              {previewCommand}
+            </span>
+          </div>
           {error ? <div className="text-xs text-danger">{error}</div> : null}
 
-          <div className="flex justify-end gap-2 -mx-4 -mb-4 px-4 py-3 border-t border-border mt-2">
+          <DialogFooter variant="bleed">
             <Button
               variant="secondary"
               size="md"
@@ -151,7 +156,7 @@ export function CreateWorktreeDialog({
             <Button type="submit" size="md" disabled={submitDisabled}>
               {isCreating ? 'Creating…' : 'Create'}
             </Button>
-          </div>
+          </DialogFooter>
         </form>
       </DialogContent>
     </Dialog>

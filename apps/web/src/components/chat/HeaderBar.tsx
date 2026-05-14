@@ -38,7 +38,7 @@ export function HeaderBar({ title, children }: HeaderBarProps): React.JSX.Elemen
         </span>
       )}
       {sessionLabel && (
-        <span className="text-text-muted/60 text-xs truncate flex-1 min-w-0">{sessionLabel}</span>
+        <span className="text-subtle text-xs truncate flex-1 min-w-0">{sessionLabel}</span>
       )}
       {!sessionLabel && <div className="flex-1" />}
       {children}
