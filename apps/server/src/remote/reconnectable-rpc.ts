@@ -1,22 +1,49 @@
 import { logger } from '../logger.ts';
 import type { RemoteRpcWithEvents } from './types.ts';
 
+/**
+ * Stable event bus that survives summoner WS reconnects.
+ * Listeners registered via on() persist across replace() calls —
+ * they are re-wired to each new underlying RpcChannel automatically.
+ */
 export class ReconnectableRpc implements RemoteRpcWithEvents {
   private current: RemoteRpcWithEvents | null = null;
+  private readonly persistentListeners = new Map<string, Set<(...args: unknown[]) => void>>();
+  private currentUnsubscribers: Array<() => void> = [];
 
   get connected(): boolean {
     return this.current !== null;
   }
 
   replace(rpc: RemoteRpcWithEvents): void {
+    for (const unsub of this.currentUnsubscribers) unsub();
+    this.currentUnsubscribers = [];
     this.current = rpc;
     logger.info('Remote summoner connected');
-    rpc.on('disconnect', () => {
-      if (this.current === rpc) {
-        logger.info('Remote summoner disconnected');
-        this.current = null;
+
+    for (const [event, fns] of this.persistentListeners) {
+      for (const fn of fns) {
+        this.currentUnsubscribers.push(rpc.on(event, fn));
       }
-    });
+    }
+
+    this.currentUnsubscribers.push(
+      rpc.on('disconnect', () => {
+        if (this.current === rpc) {
+          logger.info('Remote summoner disconnected');
+          this.current = null;
+          for (const unsub of this.currentUnsubscribers) unsub();
+          this.currentUnsubscribers = [];
+        }
+      }),
+    );
+  }
+
+  destroy(): void {
+    for (const unsub of this.currentUnsubscribers) unsub();
+    this.currentUnsubscribers = [];
+    this.persistentListeners.clear();
+    this.current = null;
   }
 
   request<R = unknown>(method: string, params: unknown): Promise<R> {
@@ -25,10 +52,22 @@ export class ReconnectableRpc implements RemoteRpcWithEvents {
   }
 
   on(event: string, fn: (...args: unknown[]) => void): () => void {
-    if (!this.current) {
-      logger.debug({ event }, 'ReconnectableRpc.on() called with no active connection');
-      return () => {};
+    let set = this.persistentListeners.get(event);
+    if (!set) {
+      set = new Set();
+      this.persistentListeners.set(event, set);
     }
-    return this.current.on(event, fn);
+    set.add(fn);
+
+    let unsub: (() => void) | null = null;
+    if (this.current) {
+      unsub = this.current.on(event, fn);
+      this.currentUnsubscribers.push(unsub);
+    }
+
+    return () => {
+      this.persistentListeners.get(event)?.delete(fn);
+      unsub?.();
+    };
   }
 }

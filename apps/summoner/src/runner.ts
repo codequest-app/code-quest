@@ -1,8 +1,7 @@
 import { EventEmitter } from 'node:events';
-import type { ClientMessage, ProcessHandle, ProcessProvider } from '@code-quest/shared';
+import type { ProcessHandle, ProcessProvider } from '@code-quest/shared';
 import { logger } from './logger.ts';
 import type { ParseResult, ProviderAdapter } from './types.ts';
-import { isRecord } from './utils.ts';
 
 const INHERITED_ENV_KEYS_TO_REMOVE = ['CLAUDECODE', 'CLAUDE_CODE_ENTRYPOINT'] as const;
 const SDK_FILE_CHECKPOINTING_KEY = 'CLAUDE_CODE_ENABLE_SDK_FILE_CHECKPOINTING';
@@ -85,7 +84,8 @@ export class ProcessRunner<E = unknown, L = unknown> extends EventEmitter {
       logger.debug({ err: error }, 'Async iteration ended with error');
     }
     this.handle = null;
-    this.emit('exit', null);
+    const code = typeof handle.signal.reason === 'number' ? handle.signal.reason : null;
+    this.emit('exit', code);
   }
 
   private _processLine(line: string): void {
@@ -98,18 +98,8 @@ export class ProcessRunner<E = unknown, L = unknown> extends EventEmitter {
       this.emit('control_response', cr);
     }
     for (const message of messages) {
-      this.emit('client_message', this.augmentForPersistence(message));
+      this.emit('client_message', message);
     }
-  }
-
-  /** session:init is the one moment server needs to record how this
-   *  process was actually spawned. Piggyback the resolved launchArgs
-   *  on that event's payload so server can write it to DB without
-   *  reaching back into runner state. */
-  private augmentForPersistence(message: ClientMessage): ClientMessage {
-    if (message.name !== 'session:init') return message;
-    const base = isRecord(message.payload) ? message.payload : {};
-    return { ...message, payload: { ...base, args: this.launchArgs } };
   }
 
   write(raw: string): void {

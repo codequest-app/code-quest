@@ -7,6 +7,7 @@ import type {
 } from '@code-quest/shared';
 import {
   errorMessageEventSchema,
+  isRecord,
   sessionInitConfigSchema,
   sessionInitEventSchema,
   sessionStatusEventSchema,
@@ -255,10 +256,6 @@ export class Channel {
     this.runner.respondToControlRequest(requestId, response);
   }
 
-  abort(): void {
-    this.runner.kill();
-  }
-
   write(data: string): void {
     this.runner.write(data);
   }
@@ -356,8 +353,9 @@ export class Channel {
     if (this._runnerListeners) return; // already wired
 
     const onClientMessage = (message: ClientMessage) => {
-      this.handleInternalMessage(message);
-      hooks.onClientMessage?.(this, message);
+      const msg = augmentSessionInit(message, this.runner.launchArgs);
+      this.handleInternalMessage(msg);
+      hooks.onClientMessage?.(this, msg);
     };
 
     const onControlResponse = (response: ResolvedControlResponse) => {
@@ -401,4 +399,10 @@ export class Channel {
     this.resetSessionConfig();
     this._exited = true;
   }
+}
+
+function augmentSessionInit(message: ClientMessage, launchArgs: string[]): ClientMessage {
+  if (message.name !== 'session:init') return message;
+  const base = isRecord(message.payload) ? message.payload : {};
+  return { ...message, payload: { ...base, args: launchArgs } };
 }

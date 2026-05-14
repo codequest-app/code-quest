@@ -85,7 +85,7 @@ export function create({
       payload,
       ({ channelId }) => {
         if (interruptedChannels.has(channelId)) {
-          ch.abort();
+          ch.kill();
         } else {
           interruptedChannels.add(channelId);
           fireSendRequest(ch, 'message:interrupt');
