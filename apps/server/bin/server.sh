@@ -6,6 +6,7 @@ NODE="$DIR/runtime/node"
 SQLITE_NODE="$DIR/node_modules/better-sqlite3/build/Release/better_sqlite3.node"
 
 NODE_VERSION="22.15.0"
+NODE_MODULES="131"
 SQLITE_VERSION="12.6.2"
 
 # ── Detect platform ──
@@ -57,13 +58,27 @@ download_sqlite() {
   echo "[setup] better-sqlite3 downloaded."
 }
 
+# ── Resolve Node.js ──
+
+resolve_node() {
+  SYSTEM_NODE=$(command -v node 2>/dev/null || true)
+  if [ -n "$SYSTEM_NODE" ]; then
+    SYSTEM_MODULES=$("$SYSTEM_NODE" -e "process.stdout.write(process.versions.modules)" 2>/dev/null || true)
+    if [ "$SYSTEM_MODULES" = "$NODE_MODULES" ]; then
+      NODE="$SYSTEM_NODE"
+      echo "[setup] Using system Node.js ($("$NODE" --version))."
+      return
+    fi
+  fi
+  if [ ! -x "$DIR/runtime/node" ]; then
+    download_node
+  fi
+}
+
 # ── Main ──
 
 detect_platform
-
-if [ ! -x "$NODE" ]; then
-  download_node
-fi
+resolve_node
 
 if [ ! -f "$SQLITE_NODE" ]; then
   download_sqlite
