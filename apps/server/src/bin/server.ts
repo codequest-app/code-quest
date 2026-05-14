@@ -177,7 +177,7 @@ const publicDir = process.env.PUBLIC_DIR
 if (publicDir) {
   app.use(express.static(publicDir));
   // SPA fallback
-  app.get('*', (req, res, next) => {
+  app.get('*path', (req, res, next) => {
     if (req.path.startsWith(HEALTH_PATH)) return next();
     res.sendFile(join(publicDir, 'index.html'));
   });
