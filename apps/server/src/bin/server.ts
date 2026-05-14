@@ -65,7 +65,14 @@ function requireSummonerToken(): string {
 }
 
 const app = express();
-app.use(helmet());
+// upgrade-insecure-requests tells browsers to rewrite resource URLs to HTTPS.
+// It must be off when Node serves plain HTTP (default); set HTTPS_MODE=true
+// when Node terminates TLS directly to re-enable HSTS and this directive.
+const cspDirectives = helmet.contentSecurityPolicy.getDefaultDirectives();
+if (!config.httpsMode) cspDirectives['upgrade-insecure-requests'] = null;
+app.use(
+  helmet({ hsts: config.httpsMode, contentSecurityPolicy: { directives: cspDirectives } }),
+);
 app.use(cors());
 
 const httpServer = createServer(app);
