@@ -64,6 +64,8 @@ interface AppConfig {
   readonly summonerToken: string | undefined;
   readonly summonerTokenGenerated: boolean;
   readonly authToken: string | undefined;
+  /** True when Node terminates TLS directly (no reverse proxy). Enables HSTS. */
+  readonly httpsMode: boolean;
 }
 
 export function loadConfig(env: Env = process.env): AppConfig {
@@ -84,6 +86,7 @@ export function loadConfig(env: Env = process.env): AppConfig {
     historyBatchSize: parseNumber(env.SESSION_HISTORY_BATCH_SIZE, 5000),
     summonerMode: env.SUMMONER_MODE === 'local' ? 'local' : 'remote',
     authToken: env.AUTH_TOKEN || undefined,
+    httpsMode: parseBool(env.HTTPS_MODE, false),
     ...resolveSummonerToken(env),
   } as const;
 }
