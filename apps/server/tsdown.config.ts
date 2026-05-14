@@ -15,6 +15,10 @@ export default defineConfig({
   splitting: true,
   outputOptions: {
     chunkFileNames: '_chunks/[name]-[hash].js',
+    banner: (chunk) =>
+      chunk.isEntry
+        ? "import { createRequire } from 'node:module'; const require = createRequire(import.meta.url);"
+        : '',
   },
   sourcemap: process.env.BUILD_SOURCEMAP === 'true',
   fixedExtension: false,
@@ -22,9 +26,6 @@ export default defineConfig({
   deps: {
     alwaysBundle: [/^(?!better-sqlite3|bindings|file-uri-to-path).*/],
     neverBundle: ['better-sqlite3', 'bindings', 'file-uri-to-path'],
-  },
-  banner: {
-    js: "import { createRequire } from 'node:module'; const require = createRequire(import.meta.url);",
   },
   onSuccess() {
     cpSync(resolve('../../packages/db-schema/drizzle'), resolve('dist/migrations'), {
