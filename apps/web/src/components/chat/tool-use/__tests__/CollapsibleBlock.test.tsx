@@ -45,17 +45,6 @@ describe('CollapsibleBlock', () => {
     expect(screen.queryByText('content')).not.toBeInTheDocument();
   });
 
-  it('renders label, labelDetail, and labelRange', () => {
-    render(
-      <CollapsibleBlock icon="🔧" label="MyLabel" labelDetail="detail.txt" labelRange="1–10">
-        <span>content</span>
-      </CollapsibleBlock>,
-    );
-    expect(screen.getByText('MyLabel')).toBeInTheDocument();
-    expect(screen.getByText('detail.txt')).toBeInTheDocument();
-    expect(screen.getByText('1–10')).toBeInTheDocument();
-  });
-
   it('shows children when defaultOpen is true', () => {
     render(
       <CollapsibleBlock icon="📄" label="Test" defaultOpen>

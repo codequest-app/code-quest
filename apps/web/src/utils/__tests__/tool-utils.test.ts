@@ -1,12 +1,7 @@
 import { describe, expect, it } from 'vitest';
 import type { Message } from '@/types/ui';
-import {
-  buildGroupChips,
-  getToolHeaderInfo,
-  isMcpTool,
-  parseMcpToolName,
-  splitTimelineRuns,
-} from '@/utils/tool-utils';
+import { buildGroupChips, splitTimelineRuns } from '@/utils/timeline-utils';
+import { getToolHeaderInfo, isMcpTool, parseMcpToolName } from '@/utils/tool-utils';
 
 describe('tool-registry', () => {
   describe('getToolHeaderInfo', () => {
@@ -125,8 +120,35 @@ function thinkingMsg(id = 't-think'): Message {
   return { id, role: 'assistant', type: 'thinking', content: '', timestamp: 0 } as Message;
 }
 
+function assistantTurnMsg(
+  toolName: string,
+  id = `at-${toolName}`,
+  opts: { withThinking?: boolean } = {},
+): Message {
+  const blocks = [
+    ...(opts.withThinking ? [{ id: `${id}-think`, type: 'thinking' as const, content: '' }] : []),
+    { id: `${id}-tool`, type: 'tool_use' as const, content: toolName, toolId: `${id}-tool` },
+  ];
+  return {
+    id,
+    role: 'assistant',
+    type: 'assistant_turn',
+    content: toolName,
+    blocks,
+    timestamp: 0,
+  } as Message;
+}
+
 function textMsg(id = 't-text'): Message {
   return { id, role: 'assistant', type: 'text', content: 'hi', timestamp: 0 } as Message;
+}
+
+function actionResultMsg(id = 'ar-1', content = 'Approved: Bash'): Message {
+  return { id, role: 'user', type: 'action_result', content, timestamp: 0 } as Message;
+}
+
+function pendingActionMsg(id = 'pa-1'): Message {
+  return { id, role: 'user', type: 'pending_action', content: '', timestamp: 0 } as Message;
 }
 
 describe('splitTimelineRuns', () => {
@@ -182,6 +204,134 @@ describe('splitTimelineRuns', () => {
     const think = thinkingMsg();
     expect(splitTimelineRuns([think])).toEqual([{ kind: 'solo', message: think }]);
   });
+
+  it('assistant_turn with thinking+tool_use is treated as tool message → groups with adjacent tools', () => {
+    const m1 = assistantTurnMsg('Bash', 'at1', { withThinking: true });
+    const m2 = assistantTurnMsg('Read', 'at2', { withThinking: true });
+    expect(splitTimelineRuns([m1, m2])).toEqual([{ kind: 'grouped', messages: [m1, m2] }]);
+  });
+
+  it('assistant_turn with thinking+tool_use groups with plain tool_use messages', () => {
+    const m1 = toolMsg('Bash', 'b1');
+    const m2 = assistantTurnMsg('Read', 'at2', { withThinking: true });
+    const m3 = toolMsg('Write', 'w1');
+    expect(splitTimelineRuns([m1, m2, m3])).toEqual([{ kind: 'grouped', messages: [m1, m2, m3] }]);
+  });
+
+  // Real-world pattern from DB session 513938c2:
+  // Each assistant message has SAME message.id for text + tool_use blocks,
+  // so they merge into one assistant_turn with [text, tool_use].
+  // These must stay SOLO — the text is the assistant's visible response.
+  it('assistant_turn with text+tool_use stays solo (text block means it is a response, not just a tool call)', () => {
+    const m = {
+      id: 'at-1',
+      role: 'assistant',
+      type: 'assistant_turn',
+      content: 'Let me read the file',
+      blocks: [
+        { id: 'b1', type: 'text', content: 'Let me read the file' },
+        { id: 'b2', type: 'tool_use', content: 'Read', toolId: 'tu-1' },
+      ],
+      timestamp: 0,
+    } as Message;
+    expect(splitTimelineRuns([m])).toEqual([{ kind: 'solo', message: m }]);
+  });
+
+  it('multiple consecutive assistant_turn [text+tool_use] stay solo, not grouped', () => {
+    const m1 = {
+      id: 'at-1',
+      role: 'assistant',
+      type: 'assistant_turn',
+      content: 'Let me read...',
+      blocks: [
+        { id: 'b1', type: 'text', content: 'Let me read...' },
+        { id: 'b2', type: 'tool_use', content: 'Read', toolId: 'tu-1' },
+      ],
+      timestamp: 0,
+    } as Message;
+    const m2 = {
+      id: 'at-2',
+      role: 'assistant',
+      type: 'assistant_turn',
+      content: 'Now edit...',
+      blocks: [
+        { id: 'b3', type: 'text', content: 'Now edit...' },
+        { id: 'b4', type: 'tool_use', content: 'Edit', toolId: 'tu-2' },
+      ],
+      timestamp: 0,
+    } as Message;
+    expect(splitTimelineRuns([m1, m2])).toEqual([
+      { kind: 'solo', message: m1 },
+      { kind: 'solo', message: m2 },
+    ]);
+  });
+
+  it('assistant_turn with only thinking blocks (no tool_use) stays solo', () => {
+    const thinkOnly = {
+      id: 'at-think',
+      role: 'assistant',
+      type: 'assistant_turn',
+      content: '',
+      blocks: [{ id: 'b1', type: 'thinking', content: '' }],
+      timestamp: 0,
+    } as Message;
+    const tool = toolMsg('Bash', 'b1');
+    expect(splitTimelineRuns([thinkOnly, tool])).toEqual([
+      { kind: 'solo', message: thinkOnly },
+      { kind: 'solo', message: tool },
+    ]);
+  });
+
+  it('[tool, action_result, tool] → single grouped run (action_result does not break group)', () => {
+    const b1 = toolMsg('Bash', 'b1');
+    const ar = actionResultMsg();
+    const r1 = toolMsg('Read', 'r1');
+    expect(splitTimelineRuns([b1, ar, r1])).toEqual([{ kind: 'grouped', messages: [b1, ar, r1] }]);
+  });
+
+  it('[tool, pending_action, tool] → single grouped run', () => {
+    const b1 = toolMsg('Bash', 'b1');
+    const pa = pendingActionMsg();
+    const r1 = toolMsg('Read', 'r1');
+    expect(splitTimelineRuns([b1, pa, r1])).toEqual([{ kind: 'grouped', messages: [b1, pa, r1] }]);
+  });
+
+  it('[tool, action_result, tool, action_result, tool] → single grouped run', () => {
+    const b1 = toolMsg('Bash', 'b1');
+    const ar1 = actionResultMsg('ar-1');
+    const r1 = toolMsg('Read', 'r1');
+    const ar2 = actionResultMsg('ar-2');
+    const w1 = toolMsg('Write', 'w1');
+    expect(splitTimelineRuns([b1, ar1, r1, ar2, w1])).toEqual([
+      { kind: 'grouped', messages: [b1, ar1, r1, ar2, w1] },
+    ]);
+  });
+
+  it('[action_result] alone stays solo', () => {
+    const ar = actionResultMsg();
+    expect(splitTimelineRuns([ar])).toEqual([{ kind: 'solo', message: ar }]);
+  });
+
+  it('text breaks the group even with action_result inside', () => {
+    const b1 = toolMsg('Bash', 'b1');
+    const ar = actionResultMsg();
+    const t = textMsg();
+    const r1 = toolMsg('Read', 'r1');
+    expect(splitTimelineRuns([b1, ar, t, r1])).toEqual([
+      { kind: 'grouped', messages: [b1, ar] },
+      { kind: 'solo', message: t },
+      { kind: 'solo', message: r1 },
+    ]);
+  });
+
+  it('buildGroupChips extracts tool name from assistant_turn with thinking+tool_use', () => {
+    const m1 = assistantTurnMsg('Bash', 'at1', { withThinking: true });
+    const m2 = assistantTurnMsg('Read', 'at2', { withThinking: true });
+    expect(buildGroupChips([m1, m2])).toEqual([
+      { label: 'Bash', count: 1, isError: false },
+      { label: 'Read', count: 1, isError: false },
+    ]);
+  });
 });
 
 describe('buildGroupChips', () => {
@@ -235,6 +385,16 @@ describe('buildGroupChips', () => {
       { label: '/zod-validation', isError: false },
       { label: 'Run analysis', isError: false },
     ]);
+  });
+
+  it('tool_use with empty content is skipped (no invisible-label chip)', () => {
+    const nodes = [toolMsg('', 't1'), toolMsg('', 't2')];
+    expect(buildGroupChips(nodes)).toEqual([]);
+  });
+
+  it('empty-content tool mixed with valid tool only shows the valid chip', () => {
+    const nodes = [toolMsg('', 't1'), toolMsg('Bash', 'b1')];
+    expect(buildGroupChips(nodes)).toEqual([{ label: 'Bash', count: 1, isError: false }]);
   });
 
   it('insertion order preserved: generic before named before generic', () => {

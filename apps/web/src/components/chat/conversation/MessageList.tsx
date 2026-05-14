@@ -336,7 +336,9 @@ export const MessageList: React.ForwardRefExoticComponent<
     });
   };
 
-  selfRef.current = { scrollToMessage };
+  useEffect(() => {
+    selfRef.current = { scrollToMessage };
+  });
   useImperativeHandle(ref, () => ({ scrollToMessage }));
 
   const virtualItems = virtualizer.getVirtualItems();
@@ -352,7 +354,7 @@ export const MessageList: React.ForwardRefExoticComponent<
         {messages.length === 0 ? (
           <div className="flex flex-col items-center justify-center h-full text-center select-none gap-3 relative -top-7">
             <span className="text-4xl text-assistant">✦</span>
-            <span className="text-lg font-medium text-text-bright">CC Office</span>
+            <span className="text-lg font-medium text-text-bright">Code Quest</span>
             <span className="text-sm text-text-muted">How can I help you today?</span>
           </div>
         ) : (

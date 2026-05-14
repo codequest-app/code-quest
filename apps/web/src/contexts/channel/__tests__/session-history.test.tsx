@@ -221,6 +221,6 @@ describe('isConnecting state', () => {
 
     // New session with no history → empty state, no SpinnerVerb
     expect(screen.queryByLabelText('spinner-verb')).not.toBeInTheDocument();
-    expect(screen.getByText('CC Office')).toBeInTheDocument();
+    expect(screen.getByText('Code Quest')).toBeInTheDocument();
   });
 });

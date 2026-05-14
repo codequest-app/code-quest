@@ -36,11 +36,14 @@ import {
   ToolResultBlock,
 } from '../tool-use/index.ts';
 import { renderIcon } from '../tool-use/message-type-icons.tsx';
-import { ToolUseBlock } from '../tool-use/ToolUseBlock.tsx';
+import { ToolUseCollapsible } from '../tool-use/ToolUseCollapsible.tsx';
 import { AssistantTurnContent } from './AssistantTurnContent.tsx';
 import { MessageActions } from './MessageActions.tsx';
 import { SubagentChildren } from './SubagentChildren.tsx';
 import { ThinkingBlock } from './ThinkingBlock.tsx';
+
+const JSON_VIEWER_CLASS =
+  'bg-code-block p-3 rounded-lg overflow-x-auto text-xs border border-border';
 
 const NO_COPY_TYPES = new Set([
   'tool_use',
@@ -52,9 +55,6 @@ const NO_COPY_TYPES = new Set([
   'thinking',
   'redacted_thinking',
 ]);
-
-const JSON_VIEWER_CLASS =
-  'bg-code-block p-3 rounded-lg overflow-x-auto text-xs border border-border';
 
 interface NodeContentProps {
   message: Message;
@@ -125,7 +125,7 @@ export const NodeContent: React.MemoExoticComponent<
               return (
                 <span
                   key={`${att.filename}-${att.startLine}`}
-                  className="inline-flex items-center gap-1 text-xs text-text-muted bg-white/5 border border-border/50 rounded px-2 py-0.5"
+                  className="inline-flex items-center gap-1 text-xs text-text-muted bg-surface border border-border/50 rounded px-2 py-0.5"
                 >
                   {fileName}
                   {range}
@@ -160,19 +160,13 @@ export const NodeContent: React.MemoExoticComponent<
   );
 });
 
-function UserTextContent({
-  content,
-  isLastTurn,
-}: {
-  content: string;
-  isLastTurn?: boolean;
-}): React.JSX.Element {
+function UserTextContent({ content }: { content: string }): React.JSX.Element {
   const [preview, setPreview] = useState<{ src: string; alt: string } | null>(null);
   const { text, attachments } = parseAttachments(content);
 
   return (
     <>
-      <Expandable maxHeight={600} defaultOpen={isLastTurn ?? false}>
+      <Expandable maxHeight={600} defaultOpen={true}>
         <div className="leading-relaxed whitespace-pre-wrap">
           {text}
           {attachments.length > 0 && (
@@ -190,7 +184,7 @@ function UserTextContent({
                 ) : (
                   <span
                     key={att.name}
-                    className="inline-flex items-center gap-1 text-xs text-text-muted bg-white/5 border border-border/50 rounded px-2 py-0.5"
+                    className="inline-flex items-center gap-1 text-xs text-text-muted bg-surface border border-border/50 rounded px-2 py-0.5"
                   >
                     {att.name}
                   </span>
@@ -205,6 +199,22 @@ function UserTextContent({
       )}
     </>
   );
+}
+
+function resolveTask(
+  message: NodeContentProps['message'],
+  task: Task | undefined,
+): Task | undefined {
+  if (task) return task;
+  if (message.type === 'tool_use' && message.taskStatus) {
+    return {
+      toolUseId: message.toolId ?? '',
+      taskType: message.taskType,
+      status: message.taskStatus,
+      description: '',
+    } as Task;
+  }
+  return undefined;
 }
 
 function renderContent(
@@ -223,10 +233,10 @@ function renderContent(
     const { renderAs } = message;
     const isPlain = message.role === 'user' && renderAs !== 'markdown';
     if (isPlain) {
-      return <UserTextContent content={message.content} isLastTurn={isLastTurn} />;
+      return <UserTextContent content={message.content} />;
     }
     return (
-      <Expandable maxHeight={600} defaultOpen={isLastTurn ?? false}>
+      <Expandable maxHeight={600} defaultOpen={true}>
         <div className="leading-relaxed">
           <MarkdownContent content={message.content} />
         </div>
@@ -240,27 +250,19 @@ function renderContent(
         budgetTokens={message.budget_tokens}
         durationMs={message.durationMs}
         isStreaming={message.isStreaming}
+        blockId={message.id}
       />
     );
   if (message.type === 'tool_use') {
-    const resolvedTask =
-      task ??
-      (message.taskStatus
-        ? ({
-            toolUseId: message.toolId ?? '',
-            taskType: message.taskType,
-            status: message.taskStatus,
-            description: '',
-          } as Task)
-        : undefined);
     return (
-      <ToolUseBlock
+      <ToolUseCollapsible
         toolName={message.content}
-        input={message.input}
+        input={message.input ?? {}}
+        toolId={message.toolId}
+        task={resolveTask(message, task)}
         result={result ?? (message.result as ToolResult | undefined)}
-        task={resolvedTask}
         partialInput={message.partialInput}
-        defaultOpen={isLastTurn}
+        isLastTurn={isLastTurn}
       />
     );
   }
