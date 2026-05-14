@@ -7,13 +7,7 @@ import { CitationsPanel } from '../session/CitationsPanel.tsx';
 import { ToolUseBlock } from '../tool-use/ToolUseBlock.tsx';
 import { ThinkingBlock } from './ThinkingBlock.tsx';
 
-function ToolUseBlockWithStore({
-  block,
-  isLastTurn,
-}: {
-  block: Block;
-  isLastTurn?: boolean;
-}): React.JSX.Element {
+function ToolUseBlockWithStore({ block }: { block: Block }): React.JSX.Element {
   const toolId = block.toolId ?? '';
   const { task, result } = useChannelStore(
     useShallow((s) => ({
@@ -28,7 +22,7 @@ function ToolUseBlockWithStore({
       result={result}
       task={task}
       partialInput={block.partialInput}
-      defaultOpen={isLastTurn}
+      defaultOpen={false}
     />
   );
 }
@@ -64,7 +58,7 @@ export function AssistantTurnContent({
       );
     }
     if (block.type === 'tool_use' && block.toolId) {
-      return <ToolUseBlockWithStore key={block.id} block={block} isLastTurn={isLastTurn} />;
+      return <ToolUseBlockWithStore key={block.id} block={block} />;
     }
     return <p key={block.id}>{block.content}</p>;
   });
