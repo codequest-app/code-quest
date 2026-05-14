@@ -2,7 +2,7 @@ import { execFileSync } from 'node:child_process';
 import { cpSync, existsSync, readFileSync, writeFileSync } from 'node:fs';
 import { createRequire } from 'node:module';
 import { dirname, join, resolve } from 'node:path';
-import { defineConfig } from 'tsup';
+import { defineConfig } from 'tsdown';
 
 const require = createRequire(import.meta.url);
 
@@ -12,10 +12,17 @@ export default defineConfig({
   target: 'node22',
   outDir: 'dist',
   clean: false,
-  splitting: false,
+  splitting: true,
+  outputOptions: {
+    chunkFileNames: '_chunks/[name]-[hash].js',
+  },
   sourcemap: process.env.BUILD_SOURCEMAP === 'true',
-  noExternal: [/^(?!better-sqlite3|bindings|file-uri-to-path).*/],
-  external: ['better-sqlite3', 'bindings', 'file-uri-to-path'],
+  fixedExtension: false,
+  dts: false,
+  deps: {
+    alwaysBundle: [/^(?!better-sqlite3|bindings|file-uri-to-path).*/],
+    neverBundle: ['better-sqlite3', 'bindings', 'file-uri-to-path'],
+  },
   banner: {
     js: "import { createRequire } from 'node:module'; const require = createRequire(import.meta.url);",
   },

@@ -16,7 +16,8 @@ const jsFiles = readdirSync(distDir, { recursive: true }).filter(
     typeof f === 'string' &&
     f.endsWith('.js') &&
     !f.includes('node_modules') &&
-    !f.includes('public'),
+    !f.includes('public') &&
+    !f.includes('_chunks'),
 );
 
 // encodeURIComponent (used by javascript-obfuscator's btoa) throws URIError on

@@ -1,4 +1,4 @@
-import { defineConfig } from 'tsup';
+import { defineConfig } from 'tsdown';
 
 export default defineConfig({
   entry: ['src/main.ts'],
@@ -8,5 +8,9 @@ export default defineConfig({
   clean: false,
   splitting: false,
   minify: true,
-  noExternal: [/^(?!better-sqlite3).*/],
+  fixedExtension: false,
+  dts: false,
+  deps: {
+    alwaysBundle: [/.*/],
+  },
 });
