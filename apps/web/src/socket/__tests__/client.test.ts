@@ -1,6 +1,7 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 
-const MockWsClient = vi.fn(() => ({}));
+// biome-ignore lint/complexity/useArrowFunction: vitest v4 requires regular functions for mocks used with `new`
+const MockWsClient = vi.fn(function () {});
 
 vi.mock('socket.io-client', () => ({
   io: vi.fn(() => ({ id: 'socketio-mock', connected: false })),
@@ -11,15 +12,18 @@ vi.mock('../ws-client.ts', () => ({
 }));
 
 vi.mock('../ws-socket-adapter.ts', () => ({
-  WsSocketAdapter: vi.fn(() => ({
-    id: 'ws-mock',
-    connected: false,
-    connect: vi.fn(),
-    disconnect: vi.fn(),
-    emit: vi.fn(),
-    on: vi.fn(),
-    off: vi.fn(),
-  })),
+  // biome-ignore lint/complexity/useArrowFunction: vitest v4 requires regular functions for mocks used with `new`
+  WsSocketAdapter: vi.fn(function () {
+    return {
+      id: 'ws-mock',
+      connected: false,
+      connect: vi.fn(),
+      disconnect: vi.fn(),
+      emit: vi.fn(),
+      on: vi.fn(),
+      off: vi.fn(),
+    };
+  }),
 }));
 
 describe('createSocket', () => {

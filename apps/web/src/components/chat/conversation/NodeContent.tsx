@@ -1,4 +1,5 @@
 import { memo, useState } from 'react';
+import { useShallow } from 'zustand/react/shallow';
 import { useChannelStore } from '@/stores/ChannelStoreContext';
 import type { ToolResult } from '@/types/chat';
 import type { Task } from '@/types/task';
@@ -80,10 +81,12 @@ export const NodeContent: React.MemoExoticComponent<
 }: NodeContentProps): React.JSX.Element | null {
   const isUser = message.role === 'user';
   const toolId = getToolId(message);
-  const { task, result } = useChannelStore((s) => ({
-    task: toolId ? s.tasks.get(toolId) : undefined,
-    result: toolId ? s.results.get(toolId) : undefined,
-  }));
+  const { task, result } = useChannelStore(
+    useShallow((s) => ({
+      task: toolId ? s.tasks.get(toolId) : undefined,
+      result: toolId ? s.results.get(toolId) : undefined,
+    })),
+  );
   const children = toolId && childrenIndex ? childrenIndex.get(toolId) : undefined;
 
   const body = renderContent(message, task, result, onDiffRespond, isLastTurn);

@@ -54,6 +54,20 @@ vi.mock('socket.io-client', () => ({
   }),
 }));
 
+// happy-dom has no ResizeObserver. This stub fires the callback once on observe()
+// so components that read scrollHeight/clientHeight inside it get a chance to update.
+global.ResizeObserver = class ResizeObserver {
+  private cb: ResizeObserverCallback;
+  constructor(cb: ResizeObserverCallback) {
+    this.cb = cb;
+  }
+  observe(_target: Element) {
+    this.cb([], this);
+  }
+  unobserve() {}
+  disconnect() {}
+};
+
 // react-resizable-panels requires full DOM measurement APIs unavailable in happy-dom.
 // Mock matches real API (PanelGroup / Panel / PanelResizeHandle); Panel forwards
 // ref to a minimal object so imperative collapse/expand calls in prod code

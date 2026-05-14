@@ -19,11 +19,14 @@ export function Expandable({
   const ref = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
-    if (open) return;
     const el = ref.current;
     if (!el) return;
-    setOverflow(el.scrollHeight > el.clientHeight);
-  });
+    const observer = new ResizeObserver(() => {
+      if (!open) setOverflow(el.scrollHeight > el.clientHeight);
+    });
+    observer.observe(el);
+    return () => observer.disconnect();
+  }, [open]);
 
   return (
     <Collapsible.Root open={open} onOpenChange={setOpen}>

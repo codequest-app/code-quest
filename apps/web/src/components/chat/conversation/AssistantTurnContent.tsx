@@ -1,3 +1,4 @@
+import { useShallow } from 'zustand/react/shallow';
 import { useChannelStore } from '@/stores/ChannelStoreContext';
 import type { AssistantTurn, Block } from '@/types/ui';
 import { Expandable } from '../renderers/Expandable.tsx';
@@ -14,10 +15,12 @@ function ToolUseBlockWithStore({
   isLastTurn?: boolean;
 }): React.JSX.Element {
   const toolId = block.toolId ?? '';
-  const { task, result } = useChannelStore((s) => ({
-    task: s.tasks.get(toolId),
-    result: s.results.get(toolId),
-  }));
+  const { task, result } = useChannelStore(
+    useShallow((s) => ({
+      task: s.tasks.get(toolId),
+      result: s.results.get(toolId),
+    })),
+  );
   return (
     <ToolUseBlock
       toolName={block.content}
