@@ -46,7 +46,7 @@ function SendButton({
       data-mode={mode}
       onClick={isProcessing ? onAbort : onSubmit}
       className={cn(
-        'bg-[var(--mode-accent)] text-white',
+        'bg-mode-accent text-selected-text',
         isProcessing
           ? 'text-xs disabled:opacity-50'
           : 'text-base disabled:opacity-40 disabled:cursor-not-allowed',

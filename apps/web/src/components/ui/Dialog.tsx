@@ -53,7 +53,7 @@ export function DialogContent({
       <RadixDialog.Content
         className={cn(
           contentPos,
-          'bg-surface text-text border border-border rounded-lg shadow-xl outline-none',
+          'bg-surface text-text border border-border rounded-lg shadow-floating outline-none',
           scrollable ? 'overflow-y-auto' : 'overflow-hidden flex flex-col',
           SIZE_CLASSES[size],
           className,

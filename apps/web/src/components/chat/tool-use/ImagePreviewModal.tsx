@@ -24,7 +24,7 @@ export function ImagePreviewModal({
     <div
       role="dialog"
       aria-label={alt}
-      className="fixed inset-0 z-50 flex items-center justify-center bg-black/70"
+      className="fixed inset-0 z-modal flex items-center justify-center bg-overlay"
       onClick={onClose}
     >
       {/* biome-ignore lint/a11y/useKeyWithClickEvents: stopPropagation only; keyboard handled by parent */}

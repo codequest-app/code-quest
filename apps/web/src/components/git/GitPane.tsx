@@ -294,7 +294,7 @@ function ChangedFiles({
           <li key={f.file}>
             <button
               type="button"
-              className="flex items-center gap-2 w-full text-left px-1 py-0.5 hover:bg-white/5 rounded"
+              className="flex items-center gap-2 w-full text-left px-1 py-0.5 hover:bg-hover-tint rounded"
               onClick={() => onPick(f.file, f.status)}
             >
               <span className={cn('font-mono w-4 text-xs', cls)}>{mark}</span>

@@ -88,7 +88,7 @@ export function ManagePluginsDialog({
               >
                 {label}
                 {count > 0 && (
-                  <span className="ml-1.5 bg-button text-white rounded-lg px-1.5 py-0.5 text-xs">
+                  <span className="ml-1.5 bg-button text-selected-text rounded-lg px-1.5 py-0.5 text-xs">
                     {count}
                   </span>
                 )}

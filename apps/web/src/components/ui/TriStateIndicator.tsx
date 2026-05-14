@@ -7,7 +7,7 @@ export const TOGGLE_PILL_BASE =
 
 export function togglePillColor(state: TriState): string {
   return cn(
-    state === 'all' && 'bg-accent text-white border-accent',
+    state === 'all' && 'bg-accent text-selected-text border-accent',
     state === 'none' && 'text-text-muted border-border',
     state === 'partial' && 'text-warning border-warning',
   );

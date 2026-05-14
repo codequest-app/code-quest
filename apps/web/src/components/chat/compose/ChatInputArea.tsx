@@ -48,8 +48,8 @@ export function ChatInputArea(): React.JSX.Element {
         data-mode={toPermissionMode(permissionMode)}
         className={cn(
           'rounded-xl bg-surface border border-border transition-all relative shadow-sm',
-          'focus-within:border-[var(--mode-accent)]',
-          'focus-within:shadow-[0_1px_2px_rgba(var(--mode-accent-rgb),var(--mode-shadow-alpha,0))]',
+          'focus-within:border-mode-accent',
+          'focus-within:shadow-[0_1px_2px_rgba(var(--color-mode-accent-rgb),var(--mode-shadow-alpha,0))]',
         )}
         onClick={focusTextarea}
         role="none"
@@ -57,7 +57,7 @@ export function ChatInputArea(): React.JSX.Element {
         <ComposeInput containerRef={containerRef} />
         <SpeechInputContainer
           onFinal={insertSlashCommand}
-          className="absolute top-2 right-2 z-10"
+          className="absolute top-2 right-2 z-raised"
         />
         <ComposeToolbar containerRef={containerRef} onAttachFile={openFilePicker} />
       </div>

@@ -113,7 +113,7 @@ describe('SessionRow', () => {
     render(<SessionRow session={baseSession} onSelect={noop} isFocused />);
     const row = screen.getByRole('option');
     expect(row.className).not.toContain('bg-selected');
-    expect(row.className).toContain('bg-white/5');
+    expect(row.className).toContain('bg-hover-tint');
   });
 
   it('isActive uses bg-selected', () => {

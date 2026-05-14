@@ -92,7 +92,7 @@ const components: Components = {
     return <tbody className="divide-y divide-border">{children}</tbody>;
   },
   tr({ children }) {
-    return <tr className="hover:bg-white/[0.02] transition-colors">{children}</tr>;
+    return <tr className="hover:bg-hover-tint transition-colors">{children}</tr>;
   },
   td({ children, style }) {
     return (

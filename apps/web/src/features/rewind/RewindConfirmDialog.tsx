@@ -85,8 +85,8 @@ const NumberedButton = forwardRef<HTMLButtonElement, NumberedButtonProps>(
       className={cn(
         'w-full flex items-baseline gap-2 px-3 py-1 rounded text-xs text-left',
         variant === 'primary'
-          ? 'bg-accent text-white hover:bg-accent/90'
-          : 'text-text hover:bg-white/5',
+          ? 'bg-accent text-selected-text hover:bg-accent/90'
+          : 'text-text hover:bg-hover-tint',
       )}
     >
       <span

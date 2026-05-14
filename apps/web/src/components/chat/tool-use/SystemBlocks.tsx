@@ -27,7 +27,7 @@ const CONTROL_RESPONSE_STYLES = [
 
 const CONTROL_RESPONSE_DEFAULT = {
   icon: '↩',
-  colorClass: 'text-text-muted bg-text-muted/10 border-l-text-muted',
+  colorClass: 'text-text-muted bg-muted/10 border-l-text-muted',
 };
 
 export function PendingActionContent({ content }: { content: string }): React.ReactNode {
@@ -240,8 +240,8 @@ export function DocumentContent({
 export function ContentBlockStart({ blockType }: { blockType?: string }): React.ReactNode {
   return (
     <div role="status" aria-label="block-placeholder" className="flex items-center gap-2 py-2">
-      <div className="h-4 w-32 bg-text-muted/20 rounded animate-pulse" />
-      <div className="h-4 w-20 bg-text-muted/10 rounded animate-pulse" />
+      <div className="h-4 w-32 bg-muted/20 rounded animate-pulse" />
+      <div className="h-4 w-20 bg-muted/10 rounded animate-pulse" />
       {blockType != null && (
         <span className="text-xs text-text-muted/60 font-mono">{blockType}...</span>
       )}

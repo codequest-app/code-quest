@@ -21,7 +21,7 @@ export function MessageActionsMenu({ items }: MessageActionsMenuProps): React.JS
           type="button"
           aria-label="Message actions"
           title="Message actions"
-          className="opacity-0 group-hover:opacity-100 w-6 h-6 flex items-center justify-center rounded-full border border-border text-text-muted hover:text-text hover:bg-white/5 transition-opacity cursor-pointer"
+          className="opacity-0 group-hover:opacity-100 w-6 h-6 flex items-center justify-center rounded-full border border-border text-text-muted hover:text-text hover:bg-hover-tint transition-opacity cursor-pointer"
         >
           <ArrowUturnLeftIcon className="w-3.5 h-3.5" />
         </button>
@@ -38,7 +38,7 @@ export function MessageActionsMenu({ items }: MessageActionsMenuProps): React.JS
               key={item.label}
               disabled={item.disabled}
               onSelect={item.onSelect}
-              className="w-full text-left px-3 py-1.5 text-xs text-text hover:bg-white/5 data-[disabled]:opacity-50 data-[highlighted]:bg-white/5 outline-none cursor-pointer transition-colors"
+              className="w-full text-left px-3 py-1.5 text-xs text-text hover:bg-hover-tint data-[disabled]:opacity-50 data-[highlighted]:bg-hover-tint outline-none cursor-pointer transition-colors"
             >
               {item.label}
             </DropdownMenu.Item>

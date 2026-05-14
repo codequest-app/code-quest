@@ -119,9 +119,9 @@ describe('T1 ChatInputArea uses surface/border tokens', () => {
     expect(chatInputAreaSrc).toMatch(/data-mode=\{toPermissionMode\(permissionMode\)\}/);
   });
   it('uses CSS-var dispatch instead of per-mode focus-within variants', () => {
-    expect(chatInputAreaSrc).toMatch(/focus-within:border-\[var\(--mode-accent\)\]/);
+    expect(chatInputAreaSrc).toMatch(/focus-within:border-mode-accent\b/);
     expect(chatInputAreaSrc).toMatch(
-      /focus-within:shadow-\[0_1px_2px_rgba\(var\(--mode-accent-rgb\),\s*var\(--mode-shadow-alpha/,
+      /focus-within:shadow-\[0_1px_2px_rgba\(var\(--color-mode-accent-rgb\),\s*var\(--mode-shadow-alpha/,
     );
     expect(chatInputAreaSrc).not.toMatch(/focus-within:data-\[mode=/);
   });
@@ -136,9 +136,9 @@ describe('T3 ComposeToolbar send button uses data-mode + CSS var dispatch', () =
     expect(composeToolbarSrc).not.toMatch(/SEND_BTN_CLASS_/);
     expect(composeToolbarSrc).not.toMatch(/data-\[mode=[a-zA-Z]+\]:bg-/);
   });
-  it('extracted SendButton renders bg-[var(--mode-accent)] and data-mode from its prop', () => {
+  it('extracted SendButton renders bg-mode-accent and data-mode from its prop', () => {
     expect(composeToolbarSrc).toMatch(/function SendButton\(/);
     expect(composeToolbarSrc).toMatch(/data-mode=\{mode\}/);
-    expect(composeToolbarSrc).toMatch(/bg-\[var\(--mode-accent\)\]/);
+    expect(composeToolbarSrc).toMatch(/bg-mode-accent\b/);
   });
 });

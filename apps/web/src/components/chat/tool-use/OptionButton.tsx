@@ -20,10 +20,15 @@ export function OptionButton({
       onMouseEnter={onMouseEnter}
       className={cn(
         'w-full text-left px-4 py-2 text-xs flex items-center gap-2 cursor-pointer transition-colors',
-        selected ? 'bg-accent text-white' : 'hover:bg-white/5',
+        selected ? 'bg-accent text-selected-text' : 'hover:bg-hover-tint',
       )}
     >
-      <span className={cn('w-4 text-center shrink-0', selected ? 'text-white' : 'text-text-muted')}>
+      <span
+        className={cn(
+          'w-4 text-center shrink-0',
+          selected ? 'text-selected-text' : 'text-text-muted',
+        )}
+      >
         {index}
       </span>
       <span>{label}</span>

@@ -71,6 +71,8 @@
   --color-text-rgb: 204, 204, 204;
   /* Hover tint: white in dark mode, black in light mode */
   --color-hover-tint-rgb: 255, 255, 255;
+  /* Semi-transparent hover tint for interactive rows (replaces bg-white/5) */
+  --color-hover-tint: rgba(var(--color-hover-tint-rgb), 0.05);
 
   /* Floating surfaces (dialog / palette / popover) */
   --color-overlay: rgba(10, 10, 12, 0.75);
@@ -89,6 +91,34 @@
   /* Floating shadow — matches F.html mockup `0 12px 32px rgba(0,0,0,0.5)`.
    * Stronger than Tailwind's shadow-lg (0 10px 15px) to match the prototype. */
   --shadow-floating: 0 12px 32px rgba(0, 0, 0, 0.5);
+
+  /* Permission-mode accent — default = normal mode (claude clay orange).
+   * Overridden per [data-mode] selector below. Registered in @theme so
+   * Tailwind emits bg-mode-accent / border-mode-accent / text-mode-accent. */
+  --color-mode-accent: var(--color-claude-clay-orange);
+  --color-mode-accent-rgb: var(--color-accent-rgb);
+
+  /* Info color (e.g. git info indicators) */
+  --color-info: #3b82f6;
+
+  /* Short-name aliases — forward to canonical tokens so both spellings work.
+   * New code should prefer the short form (text-muted, bg-input, text-warn). */
+  --color-warn: var(--color-warning);
+  --color-input: var(--color-input-bg);
+  --color-muted: var(--color-text-muted);
+  --color-dim: var(--color-text-dim);
+  --color-faint: var(--color-text-faint);
+  --color-subtle: var(--color-text-subtle);
+  --color-bright: var(--color-text-bright);
+}
+
+/* Hover tint utilities — theme-adaptive semi-transparent overlay.
+ * Use tint-5 / tint-10 instead of bg-white/5 so dark↔light both work. */
+@utility tint-5 {
+  background-color: rgba(var(--color-hover-tint-rgb), 0.05);
+}
+@utility tint-10 {
+  background-color: rgba(var(--color-hover-tint-rgb), 0.1);
 }
 
 /* Section heading utility — matches F.html `.section-label`.
@@ -135,6 +165,7 @@
   --color-button-rgb: 0, 120, 212;
   --color-text-rgb: 204, 204, 204;
   --color-hover-tint-rgb: 255, 255, 255;
+  --color-hover-tint: rgba(var(--color-hover-tint-rgb), 0.05);
 
   /* Floating surfaces */
   --color-overlay: rgba(10, 10, 12, 0.75);
@@ -187,6 +218,7 @@
   --color-button-rgb: 0, 90, 158;
   --color-text-rgb: 31, 31, 31;
   --color-hover-tint-rgb: 0, 0, 0;
+  --color-hover-tint: rgba(var(--color-hover-tint-rgb), 0.05);
 
   /* Floating surfaces — light palette */
   --color-overlay: rgba(0, 0, 0, 0.35);
@@ -201,6 +233,7 @@
   --color-text-subtle: #8a8a8a;
   --color-text-faint: #b5b5b5;
   --color-text-dim: #9c9c9c;
+  --color-info: #2563eb;
 }
 
 /* Font-size axis — html font-size drives rem cascade. md = browser default (16px). */
@@ -378,32 +411,31 @@
 }
 
 /* --- Permission-mode → CSS var dispatch ---
-   Selectors set semantic tokens only (--mode-accent / --mode-accent-rgb /
-   --mode-shadow-alpha); actual visual styles live on the element via
-   Tailwind `bg-[var(--mode-accent)]` etc., so the mode-vs-visual mapping
-   has a single source of truth without global CSS owning the visuals. */
+   Selectors override --color-mode-accent (registered in @theme with a default).
+   Tailwind emits bg-mode-accent / border-mode-accent / text-mode-accent utilities
+   so components use those classes directly instead of bg-[var(--color-mode-accent)]. */
 
 [data-mode="normal"] {
-  --mode-accent: var(--color-claude-clay-orange);
-  --mode-accent-rgb: var(--color-accent-rgb);
+  --color-mode-accent: var(--color-claude-clay-orange);
+  --color-mode-accent-rgb: var(--color-accent-rgb);
   --mode-shadow-alpha: 0.2;
 }
 
 [data-mode="plan"] {
-  --mode-accent: var(--color-button);
-  --mode-accent-rgb: var(--color-button-rgb);
+  --color-mode-accent: var(--color-button);
+  --color-mode-accent-rgb: var(--color-button-rgb);
   --mode-shadow-alpha: 0.2;
 }
 
 [data-mode="acceptEdits"] {
-  --mode-accent: var(--color-text);
-  --mode-accent-rgb: var(--color-text-rgb);
+  --color-mode-accent: var(--color-text);
+  --color-mode-accent-rgb: var(--color-text-rgb);
   --mode-shadow-alpha: 0.1;
 }
 
 [data-mode="bypassPermissions"],
 [data-mode="auto"] {
-  --mode-accent: var(--color-danger);
+  --color-mode-accent: var(--color-danger);
   --mode-shadow-alpha: 0;
 }
 

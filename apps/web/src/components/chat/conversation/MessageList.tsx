@@ -401,7 +401,7 @@ export const MessageList: React.ForwardRefExoticComponent<
           type="button"
           aria-label="Scroll to bottom"
           onClick={scrollToBottom}
-          className="absolute bottom-4 right-4 z-float w-8 h-8 rounded-full bg-surface-hover text-text-muted hover:text-text flex items-center justify-center shadow-lg cursor-pointer transition-colors"
+          className="absolute bottom-4 right-4 z-float w-8 h-8 rounded-full bg-surface-hover text-text-muted hover:text-text flex items-center justify-center shadow-floating cursor-pointer transition-colors"
         >
           ↓
         </button>

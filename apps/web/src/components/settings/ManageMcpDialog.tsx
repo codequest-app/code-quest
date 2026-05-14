@@ -61,12 +61,12 @@ interface StatusMeta {
 }
 
 const STATUS_CONFIG: Record<string, StatusMeta> = {
-  connected: { icon: '✓', label: 'Connected', badge: 'bg-success text-white' },
-  failed: { icon: '✗', label: 'Failed', badge: 'bg-danger text-white' },
-  error: { badge: 'bg-danger text-white' },
-  'needs-auth': { icon: '⚠', label: 'Needs Auth', badge: 'bg-warning text-black' },
-  pending: { icon: '◐', label: 'Connecting…', badge: 'bg-text-muted/60 text-white' },
-  connecting: { label: 'Connecting…', badge: 'bg-text-muted/60 text-white' },
+  connected: { icon: '✓', label: 'Connected', badge: 'bg-success text-selected-text' },
+  failed: { icon: '✗', label: 'Failed', badge: 'bg-danger text-selected-text' },
+  error: { badge: 'bg-danger text-selected-text' },
+  'needs-auth': { icon: '⚠', label: 'Needs Auth', badge: 'bg-warning text-bg' },
+  pending: { icon: '◐', label: 'Connecting…', badge: 'bg-muted/60 text-selected-text' },
+  connecting: { label: 'Connecting…', badge: 'bg-muted/60 text-selected-text' },
   disabled: { icon: '○', label: 'Disabled', badge: 'bg-border text-text-muted' },
 };
 
@@ -95,7 +95,7 @@ function McpReadOnlyList({ servers }: { servers: McpServerInfo[] }) {
             <li
               key={s.name}
               className={cn(
-                'flex items-center justify-between gap-3 bg-bg-secondary border border-border rounded p-3 mb-2 last:mb-0',
+                'flex items-center justify-between gap-3 bg-surface border border-border rounded p-3 mb-2 last:mb-0',
                 s.status === 'disabled' && 'opacity-60',
               )}
             >
@@ -106,9 +106,8 @@ function McpReadOnlyList({ servers }: { servers: McpServerInfo[] }) {
         </ul>
       )}
       <div className="text-xs text-text-muted mt-4">
-        You can use the{' '}
-        <code className="font-mono bg-bg-secondary px-1 rounded">claude mcp add</code> command-line
-        tool to configure system-wide or private servers.
+        You can use the <code className="font-mono bg-surface px-1 rounded">claude mcp add</code>{' '}
+        command-line tool to configure system-wide or private servers.
         <br />
         <a
           href="https://code.claude.com/docs/en/mcp"
@@ -149,7 +148,7 @@ function McpGroupedList({
                   key={s.name}
                   onClick={() => onSelect(s.name)}
                   className={cn(
-                    'w-full flex items-center justify-between gap-3 bg-bg-secondary border border-border rounded p-3 mb-2 last:mb-0 cursor-pointer hover:bg-bg-secondary/60',
+                    'w-full flex items-center justify-between gap-3 bg-surface border border-border rounded p-3 mb-2 last:mb-0 cursor-pointer hover:bg-surface/60',
                     s.status === 'disabled' && 'opacity-60',
                   )}
                 >
@@ -200,7 +199,7 @@ function McpDetailView({
 }) {
   return (
     <div className="space-y-3">
-      <div className="flex items-center justify-between bg-bg-secondary border border-border rounded p-3">
+      <div className="flex items-center justify-between bg-surface border border-border rounded p-3">
         <span className="font-mono text-xs font-medium text-text">{detail.name}</span>
         <StatusBadge status={detail.status} rich />
       </div>
@@ -368,7 +367,7 @@ export function ManageMcpDialog({
           </span>
           <DialogClose
             aria-label="Close"
-            className="p-1 text-text-muted hover:text-text hover:bg-white/5 rounded"
+            className="p-1 text-text-muted hover:text-text hover:bg-hover-tint rounded"
           >
             <XIcon className="w-4 h-4" />
           </DialogClose>

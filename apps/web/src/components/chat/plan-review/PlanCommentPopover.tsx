@@ -94,7 +94,7 @@ export function PlanCommentPopover({
           sideOffset={4}
           collisionPadding={8}
           onOpenAutoFocus={(e) => e.preventDefault()}
-          className="z-modal bg-bg-secondary border border-border rounded-lg shadow-xl p-2 w-64"
+          className="z-modal bg-surface border border-border rounded-lg shadow-floating p-2 w-64"
         >
           {selectedText && (
             <>
@@ -111,7 +111,7 @@ export function PlanCommentPopover({
                 onChange={(e) => setCommentText(e.target.value)}
                 placeholder="Add comment..."
                 rows={2}
-                className="w-full text-sm bg-input-overlay rounded px-2 py-1 text-text border border-white/10 resize-none"
+                className="w-full text-sm bg-input-overlay rounded px-2 py-1 text-text border border-floating-border-subtle resize-none"
                 onKeyDown={(e) => {
                   if (e.key === 'Enter' && !e.shiftKey) {
                     e.preventDefault();

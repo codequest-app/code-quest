@@ -89,7 +89,7 @@ export function TabBar({
                     'border-r border-border border-b-2 border-b-transparent',
                     tab.sessionId === activeTabId
                       ? 'text-text-bright bg-bg border-b-accent'
-                      : 'text-text-muted hover:text-text hover:bg-white/5',
+                      : 'text-text-muted hover:text-text hover:bg-hover-tint',
                   )}
                   onClick={() => onSelectTab(tab.sessionId)}
                   title={tab.worktree?.path}
@@ -129,7 +129,7 @@ export function TabBar({
         {onNewTab && (
           <button
             type="button"
-            className="flex items-center justify-center w-6 h-6 rounded text-xs text-text-muted hover:text-text hover:bg-white/5 shrink-0"
+            className="flex items-center justify-center w-6 h-6 rounded text-xs text-text-muted hover:text-text hover:bg-hover-tint shrink-0"
             onClick={onNewTab}
             aria-label="New tab"
           >
@@ -139,7 +139,7 @@ export function TabBar({
         {onOpenHistory && (
           <button
             type="button"
-            className="flex items-center justify-center w-6 h-6 rounded text-xs text-text-muted hover:text-text hover:bg-white/5 shrink-0 ml-auto"
+            className="flex items-center justify-center w-6 h-6 rounded text-xs text-text-muted hover:text-text hover:bg-hover-tint shrink-0 ml-auto"
             onClick={onOpenHistory}
             aria-label="Session history"
             title="Session history"

@@ -80,7 +80,7 @@ function ModifiedFileItem({
             <button
               type="button"
               onClick={() => onAccept(file.path)}
-              className={cn(ACTION_BTN, 'bg-accent text-white hover:bg-accent/80')}
+              className={cn(ACTION_BTN, 'bg-accent text-selected-text hover:bg-accent/80')}
             >
               Accept
             </button>

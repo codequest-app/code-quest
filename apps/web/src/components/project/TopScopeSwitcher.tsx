@@ -77,7 +77,7 @@ export function TopScopeSwitcher({
         <Popover.Content
           align="start"
           sideOffset={4}
-          className="w-72 z-modal rounded border border-border bg-surface shadow-lg flex flex-col max-h-96"
+          className="w-72 z-modal rounded border border-border bg-surface shadow-floating flex flex-col max-h-96"
         >
           {/* Inner role="listbox" preserves the listbox semantic + test query
               shape; Radix's Popover.Content carries role="dialog" by default
@@ -167,7 +167,7 @@ function ScopeItem({
       title={project.cwd}
       className={cn(
         'w-full text-left px-3 py-1 text-sm flex items-center gap-1.5',
-        active ? 'text-accent bg-accent/10' : 'text-text hover:bg-white/5',
+        active ? 'text-accent bg-accent/10' : 'text-text hover:bg-hover-tint',
       )}
     >
       <FolderIcon className="w-3.5 h-3.5 shrink-0 text-text-muted" />

@@ -5,7 +5,7 @@ import { cn } from '@/utils/cn';
 import { TopbarLiveSessions } from '../live-session/TopbarLiveSessions.tsx';
 import { IconButton } from '../ui/IconButton.tsx';
 
-const ACTION_CLASS = 'w-8 h-8 text-text-muted hover:text-text hover:bg-white/5';
+const ACTION_CLASS = 'w-8 h-8 text-text-muted hover:text-text hover:bg-hover-tint';
 
 type Mode = 'desktop' | 'mobile';
 

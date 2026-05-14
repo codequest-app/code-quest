@@ -55,7 +55,7 @@ export function LiveSessionPopover({
             <Popover.Close asChild>
               <button
                 type="button"
-                className="px-2 py-1 rounded text-xs bg-accent text-white hover:bg-accent/80"
+                className="px-2 py-1 rounded text-xs bg-accent text-selected-text hover:bg-accent/80"
                 onClick={() => onOpen(session.channelId)}
               >
                 Open

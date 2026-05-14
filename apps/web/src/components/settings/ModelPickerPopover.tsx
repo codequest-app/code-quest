@@ -106,7 +106,7 @@ export function ModelPickerPopover({
       ref={listboxRef}
       role="listbox"
       tabIndex={0}
-      className="bg-surface border border-border rounded shadow-lg overflow-hidden text-xs animate-fade-in-fast max-h-75 overflow-y-auto pb-2 focus:outline-none"
+      className="bg-surface border border-border rounded shadow-floating overflow-hidden text-xs animate-fade-in-fast max-h-75 overflow-y-auto pb-2 focus:outline-none"
       onKeyDown={handleKeyDown}
     >
       {defaultDisplay && (

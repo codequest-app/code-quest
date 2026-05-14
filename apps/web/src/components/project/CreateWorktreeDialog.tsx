@@ -136,7 +136,7 @@ export function CreateWorktreeDialog({
           </Tabs.Root>
 
           <CommandPreview command={previewCommand} />
-          {error ? <div className="text-xs text-red-500">{error}</div> : null}
+          {error ? <div className="text-xs text-danger">{error}</div> : null}
 
           <div className="flex justify-end gap-2 -mx-4 -mb-4 px-4 py-3 border-t border-border mt-2">
             <Button

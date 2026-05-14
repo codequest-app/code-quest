@@ -42,7 +42,7 @@ export function TopbarLiveSessions({
             <button
               type="button"
               aria-label={`${label} (${s.state})`}
-              className="flex items-center gap-1.5 px-2 py-0.5 rounded-l border border-border text-xs text-text-muted hover:text-text hover:bg-white/5"
+              className="flex items-center gap-1.5 px-2 py-0.5 rounded-l border border-border text-xs text-text-muted hover:text-text hover:bg-hover-tint"
               onClick={() => onActivate(s.channelId)}
               title={s.title ?? label}
             >
@@ -57,7 +57,7 @@ export function TopbarLiveSessions({
                 <button
                   type="button"
                   aria-label={`More actions for ${label}`}
-                  className="px-1 py-0.5 rounded-r border border-l-0 border-border text-xs text-text-dim hover:text-text hover:bg-white/5 opacity-0 group-hover:opacity-100 focus:opacity-100"
+                  className="px-1 py-0.5 rounded-r border border-l-0 border-border text-xs text-text-dim hover:text-text hover:bg-hover-tint opacity-0 group-hover:opacity-100 focus:opacity-100"
                 >
                   ⋯
                 </button>

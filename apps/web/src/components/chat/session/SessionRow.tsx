@@ -93,8 +93,8 @@ export function SessionRow({
       tabIndex={0}
       className={cn(
         'flex items-center w-full text-left px-3 py-2 group',
-        isActive ? 'bg-selected cursor-default' : 'hover:bg-white/5 cursor-pointer',
-        !isActive && isFocused && 'bg-white/5',
+        isActive ? 'bg-selected cursor-default' : 'hover:bg-hover-tint cursor-pointer',
+        !isActive && isFocused && 'bg-hover-tint',
       )}
       onClick={isRenaming || isActive ? undefined : () => onSelect(s.channelId)}
       onKeyDown={(e) => {

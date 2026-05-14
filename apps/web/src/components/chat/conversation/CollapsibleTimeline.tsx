@@ -32,12 +32,12 @@ function dotClass(
     message.type === 'thinking' ||
     message.type === 'streamlined_text'
   ) {
-    return 'bg-text-muted/60';
+    return 'bg-muted/60';
   }
   if (message.type === 'assistant_turn') {
     const turn = message as AssistantTurn;
     const hasToolUse = turn.blocks.some((b) => b.type === 'tool_use');
-    if (!hasToolUse) return 'bg-text-muted/60';
+    if (!hasToolUse) return 'bg-muted/60';
   }
   if (storeResult?.is_error) return 'bg-danger';
   if (storeResult) return 'bg-success';
@@ -97,7 +97,7 @@ function ToolGroup({
     <div data-collapsed-ids={collapsedIds}>
       <TimelineItem
         position={expanded ? 'first' : position}
-        dotClass="bg-text-muted/40"
+        dotClass="bg-muted/40"
         showDot={!expanded}
         py="py-1.5"
       >

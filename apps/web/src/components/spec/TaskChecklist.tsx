@@ -91,7 +91,7 @@ export function TaskChecklist({
             key={line.lineIndex}
             htmlFor={checkboxId}
             aria-label={`task-line-${line.lineIndex}`}
-            className="flex items-start gap-2 py-0.5 cursor-pointer hover:bg-white/5 rounded"
+            className="flex items-start gap-2 py-0.5 cursor-pointer hover:bg-hover-tint rounded"
           >
             <span aria-hidden className="whitespace-pre">
               {line.indent}

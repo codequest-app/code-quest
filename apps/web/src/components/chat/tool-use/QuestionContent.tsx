@@ -13,7 +13,7 @@ function CheckIndicator({ checked }: { checked: boolean }) {
       )}
     >
       {checked && (
-        <span className="text-white">
+        <span className="text-selected-text">
           <CheckMark className="w-2.5 h-2.5" />
         </span>
       )}
@@ -60,7 +60,7 @@ function OptionItem({
       onKeyDown={onKeySelect}
       className={cn(
         'flex items-start gap-2 px-2 py-1.5 rounded cursor-pointer text-xs',
-        selected ? 'bg-accent/10' : 'hover:bg-white/5',
+        selected ? 'bg-accent/10' : 'hover:bg-hover-tint',
       )}
     >
       <div className="mt-0.5 shrink-0">

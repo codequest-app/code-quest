@@ -117,7 +117,7 @@ export function EffortSwitch({ level, levels, onSelect }: EffortSwitchProps): Re
           aria-label="effort-switch-thumb"
           className={cn(
             'absolute top-1/2 -translate-y-1/2 w-3.5 h-3.5 rounded-full',
-            'bg-white shadow-sm ring-1 ring-black/20',
+            'bg-white shadow-sm ring-1 ring-border/20', // bg-white: 設計意圖，不改
             'transition-all duration-150',
           )}
           style={{ left: thumbLeft }}

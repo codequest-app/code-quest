@@ -52,7 +52,7 @@ export const WorktreeRow: React.ForwardRefExoticComponent<
         e.stopPropagation();
         onBranchClick?.();
       }}
-      className="relative z-10 inline-flex items-center gap-1 px-1.5 py-0.5 rounded border border-border bg-white/[0.04] hover:border-accent hover:bg-white/10 cursor-pointer font-mono text-xs text-text-muted"
+      className="relative z-10 inline-flex items-center gap-1 px-1.5 py-0.5 rounded border border-border bg-hover-tint hover:border-accent hover:bg-tint-10 cursor-pointer font-mono text-xs text-text-muted"
       title="Switch branch"
     >
       <span aria-hidden="true" className="text-text-subtle text-xs">
@@ -84,8 +84,8 @@ export const WorktreeRow: React.ForwardRefExoticComponent<
       className={cn(
         'group relative flex items-center gap-1.5 px-2 py-1 text-xs rounded border-l-2',
         active
-          ? 'border-accent bg-white/5 text-text'
-          : 'border-transparent text-text-muted hover:bg-white/5 hover:text-text',
+          ? 'border-accent bg-hover-tint text-text'
+          : 'border-transparent text-text-muted hover:bg-hover-tint hover:text-text',
         className,
       )}
     >

@@ -74,12 +74,12 @@ export const FileTreeRow: React.ForwardRefExoticComponent<
       ref={ref}
       aria-disabled={isDisabled || undefined}
       className={cn(
-        'flex items-center px-1 py-0.5 text-sm select-none',
+        'flex items-center pr-1 py-0.5 text-sm select-none pl-[calc(var(--depth)*0.875rem+0.375rem)]',
         isDisabled
           ? 'cursor-not-allowed opacity-40'
-          : ['cursor-pointer', isHighlighted ? 'bg-accent/20' : 'hover:bg-white/5'],
+          : ['cursor-pointer', isHighlighted ? 'bg-accent/20' : 'hover:bg-hover-tint'],
       )}
-      style={{ paddingLeft: `${item.getItemMeta().level * 14 + 6}px` }}
+      style={{ '--depth': item.getItemMeta().level } as React.CSSProperties}
       onClick={onClick}
       onDoubleClick={onDoubleClick}
     >
@@ -126,7 +126,7 @@ export const FileTreeRow: React.ForwardRefExoticComponent<
           role="status"
           aria-label={`git-mark-${data.path}`}
           className={cn(
-            'ml-2 font-mono text-xs px-1 rounded bg-white/5',
+            'ml-2 font-mono text-xs px-1 rounded bg-hover-tint',
             GIT_MARK_CLASS[gitMark] ?? 'text-text-muted',
           )}
         >

@@ -130,7 +130,7 @@ function WorkspaceLayoutInner() {
                 type="button"
                 aria-label="Dismiss sidebar"
                 onClick={() => setLeftOpen(false)}
-                className="lg:hidden fixed inset-0 z-overlay bg-black/40"
+                className="lg:hidden fixed inset-0 z-overlay bg-overlay"
               />
             )}
             <DrawerAside

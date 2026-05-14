@@ -41,7 +41,7 @@ export function AddProjectDialog({
           <button
             type="button"
             aria-label="Close"
-            className="absolute top-3 right-3 p-1 text-text-muted hover:text-text hover:bg-white/5 rounded"
+            className="absolute top-3 right-3 p-1 text-text-muted hover:text-text hover:bg-hover-tint rounded"
           >
             <XIcon className="w-4 h-4" />
           </button>

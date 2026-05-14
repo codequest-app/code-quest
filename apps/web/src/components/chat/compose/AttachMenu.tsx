@@ -62,7 +62,7 @@ export function AttachMenu({
           sideOffset={4}
           onOpenAutoFocus={(e) => e.preventDefault()}
           onFocusOutside={(e) => e.preventDefault()}
-          className="bg-surface border border-border rounded-lg shadow-lg overflow-hidden z-modal min-w-50"
+          className="bg-surface border border-border rounded-lg shadow-floating overflow-hidden z-modal min-w-50"
         >
           {items.map((item) => (
             <button

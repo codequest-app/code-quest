@@ -6,7 +6,7 @@ import { focusRing } from './_tokens.ts';
 const trackClass = (isOn: boolean) =>
   cn(
     'flex items-center w-7 h-3.5 rounded-full transition-colors shrink-0',
-    isOn ? 'bg-toggle' : 'bg-white/20',
+    isOn ? 'bg-toggle' : 'bg-hover-tint',
   );
 
 const thumbClass = (isOn: boolean) =>

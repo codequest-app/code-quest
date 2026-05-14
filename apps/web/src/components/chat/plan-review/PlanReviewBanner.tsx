@@ -114,7 +114,7 @@ export function PlanReviewBanner({ pending, onRespond }: PlanReviewBannerProps):
               return (
                 <span
                   key={label}
-                  className="inline-block bg-white/5 rounded px-1.5 py-0.5 mr-1 mt-0.5"
+                  className="inline-block bg-hover-tint rounded px-1.5 py-0.5 mr-1 mt-0.5"
                 >
                   {label}
                 </span>
@@ -145,7 +145,7 @@ export function PlanReviewBanner({ pending, onRespond }: PlanReviewBannerProps):
             className={cn(
               'w-full text-left text-xs px-2 py-1.5 rounded cursor-pointer font-medium transition-colors',
               opt.primary
-                ? 'bg-accent text-white font-bold'
+                ? 'bg-accent text-selected-text font-bold'
                 : 'bg-transparent text-text inset-border',
             )}
           >

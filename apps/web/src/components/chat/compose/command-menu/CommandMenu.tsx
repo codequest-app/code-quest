@@ -277,7 +277,7 @@ export function CommandMenu({
             compose.focusTextarea();
           }}
           role="menu"
-          className="bg-surface border border-border rounded-lg shadow-lg z-modal text-xs max-h-[50vh] overflow-hidden animate-slide-up"
+          className="bg-surface border border-border rounded-lg shadow-floating z-modal text-xs max-h-[50vh] overflow-hidden animate-slide-up"
           style={{ width: 'var(--radix-popper-anchor-width)' }}
         >
           <div className={cn(externalOpen ? 'pt-1' : 'p-1')}>

@@ -45,7 +45,7 @@ function RewindOption({ item, index, focusIndex, now, onSelect, onFocus }: Rewin
       onMouseEnter={() => onFocus(index)}
       className={cn(
         'flex items-center justify-between px-3 py-2 rounded cursor-pointer text-sm text-left',
-        index === focusIndex ? 'bg-selected text-white' : 'text-text hover:bg-white/5',
+        index === focusIndex ? 'bg-selected text-selected-text' : 'text-text hover:bg-hover-tint',
       )}
     >
       <span className="truncate mr-3">{item.promptText}</span>

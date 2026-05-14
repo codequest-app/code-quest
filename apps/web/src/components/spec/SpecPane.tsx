@@ -103,7 +103,7 @@ export function SpecPane({ cwd }: SpecPaneProps): React.JSX.Element {
                 return (
                   <li
                     key={c.name}
-                    className="flex items-center gap-2 px-1 py-0.5 hover:bg-white/5 rounded"
+                    className="flex items-center gap-2 px-1 py-0.5 hover:bg-hover-tint rounded"
                   >
                     <button
                       type="button"
@@ -162,7 +162,7 @@ export function SpecPane({ cwd }: SpecPaneProps): React.JSX.Element {
                   <button
                     type="button"
                     aria-label={`spec-capability-row-${s.capability}`}
-                    className="flex items-center gap-2 w-full text-left px-1 py-0.5 hover:bg-white/5 rounded"
+                    className="flex items-center gap-2 w-full text-left px-1 py-0.5 hover:bg-hover-tint rounded"
                     onClick={() => setOpen({ kind: 'spec', name: s.capability })}
                   >
                     <span aria-hidden className="text-text-dim text-xs">

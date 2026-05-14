@@ -5,14 +5,14 @@ import { Button } from '../ui/Button.tsx';
 import { InlineAction } from '../ui/InlineAction.tsx';
 
 const MCP_STATUS_BADGE: Partial<Record<McpServerInfo['status'], string>> & { _default: string } = {
-  connected: 'bg-success text-white',
-  failed: 'bg-danger text-white',
-  error: 'bg-danger text-white',
-  'needs-auth': 'bg-warning text-black',
-  connecting: 'bg-warning text-black',
-  disabled: 'bg-text-muted/30 text-text-muted',
-  disconnected: 'bg-text-muted/30 text-text-muted',
-  _default: 'bg-text-muted/30 text-text-muted',
+  connected: 'bg-success text-selected-text',
+  failed: 'bg-danger text-selected-text',
+  error: 'bg-danger text-selected-text',
+  'needs-auth': 'bg-warning text-bg',
+  connecting: 'bg-warning text-bg',
+  disabled: 'bg-muted/30 text-text-muted',
+  disconnected: 'bg-muted/30 text-text-muted',
+  _default: 'bg-muted/30 text-text-muted',
 };
 
 interface McpServerRowProps {
@@ -91,7 +91,7 @@ export function McpServerRow({
             'text-xs px-2 py-0.5 rounded border transition-colors',
             s.enabled
               ? 'border-success/30 text-success hover:bg-success/10'
-              : 'border-border text-text-muted hover:bg-white/5',
+              : 'border-border text-text-muted hover:bg-hover-tint',
           )}
         >
           {s.enabled ? 'On' : 'Off'}

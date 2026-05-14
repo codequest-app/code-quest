@@ -168,7 +168,7 @@ export function ToolPermissionCard({
                     <span>Details</span>
                     <ChevronDown className="w-3 h-3 shrink-0 transition-transform [details[open]>&]:rotate-180" />
                   </summary>
-                  <pre className="mt-2 p-2 text-xs font-mono bg-black/10 border border-border rounded overflow-auto max-h-48 whitespace-pre-wrap">
+                  <pre className="mt-2 p-2 text-xs font-mono bg-input-overlay border border-border rounded overflow-auto max-h-48 whitespace-pre-wrap">
                     {JSON.stringify(input, null, 2)}
                   </pre>
                 </details>
@@ -192,7 +192,7 @@ export function ToolPermissionCard({
                 className={cn(
                   'w-full text-left text-xs px-2 py-1.5 rounded border-0 cursor-pointer font-medium transition-colors disabled:opacity-40 disabled:cursor-not-allowed',
                   i === focusedIdx
-                    ? 'bg-accent text-white font-bold'
+                    ? 'bg-accent text-selected-text font-bold'
                     : 'bg-transparent text-text inset-border',
                 )}
               >

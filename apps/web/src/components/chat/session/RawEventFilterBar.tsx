@@ -1,4 +1,5 @@
 import type { FilterEntry } from '@/components/live-session/FilterPopover';
+import { cn } from '@/utils/cn';
 
 interface RawEventFilterBarProps {
   entries: FilterEntry[];
@@ -24,80 +25,22 @@ export function RawEventFilterBar({
   if (sorted.length === 0) return null;
 
   return (
-    <div
-      style={{
-        borderBottom: '1px solid var(--color-floating-border-subtle)',
-        padding: '6px 0 6px 12px',
-        display: 'flex',
-        flexDirection: 'column',
-        gap: '4px',
-        flexShrink: 0,
-      }}
-    >
+    <div className="border-b border-floating-border-subtle py-1.5 pl-3 flex flex-col gap-1 flex-shrink-0">
       {/* header row */}
-      <div
-        style={{
-          display: 'flex',
-          alignItems: 'center',
-          justifyContent: 'space-between',
-          paddingRight: '12px',
-        }}
-      >
-        <span
-          style={{
-            fontSize: '8px',
-            fontFamily: 'monospace',
-            letterSpacing: '0.1em',
-            textTransform: 'uppercase',
-            color: 'var(--color-border)',
-          }}
-        >
-          channels
-        </span>
-        <div style={{ display: 'flex', gap: '8px' }}>
+      <div className="flex items-center justify-between pr-3">
+        <span className="text-2xs font-mono tracking-widest uppercase text-border">channels</span>
+        <div className="flex gap-2">
           <button
             type="button"
             onClick={() => onChange(new Set(sorted.map((e) => e.type)))}
-            style={{
-              fontSize: '8px',
-              fontFamily: 'monospace',
-              color: 'var(--color-text-faint)',
-              background: 'none',
-              border: 'none',
-              cursor: 'pointer',
-              padding: 0,
-              letterSpacing: '0.06em',
-              transition: 'color 0.1s',
-            }}
-            onMouseEnter={(e) => {
-              e.currentTarget.style.color = 'var(--color-accent)';
-            }}
-            onMouseLeave={(e) => {
-              e.currentTarget.style.color = 'var(--color-text-faint)';
-            }}
+            className="text-2xs font-mono text-text-faint bg-transparent border-0 cursor-pointer p-0 tracking-wider transition-colors duration-100 hover:text-accent"
           >
             all
           </button>
           <button
             type="button"
             onClick={() => onChange(new Set())}
-            style={{
-              fontSize: '8px',
-              fontFamily: 'monospace',
-              color: 'var(--color-text-faint)',
-              background: 'none',
-              border: 'none',
-              cursor: 'pointer',
-              padding: 0,
-              letterSpacing: '0.06em',
-              transition: 'color 0.1s',
-            }}
-            onMouseEnter={(e) => {
-              e.currentTarget.style.color = 'var(--color-text)';
-            }}
-            onMouseLeave={(e) => {
-              e.currentTarget.style.color = 'var(--color-text-faint)';
-            }}
+            className="text-2xs font-mono text-text-faint bg-transparent border-0 cursor-pointer p-0 tracking-wider transition-colors duration-100 hover:text-text"
           >
             none
           </button>
@@ -105,16 +48,7 @@ export function RawEventFilterBar({
       </div>
 
       {/* chips row — horizontal scroll */}
-      <div
-        style={{
-          display: 'flex',
-          gap: '4px',
-          overflowX: 'auto',
-          paddingRight: '12px',
-          paddingBottom: '2px',
-          scrollbarWidth: 'none',
-        }}
-      >
+      <div className="flex gap-1 overflow-x-auto pr-3 pb-0.5 [scrollbar-width:none]">
         {sorted.map((entry) => {
           const active = selected.has(entry.type);
           const barRatio = entry.count / maxCount;
@@ -127,65 +61,34 @@ export function RawEventFilterBar({
               aria-pressed={active}
               onClick={() => toggle(entry.type)}
               title={`${entry.type} (${entry.count})`}
-              style={{
-                position: 'relative',
-                display: 'flex',
-                alignItems: 'center',
-                gap: '4px',
-                padding: '2px 6px',
-                borderRadius: '3px',
-                border: active
-                  ? '1px solid rgba(var(--color-accent-rgb), 0.5)'
-                  : '1px solid rgba(var(--color-hover-tint-rgb), 0.06)',
-                background: active
-                  ? 'rgba(var(--color-accent-rgb), 0.08)'
-                  : 'rgba(var(--color-hover-tint-rgb), 0.02)',
-                cursor: 'pointer',
-                flexShrink: 0,
-                overflow: 'hidden',
-                transition: 'border-color 0.15s, background 0.15s',
-              }}
+              className={cn(
+                'relative flex items-center gap-1 px-1.5 py-0.5 rounded-sm flex-shrink-0 overflow-hidden cursor-pointer transition-[border-color,background] duration-150',
+                active
+                  ? 'border border-accent/50 bg-accent/[0.08]'
+                  : 'border border-border/20 bg-transparent',
+              )}
             >
               {/* bar fill behind text */}
               <div
-                style={{
-                  position: 'absolute',
-                  left: 0,
-                  bottom: 0,
-                  top: 0,
-                  width: `${Math.max(barRatio * 100, 8)}%`,
-                  background: active
-                    ? 'rgba(var(--color-accent-rgb), 0.06)'
-                    : 'rgba(var(--color-hover-tint-rgb), 0.015)',
-                  transition: 'width 0.3s',
-                  pointerEvents: 'none',
-                }}
+                className={cn(
+                  'absolute left-0 bottom-0 top-0 transition-[width] duration-300 pointer-events-none',
+                  active ? 'bg-accent/[0.06]' : 'bg-transparent',
+                )}
+                style={{ width: `${Math.max(barRatio * 100, 8)}%` }}
               />
               <span
-                style={{
-                  fontSize: '9px',
-                  fontFamily: 'monospace',
-                  color: active ? 'var(--color-accent)' : 'var(--color-text-dim)',
-                  transition: 'color 0.15s',
-                  position: 'relative',
-                  whiteSpace: 'nowrap',
-                  maxWidth: '72px',
-                  overflow: 'hidden',
-                  textOverflow: 'ellipsis',
-                }}
+                className={cn(
+                  'text-2xs font-mono transition-colors duration-150 relative whitespace-nowrap max-w-18 overflow-hidden text-ellipsis',
+                  active ? 'text-accent' : 'text-text-dim',
+                )}
               >
                 {entry.type}
               </span>
               <span
-                style={{
-                  fontSize: '8px',
-                  fontFamily: 'monospace',
-                  color: active
-                    ? 'rgba(var(--color-accent-rgb), 0.6)'
-                    : 'rgba(var(--color-hover-tint-rgb), 0.12)',
-                  position: 'relative',
-                  transition: 'color 0.15s',
-                }}
+                className={cn(
+                  'text-2xs font-mono relative transition-colors duration-150',
+                  active ? 'text-accent/60' : 'text-text-faint',
+                )}
               >
                 {entry.count}
               </span>

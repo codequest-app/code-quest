@@ -103,7 +103,7 @@ export function PermissionModePicker({
           avoidCollisions={false}
           onOpenAutoFocus={(e) => e.preventDefault()}
           onFocusOutside={(e) => e.preventDefault()}
-          className="bg-surface border border-border rounded-lg shadow-lg z-modal w-80 max-w-[calc(100vw-2rem)] py-1"
+          className="bg-surface border border-border rounded-lg shadow-floating z-modal w-80 max-w-[calc(100vw-2rem)] py-1"
         >
           <div className="px-3 py-1.5 text-xs text-text-muted flex items-center justify-between">
             <span className="font-semibold">Modes</span>

@@ -92,7 +92,7 @@ export function ProjectCard({
             <div
               className={cn(
                 'group relative my-0.5 rounded',
-                active ? 'bg-accent/10' : 'hover:bg-white/5',
+                active ? 'bg-accent/10' : 'hover:bg-hover-tint',
               )}
             >
               <button

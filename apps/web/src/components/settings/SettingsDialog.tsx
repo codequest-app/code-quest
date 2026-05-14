@@ -45,7 +45,7 @@ export function SettingsDialog({ open, onClose }: SettingsDialogProps): React.JS
                   'px-4 py-2 text-left text-xs font-mono cursor-pointer transition-colors',
                   activeSection === section
                     ? 'bg-accent/10 text-accent font-semibold'
-                    : 'text-text-subtle hover:text-text hover:bg-white/5',
+                    : 'text-text-subtle hover:text-text hover:bg-hover-tint',
                 )}
               >
                 {section}

@@ -66,7 +66,7 @@ export function NotificationToast({
     <div
       role="alert"
       className={cn(
-        'bg-surface border rounded-md px-4 py-3 shadow-lg',
+        'bg-surface border rounded-md px-4 py-3 shadow-floating',
         severity === 'error'
           ? 'border-danger'
           : severity === 'warning'
@@ -90,7 +90,7 @@ export function NotificationToast({
         <Button
           variant="ghost"
           size="xs"
-          className="rounded-md text-sm font-medium bg-white/10 text-text-muted hover:bg-white/20"
+          className="rounded-md text-sm font-medium bg-hover-tint text-text-muted hover:bg-surface-hover"
           onClick={onDismiss}
         >
           Dismiss

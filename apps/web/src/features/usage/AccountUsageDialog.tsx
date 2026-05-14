@@ -92,7 +92,7 @@ function UsageBarRow({
         <span className="text-text">{label}</span>
         <span className="text-text tabular-nums">{pct}%</span>
       </div>
-      <div className="h-1.5 bg-white/5 rounded-sm overflow-hidden">
+      <div className="h-1.5 bg-hover-tint rounded-sm overflow-hidden">
         <div
           className={cn('h-full rounded-sm transition-all', isHigh ? 'bg-danger' : 'bg-accent')}
           style={{ width: `${pct}%` }}
@@ -128,7 +128,7 @@ export function AccountUsageDialog({
   return (
     <Dialog.Root open={open} onOpenChange={(v) => !v && onClose()}>
       <Dialog.Portal>
-        <Dialog.Overlay className="fixed inset-0 z-popover bg-black/50" />
+        <Dialog.Overlay className="fixed inset-0 z-popover bg-overlay" />
         <Dialog.Content
           aria-label="Account & Usage"
           aria-describedby={undefined}

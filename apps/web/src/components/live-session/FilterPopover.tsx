@@ -26,12 +26,12 @@ function FilterCheckboxItem({
   return (
     <label
       htmlFor={id}
-      className="flex items-center gap-2 px-3 py-1 cursor-pointer relative transition-colors hover:bg-white/[0.03]"
+      className="flex items-center gap-2 px-3 py-1 cursor-pointer relative transition-colors hover:bg-hover-tint"
     >
       <div
         className={cn(
           'absolute left-0 top-0 bottom-0 pointer-events-none transition-all',
-          checked ? 'bg-accent/[0.06]' : 'bg-white/[0.02]',
+          checked ? 'bg-accent/[0.06]' : 'bg-hover-tint',
         )}
         style={{ width: `${barWidth}%` }}
       />
@@ -44,7 +44,7 @@ function FilterCheckboxItem({
       <div
         className={cn(
           'w-1 h-1 rounded-full shrink-0 transition-colors z-sticky',
-          checked ? 'bg-accent' : 'bg-white/10',
+          checked ? 'bg-accent' : 'bg-surface-hover',
         )}
       />
       <span
@@ -58,7 +58,7 @@ function FilterCheckboxItem({
       <span
         className={cn(
           'text-xs tabular-nums font-mono transition-colors z-sticky',
-          checked ? 'text-accent/70' : 'text-white/15',
+          checked ? 'text-accent/70' : 'text-text-faint',
         )}
       >
         {entry.count}
@@ -135,7 +135,7 @@ export function FilterPopover({
             type="button"
             aria-label="Clear all"
             onClick={clearAll}
-            className="text-xs font-semibold tracking-wider uppercase text-text-muted hover:text-text bg-white/[0.04] hover:bg-white/10 border border-white/10 rounded px-1.5 py-0.5 cursor-pointer transition-all"
+            className="text-xs font-semibold tracking-wider uppercase text-text-muted hover:text-text bg-hover-tint hover:bg-surface-hover border border-floating-border-subtle rounded px-1.5 py-0.5 cursor-pointer transition-all"
           >
             None
           </button>

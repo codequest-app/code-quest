@@ -53,7 +53,7 @@ export function MermaidDiagram({ code }: { code: string }): React.JSX.Element | 
 
   if (error) {
     return (
-      <pre className="text-red-400 text-xs whitespace-pre-wrap p-3 bg-surface rounded">{error}</pre>
+      <pre className="text-danger text-xs whitespace-pre-wrap p-3 bg-surface rounded">{error}</pre>
     );
   }
 
