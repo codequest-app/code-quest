@@ -260,7 +260,7 @@ function renderContent(
         result={result ?? (message.result as ToolResult | undefined)}
         task={resolvedTask}
         partialInput={message.partialInput}
-        defaultOpen={false}
+        defaultOpen={isLastTurn}
       />
     );
   }
