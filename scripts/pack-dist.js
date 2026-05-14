@@ -1,4 +1,4 @@
-import { cpSync, mkdirSync, readdirSync, rmSync } from 'node:fs';
+import { cpSync, existsSync, mkdirSync, readdirSync, rmSync } from 'node:fs';
 import { resolve } from 'node:path';
 
 const root = resolve(import.meta.dirname, '..');
@@ -7,6 +7,7 @@ const dist = resolve(root, 'release');
 const PRESERVE = new Set(['runtime']);
 
 function cleanDir(dir) {
+  if (!existsSync(dir)) return;
   for (const entry of readdirSync(dir, { withFileTypes: true })) {
     if (!PRESERVE.has(entry.name)) {
       rmSync(resolve(dir, entry.name), { recursive: true, force: true });
