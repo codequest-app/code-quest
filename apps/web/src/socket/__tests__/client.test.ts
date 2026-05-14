@@ -1,39 +1,19 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
-
-// biome-ignore lint/complexity/useArrowFunction: vitest v4 requires regular functions for mocks used with `new`
-const MockWsClient = vi.fn(function () {});
-
-vi.mock('socket.io-client', () => ({
-  io: vi.fn(() => ({ id: 'socketio-mock', connected: false })),
-}));
-
-vi.mock('../ws-client.ts', () => ({
-  WsClient: MockWsClient,
-}));
-
-vi.mock('../ws-socket-adapter.ts', () => ({
-  // biome-ignore lint/complexity/useArrowFunction: vitest v4 requires regular functions for mocks used with `new`
-  WsSocketAdapter: vi.fn(function () {
-    return {
-      id: 'ws-mock',
-      connected: false,
-      connect: vi.fn(),
-      disconnect: vi.fn(),
-      emit: vi.fn(),
-      on: vi.fn(),
-      off: vi.fn(),
-    };
-  }),
-}));
+import { MockWebSocket } from '@/test/mock-websocket';
 
 describe('createSocket', () => {
+  let originalWS: typeof globalThis.WebSocket;
+
   beforeEach(() => {
+    originalWS = globalThis.WebSocket;
+    MockWebSocket.reset();
+    globalThis.WebSocket = MockWebSocket as unknown as typeof globalThis.WebSocket;
     vi.resetModules();
     sessionStorage.clear();
-    MockWsClient.mockClear();
   });
 
   afterEach(() => {
+    globalThis.WebSocket = originalWS;
     vi.unstubAllEnvs();
   });
 
@@ -42,51 +22,46 @@ describe('createSocket', () => {
     const { createSocket } = await import('../client.ts');
     const result = createSocket();
     expect(result).not.toBeInstanceOf(Promise);
-    expect(result).toHaveProperty('id', 'ws-mock');
   });
 
   it('returns promise when transport is socketio', async () => {
     vi.stubEnv('VITE_TRANSPORT', 'socketio');
     const { createSocket } = await import('../client.ts');
-    const result = createSocket();
-    expect(result).toBeInstanceOf(Promise);
-    const socket = await result;
-    expect(socket).toHaveProperty('id', 'socketio-mock');
+    // createSocket defers to socket.io-client via dynamic import — just verify it is async
+    expect(createSocket()).toBeInstanceOf(Promise);
   });
 
   describe('sessionKey (ws transport)', () => {
-    function getCalledUrl(): string {
-      const calls = MockWsClient.mock.calls as unknown as string[][];
-      return calls[0]![0]!;
-    }
-
     it('appends sessionKey query param to the WS URL', async () => {
       vi.stubEnv('VITE_TRANSPORT', 'ws');
       const { createSocket } = await import('../client.ts');
-      createSocket('http://localhost:3000');
-      expect(new URL(getCalledUrl()).searchParams.get('sessionKey')).toBeTruthy();
+      const adapter = createSocket('http://localhost:3000') as { connect(): void };
+      adapter.connect();
+      const url = MockWebSocket.last()?.url ?? '';
+      expect(new URL(url).searchParams.get('sessionKey')).toBeTruthy();
     });
 
     it('reuses the same sessionKey across calls (reads from sessionStorage)', async () => {
       vi.stubEnv('VITE_TRANSPORT', 'ws');
       const { createSocket } = await import('../client.ts');
-      createSocket('http://localhost:3000');
-      const key1 = new URL(getCalledUrl()).searchParams.get('sessionKey');
+      const a1 = createSocket('http://localhost:3000') as { connect(): void };
+      a1.connect();
+      const key1 = new URL(MockWebSocket.last()!.url).searchParams.get('sessionKey');
 
       vi.resetModules();
-      MockWsClient.mockClear();
       const { createSocket: createSocket2 } = await import('../client.ts');
-      createSocket2('http://localhost:3000');
-      const key2 = new URL(getCalledUrl()).searchParams.get('sessionKey');
+      const a2 = createSocket2('http://localhost:3000') as { connect(): void };
+      a2.connect();
+      const key2 = new URL(MockWebSocket.last()!.url).searchParams.get('sessionKey');
 
       expect(key1).toBe(key2);
     });
 
-    it('does not append sessionKey for socketio transport', async () => {
+    it('does not open a WebSocket for socketio transport', async () => {
       vi.stubEnv('VITE_TRANSPORT', 'socketio');
       const { createSocket } = await import('../client.ts');
-      await createSocket('http://localhost:3000');
-      expect(MockWsClient).not.toHaveBeenCalled();
+      createSocket('http://localhost:3000');
+      expect(MockWebSocket.created()).toBe(0);
     });
   });
 });

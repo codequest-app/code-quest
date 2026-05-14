@@ -1,6 +1,6 @@
 import 'dotenv/config';
 import { formatBanner } from '@code-quest/shared';
-import { bearerToken, createConnectionLoop, WsTransport, wsAdapter } from '@code-quest/shared/node';
+import { WsClient } from '@code-quest/shared/node';
 import { loadConfig } from './config.ts';
 import { Agent } from './connection/agent.ts';
 import { LocalFilesystemService } from './filesystem/local.ts';
@@ -38,7 +38,7 @@ if (!config.token) {
   process.exit(1);
 }
 
-console.log(
+logger.info(
   formatBanner('Code Quest Summoner', [
     { key: 'Server', value: config.server },
     { key: 'Token', value: '***' },
@@ -51,15 +51,27 @@ const rootGuard = new LocalRootGuard(config.fsRoots);
 const filesystem = new LocalFilesystemService(config.fsRoots, rootGuard, new LocalWatchService());
 const git = new LocalGitService();
 
-const transport = new WsTransport(wsAdapter());
-
 const serverUrl = new URL(config.server);
 serverUrl.searchParams.set('sessionKey', crypto.randomUUID());
 
-createConnectionLoop(transport, serverUrl.toString(), {
-  middleware: [bearerToken(config.token)],
-  createAgent: (rpc) => new Agent(rpc, processProvider, filesystem, git),
-  onConnect: () => logger.info(`[summoner] connected to ${config.server}`),
-  onDisconnect: () => logger.warn('[summoner] disconnected, will reconnect...'),
-  onReconnecting: () => logger.info('[summoner] reconnecting...'),
+const client = new WsClient(serverUrl.toString(), {
+  headers: { Authorization: `Bearer ${config.token}` },
 });
+
+const agent = new Agent(processProvider, filesystem, git);
+agent.attach(client);
+
+client.setLifecycleListener({
+  onOpen: (id) => logger.info({ connectionId: id }, `[summoner] connected to ${config.server}`),
+  onClose: () => logger.warn('[summoner] disconnected, reconnecting...'),
+});
+
+client.connect();
+
+for (const sig of ['SIGINT', 'SIGTERM'] as const) {
+  process.on(sig, () => {
+    agent.dispose();
+    client.disconnect();
+    process.exit(0);
+  });
+}

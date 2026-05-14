@@ -1,5 +1,5 @@
+import type { WsClient } from '@code-quest/shared';
 import type { SocketLike } from './client.ts';
-import type { WsClient } from './ws-client.ts';
 
 type Listener = (...args: unknown[]) => void;
 

@@ -1,4 +1,5 @@
 import { type Envelope, EnvelopeSchema } from '@code-quest/shared';
+import type { AgentTransport } from './agent-transport.ts';
 
 interface WsClientOptions {
   /** First reconnect delay in ms (doubles on each successive failure). Default 500. */
@@ -9,9 +10,12 @@ interface WsClientOptions {
   pingIntervalMs?: number;
   /** Outbox cap; oldest message dropped on overflow. Default 100. */
   outboxLimit?: number;
+  /** Extra HTTP headers sent on each (re)connect — Node.js native WebSocket only. */
+  headers?: Record<string, string>;
 }
 
 type EventListener = (data: unknown) => void;
+type RequestHandler = (data: unknown) => Promise<unknown>;
 
 interface LifecycleListener {
   onOpen(id: string): void;
@@ -28,9 +32,9 @@ type QueuedEnvelope =
   | { kind: 'request'; id: string; event: string; data: unknown };
 
 /**
- * WsClient — browser-side raw WebSocket client speaking the project envelope
- * protocol. Provides the surface area existing code expects from a socket.io
- * client: connect/disconnect/on/off/emit + a Promise-based request/response.
+ * WsClient — shared raw WebSocket client (browser and Node.js) speaking the
+ * project envelope protocol. Provides connect/disconnect/on/off/emit/request
+ * plus onRequest for server-initiated RPC calls.
  *
  * Resilience:
  *   - Outbox queues outgoing envelopes while disconnected, flushes on OPEN.
@@ -39,20 +43,22 @@ type QueuedEnvelope =
  *     received seq so the server (above-transport ResumableSocket) can replay.
  *   - Idle ping every pingIntervalMs to keep proxies from idle-killing.
  */
-export class WsClient {
+export class WsClient implements AgentTransport {
   private ws?: WebSocket;
   private outbox: QueuedEnvelope[] = [];
   private pending = new Map<string, PendingRequest>();
   private listeners = new Map<string, Set<EventListener>>();
+  private requestHandlers = new Map<string, RequestHandler>();
   private lastSeq = 0;
   private backoffMs: number;
   private reconnectTimer?: ReturnType<typeof setTimeout>;
   private pingTimer?: ReturnType<typeof setInterval>;
   private explicitlyClosed = false;
   private lifecycle?: LifecycleListener;
-  private currentId = '';
   private visibilityHandler?: () => void;
-  private readonly opts: Required<WsClientOptions>;
+  private readonly opts: Required<Omit<WsClientOptions, 'headers'>> & {
+    headers?: Record<string, string>;
+  };
   private readonly url: string;
 
   constructor(url: string, opts: WsClientOptions = {}) {
@@ -62,6 +68,7 @@ export class WsClient {
       maxBackoffMs: opts.maxBackoffMs ?? 10_000,
       pingIntervalMs: opts.pingIntervalMs ?? 25_000,
       outboxLimit: opts.outboxLimit ?? 100,
+      headers: opts.headers,
     };
     this.backoffMs = this.opts.initialBackoffMs;
     this.bindVisibilityChange();
@@ -81,10 +88,11 @@ export class WsClient {
     if (this.reconnectTimer) clearTimeout(this.reconnectTimer);
     if (this.pingTimer) clearInterval(this.pingTimer);
     if (this.visibilityHandler) {
-      document.removeEventListener('visibilitychange', this.visibilityHandler);
+      doc()?.removeEventListener('visibilitychange', this.visibilityHandler);
       this.visibilityHandler = undefined;
     }
     if (this.ws && this.ws.readyState !== this.ws.CLOSED) this.ws.close(1000);
+    this.ws = undefined;
     for (const p of this.pending.values()) p.reject(new Error('disconnected'));
     this.pending.clear();
   }
@@ -122,6 +130,11 @@ export class WsClient {
     this.listeners.get(event)?.delete(fn);
   }
 
+  onRequest(event: string, handler: RequestHandler): () => void {
+    this.requestHandlers.set(event, handler);
+    return () => this.requestHandlers.delete(event);
+  }
+
   /**
    * Subscribe to connection lifecycle. The adapter uses this to surface
    * 'connect' / 'connect_error' events to the socket.io-shaped consumer code.
@@ -143,12 +156,42 @@ export class WsClient {
 
   // ── Internals ──
 
+  private async handleIncomingRequest(id: string, event: string, data: unknown): Promise<void> {
+    // If the socket closed between receiving the request and sending the response,
+    // sendNow silently no-ops — the server's pending request will time out naturally.
+    if (!this.isOpen()) return;
+    const handler = this.requestHandlers.get(event);
+    if (!handler) {
+      this.sendNow({ kind: 'response', id, ok: false, error: `Unknown method: ${event}` });
+      return;
+    }
+    try {
+      const result = await handler(data);
+      if (this.isOpen()) this.sendNow({ kind: 'response', id, ok: true, data: result });
+    } catch (err) {
+      if (this.isOpen())
+        this.sendNow({
+          kind: 'response',
+          id,
+          ok: false,
+          error: err instanceof Error ? err.message : String(err),
+        });
+    }
+  }
+
   private openSocket(): void {
     if (this.reconnectTimer) {
       clearTimeout(this.reconnectTimer);
       this.reconnectTimer = undefined;
     }
-    const ws = new WebSocket(this.url);
+    // Node.js 21+ (undici) WebSocket accepts { headers } as the second argument
+    // and forwards them on the HTTP upgrade request — verified at runtime.
+    // The browser WebSocket overload types only string | string[] (protocols),
+    // so we cast through that union; browsers ignore unknown object keys.
+    const wsOptions = (this.opts.headers ? { headers: this.opts.headers } : undefined) as
+      | string[]
+      | undefined;
+    const ws = new WebSocket(this.url, wsOptions);
     this.ws = ws;
     ws.onopen = () => this.handleOpen();
     ws.onmessage = (ev) => this.handleMessage(ev);
@@ -160,7 +203,6 @@ export class WsClient {
 
   private handleOpen(): void {
     this.backoffMs = this.opts.initialBackoffMs;
-    this.currentId = randomId();
     // Send resume FIRST so the server replays missed events before our queued
     // outbound work executes against potentially-stale state.
     this.sendNow({ kind: 'resume', lastSeq: this.lastSeq });
@@ -169,7 +211,7 @@ export class WsClient {
     }
     this.outbox = [];
     this.startPingTimer();
-    this.lifecycle?.onOpen(this.currentId);
+    this.lifecycle?.onOpen(randomId());
   }
 
   private handleMessage(ev: MessageEvent): void {
@@ -197,9 +239,11 @@ export class WsClient {
         else p.reject(new Error(env.error ?? 'request failed'));
         return;
       }
+      case 'request':
+        void this.handleIncomingRequest(env.id, env.event, env.data);
+        return;
       case 'pong':
       case 'ping':
-      case 'request':
       case 'resume':
         return;
     }
@@ -228,9 +272,9 @@ export class WsClient {
    * reconnect immediately rather than wait out the remaining backoff.
    */
   private bindVisibilityChange(): void {
-    if (typeof document === 'undefined') return;
+    if (!doc()) return;
     this.visibilityHandler = () => {
-      if (document.visibilityState !== 'visible') return;
+      if (doc()?.visibilityState !== 'visible') return;
       if (this.isOpen() || this.explicitlyClosed) return;
       if (!this.reconnectTimer) return;
       clearTimeout(this.reconnectTimer);
@@ -238,7 +282,7 @@ export class WsClient {
       this.backoffMs = this.opts.initialBackoffMs;
       this.openSocket();
     };
-    document.addEventListener('visibilitychange', this.visibilityHandler);
+    doc()?.addEventListener('visibilitychange', this.visibilityHandler);
   }
 
   private startPingTimer(): void {
@@ -290,6 +334,18 @@ export class WsClient {
       }
     }
   }
+}
+
+interface DocumentLike {
+  visibilityState: string;
+  addEventListener(type: string, listener: () => void): void;
+  removeEventListener(type: string, listener: () => void): void;
+}
+
+function doc(): DocumentLike | undefined {
+  return typeof globalThis !== 'undefined'
+    ? (globalThis as { document?: DocumentLike }).document
+    : undefined;
 }
 
 function randomId(): string {

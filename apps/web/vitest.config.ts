@@ -45,9 +45,9 @@ export default defineConfig({
           name: 'unit',
           include: ['src/**/*.test.ts'],
           pool: 'threads',
-          poolOptions: {
-            threads: { isolate: false, maxThreads: 2, minThreads: 2 },
-          },
+          isolate: false,
+          maxThreads: 2,
+          minThreads: 2,
         },
       },
       {
@@ -59,9 +59,7 @@ export default defineConfig({
           name: 'component',
           include: ['src/**/*.test.tsx'],
           pool: 'forks',
-          poolOptions: {
-            forks: { singleFork: true },
-          },
+          singleFork: true,
         },
       },
     ],

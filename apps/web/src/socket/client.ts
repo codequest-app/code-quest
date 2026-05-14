@@ -1,7 +1,7 @@
 import type { ClientToServerEvents, ServerToClientEvents } from '@code-quest/shared';
+import { WsClient } from '@code-quest/shared';
 import type { Socket } from 'socket.io-client';
 import { config } from '../config.ts';
-import { WsClient } from './ws-client.ts';
 import { WsSocketAdapter } from './ws-socket-adapter.ts';
 
 export type TypedSocket = Socket<ServerToClientEvents, ClientToServerEvents>;

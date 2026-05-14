@@ -10,6 +10,7 @@ export {
 } from './logger.ts';
 
 export { toRpcSocket, wsAdapter } from './transport/adapters/ws-adapter.ts';
+export type { AgentTransport } from './transport/agent-transport.ts';
 export {
   type AuthContext,
   type Authenticator,
@@ -45,6 +46,7 @@ export type {
   RpcSocket as WsRpcSocket,
   WsAdapter,
 } from './transport/ws-adapter.ts';
+export { WsClient } from './transport/ws-client.ts';
 export {
   type ConnectionContext,
   type ConnectionHandler,
