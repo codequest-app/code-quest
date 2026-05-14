@@ -12,7 +12,7 @@ description: >
 > ⚠️ **This skill is server-focused.** Frontend tests follow `frontend-testing` (Testing Library +
 > six core principles). This file covers DB / socket.io server-side / CLI process patterns only.
 
-Stack: vitest 1.x, TypeScript, ESM, better-sqlite3, socket.io-client
+Stack: vitest 4.x, TypeScript, ESM, better-sqlite3, socket.io-client
 
 ---
 
@@ -255,6 +255,45 @@ await new Promise<void>((r) => setImmediate(r));
 ## Vitest v4 Breaking Changes
 
 > Reference: https://vitest.dev/guide/migration.html
+
+### poolOptions 移除（v4 breaking change）
+
+`poolOptions` 已移除，改為頂層選項：
+
+```ts
+// v3
+poolOptions: {
+  threads: { isolate: false, maxThreads: 2, minThreads: 2 },
+}
+poolOptions: {
+  forks: { singleFork: true },
+}
+
+// v4
+isolate: false,
+maxWorkers: 2,
+minWorkers: 2,
+// singleFork: true → maxWorkers: 1
+```
+
+### Arrow Function 不能作為 Constructor Mock
+
+v4 中用 `new` 呼叫的 mock，其實作不能是 arrow function：
+
+```ts
+// v3（會 warn 但能跑）
+vi.fn(() => ({ id: 'mock' }))
+
+// v4（TypeError: () => ({}) is not a constructor）
+vi.fn(() => ({ id: 'mock' }))  // ❌
+
+// v4 正確寫法
+vi.fn(function () { return { id: 'mock' }; })  // ✅
+// 或
+vi.fn(function () {
+  this.id = 'mock';
+})  // ✅
+```
 
 ### Type Signature Changes
 
