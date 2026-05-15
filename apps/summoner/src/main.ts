@@ -1,4 +1,11 @@
 import 'dotenv/config';
+import {
+  Broadcaster,
+  CachedDataSource,
+  FilesDataSource,
+  GitDataSource,
+  OpenspecDataSource,
+} from '@code-quest/broadcaster';
 import { LocalFilesystemService, LocalRootGuard } from '@code-quest/filesystem';
 import { LocalGitService } from '@code-quest/git';
 import { LocalOpenspecService } from '@code-quest/openspec';
@@ -7,6 +14,9 @@ import { WsClient } from '@code-quest/transport';
 import { LocalWatchService } from '@code-quest/watch';
 import { loadConfig } from './config.ts';
 import { Agent } from './connection/agent.ts';
+import { BroadcasterHandler } from './connection/broadcaster-handler.ts';
+import { FsHandler } from './connection/fs-handler.ts';
+import { GitHandler } from './connection/git-handler.ts';
 import { logger } from './logger.ts';
 import { ChildProcessProvider } from './transports/child-process.ts';
 
@@ -53,6 +63,14 @@ const git = new LocalGitService();
 const watchService = new LocalWatchService();
 const openspec = new LocalOpenspecService(filesystem, processProvider);
 
+const broadcaster = new Broadcaster()
+  .add(
+    'files',
+    (cwd) => new CachedDataSource(new FilesDataSource(cwd, '', watchService, filesystem)),
+  )
+  .add('git', (cwd) => new GitDataSource(cwd, watchService, git))
+  .add('openspec', (cwd) => new OpenspecDataSource(cwd, watchService, openspec));
+
 const serverUrl = new URL(config.server);
 serverUrl.searchParams.set('sessionKey', crypto.randomUUID());
 
@@ -60,7 +78,11 @@ const client = new WsClient(serverUrl.toString(), {
   headers: { Authorization: `Bearer ${config.token}` },
 });
 
-const agent = new Agent(processProvider, filesystem, git, watchService, openspec);
+const agent = new Agent(processProvider, [
+  new FsHandler(filesystem),
+  new GitHandler(git),
+  new BroadcasterHandler(broadcaster),
+]);
 agent.attach(client);
 
 client.setLifecycleListener({

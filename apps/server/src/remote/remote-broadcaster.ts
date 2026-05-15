@@ -1,5 +1,6 @@
 import { REMOTE_METHODS } from '@code-quest/schemas';
 
+type SnapshotCallback = (type: string, data: unknown) => void;
 type Unsubscribe = () => void;
 
 interface RemoteRpc {
@@ -13,18 +14,16 @@ interface WatchSnapshot {
   data: unknown;
 }
 
-export class RemoteBroadcaster<T> {
+export class RemoteBroadcaster {
   private readonly rpc: RemoteRpc;
-  private readonly type: string;
-  private readonly subscribers = new Map<string, Map<string, (data: T) => void>>();
+  private readonly subscribers = new Map<string, Map<string, SnapshotCallback>>();
   private offSnapshot: Unsubscribe | null = null;
 
-  constructor(rpc: RemoteRpc, type: string) {
+  constructor(rpc: RemoteRpc) {
     this.rpc = rpc;
-    this.type = type;
   }
 
-  subscribe(cwd: string, subscriberId: string, cb: (data: T) => void): Unsubscribe {
+  subscribe(cwd: string, subscriberId: string, cb: SnapshotCallback): Unsubscribe {
     let cwdSubs = this.subscribers.get(cwd);
     const isFirst = !cwdSubs || cwdSubs.size === 0;
 
@@ -54,11 +53,10 @@ export class RemoteBroadcaster<T> {
     if (this.offSnapshot) return;
     this.offSnapshot = this.rpc.on(REMOTE_METHODS.watch.snapshot, (...args: unknown[]) => {
       const payload = args[0] as WatchSnapshot;
-      if (payload.type !== this.type) return;
       const subs = this.subscribers.get(payload.cwd);
       if (!subs) return;
       for (const cb of subs.values()) {
-        cb(payload.data as T);
+        cb(payload.type, payload.data);
       }
     });
   }

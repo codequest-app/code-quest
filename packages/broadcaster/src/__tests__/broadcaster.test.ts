@@ -24,54 +24,80 @@ function makeSource<T>(value: T): DataSource<T> & { notify(): void; readCount: n
 }
 
 describe('Broadcaster', () => {
-  it('new subscriber receives current value immediately via read()', async () => {
-    const source = makeSource('data');
-    const broadcaster = new Broadcaster(() => source);
+  it('add() returns this for chaining', () => {
+    const broadcaster = new Broadcaster();
+    const result = broadcaster.add('files', () => makeSource([]));
+    expect(result).toBe(broadcaster);
+  });
+
+  it('new subscriber receives cb(type, data) for each registered type', async () => {
+    const broadcaster = new Broadcaster()
+      .add('files', () => makeSource(['a.ts']))
+      .add('git', () => makeSource({ branch: 'main' }));
     const cb = vi.fn();
     broadcaster.subscribe('/repo', 's1', cb);
-    await vi.waitUntil(() => cb.mock.calls.length > 0);
-    expect(cb).toHaveBeenCalledWith('data');
+    await vi.waitUntil(() => cb.mock.calls.length >= 2);
+    expect(cb).toHaveBeenCalledWith('files', ['a.ts']);
+    expect(cb).toHaveBeenCalledWith('git', { branch: 'main' });
   });
 
   it('second subscriber for same cwd gets cached lastValue synchronously', async () => {
     const source = makeSource('data');
-    const broadcaster = new Broadcaster(() => source);
+    const broadcaster = new Broadcaster().add('files', () => source);
     const cb1 = vi.fn();
-    const cb2 = vi.fn();
     broadcaster.subscribe('/repo', 's1', cb1);
     await vi.waitUntil(() => cb1.mock.calls.length > 0);
+
+    const cb2 = vi.fn();
     broadcaster.subscribe('/repo', 's2', cb2);
-    expect(cb2).toHaveBeenCalledWith('data');
+    expect(cb2).toHaveBeenCalledWith('files', 'data');
     expect(source.readCount).toBe(1);
   });
 
-  it('all subscribers receive updated value when source changes', async () => {
+  it('all subscribers receive cb(type, data) when a DataSource changes', async () => {
     const source = makeSource('v1');
-    const broadcaster = new Broadcaster(() => source);
+    const broadcaster = new Broadcaster().add('files', () => source);
     const cb1 = vi.fn();
     const cb2 = vi.fn();
     broadcaster.subscribe('/repo', 's1', cb1);
     broadcaster.subscribe('/repo', 's2', cb2);
     await vi.waitUntil(() => cb1.mock.calls.length > 0);
+
     source.notify();
     await vi.waitUntil(() => cb1.mock.calls.length > 1);
-    expect(cb1).toHaveBeenLastCalledWith('v1');
-    expect(cb2).toHaveBeenLastCalledWith('v1');
+    expect(cb1).toHaveBeenLastCalledWith('files', 'v1');
+    expect(cb2).toHaveBeenLastCalledWith('files', 'v1');
   });
 
-  it('last subscriber unsubscribing calls source.dispose()', async () => {
+  it('only the changed type emits — other types stay silent', async () => {
+    const filesSource = makeSource(['a.ts']);
+    const gitSource = makeSource({ branch: 'main' });
+    const broadcaster = new Broadcaster()
+      .add('files', () => filesSource)
+      .add('git', () => gitSource);
+    const cb = vi.fn();
+    broadcaster.subscribe('/repo', 's1', cb);
+    await vi.waitUntil(() => cb.mock.calls.length >= 2);
+    cb.mockClear();
+
+    filesSource.notify();
+    await vi.waitUntil(() => cb.mock.calls.length > 0);
+    expect(cb).toHaveBeenCalledWith('files', ['a.ts']);
+    expect(cb).not.toHaveBeenCalledWith('git', expect.anything());
+  });
+
+  it('last subscriber unsubscribing disposes all DataSources for that cwd', async () => {
     const dispose = vi.fn();
-    const broadcaster = new Broadcaster(() => ({ ...makeSource('x'), dispose }));
+    const broadcaster = new Broadcaster().add('files', () => ({ ...makeSource('x'), dispose }));
     const off = broadcaster.subscribe('/repo', 's1', vi.fn());
     await vi.waitUntil(() => dispose.mock.calls.length === 0);
-    expect(dispose).not.toHaveBeenCalled();
     off();
     expect(dispose).toHaveBeenCalledTimes(1);
   });
 
-  it('last subscriber unsubscribing removes cwd entry', async () => {
+  it('last subscriber unsubscribing removes cwd entry so next subscribe creates fresh sources', async () => {
     let sourceCreated = 0;
-    const broadcaster = new Broadcaster(() => {
+    const broadcaster = new Broadcaster().add('files', () => {
       sourceCreated++;
       return makeSource('x');
     });
@@ -79,38 +105,53 @@ describe('Broadcaster', () => {
     const off = broadcaster.subscribe('/repo', 's1', cb);
     await vi.waitUntil(() => cb.mock.calls.length > 0);
     off();
+
     const cb2 = vi.fn();
     broadcaster.subscribe('/repo', 's2', cb2);
     await vi.waitUntil(() => cb2.mock.calls.length > 0);
     expect(sourceCreated).toBe(2);
   });
 
-  it('different cwds use independent sources', async () => {
-    const sources: Array<ReturnType<typeof makeSource>> = [];
-    const broadcaster = new Broadcaster((cwd) => {
-      const s = makeSource(cwd);
-      sources.push(s);
-      return s;
+  it('different cwds use independent DataSource instances', async () => {
+    const cwds: string[] = [];
+    const broadcaster = new Broadcaster().add('files', (cwd) => {
+      cwds.push(cwd);
+      return makeSource(cwd);
     });
     const cbA = vi.fn();
     const cbB = vi.fn();
     broadcaster.subscribe('/a', 's1', cbA);
     broadcaster.subscribe('/b', 's2', cbB);
     await vi.waitUntil(() => cbA.mock.calls.length > 0 && cbB.mock.calls.length > 0);
-    expect(cbA).toHaveBeenCalledWith('/a');
-    expect(cbB).toHaveBeenCalledWith('/b');
-    expect(sources).toHaveLength(2);
+    expect(cbA).toHaveBeenCalledWith('files', '/a');
+    expect(cbB).toHaveBeenCalledWith('files', '/b');
+    expect(cwds).toEqual(['/a', '/b']);
   });
 
   it('unsubscribed callback no longer receives updates', async () => {
     const source = makeSource('v1');
-    const broadcaster = new Broadcaster(() => source);
+    const broadcaster = new Broadcaster().add('files', () => source);
     const cb = vi.fn();
     const off = broadcaster.subscribe('/repo', 's1', cb);
     await vi.waitUntil(() => cb.mock.calls.length > 0);
     off();
+
     source.notify();
     await new Promise((r) => setTimeout(r, 20));
     expect(cb).toHaveBeenCalledTimes(1);
+  });
+
+  it('single subscribe covers all registered types without extra subscribe calls', async () => {
+    const broadcaster = new Broadcaster()
+      .add('files', () => makeSource(['a.ts']))
+      .add('git', () => makeSource({ branch: 'main' }))
+      .add('openspec', () => makeSource({ changes: [] }));
+    const cb = vi.fn();
+    broadcaster.subscribe('/repo', 's1', cb);
+    await vi.waitUntil(() => cb.mock.calls.length >= 3);
+    const types = cb.mock.calls.map(([type]) => type);
+    expect(types).toContain('files');
+    expect(types).toContain('git');
+    expect(types).toContain('openspec');
   });
 });

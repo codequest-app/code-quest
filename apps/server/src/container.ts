@@ -224,44 +224,24 @@ function pickOrComposite<T>(stores: T[], makeComposite: (stores: T[]) => T): T {
 }
 
 function bindRemoteSnapshotBroadcasters(container: Container, remoteRpc: ReconnectableRpc): void {
-  container
-    .bind(TYPES.FilesBroadcaster)
-    .toConstantValue(
-      new RemoteBroadcaster<import('@code-quest/schemas').FileResult[]>(remoteRpc, 'files'),
-    );
-  container
-    .bind(TYPES.GitBroadcaster)
-    .toConstantValue(
-      new RemoteBroadcaster<import('@code-quest/schemas').GitStatusResult>(remoteRpc, 'git'),
-    );
-  container
-    .bind(TYPES.OpenspecBroadcaster)
-    .toConstantValue(
-      new RemoteBroadcaster<import('@code-quest/schemas').OpenspecListResult>(
-        remoteRpc,
-        'openspec',
-      ),
-    );
+  container.bind(TYPES.Broadcaster).toConstantValue(new RemoteBroadcaster(remoteRpc));
 }
 
 function bindSnapshotBroadcasters(container: Container, watchService: WatchService): void {
-  const filesBroadcaster = new Broadcaster<import('@code-quest/schemas').FileResult[]>((cwd) => {
-    const fs = container.get<FilesystemService>(TYPES.FilesystemService);
-    return new CachedDataSource(new FilesDataSource(cwd, '', watchService, fs));
-  });
-  const gitBroadcaster = new Broadcaster<import('@code-quest/schemas').GitStatusResult>((cwd) => {
-    const git = container.get<GitService>(TYPES.GitService);
-    return new GitDataSource(cwd, watchService, git);
-  });
-  const openspecBroadcaster = new Broadcaster<import('@code-quest/schemas').OpenspecListResult>(
-    (cwd) => {
+  const broadcaster = new Broadcaster()
+    .add('files', (cwd) => {
+      const fs = container.get<FilesystemService>(TYPES.FilesystemService);
+      return new CachedDataSource(new FilesDataSource(cwd, '', watchService, fs));
+    })
+    .add('git', (cwd) => {
+      const git = container.get<GitService>(TYPES.GitService);
+      return new GitDataSource(cwd, watchService, git);
+    })
+    .add('openspec', (cwd) => {
       const openspec = container.get<OpenspecService>(TYPES.OpenspecService);
       return new OpenspecDataSource(cwd, watchService, openspec);
-    },
-  );
-  container.bind(TYPES.FilesBroadcaster).toConstantValue(filesBroadcaster);
-  container.bind(TYPES.GitBroadcaster).toConstantValue(gitBroadcaster);
-  container.bind(TYPES.OpenspecBroadcaster).toConstantValue(openspecBroadcaster);
+    });
+  container.bind(TYPES.Broadcaster).toConstantValue(broadcaster);
 }
 
 function buildStores(

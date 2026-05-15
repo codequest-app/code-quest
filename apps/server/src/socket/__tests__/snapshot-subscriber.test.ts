@@ -21,22 +21,22 @@ function makeSocket(): TypedSocket & { emitted: Array<[string, unknown]> } {
   };
 }
 
-function makeBroadcaster<T>(): {
-  broadcaster: Broadcaster<T>;
-  push(cwd: string, value: T): void;
+function makeBroadcaster(): {
+  broadcaster: Broadcaster;
+  push(cwd: string, type: string, data: unknown): void;
 } {
-  const subs = new Map<string, (v: T) => void>();
+  const subs = new Map<string, (type: string, data: unknown) => void>();
   const broadcaster = {
-    subscribe: vi.fn((cwd: string, id: string, cb: (v: T) => void) => {
+    subscribe: vi.fn((cwd: string, id: string, cb: (type: string, data: unknown) => void) => {
       subs.set(`${cwd}:${id}`, cb);
       return () => subs.delete(`${cwd}:${id}`);
     }),
-  } as unknown as Broadcaster<T>;
+  } as unknown as Broadcaster;
   return {
     broadcaster,
-    push(cwd, value) {
+    push(cwd, type, data) {
       for (const [key, cb] of subs) {
-        if (key.startsWith(`${cwd}:`)) cb(value);
+        if (key.startsWith(`${cwd}:`)) cb(type, data);
       }
     },
   };
@@ -56,17 +56,11 @@ const OPENSPEC: OpenspecListResult = { changes: [], specs: [] };
 describe('subscribeSnapshotForSocket', () => {
   it('files broadcaster push emits files:dirty with snapshot', () => {
     const socket = makeSocket();
-    const files = makeBroadcaster<FileResult[]>();
-    const git = makeBroadcaster<GitStatusResult>();
-    const openspec = makeBroadcaster<OpenspecListResult>();
+    const { broadcaster, push } = makeBroadcaster();
 
-    subscribeSnapshotForSocket(socket, 'sub-1', '/repo', {
-      files: files.broadcaster,
-      git: git.broadcaster,
-      openspec: openspec.broadcaster,
-    });
+    subscribeSnapshotForSocket(socket, 'sub-1', '/repo', broadcaster);
 
-    files.push('/repo', FILES);
+    push('/repo', 'files', FILES);
 
     expect(socket.emitted).toContainEqual([
       EVENTS.fs.dirty,
@@ -76,34 +70,22 @@ describe('subscribeSnapshotForSocket', () => {
 
   it('git broadcaster push emits git:dirty with snapshot', () => {
     const socket = makeSocket();
-    const files = makeBroadcaster<FileResult[]>();
-    const git = makeBroadcaster<GitStatusResult>();
-    const openspec = makeBroadcaster<OpenspecListResult>();
+    const { broadcaster, push } = makeBroadcaster();
 
-    subscribeSnapshotForSocket(socket, 'sub-1', '/repo', {
-      files: files.broadcaster,
-      git: git.broadcaster,
-      openspec: openspec.broadcaster,
-    });
+    subscribeSnapshotForSocket(socket, 'sub-1', '/repo', broadcaster);
 
-    git.push('/repo', GIT);
+    push('/repo', 'git', GIT);
 
     expect(socket.emitted).toContainEqual([EVENTS.git.dirty, { cwd: '/repo', snapshot: GIT }]);
   });
 
   it('openspec broadcaster push emits openspec:dirty with snapshot', () => {
     const socket = makeSocket();
-    const files = makeBroadcaster<FileResult[]>();
-    const git = makeBroadcaster<GitStatusResult>();
-    const openspec = makeBroadcaster<OpenspecListResult>();
+    const { broadcaster, push } = makeBroadcaster();
 
-    subscribeSnapshotForSocket(socket, 'sub-1', '/repo', {
-      files: files.broadcaster,
-      git: git.broadcaster,
-      openspec: openspec.broadcaster,
-    });
+    subscribeSnapshotForSocket(socket, 'sub-1', '/repo', broadcaster);
 
-    openspec.push('/repo', OPENSPEC);
+    push('/repo', 'openspec', OPENSPEC);
 
     expect(socket.emitted).toContainEqual([
       EVENTS.openspec.dirty,
@@ -111,23 +93,16 @@ describe('subscribeSnapshotForSocket', () => {
     ]);
   });
 
-  it('returns unsubscribe functions that stop further delivery', () => {
+  it('returns unsubscribe function that stops further delivery', () => {
     const socket = makeSocket();
-    const files = makeBroadcaster<FileResult[]>();
-    const git = makeBroadcaster<GitStatusResult>();
-    const openspec = makeBroadcaster<OpenspecListResult>();
+    const { broadcaster, push } = makeBroadcaster();
 
-    const offs = subscribeSnapshotForSocket(socket, 'sub-1', '/repo', {
-      files: files.broadcaster,
-      git: git.broadcaster,
-      openspec: openspec.broadcaster,
-    });
+    const off = subscribeSnapshotForSocket(socket, 'sub-1', '/repo', broadcaster);
+    off();
 
-    for (const off of offs) off();
-
-    files.push('/repo', FILES);
-    git.push('/repo', GIT);
-    openspec.push('/repo', OPENSPEC);
+    push('/repo', 'files', FILES);
+    push('/repo', 'git', GIT);
+    push('/repo', 'openspec', OPENSPEC);
 
     expect(socket.emitted).toHaveLength(0);
   });

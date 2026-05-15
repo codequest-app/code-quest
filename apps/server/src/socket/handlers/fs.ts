@@ -13,7 +13,6 @@ import {
   fsUnwatchPayloadSchema,
   fsWatchPayloadSchema,
 } from '@code-quest/schemas';
-import type { Unsubscribe } from '@code-quest/watch';
 import type { ZodType } from 'zod';
 import { logger } from '../../logger.ts';
 import type { HandlerContext } from '../../types.ts';
@@ -44,14 +43,9 @@ function createFsHandler<T>(
 export function create({
   emitter,
   filesystemService: fs,
-  filesBroadcaster,
-  gitBroadcaster,
-  openspecBroadcaster,
-}: Pick<
-  HandlerContext,
-  'emitter' | 'filesystemService' | 'filesBroadcaster' | 'gitBroadcaster' | 'openspecBroadcaster'
->): void {
-  const subsBySocket = new Map<string, Map<string, { cwd: string; offs: Unsubscribe[] }>>();
+  broadcaster,
+}: Pick<HandlerContext, 'emitter' | 'filesystemService' | 'broadcaster'>): void {
+  const subsBySocket = new Map<string, Map<string, { cwd: string; off: () => void }>>();
 
   const handleBrowse = createFsHandler(
     fsBrowsePayloadSchema,
@@ -127,23 +121,19 @@ export function create({
         socket.on('disconnect', () => {
           const m = subsBySocket.get(socket.id);
           if (!m) return;
-          for (const { offs } of m.values()) {
-            for (const off of offs) off();
+          for (const { off } of m.values()) {
+            off();
           }
           subsBySocket.delete(socket.id);
         });
       }
       const existing = perSub.get(subscriberId);
       if (existing) {
-        for (const off of existing.offs) off();
+        existing.off();
       }
       perSub.set(subscriberId, {
         cwd,
-        offs: subscribeSnapshotForSocket(socket, subscriberId, cwd, {
-          files: filesBroadcaster,
-          git: gitBroadcaster,
-          openspec: openspecBroadcaster,
-        }),
+        off: subscribeSnapshotForSocket(socket, subscriberId, cwd, broadcaster),
       });
       callback?.({});
     } catch (err) {
@@ -167,7 +157,7 @@ export function create({
       const perSub = subsBySocket.get(socket.id);
       const entry = perSub?.get(subscriberId);
       if (entry) {
-        for (const off of entry.offs) off();
+        entry.off();
         perSub?.delete(subscriberId);
       }
       callback?.({});

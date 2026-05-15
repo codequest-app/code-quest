@@ -5,6 +5,8 @@ import { RpcChannel, toRpcSocket, WsClient } from '@code-quest/transport';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { WebSocketServer } from 'ws';
 import { Agent } from '../../connection/agent.ts';
+import { FsHandler } from '../../connection/fs-handler.ts';
+import { GitHandler } from '../../connection/git-handler.ts';
 
 describe('Connection reconnect loop', () => {
   let httpServer: HttpServer;
@@ -33,7 +35,10 @@ describe('Connection reconnect loop', () => {
     processProvider: FakeProcessProvider;
   } {
     const processProvider = opts.processProvider ?? new FakeProcessProvider();
-    const agent = new Agent(processProvider, new FakeFilesystemService(), new FakeGitService());
+    const agent = new Agent(processProvider, [
+      new FsHandler(new FakeFilesystemService()),
+      new GitHandler(new FakeGitService()),
+    ]);
     return { agent, processProvider };
   }
 
@@ -57,7 +62,10 @@ describe('Connection reconnect loop', () => {
     });
 
     const filesystem = new FakeFilesystemService();
-    const agent = new Agent(new FakeProcessProvider(), filesystem, new FakeGitService());
+    const agent = new Agent(new FakeProcessProvider(), [
+      new FsHandler(filesystem),
+      new GitHandler(new FakeGitService()),
+    ]);
     const events: string[] = [];
 
     const client = new WsClient(url(), { initialBackoffMs: 50 });

@@ -5,6 +5,8 @@ import { type Envelope, RpcChannel, toRpcSocket } from '@code-quest/transport';
 import { afterEach, beforeEach, describe, expect, it } from 'vitest';
 import { WebSocket, WebSocketServer } from 'ws';
 import { Agent } from '../../connection/agent.ts';
+import { FsHandler } from '../../connection/fs-handler.ts';
+import { GitHandler } from '../../connection/git-handler.ts';
 
 function makeSetup() {
   let httpServer: HttpServer;
@@ -18,7 +20,7 @@ function makeSetup() {
     httpServer = createServer();
     wss = new WebSocketServer({ noServer: true });
 
-    const agent = new Agent(processProvider, filesystem, git);
+    const agent = new Agent(processProvider, [new FsHandler(filesystem), new GitHandler(git)]);
     httpServer.on('upgrade', (req, socket, head) => {
       wss.handleUpgrade(req, socket, head, (ws) => {
         agent.attach(new RpcChannel(toRpcSocket(ws)));

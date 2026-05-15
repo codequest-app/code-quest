@@ -1,13 +1,7 @@
 import type { Broadcaster } from '@code-quest/broadcaster';
 import type { DiffFileService } from '@code-quest/diff-file';
 import type { OpenspecService } from '@code-quest/openspec';
-import type {
-  FileResult,
-  FilesystemService,
-  GitService,
-  GitStatusResult,
-  OpenspecListResult,
-} from '@code-quest/schemas';
+import type { FilesystemService, GitService } from '@code-quest/schemas';
 import type { LaunchOptions, PluginCliService, ProcessRunner } from '@code-quest/summoner';
 import type { ProjectAutoUpserter } from './services/project-auto-upserter.ts';
 import type { ProjectStore } from './services/project-store.ts';
@@ -46,9 +40,7 @@ export const TYPES: {
   readonly ProcessProvider: symbol;
   readonly WatchService: symbol;
   readonly AutoMode: symbol;
-  readonly FilesBroadcaster: symbol;
-  readonly GitBroadcaster: symbol;
-  readonly OpenspecBroadcaster: symbol;
+  readonly Broadcaster: symbol;
 } = {
   RunnerFactory: Symbol.for('RunnerFactory'),
   SessionStore: Symbol.for('SessionStore'),
@@ -70,9 +62,7 @@ export const TYPES: {
   ProcessProvider: Symbol.for('ProcessProvider'),
   WatchService: Symbol.for('WatchService'),
   AutoMode: Symbol.for('AutoMode'),
-  FilesBroadcaster: Symbol.for('FilesBroadcaster'),
-  GitBroadcaster: Symbol.for('GitBroadcaster'),
-  OpenspecBroadcaster: Symbol.for('OpenspecBroadcaster'),
+  Broadcaster: Symbol.for('Broadcaster'),
 } as const;
 
 export interface HandlerContext {
@@ -92,7 +82,5 @@ export interface HandlerContext {
   pluginCli: PluginCliService;
   diffFileService: DiffFileService;
   planHandler: PlanApi;
-  filesBroadcaster: Broadcaster<FileResult[]>;
-  gitBroadcaster: Broadcaster<GitStatusResult>;
-  openspecBroadcaster: Broadcaster<OpenspecListResult>;
+  broadcaster: Broadcaster;
 }

@@ -1,14 +1,7 @@
 import type { Broadcaster } from '@code-quest/broadcaster';
 import type { DiffFileService } from '@code-quest/diff-file';
 import type { OpenspecService } from '@code-quest/openspec';
-import type {
-  FileResult,
-  FilesystemService,
-  GitService,
-  GitStatusResult,
-  OpenspecListResult,
-  TransportHandle,
-} from '@code-quest/schemas';
+import type { FilesystemService, GitService, TransportHandle } from '@code-quest/schemas';
 import type { PluginCliService } from '@code-quest/summoner';
 import { inject, injectable } from 'inversify';
 import type { ProjectAutoUpserter } from '../services/project-auto-upserter.ts';
@@ -60,9 +53,7 @@ export class SocketServer {
   private pluginCli: PluginCliService;
   private diffFileService: DiffFileService;
   private settingsStore: SettingsStore;
-  private filesBroadcaster: Broadcaster<FileResult[]>;
-  private gitBroadcaster: Broadcaster<GitStatusResult>;
-  private openspecBroadcaster: Broadcaster<OpenspecListResult>;
+  private broadcaster: Broadcaster;
   constructor(
     @inject(TYPES.AutoMode) autoMode: boolean,
     @inject(TYPES.RawEventService) rawEventService: RawEventService,
@@ -79,12 +70,7 @@ export class SocketServer {
     @inject(TYPES.PluginCliService) pluginCli: PluginCliService,
     @inject(TYPES.DiffFileService) diffFileService: DiffFileService,
     @inject(TYPES.SettingsStore) settingsStore: SettingsStore,
-    @inject(TYPES.FilesBroadcaster)
-    filesBroadcaster: Broadcaster<FileResult[]>,
-    @inject(TYPES.GitBroadcaster)
-    gitBroadcaster: Broadcaster<GitStatusResult>,
-    @inject(TYPES.OpenspecBroadcaster)
-    openspecBroadcaster: Broadcaster<OpenspecListResult>,
+    @inject(TYPES.Broadcaster) broadcaster: Broadcaster,
   ) {
     this.autoMode = autoMode;
     this.rawEventService = rawEventService;
@@ -101,9 +87,7 @@ export class SocketServer {
     this.pluginCli = pluginCli;
     this.diffFileService = diffFileService;
     this.settingsStore = settingsStore;
-    this.filesBroadcaster = filesBroadcaster;
-    this.gitBroadcaster = gitBroadcaster;
-    this.openspecBroadcaster = openspecBroadcaster;
+    this.broadcaster = broadcaster;
   }
 
   private handlersWired = false;
@@ -161,9 +145,7 @@ export class SocketServer {
       pluginCli: this.pluginCli,
       diffFileService: this.diffFileService,
       planHandler: plan.create({ emitter: this.emitter }),
-      filesBroadcaster: this.filesBroadcaster,
-      gitBroadcaster: this.gitBroadcaster,
-      openspecBroadcaster: this.openspecBroadcaster,
+      broadcaster: this.broadcaster,
     };
   }
 

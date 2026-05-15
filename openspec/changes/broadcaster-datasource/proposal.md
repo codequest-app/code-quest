@@ -1,29 +1,29 @@
 ## Why
 
-現有的 `DirtyBroadcaster` + `WatchService` 架構把「偵測變更」和「讀取資料」分成兩層，前端收到 dirty signal 後還要自己 re-fetch，造成兩段式 round-trip，且快取、remote mode 支援都難以統一處理。需要一個更根本的架構：讓每個資料域（files、git、openspec）自己封裝讀取 + 快取 + 變更偵測，透過統一的 `Broadcaster` 介面 push 完整狀態給前端。
+現有的 `DirtyBroadcaster` + `WatchService` 架構把「偵測變更」和「讀取資料」分成兩層，前端收到 dirty signal 後還要自己 re-fetch，造成兩段式 round-trip，且快取、remote mode 支援都難以統一處理。
+
+初版重構（已完成）把三個 domain（files、git、openspec）各自抽成 `DataSource<T>`，並用三個獨立的 `Broadcaster<T>` 管理訂閱。但這個設計暴露了一個協議層的問題：remote mode 下，server 的三個 `RemoteBroadcaster` 各自向 Agent 發 `watch.start`，Agent 以 cwd 為 key 儲存訂閱，第二次 `watch.start` 會覆蓋第一次，造成訂閱洩漏。
+
+根本原因是：**WatchService 本來就只需要一個 watcher per cwd**，三個 Broadcaster 各自訂閱同一個 cwd 是重複的。正確的設計是一個 `Broadcaster` 持有多種 DataSource，一次 subscribe 涵蓋所有 type，watcher 只開一次。
 
 ## What Changes
 
-- 新增 `DataSource<T>` 介面：`read(): Promise<T>` + `onChange(cb): Unsubscribe`，封裝快取與變更偵測
-- 新增 `Broadcaster<T>`：依賴注入 `DataSource<T>`，subscriber 連線時立即 push 當前值，變更時 push 新值
-- 新增三個 DataSource 實作：`FilesDataSource`、`GitDataSource`、`OpenspecDataSource`
-  - 每個各自管理自己的快取策略與 watcher（local 用 chokidar，remote 透過 RPC）
-- 移除現有的 `DirtyBroadcaster` + 三個 matcher (`matchesFs`/`matchesGit`/`matchesOpenspec`)
-- 移除 `WatchService` 注入到 broadcaster 的模式（改由各 DataSource 內部管理）
-- **BREAKING**：前端不再收到 `EVENTS.fs.dirty` / `EVENTS.git.dirty` / `EVENTS.openspec.dirty` signal 後自行 re-fetch，改為直接收到完整資料
+- 重新設計 `Broadcaster`：從 `Broadcaster<T>`（單一型別）改為多型別，持有多個命名的 DataSource
+- `subscribe(cwd, subscriberId, cb)` 的 `cb` 接收 `(type, data)` 而非單一型別的 `data`
+- 三個 `Broadcaster<T>` 合併為一個 `Broadcaster` 實例（files + git + openspec 全部在裡面）
+- Remote mode：一個 `watch.start` / `watch.stop` 對應一個 `Broadcaster.subscribe` / unsubscribe，ref count 問題自然消失
+- Local mode：server 直接持有一個 `Broadcaster` in-process reference，不需要三個分開的 binding
+- `RemoteBroadcaster` 配合更新，訂閱單一 channel 收到 typed snapshot
 
 ## Capabilities
 
-### New Capabilities
-- `broadcaster-datasource`: 通用 Broadcaster + DataSource 介面，files/git/openspec 各自實作 DataSource，統一由 Broadcaster 管理 subscriber lifecycle 與 push
-
 ### Modified Capabilities
+- `broadcaster-datasource`: Broadcaster 改為多型別設計，一次訂閱涵蓋 files + git + openspec，解決 remote mode watch.start 覆蓋問題
 
 ## Impact
 
-- `apps/server/src/services/dirty-broadcaster.ts` — 移除，以 `Broadcaster<T>` 取代
-- `apps/server/src/socket/dirty-matchers.ts` — 移除（matcher 邏輯移入各 DataSource）
-- `apps/server/src/socket/dirty-subscriber.ts` — 移除或大幅重寫
-- `apps/server/src/container.ts` — 改為注入三個 DataSource 給對應 Broadcaster
-- `apps/summoner/src/fs-watch/local.ts` (`LocalWatchService`) — 保留，由 DataSource 內部使用
-- `apps/web/src/contexts/FsContext.tsx`、`GitContext.tsx`、`OpenspecContext.tsx` — 移除 dirty handler + re-fetch 邏輯，改為 subscribe 直接收值
+- `packages/broadcaster/src/broadcaster.ts` — 重新設計 API，不再是泛型
+- `apps/server/src/container.ts` — 三個 Broadcaster binding 合併為一個
+- `apps/server/src/remote/remote-broadcaster.ts` — 配合新介面更新
+- `apps/summoner/src/connection/watch-handlers.ts` — 簡化，直接用一個 Broadcaster
+- `apps/summoner/src/connection/agent.ts` — 移除 watchService / openspec 個別參數，改接 Broadcaster

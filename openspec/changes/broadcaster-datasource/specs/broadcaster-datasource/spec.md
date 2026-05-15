@@ -26,21 +26,25 @@ Each data domain (files, git, openspec) SHALL implement `DataSource<T>` with `re
 - **WHEN** multiple `onChange` callbacks fire before any `read()` is called
 - **THEN** the cache SHALL be invalidated once and only one `read()` SHALL be triggered on next access
 
-### Requirement: Broadcaster manages per-cwd subscriptions and pushes complete values
-`Broadcaster<T>` SHALL manage a map of cwd → `{ source: DataSource<T>, lastValue: T | null, subs }`. Each cwd SHALL have at most one `DataSource<T>` instance (lazily created on first subscribe).
+### Requirement: Broadcaster holds multiple named DataSources and manages per-cwd subscriptions
+`Broadcaster` SHALL allow registering multiple named DataSource factories via `add(type, createSource)`. On `subscribe(cwd, subscriberId, cb)`, it SHALL lazily create all registered DataSources for that cwd and push typed snapshots `cb(type, data)` whenever any DataSource changes. A single WatchService instance MAY be shared across all DataSources for the same cwd — the Broadcaster does not manage the WatchService directly.
 
-#### Scenario: New subscriber receives current value immediately
+#### Scenario: New subscriber receives current values for all types immediately
 - **WHEN** a new subscriber calls `subscribe(cwd, id, cb)`
-- **THEN** if `lastValue` is cached, cb SHALL be called synchronously with the cached value
-- **THEN** if no `lastValue` exists, a `read()` SHALL be initiated and cb called when resolved
+- **THEN** for each registered type, if `lastValue` is cached, `cb(type, lastValue)` SHALL be called immediately
+- **THEN** for each type with no `lastValue`, a `read()` SHALL be initiated and `cb(type, data)` called when resolved
 
-#### Scenario: All subscribers receive updated value on data change
-- **WHEN** the DataSource's `onChange` fires
-- **THEN** `Broadcaster` SHALL call `source.read()` and push the result to all active subscribers for that cwd
+#### Scenario: All subscribers receive updated value when any DataSource changes
+- **WHEN** a DataSource's `onChange` fires for a given type
+- **THEN** `Broadcaster` SHALL call `source.read()` and push `cb(type, data)` to all active subscribers for that cwd
 
-#### Scenario: Last subscriber unsubscribes cleans up DataSource
+#### Scenario: Last subscriber unsubscribes cleans up all DataSources for that cwd
 - **WHEN** the last subscriber for a given cwd unsubscribes
-- **THEN** `Broadcaster` SHALL remove the cwd entry (source, lastValue, subs)
+- **THEN** `Broadcaster` SHALL dispose all DataSources for that cwd and remove the cwd entry
+
+#### Scenario: Single subscribe covers all registered types
+- **WHEN** `subscribe(cwd, id, cb)` is called once
+- **THEN** `cb` SHALL receive updates for ALL registered types (files, git, openspec) without additional subscribe calls
 
 ### Requirement: FilesDataSource filters fs events and wraps CachedDataSource
 `FilesDataSource` SHALL subscribe to `WatchService` for a given cwd. It SHALL call `notifyChange()` only for events whose path does NOT match `GIT_META_RE` and is NOT in the glob ignore list (node_modules, .git, dist, coverage, logs). It SHALL be wrapped in `CachedDataSource` by the caller.
@@ -75,19 +79,24 @@ Each data domain (files, git, openspec) SHALL implement `DataSource<T>` with `re
 - **WHEN** a `change` event arrives for `src/bar.ts`
 - **THEN** `OpenspecDataSource` SHALL NOT call `notifyChange()`
 
-### Requirement: Broadcaster resides in summoner for both local and remote mode
-The three `Broadcaster` instances (files, git, openspec) SHALL be created and managed in the summoner process. WatchService and DataSource reads SHALL always execute on the machine where files reside.
+### Requirement: One Broadcaster instance covers all types, shared WatchService per process
+The single `Broadcaster` instance SHALL be created in the summoner process with all three DataSource types registered. A single `WatchService` instance SHALL be shared across all DataSource factories for the same process so that only one underlying fs watcher is opened per cwd.
 
 #### Scenario: Local mode server accesses Broadcaster in-process
 - **WHEN** running in local mode (server embeds summoner)
-- **THEN** server SHALL hold direct in-process references to the Broadcaster instances
+- **THEN** server SHALL hold one direct in-process reference to the single `Broadcaster` instance
 
-#### Scenario: Remote mode uses watch RPC protocol
+#### Scenario: Remote mode uses watch RPC protocol with one subscribe per cwd
 - **WHEN** running in remote mode (summoner is separate process)
-- **THEN** server SHALL send `watch.start({ cwd })` RPC request to summoner on first socket subscriber
-- **THEN** summoner SHALL push `watch.snapshot({ cwd, type, data })` to server on each Broadcaster update
-- **THEN** server SHALL forward snapshot data to all sockets subscribed to that cwd
+- **THEN** server SHALL send `watch.start({ cwd })` RPC request to summoner exactly once per cwd (on first socket subscriber)
+- **THEN** summoner SHALL call `broadcaster.subscribe(cwd, ...)` once, which covers all types
+- **THEN** summoner SHALL push `watch.snapshot({ cwd, type, data })` to server for each type update
 - **THEN** server SHALL send `watch.stop({ cwd })` when no sockets remain subscribed to that cwd
+- **THEN** `watch.stop` SHALL cause summoner to call the unsubscribe returned by `broadcaster.subscribe()`
+
+#### Scenario: watch.start does not cause duplicate subscriptions
+- **WHEN** `watch.start({ cwd })` is received while a subscription for that cwd already exists
+- **THEN** summoner SHALL NOT create a second subscription for that cwd
 
 ### Requirement: Socket events carry optional snapshot payload
 Existing `EVENTS.fs.dirty`, `EVENTS.git.dirty`, `EVENTS.openspec.dirty` events SHALL gain an optional `snapshot` field carrying the complete data. The `cwd` and existing fields SHALL remain unchanged for backwards compatibility.

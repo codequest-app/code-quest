@@ -2,7 +2,7 @@ import { createServer, type Server as HttpServer } from 'node:http';
 import type { AddressInfo } from 'node:net';
 import { RemoteFilesystemService } from '@code-quest/filesystem';
 import { RemoteGitService } from '@code-quest/git';
-import { Agent } from '@code-quest/summoner/connection';
+import { Agent, FsHandler, GitHandler } from '@code-quest/summoner/connection';
 import { FakeFilesystemService, FakeGitService, FakeProcessProvider } from '@code-quest/test-kit';
 import { RpcChannel, type RpcChannelSocket } from '@code-quest/transport';
 import { afterEach, beforeEach, describe, expect, it } from 'vitest';
@@ -30,7 +30,10 @@ function makeSetup() {
 
     httpServer.on('upgrade', (req, socket, head) => {
       wss.handleUpgrade(req, socket, head, (ws) => {
-        new Agent(new FakeProcessProvider(), filesystem, git).attach(new RpcChannel(wrapWs(ws)));
+        new Agent(new FakeProcessProvider(), [
+          new FsHandler(filesystem),
+          new GitHandler(git),
+        ]).attach(new RpcChannel(wrapWs(ws)));
       });
     });
 

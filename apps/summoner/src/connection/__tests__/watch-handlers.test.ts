@@ -1,9 +1,14 @@
-import { LocalOpenspecService } from '@code-quest/openspec';
+import {
+  Broadcaster,
+  CachedDataSource,
+  FilesDataSource,
+  GitDataSource,
+} from '@code-quest/broadcaster';
 import type { AgentTransport } from '@code-quest/schemas';
 import { REMOTE_METHODS } from '@code-quest/schemas';
 import { FakeFilesystemService, FakeGitService, FakeWatchService } from '@code-quest/test-kit';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
-import { registerWatchHandlers } from '../watch-handlers.ts';
+import { BroadcasterHandler } from '../broadcaster-handler.ts';
 
 function makeFakeRpc() {
   const handlers = new Map<string, (data: unknown) => Promise<unknown>>();
@@ -33,22 +38,25 @@ function snapshots(emitted: Array<[string, unknown]>, type?: string) {
   });
 }
 
-describe('registerWatchHandlers', () => {
+describe('BroadcasterHandler', () => {
   let watch: FakeWatchService;
   let fs: FakeFilesystemService;
   let git: FakeGitService;
+  let broadcaster: Broadcaster;
 
   beforeEach(() => {
     watch = new FakeWatchService();
     fs = new FakeFilesystemService();
     fs.setRoots(['/repo']);
     git = new FakeGitService();
+    broadcaster = new Broadcaster()
+      .add('files', (cwd) => new CachedDataSource(new FilesDataSource(cwd, '', watch, fs)))
+      .add('git', (cwd) => new GitDataSource(cwd, watch, git));
   });
 
-  it('watch/start sends initial files snapshot on subscribe', async () => {
+  it('watch.start sends initial files snapshot on subscribe', async () => {
     const { rpc, emitted, request } = makeFakeRpc();
-    const openspec = new LocalOpenspecService(fs, { execFile: vi.fn() } as never);
-    registerWatchHandlers(rpc, watch, fs, git, openspec);
+    new BroadcasterHandler(broadcaster).attach(rpc);
 
     await request(REMOTE_METHODS.watch.start, { cwd: '/repo' });
     await vi.waitUntil(() => snapshots(emitted, 'files').length > 0, { timeout: 500 });
@@ -58,10 +66,9 @@ describe('registerWatchHandlers', () => {
     expect(snap.type).toBe('files');
   });
 
-  it('watch/start pushes files snapshot on file change', async () => {
+  it('watch.start pushes files snapshot on file change', async () => {
     const { rpc, emitted, request } = makeFakeRpc();
-    const openspec = new LocalOpenspecService(fs, { execFile: vi.fn() } as never);
-    registerWatchHandlers(rpc, watch, fs, git, openspec);
+    new BroadcasterHandler(broadcaster).attach(rpc);
 
     await request(REMOTE_METHODS.watch.start, { cwd: '/repo' });
     await vi.waitUntil(() => snapshots(emitted, 'files').length > 0, { timeout: 500 });
@@ -75,10 +82,9 @@ describe('registerWatchHandlers', () => {
     expect(snap.type).toBe('files');
   });
 
-  it('watch/start pushes git snapshot on .git/HEAD change', async () => {
+  it('watch.start pushes git snapshot on .git/HEAD change', async () => {
     const { rpc, emitted, request } = makeFakeRpc();
-    const openspec = new LocalOpenspecService(fs, { execFile: vi.fn() } as never);
-    registerWatchHandlers(rpc, watch, fs, git, openspec);
+    new BroadcasterHandler(broadcaster).attach(rpc);
 
     await request(REMOTE_METHODS.watch.start, { cwd: '/repo' });
     await vi.waitUntil(() => snapshots(emitted, 'git').length > 0, { timeout: 500 });
@@ -92,10 +98,9 @@ describe('registerWatchHandlers', () => {
     expect(snap.type).toBe('git');
   });
 
-  it('watch/stop unsubscribes and stops snapshot delivery', async () => {
+  it('watch.stop unsubscribes and stops snapshot delivery', async () => {
     const { rpc, emitted, request } = makeFakeRpc();
-    const openspec = new LocalOpenspecService(fs, { execFile: vi.fn() } as never);
-    registerWatchHandlers(rpc, watch, fs, git, openspec);
+    new BroadcasterHandler(broadcaster).attach(rpc);
 
     await request(REMOTE_METHODS.watch.start, { cwd: '/repo' });
     await vi.waitUntil(() => snapshots(emitted).length > 0, { timeout: 500 });
@@ -109,25 +114,18 @@ describe('registerWatchHandlers', () => {
     expect(emitted.length).toBe(countBefore);
   });
 
-  it('watch/start for same cwd replaces prior subscription without double-delivery', async () => {
+  it('watch.start for same cwd is guarded — does not create duplicate subscription', async () => {
     const { rpc, emitted, request } = makeFakeRpc();
-    const openspec = new LocalOpenspecService(fs, { execFile: vi.fn() } as never);
-    registerWatchHandlers(rpc, watch, fs, git, openspec);
+    new BroadcasterHandler(broadcaster).attach(rpc);
 
     await request(REMOTE_METHODS.watch.start, { cwd: '/repo' });
     await vi.waitUntil(() => snapshots(emitted, 'files').length > 0, { timeout: 500 });
+    await request(REMOTE_METHODS.watch.start, { cwd: '/repo' }); // duplicate
+    const countAfter = snapshots(emitted, 'files').length;
 
-    await request(REMOTE_METHODS.watch.start, { cwd: '/repo' }); // re-start
-    await vi.waitUntil(() => snapshots(emitted, 'files').length > 1, { timeout: 500 });
-
-    const countAfterRestart = snapshots(emitted, 'files').length;
-
-    // File change should produce exactly ONE files snapshot (not two from double subscription)
     watch.simulate('/repo', { type: 'change', path: 'src/foo.ts' });
-    await vi.waitUntil(() => snapshots(emitted, 'files').length > countAfterRestart, {
-      timeout: 500,
-    });
+    await vi.waitUntil(() => snapshots(emitted, 'files').length > countAfter, { timeout: 500 });
 
-    expect(snapshots(emitted, 'files').length).toBe(countAfterRestart + 1);
+    expect(snapshots(emitted, 'files').length).toBe(countAfter + 1);
   });
 });

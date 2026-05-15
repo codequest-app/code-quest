@@ -1,229 +1,119 @@
 ## Context
 
-現有架構：`DirtyBroadcaster` 注入一個共用的 `WatchService`，用 matcher 把 fs events 分流成三個 dirty signal（fs / git / openspec）。前端收到 signal 後自己 re-fetch，造成兩段式 round-trip。Remote mode 下 server 的 `LocalWatchService` watch 的是 server 本機路徑，但實際檔案在 summoner 那台機器，dirty broadcast 完全失效。
+已完成的部分（維持不動）：
+- `packages/broadcaster/` package 已建立，`DataSource<T>`、`CachedDataSource<T>` 已實作
+- `FilesDataSource`、`GitDataSource`、`OpenspecDataSource` 已實作
+- Server local / remote 的訂閱流程已通
+- 前端 dirty event + snapshot 已串接
 
-**現有流程：**
-```
-chokidar (summoner)
-  → WatchService
-  → DirtyBroadcaster (matcher 分流)
-  → EVENTS.*.dirty signal (空的)
-  → 前端 re-fetch
-```
+本次重構的目標是把三個獨立 `Broadcaster<T>` 合併為一個多型別 `Broadcaster`，解決 remote mode 的 `watch.start` 覆蓋問題。
 
 ## Goals / Non-Goals
 
 **Goals:**
-- Broadcaster push 完整值給前端，前端不再需要 re-fetch
-- 快取統一由 CachedDataSource 裝飾層處理
-- DataSource + Broadcaster 在 summoner，watch / read 永遠在檔案所在的機器
-- Local / remote mode 差異只在 server 如何拿到 Broadcaster reference（in-process vs RPC subscription）
-- RemoteWatchService 不需要實作
+- 一個 `Broadcaster` 持有多種 DataSource（files + git + openspec）
+- 一次 `subscribe(cwd, subscriberId, cb)` 訂閱全部 type，底層 WatchService 只開一個 watcher per cwd
+- remote mode `watch.start` 1:1 對應一個 subscribe，不再有 ref count 問題
+- local mode server 只持有一個 `Broadcaster` binding
 
 **Non-Goals:**
-- 改變 WatchService 介面
-- 改變 git / openspec 的讀取實作（read() 內部邏輯不變）
-- 處理斷線補發（reconnectable-rpc 層已處理重連，重連後 Broadcaster 會自動 push 一次最新值）
+- 改變 `DataSource<T>` 介面
+- 改變 `CachedDataSource<T>` 實作
+- 改變各 DataSource 的過濾邏輯
+- 改變前端 dirty event 的 payload 結構
 
 ## Decisions
 
-### Package 位置：packages/broadcaster
-
-DataSource + Broadcaster 抽成獨立 package `@code-quest/broadcaster`，summoner 和 server 都 import：
-
-```
-packages/broadcaster/
-  src/
-    types.ts          ← DataSource<T> interface, Unsubscribe
-    cached.ts         ← CachedDataSource<T>
-    broadcaster.ts    ← Broadcaster<T>
-    datasources/
-      files.ts        ← FilesDataSource
-      git.ts          ← GitDataSource
-      openspec.ts     ← OpenspecDataSource
-    index.ts
-```
-
-### 介面設計
+### 新的 Broadcaster API
 
 ```ts
-interface DataSource<T> {
-  read(): Promise<T>
-  onChange(cb: () => void): Unsubscribe
+type SnapshotCallback = (type: string, data: unknown) => void;
+
+class Broadcaster {
+  add(type: string, createSource: (cwd: string) => DataSource<unknown>): this
+  subscribe(cwd: string, subscriberId: string, cb: SnapshotCallback): Unsubscribe
 }
 ```
 
-`onChange` 只發 signal，不帶值。Broadcaster 收到 signal 後自己呼叫 `read()`。
-
-### Broadcaster 管理多個 cwd，各自對應一個 DataSource
-
-一個 Broadcaster 實例管理多個 cwd，每個 cwd 懶建立自己的 DataSource：
+內部結構：
 
 ```ts
-class Broadcaster<T> {
-  private entries = new Map<string, {
-    source: DataSource<T>
-    lastValue: T | null
-    subs: Map<string, (v: T) => void>
-  }>()
+// per cwd
+interface CwdEntry {
+  sources: Map<string, { source: DataSource<unknown>; lastValue: unknown | null }>;
+  subs: Map<string, SnapshotCallback>;
+  unwatches: (() => void)[];
+}
+```
 
-  subscribe(cwd: string, subscriberId: string, cb: (value: T) => void): Unsubscribe {
-    let entry = this.entries.get(cwd)
-    if (!entry) {
-      const source = this.createSource(cwd)
-      entry = { source, lastValue: null, subs: new Map() }
-      this.entries.set(cwd, entry)
-      source.onChange(async () => {
-        const v = await source.read()
-        entry!.lastValue = v
-        for (const sub of entry!.subs.values()) sub(v)
-      })
-    }
-    entry.subs.set(subscriberId, cb)
+`add()` 登記一個 type 和它的 createSource factory，在 subscribe 時才懶建立 DataSource。
 
-    if (entry.lastValue !== null) {
-      cb(entry.lastValue)
-    } else {
-      void entry.source.read().then(v => {
-        entry!.lastValue = v
-        cb(v)
-      })
-    }
+### subscribe 行為
 
-    return () => {
-      entry!.subs.delete(subscriberId)
-      if (entry!.subs.size === 0) {
-        this.entries.delete(cwd)
-      }
-    }
+```
+subscribe(cwd, subscriberId, cb)
+  → 若 cwd 尚未建立 entry：
+      → 對每個已登記的 type，建立 DataSource
+      → 每個 DataSource.onChange → read() → 通知所有 subs 的 cb(type, data)
+  → 將 cb 加入 subs
+  → 對每個 type，若有 lastValue 則立即呼叫 cb(type, lastValue)
+    否則發起 read() 並在完成後呼叫 cb(type, data)
+  → 回傳 unsubscribe function
+    → subs.delete(subscriberId)
+    → 若 subs.size === 0：dispose 所有 DataSource，刪除 entry
+```
+
+### 建立方式（summoner）
+
+```ts
+const broadcaster = new Broadcaster()
+  .add('files', (cwd) => new CachedDataSource(new FilesDataSource(cwd, '', watchService, fs)))
+  .add('git', (cwd) => new GitDataSource(cwd, watchService, git))
+  .add('openspec', (cwd) => new OpenspecDataSource(cwd, watchService, openspec));
+```
+
+一個 `WatchService` instance，三個 DataSource 各自 subscribe 同一個 watcher，底層只開一個 chokidar watcher per cwd。
+
+### Agent 簡化
+
+```ts
+// 之前
+constructor(processProvider, filesystem, git, watchService?, openspec?)
+
+// 之後
+constructor(processProvider, filesystem, git, broadcaster: Broadcaster)
+```
+
+`registerWatchHandlers` 接收一個 `Broadcaster`，`watch.start` 直接呼叫 `broadcaster.subscribe()`。
+
+### RemoteBroadcaster 更新
+
+```ts
+class RemoteBroadcaster {
+  subscribe(cwd: string, subscriberId: string, cb: SnapshotCallback): Unsubscribe {
+    // 第一個 subscriber → rpc.request(watch.start, { cwd })
+    // snapshot 到來 → cb(type, data)
+    // 最後一個 unsubscribe → rpc.request(watch.stop, { cwd })
   }
 }
 ```
 
-### 兩層快取各自的職責
+介面和 `Broadcaster` 完全對齊（duck typing），server 不需要區分 local / remote。
 
-| 層 | 快取什麼 | 解決什麼問題 |
-|---|---|---|
-| `Broadcaster.lastValue` | 最後 push 的值（per cwd） | 新 subscriber 連線立即有值，不觸發 read() |
-| `CachedDataSource` | glob / git 結果（per cwd） | 同 cwd 短時間多次 onChange 只做一次 read() |
-
-- `FilesDataSource` → 包一層 `CachedDataSource`（glob 慢，多個 onChange 可能連發）
-- `GitDataSource` → 直接用（git status < 100ms，不需要）
-- `OpenspecDataSource` → 直接用（list 很快，不需要）
-
-### DataSource 各自 subscribe WatchService，各自過濾
-
-兩層過濾各有職責，不重疊：
-
-| 層 | 排除什麼 | 理由 |
-|---|---|---|
-| `LocalWatchService` IGNORES | `node_modules`, `.git/objects`, `.git/logs`, `dist`, `build`, `.log`… | 永遠是噪音，任何 DataSource 都不關心 |
-| DataSource matcher | 依各自的 domain 過濾 | `.git/HEAD` 讓 WatchService 通過，由 DataSource 自己決定要不要理會 |
-
-`LocalWatchService` 的 IGNORES 不需要修改，現有粒度已正確。
+### Server container
 
 ```ts
-class FilesDataSource implements DataSource<FileResult[]> {
-  constructor(cwd: string, watchService: WatchService, ...) {
-    watchService.subscribe(cwd, (ev) => {
-      if (matchesFs(ev.path)) this.notifyChange()
-    })
-  }
-}
+// 之前：三個分開的 binding
+TYPES.FilesBroadcaster
+TYPES.GitBroadcaster
+TYPES.OpenspecBroadcaster
+
+// 之後：一個
+TYPES.Broadcaster
 ```
 
-### Broadcaster 在 summoner，server 是純消費者
+Local mode 綁 `Broadcaster` 實例，remote mode 綁 `RemoteBroadcaster` 實例。
 
-summoner 建立並持有三個 Broadcaster 實例（local / remote 都跑這段）：
+### watch.start / watch.stop 協議不變
 
-```ts
-const watchService = new LocalWatchService(logger)
-const filesBroadcaster = new Broadcaster((cwd) =>
-  new CachedDataSource(new FilesDataSource(cwd, watchService, filesystemService))
-)
-const gitBroadcaster = new Broadcaster((cwd) => new GitDataSource(cwd, watchService, gitService))
-const openspecBroadcaster = new Broadcaster((cwd) => new OpenspecDataSource(cwd, watchService, openspecService))
-```
-
-**Local mode**：server process embed summoner，直接持有 Broadcaster in-process reference：
-
-```
-frontend socket.watch(cwd)
-  → server 呼叫 filesBroadcaster.subscribe(cwd, socketId, cb)
-  → cb(files) → socket.emit(EVENTS.fs.dirty, { cwd, snapshot: files })
-```
-
-**Remote mode**：summoner 是獨立 process，WebSocket 連到 server。  
-server 告訴 summoner 要 watch 哪個 cwd（request），summoner 有更新時 push snapshot 給 server：
-
-```
-frontend socket.watch(cwd)
-  → server 記錄「socketId 關注 cwd」
-  → server → summoner: request watch.start({ cwd })
-
-summoner Broadcaster 有更新 (files/git/openspec)
-  → summoner → server: push watch.snapshot({ cwd, type, data })
-  → server 查訂閱 cwd 的所有 socket
-  → socket.emit(EVENTS.fs.dirty, { cwd, snapshot: data })
-
-frontend socket.unwatch(cwd) / disconnect
-  → server 移除訂閱
-  → 若該 cwd 無任何訂閱者 → server → summoner: request watch.stop({ cwd })
-```
-
-重連後 server 重新發 `watch.start`，summoner Broadcaster 立即 push `lastValue`。
-
-### Git DataSource 的 onChange 邏輯
-
-git status 的變化透過 `.git/` 目錄內的特定檔案反映：
-
-```
-.git/HEAD        ← 切換 branch
-.git/index       ← stage / unstage
-.git/packed-refs ← fetch / push 後 refs 打包
-.git/refs/*      ← commit、push、tag
-```
-
-GitDataSource 只在這些路徑變動時才 notifyChange，排除 `.git/objects` 和 `.git/logs`（變動頻繁但 UI 不關心）：
-
-```ts
-const GIT_META_RE = /^\.git\/(HEAD|index|packed-refs|refs\/.*)$/
-
-class GitDataSource implements DataSource<GitStatus> {
-  constructor(cwd: string, watchService: WatchService, gitService: GitService) {
-    watchService.subscribe(cwd, (ev) => {
-      if (GIT_META_RE.test(ev.path)) this.notifyChange()
-    })
-  }
-}
-```
-
-### 移除的東西
-
-- `RemoteWatchService`（`packages/watch/src/remote.ts` 骨架）→ 不需要實作，刪除
-- `DirtyBroadcaster` → 以 `Broadcaster<T>` 取代
-- `dirty-matchers.ts` → matcher 邏輯移入各 DataSource constructor
-- `dirty-subscriber.ts` → server 改為透過 Broadcaster 訂閱（local 直接呼叫，remote 透過 watch.start RPC）
-
-### Socket event 漸進式更新
-
-不立即 rename event，在現有 payload 上加 optional snapshot：
-
-```ts
-// 現在
-EVENTS.fs.dirty  → { cwd, paths: string[] }
-EVENTS.git.dirty → { cwd }
-
-// 新增（保持相容）
-EVENTS.fs.dirty  → { cwd, paths: string[], snapshot?: FileResult[] }
-EVENTS.git.dirty → { cwd, snapshot?: GitStatus }
-```
-
-前端確認切換完畢後再 rename 成 `snapshot`。
-
-## Risks / Trade-offs
-
-- **FilesDataSource 快取失效時機**：onChange 只要 matchesFs 就失效快取，即使不影響 listFiles 結果的變更也會觸發重新 glob。可接受，CachedDataSource 的失效是 lazy
-- **Remote mode 新增 watch.start / watch.stop / watch.snapshot 協議**：summoner 需要新增這三個 RPC handler，是新的協議。斷線補發由 reconnectable-rpc 層處理，重連後 server 重新發 watch.start
-- **Local mode in-process 呼叫**：server 直接持有 Broadcaster instance（透過 summoner embed），耦合度比現在略高，但這是刻意設計（local mode 就是同一個 process）
-- **首次 subscribe 的 read() 延遲**：第一個 subscriber 連線時若 glob 很慢會有感知延遲。屬於優化，不在本 change 範圍
+remote mode 的 RPC 協議本身不改（仍是 `watch.start { cwd }` / `watch.stop { cwd }` / `watch.snapshot { cwd, type, data }`），只是現在 Agent 的 `watch.start` handler 對應一個 `broadcaster.subscribe()`，不會有覆蓋問題。

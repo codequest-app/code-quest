@@ -1,33 +1,20 @@
 import type { Broadcaster } from '@code-quest/broadcaster';
-import type {
-  FileResult,
-  GitStatusResult,
-  OpenspecListResult,
-  TypedSocket,
-} from '@code-quest/schemas';
+import type { TypedSocket } from '@code-quest/schemas';
 import { EVENTS } from '@code-quest/schemas';
-import type { Unsubscribe } from '@code-quest/watch';
-
-export interface SnapshotBroadcasters {
-  files: Broadcaster<FileResult[]>;
-  git: Broadcaster<GitStatusResult>;
-  openspec: Broadcaster<OpenspecListResult>;
-}
 
 export function subscribeSnapshotForSocket(
   socket: TypedSocket,
   subscriberId: string,
   cwd: string,
-  broadcasters: SnapshotBroadcasters,
-): Unsubscribe[] {
-  const offFiles = broadcasters.files.subscribe(cwd, subscriberId, (snapshot) => {
-    socket.emit(EVENTS.fs.dirty, { cwd, paths: [], snapshot });
+  broadcaster: Broadcaster,
+): () => void {
+  return broadcaster.subscribe(cwd, subscriberId, (type, data) => {
+    if (type === 'files') {
+      socket.emit(EVENTS.fs.dirty, { cwd, paths: [], snapshot: data });
+    } else if (type === 'git') {
+      socket.emit(EVENTS.git.dirty, { cwd, snapshot: data });
+    } else if (type === 'openspec') {
+      socket.emit(EVENTS.openspec.dirty, { cwd, snapshot: data });
+    }
   });
-  const offGit = broadcasters.git.subscribe(cwd, subscriberId, (snapshot) => {
-    socket.emit(EVENTS.git.dirty, { cwd, snapshot });
-  });
-  const offOpenspec = broadcasters.openspec.subscribe(cwd, subscriberId, (snapshot) => {
-    socket.emit(EVENTS.openspec.dirty, { cwd, snapshot });
-  });
-  return [offFiles, offGit, offOpenspec];
 }
