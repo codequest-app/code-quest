@@ -154,6 +154,30 @@ describe('LocalOpenspecService', () => {
       const result = await reader.list('/repo');
       expect(result).toMatchObject({ error: expect.any(String) });
     });
+
+    it('treats "No items found" spec list output as empty specs (CLI bug workaround)', async () => {
+      const { process, reader } = setup();
+      process.enqueueRunOnce({
+        exitCode: 0,
+        stdout: JSON.stringify({ changes: [] }),
+        stderr: '',
+      });
+      process.enqueueRunOnce({ exitCode: 0, stdout: 'No items found', stderr: '' });
+      const result = await reader.list('/repo');
+      expect(result).toEqual({ changes: [], specs: [] });
+    });
+
+    it('treats "No specs found." spec list output as empty specs (CLI bug workaround)', async () => {
+      const { process, reader } = setup();
+      process.enqueueRunOnce({
+        exitCode: 0,
+        stdout: JSON.stringify({ changes: [] }),
+        stderr: '',
+      });
+      process.enqueueRunOnce({ exitCode: 0, stdout: 'No specs found.', stderr: '' });
+      const result = await reader.list('/repo');
+      expect(result).toEqual({ changes: [], specs: [] });
+    });
   });
 
   describe('read', () => {

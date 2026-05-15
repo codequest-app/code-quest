@@ -87,7 +87,10 @@ export class LocalOpenspecService implements OpenspecService {
       const changesRaw = await this.process.runOnce('openspec', ['list', '--json'], { cwd });
       const specsRaw = await this.process.runOnce('openspec', ['spec', 'list', '--json'], { cwd });
       const changesParsed = cliListChangesSchema.safeParse(safeJsonParse(changesRaw.stdout));
-      const specsParsed = cliSpecListSchema.safeParse(safeJsonParse(specsRaw.stdout));
+      // `openspec spec list --json` outputs plain text when there are no specs (CLI bug).
+      // Treat any non-JSON response as an empty list rather than a hard error.
+      const specsJson = safeJsonParse(specsRaw.stdout) ?? [];
+      const specsParsed = cliSpecListSchema.safeParse(specsJson);
       if (!changesParsed.success) return { error: 'parse-changes-failed' };
       if (!specsParsed.success) return { error: 'parse-specs-failed' };
       const changes: OpenspecChangeSummary[] = changesParsed.data.changes.map(toChangeSummary);
