@@ -131,9 +131,12 @@ export class LocalFilesystemService implements FilesystemService {
 
   /** Build (or return cached) file list for `cwd`. When a WatchService is
    *  injected, subscribes once; the first FS event drops the entry so the
-   *  next query rebuilds. Without a WatchService, the cache still works
-   *  but is never invalidated (acceptable for tests / one-shot usage). */
+   *  next query rebuilds. Without a WatchService, skips the cache and walks
+   *  the FS fresh on every call. */
   private async getOrBuildListCache(cwd: string): Promise<ListCacheEntry> {
+    if (!this.watch) {
+      return this.buildListCacheEntry(cwd);
+    }
     const cached = this.listCache.get(cwd);
     if (cached) return cached;
     return getOrSet(this.listCacheInflight, cwd, () => this.buildListCacheEntry(cwd));

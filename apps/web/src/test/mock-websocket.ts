@@ -1,4 +1,4 @@
-import type { Envelope } from '@code-quest/transport';
+import type { Envelope } from '@code-quest/transport/browser';
 
 type Listener = (...args: unknown[]) => void;
 

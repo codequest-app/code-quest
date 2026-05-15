@@ -173,12 +173,12 @@ describe('LocalFilesystemService', () => {
         expect(subscribeCount).toBe(1);
       });
 
-      it('without WatchService injection, every call walks fresh (back-compat)', async () => {
+      it('without WatchService injection, every call walks fresh', async () => {
         const noWatch = makeService();
         await noWatch.listFiles(ROOT, '');
         vol.writeFileSync(join(ROOT, 'no-watch.ts'), '');
         const b = await noWatch.listFiles(ROOT, '');
-        expect(b.some((f) => f.name === 'no-watch.ts')).toBe(false);
+        expect(b.some((f) => f.name === 'no-watch.ts')).toBe(true);
       });
     });
   });

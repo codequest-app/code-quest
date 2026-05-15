@@ -1,4 +1,4 @@
-import { WsClient } from '@code-quest/transport';
+import { WsClient } from '@code-quest/transport/browser';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { MockWebSocket } from '@/test/mock-websocket';
 import { WsSocketAdapter } from '../ws-socket-adapter.ts';

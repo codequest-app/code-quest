@@ -1,5 +1,5 @@
 import type { ClientToServerEvents, ServerToClientEvents } from '@code-quest/schemas';
-import { WsClient } from '@code-quest/transport';
+import { WsClient } from '@code-quest/transport/browser';
 import type { Socket } from 'socket.io-client';
 import { config } from '../config.ts';
 import { WsSocketAdapter } from './ws-socket-adapter.ts';

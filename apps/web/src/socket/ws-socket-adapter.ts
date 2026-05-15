@@ -1,4 +1,4 @@
-import type { WsClient } from '@code-quest/transport';
+import type { WsClient } from '@code-quest/transport/browser';
 import type { SocketLike } from './client.ts';
 
 type Listener = (...args: unknown[]) => void;

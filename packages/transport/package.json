@@ -5,7 +5,8 @@
   "type": "module",
   "description": "Code Quest isomorphic network transport (WebSocket, resumable socket, pipeline)",
   "exports": {
-    ".": "./src/index.ts"
+    ".": "./src/index.ts",
+    "./browser": "./src/index-browser.ts"
   },
   "scripts": {
     "test": "vitest run --passWithNoTests",
