@@ -23,7 +23,10 @@ function releaseUnsubs(unsubs: Unsubscribe[]): void {
 /** Minimal interface ChannelManager needs from SessionHistory + sessionStore. */
 export interface SessionLookup {
   resolveSessionId(channelId: string): Promise<string>;
-  resolveCwd(channelId: string): Promise<string>;
+  resolveCwdAndProjectRoot(
+    channelId: string,
+    sessionId: string,
+  ): Promise<{ cwd: string; projectRoot: string }>;
 }
 
 interface CreateChannelOptions {
@@ -221,10 +224,11 @@ export class ChannelManager {
       throw new Error(`Session not found: ${channelId}`);
     }
 
-    const cwd = await this.sessions.resolveCwd(channelId);
+    const { cwd, projectRoot } = await this.sessions.resolveCwdAndProjectRoot(channelId, sessionId);
 
     const runner = this.runnerFactory.create({ resumeSessionId: sessionId }, { cwd });
     const channel = this.setupChannel(channelId, runner, cwd);
+    channel.projectRoot = projectRoot;
     logger.info({ channelId }, 'Channel created');
     runner.spawn();
     logger.info({ channelId }, 'CLI process started');
