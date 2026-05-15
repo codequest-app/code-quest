@@ -7,17 +7,19 @@ import type {
   WorktreeInfo,
 } from '@code-quest/schemas';
 import { GitCommands } from './commands.ts';
+import type { MinimalLogger } from './types.ts';
 import { GitWorktreeOps } from './worktree.ts';
 
-/** Local git backend. Composed of `GitCommands` (plain git CLI) and
- *  `GitWorktreeOps` (worktree CRUD + path conventions). The facade
- *  exists so consumers see a single `IGitService` regardless of how
- *  the implementation is split internally. */
 export class LocalGitService implements GitService {
   readonly capabilities = { worktree: true } as const;
 
-  private commands = new GitCommands();
-  private worktree = new GitWorktreeOps(this.commands);
+  private commands: GitCommands;
+  private worktree: GitWorktreeOps;
+
+  constructor(logger?: MinimalLogger) {
+    this.commands = new GitCommands(logger);
+    this.worktree = new GitWorktreeOps(this.commands, logger);
+  }
 
   status = (cwd: string): Promise<GitStatusResult> => this.commands.status(cwd);
   checkout = (cwd: string, branch: string): Promise<void> => this.commands.checkout(cwd, branch);

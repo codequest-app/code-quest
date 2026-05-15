@@ -1,9 +1,9 @@
 import { join } from 'node:path';
+import { LocalFilesystemService } from '@code-quest/filesystem';
 import type { DirectoryEntry } from '@code-quest/schemas';
 import { PathOutsideRootsError } from '@code-quest/schemas';
 import { vol } from 'memfs';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
-import { LocalFilesystemService } from '../local.ts';
 import { LocalRootGuard } from '../local-root-guard.ts';
 
 vi.mock('node:fs', async () => (await import('memfs')).fs);
@@ -26,7 +26,7 @@ beforeEach(async () => {
     [join(ROOT, 'package.json')]: '{}',
   });
   memfs = (await import('memfs')).fs as unknown as typeof import('node:fs');
-  service = new LocalFilesystemService([ROOT], new LocalRootGuard([ROOT]), memfs);
+  service = new LocalFilesystemService([ROOT], new LocalRootGuard([ROOT]), undefined, memfs);
 });
 
 afterEach(() => vol.reset());
@@ -258,7 +258,7 @@ describe('LocalFilesystemService', () => {
 
     beforeEach(() => {
       vol.mkdirSync(MROOT, { recursive: true });
-      svc = new LocalFilesystemService([MROOT], new LocalRootGuard([MROOT]), memfs);
+      svc = new LocalFilesystemService([MROOT], new LocalRootGuard([MROOT]), undefined, memfs);
     });
 
     it('create file then delete it', async () => {

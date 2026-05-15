@@ -1,6 +1,6 @@
+import { AlreadyRepoError, NotARepoError } from '@code-quest/git';
 import type { GitService } from '@code-quest/schemas';
 import { describe, expect, it } from 'vitest';
-import { AlreadyRepoError, NotARepoError } from '../errors.ts';
 
 /** Setup must produce a fresh service + a path we can pass as `cwd`.
  *  - `cwd` MUST point to a directory that is NOT yet a git repo.

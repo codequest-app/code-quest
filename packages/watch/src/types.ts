@@ -20,3 +20,9 @@ export interface WatchService {
    */
   subscribe(cwd: string, cb: WatchCallback): Unsubscribe;
 }
+
+export interface MinimalLogger {
+  debug(obj: object, msg: string): void;
+  warn(msg: string): void;
+  error(obj: object, msg: string): void;
+}

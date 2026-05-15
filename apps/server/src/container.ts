@@ -1,4 +1,6 @@
 import 'reflect-metadata';
+import { RemoteFilesystemService } from '@code-quest/filesystem';
+import { RemoteGitService } from '@code-quest/git';
 import type { FilesystemService, GitService, ProcessProvider } from '@code-quest/schemas';
 import {
   ChildProcessProvider,
@@ -21,8 +23,6 @@ import { config } from './config.ts';
 import type { DatabaseEntry } from './db/create-database.ts';
 import { createDatabase, type DrizzleDatabase } from './db/sqlite-client.ts';
 import { logger } from './logger.ts';
-import { RemoteFilesystemService } from './remote/filesystem-service.ts';
-import { RemoteGitService } from './remote/git-service.ts';
 import { RemoteProcessProvider } from './remote/process-provider.ts';
 import type { ReconnectableRpc } from './remote/reconnectable-rpc.ts';
 import { CompositeProjectStore } from './services/composite-project-store.ts';

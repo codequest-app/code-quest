@@ -2,8 +2,8 @@ import { execFileSync } from 'node:child_process';
 import { mkdtempSync, rmSync } from 'node:fs';
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
+import { LocalGitService } from '@code-quest/git';
 import { afterEach, describe } from 'vitest';
-import { LocalGitService } from '../local.ts';
 import { type ContractSetup, gitServiceContract } from './git-service.contract.ts';
 
 describe.skipIf(!process.env.RUN_INTEGRATION)('local-git-service (integration)', () => {

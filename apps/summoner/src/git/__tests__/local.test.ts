@@ -2,8 +2,8 @@ import { execSync } from 'node:child_process';
 import { mkdirSync, mkdtempSync, realpathSync, rmSync, writeFileSync } from 'node:fs';
 import os from 'node:os';
 import { join } from 'node:path';
+import { LocalGitService } from '@code-quest/git';
 import { afterAll, beforeAll, describe, expect, it } from 'vitest';
-import { LocalGitService } from '../local.ts';
 
 let tmpDir: string;
 let service: LocalGitService;

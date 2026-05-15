@@ -1,0 +1,25 @@
+{
+  "name": "@code-quest/git",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "description": "LocalGitService and RemoteGitService",
+  "exports": {
+    ".": "./src/index.ts",
+    "./contract": "./src/__tests__/git-service.contract.ts"
+  },
+  "scripts": {
+    "test": "vitest run --passWithNoTests",
+    "test:watch": "vitest",
+    "lint": "biome check src"
+  },
+  "dependencies": {
+    "@code-quest/schemas": "workspace:*",
+    "simple-git": "^3.36.0"
+  },
+  "devDependencies": {
+    "@types/node": "^22.15.3",
+    "typescript": "6.0.3",
+    "vitest": "^4.1.6"
+  }
+}

@@ -1,8 +1,12 @@
 import { relative } from 'node:path';
 import chokidar, { type FSWatcher } from 'chokidar';
-import { logger } from '../logger.ts';
-import { errorCode } from '../utils.ts';
-import type { Unsubscribe, WatchCallback, WatchEvent, WatchService } from './types.ts';
+import type {
+  MinimalLogger,
+  Unsubscribe,
+  WatchCallback,
+  WatchEvent,
+  WatchService,
+} from './types.ts';
 
 const IGNORES = [
   /(^|[/\\])node_modules([/\\]|$)/,
@@ -28,8 +32,25 @@ const CHOKIDAR_OPTS = {
 
 let inotifyWarned = false;
 
+const noopLogger: MinimalLogger = {
+  debug: () => {},
+  warn: () => {},
+  error: () => {},
+};
+
+function errorCode(err: unknown): string | undefined {
+  if (typeof err !== 'object' || err === null || !('code' in err)) return undefined;
+  const { code } = err as { code: unknown };
+  return typeof code === 'string' ? code : undefined;
+}
+
 export class LocalWatchService implements WatchService {
+  private readonly logger: MinimalLogger;
   private entries = new Map<string, { watcher: FSWatcher; subs: Set<WatchCallback> }>();
+
+  constructor(logger?: MinimalLogger) {
+    this.logger = logger ?? noopLogger;
+  }
 
   subscribe(cwd: string, cb: WatchCallback): Unsubscribe {
     let entry = this.entries.get(cwd);
@@ -64,7 +85,7 @@ export class LocalWatchService implements WatchService {
         try {
           sub(event);
         } catch (err) {
-          logger.error({ err }, '[LocalWatchService] subscriber threw');
+          this.logger.error({ err }, '[LocalWatchService] subscriber threw');
         }
       }
     });
@@ -72,13 +93,13 @@ export class LocalWatchService implements WatchService {
       const code = errorCode(err);
       if (code === 'ENOSPC' && !inotifyWarned) {
         inotifyWarned = true;
-        logger.warn(
+        this.logger.warn(
           '[LocalWatchService] inotify watch limit reached. ' +
             'Increase with: sudo sysctl -n fs.inotify.max_user_watches=524288',
         );
         return;
       }
-      logger.error({ err }, '[LocalWatchService] watcher error');
+      this.logger.error({ err }, '[LocalWatchService] watcher error');
     });
     return entry;
   }

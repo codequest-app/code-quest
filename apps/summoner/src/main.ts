@@ -1,11 +1,11 @@
 import 'dotenv/config';
+import { LocalFilesystemService } from '@code-quest/filesystem';
+import { LocalGitService } from '@code-quest/git';
 import { formatBanner } from '@code-quest/schemas';
 import { WsClient } from '@code-quest/transport';
 import { loadConfig } from './config.ts';
 import { Agent } from './connection/agent.ts';
-import { LocalFilesystemService } from './filesystem/local.ts';
 import { LocalRootGuard } from './filesystem/local-root-guard.ts';
-import { LocalGitService } from './git/local.ts';
 import { logger } from './logger.ts';
 import { ChildProcessProvider } from './transports/child-process.ts';
 

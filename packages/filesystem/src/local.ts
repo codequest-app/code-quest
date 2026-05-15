@@ -1,5 +1,6 @@
 import { cp, mkdir, readdir, readFile, rename, rm, stat, writeFile } from 'node:fs/promises';
 import { basename, join, normalize, relative, resolve } from 'node:path';
+import { mimeForPath } from '@code-quest/node-utils';
 import type {
   DirectoryEntry,
   FileKind,
@@ -13,8 +14,7 @@ import type {
 import { errMsg, PathOutsideRootsError, type RootGuard } from '@code-quest/schemas';
 import Fuse from 'fuse.js';
 import { glob } from 'glob';
-import { logger } from '../logger.ts';
-import { mimeForPath } from './mime-types.ts';
+import type { MinimalLogger } from './types.ts';
 
 interface ListCacheEntry {
   files: string[];
@@ -36,6 +36,12 @@ const GLOB_IGNORE = [
 
 const BROWSE_IGNORED = new Set(['node_modules', 'dist', 'coverage', '.git']);
 
+const noopLogger: MinimalLogger = {
+  debug: () => {},
+  warn: () => {},
+  error: () => {},
+};
+
 function toRootEntry(root: string): DirectoryEntry {
   return { name: basename(root), path: root };
 }
@@ -43,11 +49,18 @@ function toRootEntry(root: string): DirectoryEntry {
 export class LocalFilesystemService implements FilesystemService {
   private readonly fsRoots: readonly string[];
   private readonly rootGuard: RootGuard;
+  private readonly logger: MinimalLogger;
   private readonly fsImpl?: typeof import('node:fs');
 
-  constructor(fsRoots: readonly string[], rootGuard: RootGuard, fsImpl?: typeof import('node:fs')) {
+  constructor(
+    fsRoots: readonly string[],
+    rootGuard: RootGuard,
+    logger?: MinimalLogger,
+    fsImpl?: typeof import('node:fs'),
+  ) {
     this.fsRoots = fsRoots;
     this.rootGuard = rootGuard;
+    this.logger = logger ?? noopLogger;
     this.fsImpl = fsImpl;
   }
 
@@ -93,7 +106,7 @@ export class LocalFilesystemService implements FilesystemService {
       files.sort((a, b) => a.name.localeCompare(b.name));
       return { directories, files };
     } catch (err) {
-      logger.debug({ err }, '[LocalFilesystemService] readBrowseEntries failed');
+      this.logger.debug({ err }, '[LocalFilesystemService] readBrowseEntries failed');
       return { directories: [], files: [] };
     }
   }
@@ -128,7 +141,7 @@ export class LocalFilesystemService implements FilesystemService {
       const content = await readFile(validated, 'utf-8');
       return { content, contentType, encoding };
     } catch (err) {
-      logger.debug({ err }, '[LocalFilesystemService] readFileAbsolute failed');
+      this.logger.debug({ err }, '[LocalFilesystemService] readFileAbsolute failed');
       return { error: `File not found: ${absolutePath}` };
     }
   }
@@ -160,10 +173,8 @@ export class LocalFilesystemService implements FilesystemService {
     const validated = await this.guardPath(absolutePath);
     try {
       if (kind === 'directory') {
-        // mkdir without `recursive: true` throws EEXIST naturally — no stat pre-check needed.
         await mkdir(validated);
       } else {
-        // `wx` = write-fail-if-exists. Atomic vs the prior stat-then-write TOCTOU.
         await writeFile(validated, '', { encoding: 'utf-8', flag: 'wx' });
       }
       return { ok: true };
@@ -181,10 +192,6 @@ export class LocalFilesystemService implements FilesystemService {
   async rename(from: string, to: string): Promise<FsMutationResult> {
     const fromV = await this.guardPath(from);
     const toV = await this.guardPath(to);
-    // POSIX rename(2) silently overwrites; this stat pre-check is the
-    // no-overwrite policy. A `link` + `unlink` pattern would close the
-    // race for files but doesn't generalize (directories EPERM, EXDEV).
-    // Single-user dev tool — TOCTOU window is negligible in practice.
     if (await this.exists(toV)) return { error: 'exists' };
     return this.wrapMutation(() => rename(fromV, toV));
   }
@@ -196,7 +203,6 @@ export class LocalFilesystemService implements FilesystemService {
       await cp(fromV, toV, { recursive: true, errorOnExist: true, force: false });
       return { ok: true };
     } catch (err) {
-      // ERR_FS_CP_EEXIST when destination exists — surface as 'exists' for UI.
       if (err instanceof Error && /EEXIST|already exists/.test(err.message)) {
         return { error: 'exists' };
       }
@@ -216,7 +222,6 @@ export class LocalFilesystemService implements FilesystemService {
     }
     const resolvedCwd = resolve(cwd);
     const absolute = resolve(resolvedCwd, normalize(filePath));
-    // path.relative handles OS separators; ".." prefix signals escape.
     const rel = relative(resolvedCwd, absolute);
     if (rel.startsWith('..')) {
       return { error: 'Path traversal not allowed' };
@@ -225,7 +230,7 @@ export class LocalFilesystemService implements FilesystemService {
       const content = await readFile(absolute, 'utf-8');
       return { content };
     } catch (err) {
-      logger.debug({ err }, '[LocalFilesystemService] readFile failed');
+      this.logger.debug({ err }, '[LocalFilesystemService] readFile failed');
       return { error: `File not found: ${filePath}` };
     }
   }
@@ -251,7 +256,6 @@ export class LocalFilesystemService implements FilesystemService {
   private extractDirectories(files: string[]): string[] {
     const dirs = new Set<string>();
     for (const f of files) {
-      // Drop the file name (last segment); accumulate each directory prefix.
       f.split('/')
         .slice(0, -1)
         .reduce((prefix, segment) => {
@@ -263,7 +267,6 @@ export class LocalFilesystemService implements FilesystemService {
     return [...dirs].map((d) => `${d}/`);
   }
 
-  /** Shared build step for listRootEntries / listDirectory: dedup by key, sort by path, cap. */
   private collectEntries(
     dirs: string[],
     files: string[],

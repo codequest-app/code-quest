@@ -1,5 +1,5 @@
+import { assertWorktreeName, detectWorktree } from '@code-quest/git';
 import { describe, expect, it } from 'vitest';
-import { assertWorktreeName, detectWorktree } from '../worktree.ts';
 
 describe('assertWorktreeName', () => {
   it('accepts valid name', () => {

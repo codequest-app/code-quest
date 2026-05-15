@@ -1,0 +1,26 @@
+{
+  "name": "@code-quest/filesystem",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "description": "LocalFilesystemService and RemoteFilesystemService",
+  "exports": {
+    ".": "./src/index.ts"
+  },
+  "scripts": {
+    "test": "vitest run --passWithNoTests",
+    "test:watch": "vitest",
+    "lint": "biome check src"
+  },
+  "dependencies": {
+    "@code-quest/schemas": "workspace:*",
+    "@code-quest/node-utils": "workspace:*",
+    "fuse.js": "^7.3.0",
+    "glob": "^13.0.6"
+  },
+  "devDependencies": {
+    "@types/node": "^22.15.3",
+    "typescript": "6.0.3",
+    "vitest": "^4.1.6"
+  }
+}

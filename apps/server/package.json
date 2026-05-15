@@ -26,6 +26,8 @@
   },
   "dependencies": {
     "@code-quest/db-schema": "workspace:*",
+    "@code-quest/filesystem": "workspace:*",
+    "@code-quest/git": "workspace:*",
     "@code-quest/schemas": "workspace:*",
     "@code-quest/transport": "workspace:*",
     "@code-quest/node-utils": "workspace:*",

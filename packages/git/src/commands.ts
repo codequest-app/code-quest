@@ -2,9 +2,10 @@ import { readFile } from 'node:fs/promises';
 import { isAbsolute, resolve, sep } from 'node:path';
 import type { GitDiffResult, GitLogResult, GitStatusResult } from '@code-quest/schemas';
 import type { SimpleGit } from 'simple-git';
-import { logger } from '../logger.ts';
 import { AlreadyRepoError, NotARepoError } from './errors.ts';
 import { createGit, rawGit } from './git-runner.ts';
+import type { MinimalLogger } from './types.ts';
+import { noopLogger } from './types.ts';
 
 const GIT_STATUS_UNTRACKED = '??';
 const GIT_STATUS_STAGED_NEW = 'A';
@@ -32,6 +33,12 @@ function toLogEntry(e: { hash: string; message: string; author_name: string; dat
 }
 
 export class GitCommands {
+  private readonly logger: MinimalLogger;
+
+  constructor(logger?: MinimalLogger) {
+    this.logger = logger ?? noopLogger;
+  }
+
   async status(cwd: string): Promise<GitStatusResult> {
     const git = createGit(cwd);
     const s = await git.status();
@@ -66,8 +73,6 @@ export class GitCommands {
       const content = await readFile(absolute, 'utf-8').catch(() => '');
       return { diff: toPseudoDiff(filePath, content) };
     }
-    // Single-char 'M'/'D' is ambiguous after trim, so HEAD covers both staged and unstaged.
-    // 'A' is always staged-only.
     if (status === GIT_STATUS_STAGED_NEW) {
       return { diff: await git.diff(['--staged', '--', filePath]) };
     }
@@ -76,7 +81,7 @@ export class GitCommands {
 
   async add(cwd: string, paths?: string[]): Promise<{ ok: true } | { error: string }> {
     const args = paths && paths.length > 0 ? ['add', '--', ...paths] : ['add', '-A'];
-    const result = await rawGit(createGit(cwd), args);
+    const result = await rawGit(createGit(cwd), args, this.logger);
     return result.exitCode === 0
       ? { ok: true }
       : { error: result.stdout.trim() || `git ${args.join(' ')} failed` };
@@ -89,16 +94,16 @@ export class GitCommands {
     const git = createGit(cwd);
     const status = await git.status();
     if (status.staged.length === 0) return { error: NOTHING_TO_COMMIT };
-    const result = await rawGit(git, ['commit', '-m', message]);
+    const result = await rawGit(git, ['commit', '-m', message], this.logger);
     if (result.exitCode !== 0) {
       return { error: result.stdout.trim() || 'git commit failed' };
     }
-    const hash = (await rawGit(git, ['rev-parse', 'HEAD'])).stdout.trim();
+    const hash = (await rawGit(git, ['rev-parse', 'HEAD'], this.logger)).stdout.trim();
     return { ok: true, hash };
   }
 
   async push(cwd: string): Promise<{ ok: true } | { error: string }> {
-    const result = await rawGit(createGit(cwd), ['push']);
+    const result = await rawGit(createGit(cwd), ['push'], this.logger);
     if (result.exitCode === 0) return { ok: true };
     const out = result.stdout.toLowerCase();
     if (RE_NO_UPSTREAM.test(out)) return { error: 'no-upstream' };
@@ -107,30 +112,26 @@ export class GitCommands {
   }
 
   async fetch(cwd: string): Promise<{ ok: true } | { error: string }> {
-    const result = await rawGit(createGit(cwd), ['fetch', '--all']);
+    const result = await rawGit(createGit(cwd), ['fetch', '--all'], this.logger);
     if (result.exitCode === 0) return { ok: true };
     return { error: result.stdout.trim() || 'git fetch failed' };
   }
 
   async discardFile(cwd: string, file: string): Promise<{ ok: true } | { error: string }> {
-    const result = await rawGit(createGit(cwd), ['checkout', '--', file]);
+    const result = await rawGit(createGit(cwd), ['checkout', '--', file], this.logger);
     if (result.exitCode === 0) return { ok: true };
     return { error: result.stdout.trim() || `git checkout -- ${file} failed` };
   }
 
   async pull(cwd: string): Promise<{ ok: true; fastForwarded: boolean } | { error: string }> {
-    const result = await rawGit(createGit(cwd), ['pull', '--ff-only']);
+    const result = await rawGit(createGit(cwd), ['pull', '--ff-only'], this.logger);
     if (result.exitCode === 0) {
       const fastForwarded = !RE_ALREADY_UP_TO_DATE.test(result.stdout);
       return { ok: true, fastForwarded };
     }
     const out = result.stdout.toLowerCase();
-    if (RE_NON_FF.test(out)) {
-      return { error: 'non-ff' };
-    }
-    if (RE_NO_TRACKING.test(out)) {
-      return { error: 'no-upstream' };
-    }
+    if (RE_NON_FF.test(out)) return { error: 'non-ff' };
+    if (RE_NO_TRACKING.test(out)) return { error: 'no-upstream' };
     return { error: result.stdout.trim() || 'git pull failed' };
   }
 
@@ -138,7 +139,7 @@ export class GitCommands {
     try {
       return (await createGit(cwd).revparse(['--show-toplevel'])).trim();
     } catch (err) {
-      logger.debug({ err }, '[GitService] getRepoRoot failed');
+      this.logger.debug({ err }, '[GitService] getRepoRoot failed');
       return null;
     }
   }
@@ -152,7 +153,7 @@ export class GitCommands {
       if (dotGitIdx === -1) return absolute;
       return absolute.slice(0, dotGitIdx);
     } catch (err) {
-      logger.debug({ err }, '[GitService] getProjectRoot failed');
+      this.logger.debug({ err }, '[GitService] getProjectRoot failed');
       return null;
     }
   }
@@ -164,7 +165,7 @@ export class GitCommands {
     try {
       await git.raw(['commit', '--allow-empty', '-m', 'Initial commit']);
     } catch (err) {
-      logger.debug({ err }, '[GitService] commit without user config failed, retrying');
+      this.logger.debug({ err }, '[GitService] commit without user config failed, retrying');
       await git.raw([
         '-c',
         'user.email=code-quest@local',
@@ -181,11 +182,11 @@ export class GitCommands {
 
   async listBranches(repoRoot: string): Promise<string[]> {
     if ((await this.getRepoRoot(repoRoot)) === null) throw new NotARepoError(repoRoot);
-    const result = await rawGit(createGit(repoRoot), [
-      'branch',
-      '--list',
-      '--format=%(refname:short)',
-    ]);
+    const result = await rawGit(
+      createGit(repoRoot),
+      ['branch', '--list', '--format=%(refname:short)'],
+      this.logger,
+    );
     if (result.exitCode === 0) {
       return result.stdout
         .split('\n')
@@ -195,20 +196,19 @@ export class GitCommands {
     return [];
   }
 
-  /** Three-strategy checkout: local → fetch+local → tracking branch from origin. */
   private async checkoutWithFallback(git: SimpleGit, branch: string): Promise<void> {
     try {
       await git.checkout(branch);
       return;
     } catch (err) {
-      logger.debug({ err }, '[GitService] checkout strategy 1 failed');
+      this.logger.debug({ err }, '[GitService] checkout strategy 1 failed');
     }
     try {
       await git.fetch('origin');
       await git.checkout(branch);
       return;
     } catch (err) {
-      logger.debug({ err }, '[GitService] checkout strategy 2 failed');
+      this.logger.debug({ err }, '[GitService] checkout strategy 2 failed');
     }
     await git.checkout(['-t', `origin/${branch}`]);
   }
