@@ -5,9 +5,9 @@ import { type Envelope, RpcChannel, toRpcSocket } from '@code-quest/transport';
 import { afterEach, beforeEach, describe, expect, it } from 'vitest';
 import { WebSocket, WebSocketServer } from 'ws';
 import { Agent } from '../../connection/agent.ts';
-import { FsHandler } from '../../connection/fs-handler.ts';
-import { GitHandler } from '../../connection/git-handler.ts';
-import { ProcessHandler } from '../../connection/process-handler.ts';
+import { FsHandler } from '../../connection/handlers/fs-handler.ts';
+import { GitHandler } from '../../connection/handlers/git-handler.ts';
+import { ProcessHandler } from '../../connection/handlers/process-handler.ts';
 
 function makeSetup() {
   let httpServer: HttpServer;

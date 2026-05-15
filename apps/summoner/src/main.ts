@@ -14,10 +14,10 @@ import { WsClient } from '@code-quest/transport';
 import { LocalWatchService } from '@code-quest/watch';
 import { loadConfig } from './config.ts';
 import { Agent } from './connection/agent.ts';
-import { BroadcasterHandler } from './connection/broadcaster-handler.ts';
-import { FsHandler } from './connection/fs-handler.ts';
-import { GitHandler } from './connection/git-handler.ts';
-import { ProcessHandler } from './connection/process-handler.ts';
+import { BroadcasterHandler } from './connection/handlers/broadcaster-handler.ts';
+import { FsHandler } from './connection/handlers/fs-handler.ts';
+import { GitHandler } from './connection/handlers/git-handler.ts';
+import { ProcessHandler } from './connection/handlers/process-handler.ts';
 import { logger } from './logger.ts';
 import { ChildProcessProvider } from './transports/child-process.ts';
 

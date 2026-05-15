@@ -8,7 +8,7 @@ import type { AgentTransport } from '@code-quest/schemas';
 import { REMOTE_METHODS } from '@code-quest/schemas';
 import { FakeFilesystemService, FakeGitService, FakeWatchService } from '@code-quest/test-kit';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
-import { BroadcasterHandler } from '../broadcaster-handler.ts';
+import { BroadcasterHandler } from '../handlers/broadcaster-handler.ts';
 
 function makeFakeRpc() {
   const handlers = new Map<string, (data: unknown) => Promise<unknown>>();

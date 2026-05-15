@@ -5,9 +5,9 @@ import { RpcChannel, toRpcSocket, WsClient } from '@code-quest/transport';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { WebSocketServer } from 'ws';
 import { Agent } from '../../connection/agent.ts';
-import { FsHandler } from '../../connection/fs-handler.ts';
-import { GitHandler } from '../../connection/git-handler.ts';
-import { ProcessHandler } from '../../connection/process-handler.ts';
+import { FsHandler } from '../../connection/handlers/fs-handler.ts';
+import { GitHandler } from '../../connection/handlers/git-handler.ts';
+import { ProcessHandler } from '../../connection/handlers/process-handler.ts';
 
 describe('Connection reconnect loop', () => {
   let httpServer: HttpServer;

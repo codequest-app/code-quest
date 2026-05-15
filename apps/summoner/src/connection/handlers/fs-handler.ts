@@ -16,7 +16,7 @@ import {
   fsWriteFileAbsoluteParamsSchema,
   REMOTE_METHODS,
 } from '@code-quest/schemas';
-import type { AgentHandler } from './agent-handler.ts';
+import type { AgentHandler } from '../agent-handler.ts';
 
 export class FsHandler implements AgentHandler {
   private readonly filesystem: FilesystemService;

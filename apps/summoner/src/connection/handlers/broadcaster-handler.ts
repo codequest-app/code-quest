@@ -1,7 +1,7 @@
 import type { Broadcaster } from '@code-quest/broadcaster';
 import type { AgentTransport } from '@code-quest/schemas';
 import { REMOTE_METHODS } from '@code-quest/schemas';
-import type { AgentHandler } from './agent-handler.ts';
+import type { AgentHandler } from '../agent-handler.ts';
 
 export class BroadcasterHandler implements AgentHandler {
   private readonly broadcaster: Broadcaster;

@@ -15,7 +15,7 @@ import {
   gitRenameWorktreeParamsSchema,
   REMOTE_METHODS,
 } from '@code-quest/schemas';
-import type { AgentHandler } from './agent-handler.ts';
+import type { AgentHandler } from '../agent-handler.ts';
 
 function parseCwd(p: unknown): string {
   return gitCwdParamsSchema.parse(p).cwd;

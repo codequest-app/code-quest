@@ -12,8 +12,8 @@ import {
   processStdinParamsSchema,
   REMOTE_METHODS,
 } from '@code-quest/schemas';
-import { logger } from '../logger.ts';
-import type { AgentHandler } from './agent-handler.ts';
+import { logger } from '../../logger.ts';
+import type { AgentHandler } from '../agent-handler.ts';
 
 export class ProcessHandler implements AgentHandler {
   private readonly processProvider: ProcessProvider;
