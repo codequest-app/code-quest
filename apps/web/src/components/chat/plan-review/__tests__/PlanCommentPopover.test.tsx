@@ -1,4 +1,4 @@
-import type { PlanCommentData } from '@code-quest/shared';
+import type { PlanCommentData } from '@code-quest/schemas';
 import { fireEvent, render, screen } from '@testing-library/react';
 import { useRef } from 'react';
 import { describe, expect, it, vi } from 'vitest';

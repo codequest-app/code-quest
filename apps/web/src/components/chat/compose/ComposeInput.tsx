@@ -1,4 +1,4 @@
-import type { FsSearchResult } from '@code-quest/shared';
+import type { FsSearchResult } from '@code-quest/schemas';
 import * as Popover from '@radix-ui/react-popover';
 
 import { type ClipboardEvent, type KeyboardEvent, useEffect, useRef, useState } from 'react';

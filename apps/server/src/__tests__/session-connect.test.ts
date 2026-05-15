@@ -2,8 +2,8 @@ import type {
   SessionJoinResponse,
   SessionLaunchResponse,
   SessionResumeResponse,
-} from '@code-quest/shared';
-import { messageContentSchema } from '@code-quest/shared';
+} from '@code-quest/schemas';
+import { messageContentSchema } from '@code-quest/schemas';
 
 type LaunchOk = Extract<SessionLaunchResponse, { ok: true }>;
 type JoinOk = Extract<SessionJoinResponse, { ok: true }>;

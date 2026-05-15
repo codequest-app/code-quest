@@ -1,4 +1,4 @@
-import type { FsSearchResult } from '@code-quest/shared';
+import type { FsSearchResult } from '@code-quest/schemas';
 import { HighlightText } from '@/components/chat/ui/HighlightText';
 import { FileIcon, FolderIcon } from '@/components/icons/MentionIcons';
 import { cn } from '@/utils/cn';

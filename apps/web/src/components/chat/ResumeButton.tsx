@@ -1,4 +1,4 @@
-import type { SessionSummary } from '@code-quest/shared';
+import type { SessionSummary } from '@code-quest/schemas';
 import { ClockIcon } from '@heroicons/react/24/outline';
 import * as Popover from '@radix-ui/react-popover';
 import { useSyncExternalStore } from 'react';

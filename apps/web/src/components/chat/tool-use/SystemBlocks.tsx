@@ -1,4 +1,4 @@
-import type { ChatStats } from '@code-quest/shared';
+import type { ChatStats } from '@code-quest/schemas';
 import { MarkdownContent } from '@/components/chat/renderers/MarkdownContent';
 import { Expandable } from '@/components/chat/ui/Expandable';
 import { StatusLine } from '@/components/chat/ui/StatusLine';

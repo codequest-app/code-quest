@@ -1,4 +1,4 @@
-import type { SessionJoinResponse } from '@code-quest/shared';
+import type { SessionJoinResponse } from '@code-quest/schemas';
 import { segments as s } from '@code-quest/summoner/test';
 import type { RawEventStore } from '../services/raw-event-store.ts';
 import {

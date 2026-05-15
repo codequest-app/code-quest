@@ -1,4 +1,4 @@
-import type { ControlPermissionResponse, PendingControl, Question } from '@code-quest/shared';
+import type { ControlPermissionResponse, PendingControl, Question } from '@code-quest/schemas';
 import { useEffect, useLayoutEffect, useRef, useState } from 'react';
 import { FloatingCard } from '@/components/chat/ui/FloatingCard';
 import { ChevronDown } from '@/components/ui/Icons';

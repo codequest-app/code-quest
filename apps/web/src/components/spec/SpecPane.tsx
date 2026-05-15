@@ -1,4 +1,4 @@
-import type { OpenspecKind } from '@code-quest/shared';
+import type { OpenspecKind } from '@code-quest/schemas';
 import { ClipboardDocumentListIcon } from '@heroicons/react/24/outline';
 import { useState } from 'react';
 import { toast } from 'sonner';

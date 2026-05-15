@@ -1,4 +1,4 @@
-import type { WorktreeInfo } from '@code-quest/shared';
+import type { WorktreeInfo } from '@code-quest/schemas';
 import { ChevronDownIcon, ChevronRightIcon } from '@heroicons/react/24/outline';
 import { useEffect, useRef } from 'react';
 import {

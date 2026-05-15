@@ -1,4 +1,4 @@
-import type { ControlPermissionResponse, PendingControl } from '@code-quest/shared';
+import type { ControlPermissionResponse, PendingControl } from '@code-quest/schemas';
 import { useChannelControl } from '@/contexts/channel';
 import { PlanReviewBanner } from '../plan-review/PlanReviewBanner.tsx';
 import { HookCallbackCard } from './HookCallbackCard.tsx';

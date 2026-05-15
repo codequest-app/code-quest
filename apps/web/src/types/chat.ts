@@ -3,7 +3,7 @@ import type {
   ControlDiffReviewPayload,
   ControlElicitationPayload,
   PlanCommentData,
-} from '@code-quest/shared';
+} from '@code-quest/schemas';
 import type { Task } from './task.ts';
 import type { Message, SessionStatus } from './ui.ts';
 

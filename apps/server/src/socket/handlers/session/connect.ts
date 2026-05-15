@@ -3,19 +3,20 @@ import type {
   InitResponseResult,
   SessionInitPayload,
   SessionLaunchPayload,
-} from '@code-quest/shared';
+  SocketCallback,
+  TypedSocket,
+} from '@code-quest/schemas';
 import {
   channelExitPayloadSchema,
   controlInitResponseSchema,
   ERROR_CODES,
   EVENTS,
+  errMsg,
   sessionInitEventSchema,
   sessionJoinPayloadSchema,
   sessionLaunchPayloadSchema,
   sessionResumePayloadSchema,
-} from '@code-quest/shared';
-import type { SocketCallback, TypedSocket } from '@code-quest/shared/node';
-import { errMsg } from '@code-quest/shared/node';
+} from '@code-quest/schemas';
 import { config } from '../../../config.ts';
 import { logger } from '../../../logger.ts';
 import type { HandlerContext } from '../../../types.ts';

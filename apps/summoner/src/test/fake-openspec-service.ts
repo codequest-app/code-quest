@@ -7,7 +7,7 @@ import type {
   OpenspecReadResult,
   OpenspecSpecSummary,
   OpenspecToggleTaskResult,
-} from '@code-quest/shared';
+} from '@code-quest/schemas';
 import type { OpenspecArchiveOptions, OpenspecService } from '../openspec/types.ts';
 
 /** In-memory fake for `OpenspecService` — mirrors `FakeGitService` shape.

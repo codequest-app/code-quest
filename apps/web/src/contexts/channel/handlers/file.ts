@@ -3,7 +3,7 @@ import {
   type FsSearchResponse,
   type RpcResult,
   type TerminalGetContentsResponse,
-} from '@code-quest/shared';
+} from '@code-quest/schemas';
 import type { TypedSocket } from '@/socket/client';
 import { rpc } from '@/socket/rpc';
 

@@ -1,5 +1,0 @@
-{
-  "entry": ["src/**/__tests__/**/*.ts"],
-  "project": ["src/**/*.ts"],
-  "ignoreBinaries": ["biome"]
-}

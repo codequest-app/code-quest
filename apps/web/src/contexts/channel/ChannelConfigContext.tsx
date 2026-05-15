@@ -10,7 +10,7 @@ import {
   type RpcResult,
   type UsageQuota,
   type WorktreeInfo,
-} from '@code-quest/shared';
+} from '@code-quest/schemas';
 import {
   createContext,
   type ReactNode,

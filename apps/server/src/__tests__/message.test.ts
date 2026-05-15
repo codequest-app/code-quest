@@ -1,6 +1,6 @@
 /* biome-ignore-all lint/suspicious/noExplicitAny: test file uses type assertions */
 
-import type { SessionJoinResponse } from '@code-quest/shared';
+import type { SessionJoinResponse } from '@code-quest/schemas';
 import { type FakeClaude, segments as s } from '@code-quest/summoner/test';
 import type { RawEventStore } from '../services/raw-event-store.ts';
 import { createFakeServer, createFakeSummoner, setupSession } from '../test/index.ts';

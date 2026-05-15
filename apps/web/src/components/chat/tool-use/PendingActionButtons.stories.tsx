@@ -1,4 +1,4 @@
-import type { PendingControl } from '@code-quest/shared';
+import type { PendingControl } from '@code-quest/schemas';
 import type { Meta, StoryObj } from '@storybook/react-vite';
 import { useEffect } from 'react';
 import { useChannelControl } from '@/contexts/channel';

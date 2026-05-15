@@ -1,5 +1,5 @@
-import type { Envelope } from '@code-quest/shared';
-import { WsClient } from '@code-quest/shared';
+import type { Envelope } from '@code-quest/transport';
+import { WsClient } from '@code-quest/transport';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { MockWebSocket } from '@/test/mock-websocket';
 

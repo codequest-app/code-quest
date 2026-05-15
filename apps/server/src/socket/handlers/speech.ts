@@ -1,4 +1,4 @@
-import { EVENTS } from '@code-quest/shared';
+import { EVENTS } from '@code-quest/schemas';
 import type { HandlerContext } from '../../types.ts';
 import type { Channel } from '../channel.ts';
 import { withChannel } from '../channel-emitter.ts';

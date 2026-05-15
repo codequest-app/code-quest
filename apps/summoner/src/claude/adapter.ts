@@ -1,4 +1,4 @@
-import type { ClientMessage, ProviderClientConfig } from '@code-quest/shared';
+import type { ClientMessage, ProviderClientConfig } from '@code-quest/schemas';
 import type { AdapterOutput, ParseResult, ProviderAdapter } from '../types.ts';
 import { isRecord } from '../utils.ts';
 import { claudeClientConfig } from './client-config.ts';

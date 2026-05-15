@@ -1,4 +1,4 @@
-import { effortLevelSchema } from '@code-quest/shared';
+import { effortLevelSchema } from '@code-quest/schemas';
 import * as Popover from '@radix-ui/react-popover';
 import { useState } from 'react';
 import { FloatingCard } from '@/components/chat/ui/FloatingCard';

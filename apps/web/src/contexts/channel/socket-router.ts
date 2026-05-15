@@ -1,4 +1,4 @@
-import type { ServerToClientEvents } from '@code-quest/shared';
+import type { ServerToClientEvents } from '@code-quest/schemas';
 import type { TypedSocket } from '@/socket/client';
 import { matchesChannel, type Payload } from './handlers/guard.ts';
 

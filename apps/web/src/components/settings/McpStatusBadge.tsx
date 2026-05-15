@@ -1,4 +1,4 @@
-import type { McpServerInfo } from '@code-quest/shared';
+import type { McpServerInfo } from '@code-quest/schemas';
 import { cn } from '@/utils/cn';
 
 type McpStatus = McpServerInfo['status'];

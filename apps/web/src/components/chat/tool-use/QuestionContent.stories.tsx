@@ -1,4 +1,4 @@
-import type { Question } from '@code-quest/shared';
+import type { Question } from '@code-quest/schemas';
 import type { Meta, StoryObj } from '@storybook/react-vite';
 import { fn } from 'storybook/test';
 import { QuestionContent } from './QuestionContent.tsx';

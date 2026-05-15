@@ -4,7 +4,7 @@ import {
   modelUsageEntrySchema,
   type ProviderClientConfig,
   type UsageQuota,
-} from '@code-quest/shared';
+} from '@code-quest/schemas';
 import * as Dialog from '@radix-ui/react-dialog';
 import { cn } from '@/utils/cn';
 import { formatTokens } from '@/utils/format-number';

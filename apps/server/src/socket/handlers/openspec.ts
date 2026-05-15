@@ -1,3 +1,4 @@
+import type { SocketCallback, TypedSocket } from '@code-quest/schemas';
 import {
   EVENTS,
   openspecArchivePayloadSchema,
@@ -5,8 +6,7 @@ import {
   openspecListPayloadSchema,
   openspecReadPayloadSchema,
   openspecToggleTaskPayloadSchema,
-} from '@code-quest/shared';
-import type { SocketCallback, TypedSocket } from '@code-quest/shared/node';
+} from '@code-quest/schemas';
 import type { ZodType } from 'zod';
 import { logger } from '../../logger.ts';
 import type { HandlerContext } from '../../types.ts';

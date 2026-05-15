@@ -1,4 +1,4 @@
-import type { PlanCommentData } from '@code-quest/shared';
+import type { PlanCommentData } from '@code-quest/schemas';
 import type { ChannelState } from '@/types/chat';
 import type { Payload } from './guard.ts';
 

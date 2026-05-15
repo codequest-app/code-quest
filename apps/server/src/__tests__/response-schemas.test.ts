@@ -2,7 +2,7 @@ import {
   controlResponseSchema,
   sessionListResponseSchema,
   successResponseSchema,
-} from '@code-quest/shared';
+} from '@code-quest/schemas';
 import { describe, expect, it } from 'vitest';
 
 describe('shared response schemas', () => {

@@ -1,4 +1,4 @@
-import { DISMISSIBLE_IDS } from '@code-quest/shared';
+import { DISMISSIBLE_IDS } from '@code-quest/schemas';
 import type { Meta, StoryObj } from '@storybook/react-vite';
 import { expect } from 'storybook/test';
 import { usePreferencesStore } from '@/stores/usePreferencesStore';

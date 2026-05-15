@@ -1,4 +1,4 @@
-import type { Ack, SessionSummary } from '@code-quest/shared';
+import type { Ack, SessionSummary } from '@code-quest/schemas';
 import { useState } from 'react';
 import { focusRing } from '@/components/ui/_tokens';
 import { cn } from '@/utils/cn';

@@ -1,4 +1,4 @@
-import type { RpcResult } from '@code-quest/shared';
+import type { RpcResult } from '@code-quest/schemas';
 
 /** Build a success ack: `{ ok: true, data }`. */
 export function ok<T>(data: T): RpcResult<T> {

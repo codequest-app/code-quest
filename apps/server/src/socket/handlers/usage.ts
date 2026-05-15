@@ -1,4 +1,4 @@
-import { EVENTS, rateLimitInternalPayloadSchema } from '@code-quest/shared';
+import { EVENTS, rateLimitInternalPayloadSchema } from '@code-quest/schemas';
 import type { HandlerContext } from '../../types.ts';
 import type { Channel } from '../channel.ts';
 

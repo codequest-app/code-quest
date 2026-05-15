@@ -1,4 +1,4 @@
-import type { ClientToServerEvents } from '@code-quest/shared';
+import type { ClientToServerEvents } from '@code-quest/schemas';
 import {
   EVENTS,
   type GitAddResult,
@@ -9,7 +9,7 @@ import {
   gitCommitResultSchema,
   gitDiffByCwdResultSchema,
   gitPushResultSchema,
-} from '@code-quest/shared';
+} from '@code-quest/schemas';
 import { useState } from 'react';
 import { toast } from 'sonner';
 import type { ZodType } from 'zod';

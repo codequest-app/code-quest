@@ -1,4 +1,4 @@
-import type { EffortLevel } from '@code-quest/shared';
+import type { EffortLevel } from '@code-quest/schemas';
 import type { Feature } from '@/lib/feature';
 
 interface EffortFeatureDeps {

@@ -1,4 +1,4 @@
-import { errMsg } from '@code-quest/shared/node';
+import { errMsg } from '@code-quest/schemas';
 import { GitResponseError, type SimpleGit, simpleGit } from 'simple-git';
 import { logger } from '../logger.ts';
 

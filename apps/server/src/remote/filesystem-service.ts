@@ -7,7 +7,7 @@ import type {
   ReadFileAbsoluteResult,
   ReadFileResult,
   WriteFileResult,
-} from '@code-quest/shared';
+} from '@code-quest/schemas';
 import {
   fsBrowseDirectoriesResponseSchema,
   fsBrowseEntriesResponseSchema,
@@ -19,7 +19,7 @@ import {
   fsReadFileResponseSchema,
   fsStatKindResponseSchema,
   REMOTE_METHODS,
-} from '@code-quest/shared';
+} from '@code-quest/schemas';
 import type { RemoteRpc } from './types.ts';
 
 export class RemoteFilesystemService implements FilesystemService {

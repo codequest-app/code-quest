@@ -1,4 +1,4 @@
-import type { SessionStateSummary } from '@code-quest/shared';
+import type { SessionStateSummary } from '@code-quest/schemas';
 import { toast } from 'sonner';
 import { StatusDot } from '@/components/ui/StatusDot';
 import { basename } from '@/utils/basename';

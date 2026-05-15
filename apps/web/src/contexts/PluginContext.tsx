@@ -3,7 +3,7 @@ import {
   EVENTS,
   type MarketplaceInfo,
   type PluginInfo,
-} from '@code-quest/shared';
+} from '@code-quest/schemas';
 import {
   createContext,
   type ReactNode,

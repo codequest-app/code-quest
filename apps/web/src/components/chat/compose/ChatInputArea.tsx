@@ -1,4 +1,4 @@
-import { toPermissionMode } from '@code-quest/shared';
+import { toPermissionMode } from '@code-quest/schemas';
 import { useRef } from 'react';
 import { useChannelComposeActions, useChannelConfig, useChannelMessages } from '@/contexts/channel';
 import { useChannelStore } from '@/stores/ChannelStoreContext';

@@ -1,6 +1,6 @@
 import { timingSafeEqual } from 'node:crypto';
 import type { IncomingMessage } from 'node:http';
-import type { AuthContext, Authenticator } from '@code-quest/shared/node';
+import type { AuthContext, Authenticator } from '@code-quest/transport';
 
 export class TokenAuthenticator implements Authenticator {
   private readonly expected: Buffer;

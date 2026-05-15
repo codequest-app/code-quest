@@ -1,4 +1,4 @@
-import type { SessionSummary } from '@code-quest/shared';
+import type { SessionSummary } from '@code-quest/schemas';
 import * as Popover from '@radix-ui/react-popover';
 import { useCallback, useEffect, useState } from 'react';
 import { toast } from 'sonner';

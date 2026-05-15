@@ -1,6 +1,6 @@
 /* biome-ignore-all lint/suspicious/noExplicitAny: test stubs */
-import type { ClientMessage } from '@code-quest/shared';
-import { EVENTS } from '@code-quest/shared';
+import type { ClientMessage } from '@code-quest/schemas';
+import { EVENTS } from '@code-quest/schemas';
 import { describe, expect, it } from 'vitest';
 import { extractPendingControlRequests, filterReplayEvents } from '../history.ts';
 

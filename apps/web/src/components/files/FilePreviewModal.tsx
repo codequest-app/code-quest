@@ -1,4 +1,4 @@
-import { CONTENT_TYPE, EVENTS, fsReadResponseSchema } from '@code-quest/shared';
+import { CONTENT_TYPE, EVENTS, fsReadResponseSchema } from '@code-quest/schemas';
 import { lazy, Suspense, useEffect, useState } from 'react';
 import { useSocket } from '@/contexts/SocketContext';
 import { rpc } from '@/socket/rpc';

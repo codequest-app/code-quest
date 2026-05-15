@@ -1,4 +1,4 @@
-import type { AuthStatus, AvailablePlugin, MarketplaceInfo, PluginInfo } from '@code-quest/shared';
+import type { AuthStatus, AvailablePlugin, MarketplaceInfo, PluginInfo } from '@code-quest/schemas';
 
 interface PluginCacheEntry {
   installed: PluginInfo[];

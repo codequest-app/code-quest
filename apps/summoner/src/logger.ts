@@ -1,4 +1,4 @@
-import { parseLogConfig } from '@code-quest/shared/node';
+import { parseLogConfig } from '@code-quest/node-utils';
 import pino from 'pino';
 
 const logConfig = parseLogConfig(process.env);

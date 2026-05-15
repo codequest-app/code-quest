@@ -1,4 +1,4 @@
-import type { ClientMessage } from '@code-quest/shared';
+import type { ClientMessage } from '@code-quest/schemas';
 import { ClaudeAdapter } from '@code-quest/summoner';
 import { segments as s } from '@code-quest/summoner/test';
 import { describe, expect, it } from 'vitest';

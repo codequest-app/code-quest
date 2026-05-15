@@ -1,4 +1,4 @@
-import type { ClientMessage } from '@code-quest/shared';
+import type { ClientMessage } from '@code-quest/schemas';
 import { ClaudeAdapter } from '@code-quest/summoner/browser';
 import { messageHandlers } from '@/contexts/channel/handlers/handler-sets';
 import { type ChannelState, initialChannelState } from '@/types/chat';

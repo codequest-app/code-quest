@@ -3,7 +3,11 @@
  * Builds sub-provider tree directly — ChannelProvider not used (no initialState needed).
  */
 
-import { DISMISSIBLE_IDS, type EffectiveColorTheme, type PendingControl } from '@code-quest/shared';
+import {
+  DISMISSIBLE_IDS,
+  type EffectiveColorTheme,
+  type PendingControl,
+} from '@code-quest/schemas';
 import type { StoryObj } from '@storybook/react-vite';
 import { useEffect, useLayoutEffect, useRef, useState } from 'react';
 import { expect } from 'storybook/test';

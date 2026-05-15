@@ -1,4 +1,4 @@
-import type { PendingControl } from '@code-quest/shared';
+import type { PendingControl } from '@code-quest/schemas';
 import { segments as s } from '@code-quest/summoner/test';
 import type { RefObject } from 'react';
 import { describe, expect, it, vi } from 'vitest';

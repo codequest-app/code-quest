@@ -1,4 +1,4 @@
-import type { McpServerInfo, ProviderClientConfig } from '@code-quest/shared';
+import type { McpServerInfo, ProviderClientConfig } from '@code-quest/schemas';
 import { useSyncExternalStore } from 'react';
 import { toast } from 'sonner';
 import { AuthDialog } from '@/components/settings/AuthDialog';

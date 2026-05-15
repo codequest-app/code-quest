@@ -5,7 +5,7 @@ import type {
   ProjectsListResponse,
   ProjectsRemoveResponse,
   ProjectsUpdateResponse,
-} from '@code-quest/shared';
+} from '@code-quest/schemas';
 import { segments as s } from '@code-quest/summoner/test';
 import type { Container } from 'inversify';
 import { describe, expect, it } from 'vitest';

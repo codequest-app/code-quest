@@ -6,14 +6,14 @@ import type {
   SessionStatesPayload,
   SessionSummary,
   TeleportSessionResponse,
-} from '@code-quest/shared';
+} from '@code-quest/schemas';
 import {
   EVENTS,
   sessionCreatedPayloadSchema,
   sessionDeadPayloadSchema,
   sessionResumeResponseSchema,
   sessionStatesPayloadSchema,
-} from '@code-quest/shared';
+} from '@code-quest/schemas';
 import {
   createContext,
   type ReactNode,

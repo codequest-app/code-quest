@@ -1,4 +1,4 @@
-import type { RpcResult } from '@code-quest/shared';
+import type { RpcResult } from '@code-quest/schemas';
 import { segments as s } from '@code-quest/summoner/test';
 import { createFakeServer, createFakeSummoner, createTestContainer } from '../test/index.ts';
 import { TYPES } from '../types.ts';

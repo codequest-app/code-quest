@@ -1,4 +1,4 @@
-import { EVENTS, sessionLaunchResponseSchema } from '@code-quest/shared';
+import { EVENTS, sessionLaunchResponseSchema } from '@code-quest/schemas';
 import { type ReactNode, useEffect, useRef, useState } from 'react';
 import { SpinnerVerb } from '@/components/chat/SpinnerVerb';
 import { EmptyState } from '@/components/ui/EmptyState';

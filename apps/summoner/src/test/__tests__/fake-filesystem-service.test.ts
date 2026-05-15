@@ -1,4 +1,4 @@
-import { PathOutsideRootsError } from '@code-quest/shared';
+import { PathOutsideRootsError } from '@code-quest/schemas';
 import { describe, expect, it } from 'vitest';
 import { FakeFilesystemService } from '../fake-filesystem-service.ts';
 

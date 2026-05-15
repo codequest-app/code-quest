@@ -1,6 +1,6 @@
 import { realpath } from 'node:fs/promises';
 import { isAbsolute, relative, resolve } from 'node:path';
-import type { RootGuard } from '@code-quest/shared';
+import type { RootGuard } from '@code-quest/schemas';
 
 export class LocalRootGuard implements RootGuard {
   private readonly resolvedRoots: readonly string[];

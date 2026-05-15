@@ -1,5 +1,5 @@
-import type { ClientMessage } from '@code-quest/shared';
-import { modelUsageEntrySchema } from '@code-quest/shared';
+import type { ClientMessage } from '@code-quest/schemas';
+import { modelUsageEntrySchema } from '@code-quest/schemas';
 import { z } from 'zod';
 import type { resultSchema } from '../schemas.ts';
 

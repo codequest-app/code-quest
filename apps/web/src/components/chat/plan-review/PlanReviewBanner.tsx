@@ -2,8 +2,8 @@ import type {
   ControlPermissionResponse,
   PendingControl,
   PlanCommentData,
-} from '@code-quest/shared';
-import { planInputSchema } from '@code-quest/shared';
+} from '@code-quest/schemas';
+import { planInputSchema } from '@code-quest/schemas';
 import { ClipboardDocumentListIcon } from '@heroicons/react/24/outline';
 import { useEffect, useMemo, useRef, useState } from 'react';
 import { FloatingCard } from '@/components/chat/ui/FloatingCard';

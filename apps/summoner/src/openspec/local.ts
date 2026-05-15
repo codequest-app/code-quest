@@ -10,7 +10,7 @@ import type {
   OpenspecSpecSummary,
   OpenspecToggleTaskResult,
   ProcessProvider,
-} from '@code-quest/shared';
+} from '@code-quest/schemas';
 import { z } from 'zod';
 import { errorCode } from '../utils.ts';
 import type { OpenspecArchiveOptions, OpenspecService } from './types.ts';

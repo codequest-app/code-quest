@@ -3,7 +3,7 @@ import {
   isRecord,
   type ProjectsRemovedEvent,
   type Project as ServerProject,
-} from '@code-quest/shared';
+} from '@code-quest/schemas';
 import { createContext, type ReactNode, useContext, useEffect, useRef, useState } from 'react';
 import { toast } from 'sonner';
 import { useSocket } from './SocketContext.tsx';

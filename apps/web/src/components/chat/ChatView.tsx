@@ -1,4 +1,4 @@
-import type { SessionSummary } from '@code-quest/shared';
+import type { SessionSummary } from '@code-quest/schemas';
 import { RectangleGroupIcon } from '@heroicons/react/24/outline';
 import { useCallback } from 'react';
 import { useHotkeys } from 'react-hotkeys-hook';

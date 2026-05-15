@@ -5,7 +5,7 @@ import type {
   EnableJupyterMcpResponse,
   EnsureChromeMcpResponse,
   RpcResult,
-} from '@code-quest/shared';
+} from '@code-quest/schemas';
 import { segments as s } from '@code-quest/summoner/test';
 import { createFakeSummoner } from '../test/index.ts';
 

@@ -1,0 +1,23 @@
+{
+  "name": "@code-quest/schemas",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "description": "Code Quest shared type contracts, Zod schemas, and service interfaces",
+  "exports": {
+    ".": "./src/index.ts"
+  },
+  "scripts": {
+    "test": "vitest run",
+    "test:watch": "vitest",
+    "lint": "biome check src"
+  },
+  "dependencies": {
+    "zod": "^4.4.3"
+  },
+  "devDependencies": {
+    "@types/node": "^22.15.3",
+    "typescript": "6.0.3",
+    "vitest": "^4.1.6"
+  }
+}

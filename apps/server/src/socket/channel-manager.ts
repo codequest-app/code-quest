@@ -1,12 +1,11 @@
 import { resolve } from 'node:path';
-import type { ProviderClientConfig } from '@code-quest/shared';
+import type { ProviderClientConfig, TypedSocket } from '@code-quest/schemas';
 import {
   type ControlResponse,
   EVENTS,
   type SessionBroadcastState,
   type WorktreeInfo,
-} from '@code-quest/shared';
-import type { TypedSocket } from '@code-quest/shared/node';
+} from '@code-quest/schemas';
 import type { LaunchOptions, ProviderAdapter, Unsubscribe } from '@code-quest/summoner';
 import { logger } from '../logger.ts';
 import type { RunnerFactory } from '../types.ts';

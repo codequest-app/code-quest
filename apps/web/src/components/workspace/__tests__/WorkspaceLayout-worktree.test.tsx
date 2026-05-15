@@ -1,5 +1,5 @@
+import type { CreateWorktreeResponse } from '@code-quest/schemas';
 import { createFakeServer, createTestContainer } from '@code-quest/server/test';
-import type { CreateWorktreeResponse } from '@code-quest/shared';
 import { FakeGitService } from '@code-quest/summoner/test';
 import { act, screen, waitFor } from '@testing-library/react';
 import { describe, expect, it } from 'vitest';

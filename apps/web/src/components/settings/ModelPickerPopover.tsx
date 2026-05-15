@@ -1,4 +1,4 @@
-import type { ModelInfo } from '@code-quest/shared';
+import type { ModelInfo } from '@code-quest/schemas';
 import { useEffect, useRef } from 'react';
 import { cn } from '@/utils/cn';
 import { getModelDisplayInfo, getModelInfoDisplayName } from '@/utils/model-utils';

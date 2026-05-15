@@ -9,7 +9,7 @@ import {
   type UsageQuota,
   usageQuotaSchema,
   worktreeInfoSchema,
-} from '@code-quest/shared';
+} from '@code-quest/schemas';
 import { toast } from 'sonner';
 import type { TypedSocket } from '@/socket/client';
 import { channelEmit, rpc } from '@/socket/rpc';

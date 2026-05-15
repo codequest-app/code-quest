@@ -1,4 +1,4 @@
-import type { ControlPermissionResponse, PendingControl } from '@code-quest/shared';
+import type { ControlPermissionResponse, PendingControl } from '@code-quest/schemas';
 import { FloatingCard } from '@/components/chat/ui/FloatingCard';
 import { OptionButton } from '../ui/OptionButton';
 

@@ -1,4 +1,4 @@
-import { Pipeline, type PipelineContext } from '@code-quest/shared/node';
+import { Pipeline, type PipelineContext } from '@code-quest/transport';
 import { describe, expect, it } from 'vitest';
 
 describe('Pipeline', () => {

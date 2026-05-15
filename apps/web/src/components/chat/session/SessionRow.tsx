@@ -1,4 +1,4 @@
-import type { Ack, SessionSummary } from '@code-quest/shared';
+import type { Ack, SessionSummary } from '@code-quest/schemas';
 import { useEffect, useRef, useState } from 'react';
 import { toast } from 'sonner';
 import { HighlightText } from '@/components/chat/ui/HighlightText';

@@ -1,4 +1,4 @@
-import { EVENTS, type SessionStateSummary } from '@code-quest/shared';
+import { EVENTS, type SessionStateSummary } from '@code-quest/schemas';
 import { AppInitProvider } from '../contexts/AppInitContext.tsx';
 import { FsProvider } from '../contexts/FsContext.tsx';
 import { GitProvider } from '../contexts/GitContext.tsx';

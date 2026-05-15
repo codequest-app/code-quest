@@ -1,4 +1,4 @@
-import type { GitService } from '@code-quest/shared';
+import type { AgentTransport, GitService } from '@code-quest/schemas';
 import {
   gitAddParamsSchema,
   gitArchiveWorktreeParamsSchema,
@@ -14,8 +14,7 @@ import {
   gitLogParamsSchema,
   gitRenameWorktreeParamsSchema,
   REMOTE_METHODS,
-} from '@code-quest/shared';
-import type { AgentTransport } from '@code-quest/shared/node';
+} from '@code-quest/schemas';
 
 function parseCwd(p: unknown): string {
   return gitCwdParamsSchema.parse(p).cwd;

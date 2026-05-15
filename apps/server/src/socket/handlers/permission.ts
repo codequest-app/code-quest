@@ -4,7 +4,7 @@ import {
   EVENTS,
   permissionPayloadSchema,
   requestIdPayloadSchema,
-} from '@code-quest/shared';
+} from '@code-quest/schemas';
 import { logger } from '../../logger.ts';
 import type { HandlerContext } from '../../types.ts';
 import type { Channel } from '../channel.ts';

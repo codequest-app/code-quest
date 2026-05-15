@@ -1,7 +1,6 @@
 import { createServer, type Server as HttpServer } from 'node:http';
 import type { AddressInfo } from 'node:net';
-import type { Envelope } from '@code-quest/shared';
-import { RpcChannel, toRpcSocket } from '@code-quest/shared/node';
+import { type Envelope, RpcChannel, toRpcSocket } from '@code-quest/transport';
 import { afterEach, beforeEach, describe, expect, it } from 'vitest';
 import { WebSocket, WebSocketServer } from 'ws';
 import { Agent } from '../../connection/agent.ts';

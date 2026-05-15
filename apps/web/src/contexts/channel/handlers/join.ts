@@ -1,4 +1,4 @@
-import { sessionJoinResponseSchema } from '@code-quest/shared';
+import { sessionJoinResponseSchema } from '@code-quest/schemas';
 
 export function parseJoinResponse(
   raw: unknown,

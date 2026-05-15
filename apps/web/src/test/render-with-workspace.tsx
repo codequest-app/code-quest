@@ -1,6 +1,6 @@
 /* biome-ignore-all lint/suspicious/noExplicitAny: test harness */
 
-import { EVENTS } from '@code-quest/shared';
+import { EVENTS } from '@code-quest/schemas';
 import type { FakeClaude } from '@code-quest/summoner/test';
 import { act, render, screen, within } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';

@@ -1,5 +1,5 @@
 import type { SpawnOptions } from 'node:child_process';
-import type { ProcessHandle, ProcessProvider, ProcessRunResult } from '@code-quest/shared';
+import type { ProcessHandle, ProcessProvider, ProcessRunResult } from '@code-quest/schemas';
 import type { z } from 'zod';
 import type { controlRequestSchema, userSchema } from '../claude/schemas.ts';
 

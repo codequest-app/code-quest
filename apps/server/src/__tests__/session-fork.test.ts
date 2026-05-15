@@ -2,7 +2,7 @@ import type {
   ForkConversationResponse,
   GetSessionResponse,
   TeleportSessionResponse,
-} from '@code-quest/shared';
+} from '@code-quest/schemas';
 import { segments as s } from '@code-quest/summoner/test';
 import type { RawEventService } from '../services/raw-event-service.ts';
 import type { SessionStore } from '../services/session-store.ts';

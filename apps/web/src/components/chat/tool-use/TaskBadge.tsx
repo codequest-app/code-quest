@@ -1,4 +1,4 @@
-import type { TaskType } from '@code-quest/shared';
+import type { TaskType } from '@code-quest/schemas';
 import { Badge } from '@/components/ui/Badge';
 import type { Task } from '@/types/task';
 import { AGENT_TOOLS } from '@/utils/tool-utils';

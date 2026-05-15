@@ -1,10 +1,6 @@
 import type { Server as HttpServer } from 'node:http';
-import type {
-  Authenticator,
-  Transport,
-  TransportHandle,
-  TypedSocket,
-} from '@code-quest/shared/node';
+import type { Transport, TransportHandle, TypedSocket } from '@code-quest/schemas';
+import type { Authenticator } from '@code-quest/transport';
 import { Server } from 'socket.io';
 import { logger } from '../logger.ts';
 

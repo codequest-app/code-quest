@@ -1,4 +1,4 @@
-import type { Question } from '@code-quest/shared';
+import type { Question } from '@code-quest/schemas';
 import { useRef, useState } from 'react';
 import { TextField } from '@/components/chat/ui/TextField';
 import { CheckMark } from '@/components/ui/Icons';

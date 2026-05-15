@@ -1,4 +1,4 @@
-import type { SessionStateSummary } from '@code-quest/shared';
+import type { SessionStateSummary } from '@code-quest/schemas';
 import { Bars3Icon, Cog6ToothIcon, MagnifyingGlassIcon } from '@heroicons/react/24/outline';
 import type { ReactNode } from 'react';
 import { cn } from '@/utils/cn';

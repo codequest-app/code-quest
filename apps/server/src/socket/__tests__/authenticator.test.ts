@@ -1,5 +1,5 @@
 import type { IncomingMessage } from 'node:http';
-import { type Authenticator, NullAuthenticator } from '@code-quest/shared/node';
+import { type Authenticator, NullAuthenticator } from '@code-quest/transport';
 import { describe, expect, it } from 'vitest';
 import { TokenAuthenticator } from '../token-authenticator.ts';
 

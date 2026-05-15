@@ -1,4 +1,4 @@
-import type { UsageQuota, UsageQuotaTier } from '@code-quest/shared';
+import type { UsageQuota, UsageQuotaTier } from '@code-quest/schemas';
 import { injectable } from 'inversify';
 
 const KNOWN_TIERS = ['five_hour', 'seven_day', 'seven_day_sonnet'] as const;

@@ -1,4 +1,4 @@
-import type { SessionSummary } from '@code-quest/shared';
+import type { SessionSummary } from '@code-quest/schemas';
 
 type ResumeRoute =
   | { type: 'replace'; oldChannelId: string; newChannelId: string }

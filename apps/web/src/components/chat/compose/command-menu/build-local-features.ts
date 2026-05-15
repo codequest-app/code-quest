@@ -1,4 +1,4 @@
-import type { EffortLevel } from '@code-quest/shared';
+import type { EffortLevel } from '@code-quest/schemas';
 import { createAttachFileFeature } from '@/features/attach-file/attach-file-feature';
 import { createBtwLocalFeature } from '@/features/btw/btw-feature';
 import { createEffortFeature } from '@/features/effort/effort-feature';

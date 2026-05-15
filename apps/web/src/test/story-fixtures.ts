@@ -1,4 +1,4 @@
-import type { PendingControl, SessionStateSummary } from '@code-quest/shared';
+import type { PendingControl, SessionStateSummary } from '@code-quest/schemas';
 import { segments } from '@code-quest/summoner/test-browser';
 import type { ChannelState } from '../types/chat.ts';
 import type { Message } from '../types/ui.ts';

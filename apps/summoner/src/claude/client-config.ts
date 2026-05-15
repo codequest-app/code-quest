@@ -1,4 +1,4 @@
-import { type ProviderClientConfig, providerClientConfigSchema } from '@code-quest/shared';
+import { type ProviderClientConfig, providerClientConfigSchema } from '@code-quest/schemas';
 
 /**
  * Claude-specific ProviderClientConfig: branding, permission modes, auth methods,

@@ -1,4 +1,4 @@
-import { EVENTS } from '@code-quest/shared';
+import { EVENTS } from '@code-quest/schemas';
 import { toast } from 'sonner';
 import { showNotificationToast } from '@/components/chat/ui/NotificationToast';
 import type { TypedSocket } from '@/socket/client';

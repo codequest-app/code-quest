@@ -1,4 +1,4 @@
-import type { AvailablePlugin, MarketplaceInfo, PluginInfo } from '@code-quest/shared';
+import type { AvailablePlugin, MarketplaceInfo, PluginInfo } from '@code-quest/schemas';
 import { useState } from 'react';
 import { InlineAction } from '@/components/chat/ui/InlineAction';
 import { useChannelConfig } from '@/contexts/channel';

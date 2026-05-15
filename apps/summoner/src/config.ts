@@ -1,5 +1,5 @@
-import { parseFsRoots } from '@code-quest/shared';
-import { type LogConfig, parseLogConfig } from '@code-quest/shared/node';
+import { type LogConfig, parseLogConfig } from '@code-quest/node-utils';
+import { parseFsRoots } from '@code-quest/schemas';
 
 type Env = Record<string, string | undefined>;
 

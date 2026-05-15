@@ -5,7 +5,7 @@ import {
   type FontSize,
   type PreferencesState as PersistedPreferences,
   preferencesStateSchema,
-} from '@code-quest/shared';
+} from '@code-quest/schemas';
 import { create, type Mutate, type StoreApi, type UseBoundStore } from 'zustand';
 import { persist } from 'zustand/middleware';
 import { localStoragePersist } from './persistStorage.ts';

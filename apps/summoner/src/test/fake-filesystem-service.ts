@@ -7,8 +7,8 @@ import type {
   ReadFileAbsoluteResult,
   ReadFileResult,
   WriteFileResult,
-} from '@code-quest/shared';
-import { PathOutsideRootsError, type RootGuard } from '@code-quest/shared';
+} from '@code-quest/schemas';
+import { PathOutsideRootsError, type RootGuard } from '@code-quest/schemas';
 import { mimeForPath } from '../filesystem/mime-types.ts';
 
 export type FileTree = { [name: string]: string | FileTree };

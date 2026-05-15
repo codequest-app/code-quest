@@ -4,8 +4,8 @@ import type {
   WorktreeBranchChangedEvent,
   WorktreeInfo,
   WorktreeRemovedEvent,
-} from '@code-quest/shared';
-import { EVENTS, gitStatusByCwdResultSchema } from '@code-quest/shared';
+} from '@code-quest/schemas';
+import { EVENTS, gitStatusByCwdResultSchema } from '@code-quest/schemas';
 import {
   createContext,
   type ReactNode,

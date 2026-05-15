@@ -4,7 +4,7 @@ import {
   type OpenspecKind,
   openspecArtifactKindSchema,
   openspecReadResultSchema,
-} from '@code-quest/shared';
+} from '@code-quest/schemas';
 import * as Tabs from '@radix-ui/react-tabs';
 import { useEffect, useState } from 'react';
 import { toast } from 'sonner';

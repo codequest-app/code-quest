@@ -1,4 +1,4 @@
-import type { PluginReloadResult } from '@code-quest/shared';
+import type { PluginReloadResult } from '@code-quest/schemas';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 import { createReloadPluginsFeature } from '../reload-plugins-feature.ts';
 

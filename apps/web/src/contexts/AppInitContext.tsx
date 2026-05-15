@@ -1,4 +1,4 @@
-import { EVENTS, type InitResponse, initResponseSchema } from '@code-quest/shared';
+import { EVENTS, type InitResponse, initResponseSchema } from '@code-quest/schemas';
 import {
   createContext,
   type ReactNode,

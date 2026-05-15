@@ -6,7 +6,7 @@ import {
   type UsageQuotaTier,
   usageQuotaSchema,
   usageQuotaTierSchema,
-} from '@code-quest/shared';
+} from '@code-quest/schemas';
 
 interface ModelDisplayInfo {
   displayName: string;

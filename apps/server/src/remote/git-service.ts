@@ -11,7 +11,7 @@ import type {
   GitService,
   GitStatusResult,
   WorktreeInfo,
-} from '@code-quest/shared';
+} from '@code-quest/schemas';
 import {
   fsMutationResultSchema,
   gitAddResultSchema,
@@ -29,7 +29,7 @@ import {
   gitWorktreeListSchema,
   REMOTE_METHODS,
   worktreeInfoSchema,
-} from '@code-quest/shared';
+} from '@code-quest/schemas';
 import type { RemoteRpc } from './types.ts';
 
 export class RemoteGitService implements GitService {

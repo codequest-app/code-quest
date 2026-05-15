@@ -1,4 +1,4 @@
-import type { SessionSummary } from '@code-quest/shared';
+import type { SessionSummary } from '@code-quest/schemas';
 import { describe, expect, it } from 'vitest';
 import { resumeRoute } from '../resume-route.ts';
 

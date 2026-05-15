@@ -1,3 +1,4 @@
+import type { SocketCallback, TypedSocket } from '@code-quest/schemas';
 import {
   type ControlRespondPayload,
   cancelRequestPayloadSchema,
@@ -12,9 +13,8 @@ import {
   controlGenerateTitleResponseSchema,
   controlRespondPayloadSchema,
   EVENTS,
-} from '@code-quest/shared';
-import type { SocketCallback, TypedSocket } from '@code-quest/shared/node';
-import { errMsg } from '@code-quest/shared/node';
+  errMsg,
+} from '@code-quest/schemas';
 import { logger } from '../../logger.ts';
 import type { HandlerContext } from '../../types.ts';
 import type { Channel } from '../channel.ts';

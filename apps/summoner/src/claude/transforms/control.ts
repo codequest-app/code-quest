@@ -1,4 +1,8 @@
-import type { ClientMessage, ElicitationInputType, NotificationSeverity } from '@code-quest/shared';
+import type {
+  ClientMessage,
+  ElicitationInputType,
+  NotificationSeverity,
+} from '@code-quest/schemas';
 import type { z } from 'zod';
 import type { AdapterOutput } from '../../types.ts';
 import { asRecord, asString, isRecord } from '../../utils.ts';

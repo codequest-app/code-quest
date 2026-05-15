@@ -1,4 +1,4 @@
-import type { EffectiveColorTheme } from '@code-quest/shared';
+import type { EffectiveColorTheme } from '@code-quest/schemas';
 import { useSyncExternalStore } from 'react';
 import { usePreferencesStore } from '../stores/usePreferencesStore.ts';
 

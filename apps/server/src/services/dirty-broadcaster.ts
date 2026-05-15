@@ -1,4 +1,4 @@
-import { TopicEmitter } from '@code-quest/shared';
+import { TopicEmitter } from '@code-quest/schemas';
 import type { Unsubscribe, WatchEvent, WatchService } from '@code-quest/summoner';
 
 const DEBOUNCE_MS = 200;

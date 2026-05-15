@@ -1,4 +1,4 @@
-import type { Ack, RpcResult } from '@code-quest/shared';
+import type { Ack, RpcResult } from '@code-quest/schemas';
 import { segments as s } from '@code-quest/summoner/test';
 import { createFakeSummoner } from '../test/index.ts';
 

@@ -1,4 +1,4 @@
-import type { ControlResponse } from '@code-quest/shared';
+import type { ControlResponse } from '@code-quest/schemas';
 import type { ResolvedControlResponse } from '@code-quest/summoner';
 import { logger } from '../logger.ts';
 import type { RequestMeta } from './schemas.ts';

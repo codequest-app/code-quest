@@ -1,4 +1,4 @@
-import type { Ack, McpServerInfo, McpTool, RpcResult } from '@code-quest/shared';
+import type { Ack, McpServerInfo, McpTool, RpcResult } from '@code-quest/schemas';
 import { useState } from 'react';
 import { InlineAction } from '@/components/chat/ui/InlineAction';
 import { TextField } from '@/components/chat/ui/TextField';

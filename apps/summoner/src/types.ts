@@ -2,7 +2,7 @@ import type {
   ClientMessage,
   ProviderClientConfig,
   ResolvedControlResponse,
-} from '@code-quest/shared';
+} from '@code-quest/schemas';
 import { z } from 'zod';
 
 // --- Raw entry for recording ---

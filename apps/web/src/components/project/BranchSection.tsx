@@ -1,4 +1,4 @@
-import type { GitStatusResult } from '@code-quest/shared';
+import type { GitStatusResult } from '@code-quest/schemas';
 import { InlineAction } from '@/components/chat/ui/InlineAction';
 import { SectionLabel } from '../ui/SectionLabel.tsx';
 import { BranchPopover } from './BranchPopover.tsx';

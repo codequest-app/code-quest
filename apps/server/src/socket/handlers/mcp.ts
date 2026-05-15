@@ -1,6 +1,8 @@
+import type { SocketCallback, TypedSocket } from '@code-quest/schemas';
 import {
   channelIdPayloadSchema,
   EVENTS,
+  errMsg,
   mcpAuthenticatePayloadSchema,
   mcpGetServersPayloadSchema,
   mcpMessagePayloadSchema,
@@ -9,9 +11,7 @@ import {
   mcpReconnectPayloadSchema,
   mcpSetEnabledPayloadSchema,
   mcpSetServersPayloadSchema,
-} from '@code-quest/shared';
-import type { SocketCallback, TypedSocket } from '@code-quest/shared/node';
-import { errMsg } from '@code-quest/shared/node';
+} from '@code-quest/schemas';
 import type { z } from 'zod';
 import { logger } from '../../logger.ts';
 import type { HandlerContext } from '../../types.ts';

@@ -1,12 +1,12 @@
 import { createServer, type Server as HttpServer } from 'node:http';
 import type { AddressInfo } from 'node:net';
-import { RpcChannel, type RpcChannelSocket } from '@code-quest/shared/node';
 import { Agent } from '@code-quest/summoner/connection';
 import {
   FakeFilesystemService,
   FakeGitService,
   FakeProcessProvider,
 } from '@code-quest/summoner/test';
+import { RpcChannel, type RpcChannelSocket } from '@code-quest/transport';
 import { afterEach, beforeEach, describe, expect, it } from 'vitest';
 import { WebSocket, WebSocketServer } from 'ws';
 import { RemoteFilesystemService } from '../remote/filesystem-service.ts';

@@ -1,4 +1,4 @@
-import type { FsBrowseResponse } from '@code-quest/shared';
+import type { FsBrowseResponse } from '@code-quest/schemas';
 import { FakeClaude, segments as s } from '@code-quest/summoner/test';
 import { describe, expect, it } from 'vitest';
 import { createFakeServer, createFakeSummoner, createTestContainer } from '../test/index.ts';

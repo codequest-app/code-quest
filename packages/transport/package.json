@@ -1,0 +1,25 @@
+{
+  "name": "@code-quest/transport",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "description": "Code Quest isomorphic network transport (WebSocket, resumable socket, pipeline)",
+  "exports": {
+    ".": "./src/index.ts"
+  },
+  "scripts": {
+    "test": "vitest run --passWithNoTests",
+    "test:watch": "vitest",
+    "lint": "biome check src"
+  },
+  "dependencies": {
+    "@code-quest/schemas": "workspace:*",
+    "ws": "^8.20.1",
+    "zod": "^4.4.3"
+  },
+  "devDependencies": {
+    "@types/ws": "^8.18.1",
+    "typescript": "6.0.3",
+    "vitest": "^4.1.6"
+  }
+}

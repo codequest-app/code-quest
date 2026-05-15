@@ -1,4 +1,4 @@
-import type { SessionStateSummary } from '@code-quest/shared';
+import type { SessionStateSummary } from '@code-quest/schemas';
 import { render, screen } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import type { ReactElement } from 'react';

@@ -1,7 +1,9 @@
+import type { SocketCallback, TypedSocket } from '@code-quest/schemas';
 import {
   addMarketplacePayloadSchema,
   availablePluginSchema,
   EVENTS,
+  errMsg,
   listPluginsPayloadSchema,
   type MarketplaceRawItem,
   type MarketplaceSourceConfig,
@@ -12,9 +14,7 @@ import {
   pluginUninstallPayloadSchema,
   refreshMarketplacePayloadSchema,
   removeMarketplacePayloadSchema,
-} from '@code-quest/shared';
-import type { SocketCallback, TypedSocket } from '@code-quest/shared/node';
-import { errMsg } from '@code-quest/shared/node';
+} from '@code-quest/schemas';
 import type { PluginCliService } from '@code-quest/summoner';
 import { z } from 'zod';
 import { logger } from '../../logger.ts';

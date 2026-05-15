@@ -1,6 +1,6 @@
 import { join } from 'node:path';
-import type { DirectoryEntry } from '@code-quest/shared';
-import { PathOutsideRootsError } from '@code-quest/shared';
+import type { DirectoryEntry } from '@code-quest/schemas';
+import { PathOutsideRootsError } from '@code-quest/schemas';
 import { vol } from 'memfs';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { FakeWatchService } from '../../test/fake-watch-service.ts';

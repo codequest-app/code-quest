@@ -1,4 +1,4 @@
-import type { FilesystemService } from '@code-quest/shared';
+import type { AgentTransport, FilesystemService } from '@code-quest/schemas';
 import {
   fsBrowseDirectoriesParamsSchema,
   fsBrowseEntriesParamsSchema,
@@ -15,8 +15,7 @@ import {
   fsStatKindParamsSchema,
   fsWriteFileAbsoluteParamsSchema,
   REMOTE_METHODS,
-} from '@code-quest/shared';
-import type { AgentTransport } from '@code-quest/shared/node';
+} from '@code-quest/schemas';
 
 export function registerFsHandlers(rpc: AgentTransport, fs: FilesystemService): void {
   rpc.onRequest(REMOTE_METHODS.fs.browseDirectories, async (params) => {

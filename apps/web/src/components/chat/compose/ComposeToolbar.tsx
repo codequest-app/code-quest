@@ -4,7 +4,7 @@ import {
   mcpServerInfoSchema,
   type PermissionMode,
   toPermissionMode,
-} from '@code-quest/shared';
+} from '@code-quest/schemas';
 import * as Popover from '@radix-ui/react-popover';
 import { useState, useSyncExternalStore } from 'react';
 import { z } from 'zod';

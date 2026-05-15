@@ -1,4 +1,4 @@
-import type { MarketplaceInfo } from '@code-quest/shared';
+import type { MarketplaceInfo } from '@code-quest/schemas';
 import { TextField } from '@/components/chat/ui/TextField';
 import { Button } from '../ui/Button.tsx';
 import { BorderedIconButton, RefreshIcon, TrashIcon } from '../ui/Icons.tsx';

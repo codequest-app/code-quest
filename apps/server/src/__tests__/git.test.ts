@@ -1,6 +1,6 @@
 /* biome-ignore-all lint/suspicious/noExplicitAny: test file uses type assertions */
 
-import type { Ack } from '@code-quest/shared';
+import type { Ack } from '@code-quest/schemas';
 import { segments as s } from '@code-quest/summoner/test';
 import { createFakeSummoner } from '../test/index.ts';
 

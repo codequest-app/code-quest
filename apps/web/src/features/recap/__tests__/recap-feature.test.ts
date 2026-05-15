@@ -1,4 +1,4 @@
-import type { RpcResult, SideQuestionResult } from '@code-quest/shared';
+import type { RpcResult, SideQuestionResult } from '@code-quest/schemas';
 import { describe, expect, it, vi } from 'vitest';
 import type { msg } from '@/utils/message';
 import { createRecapFeature, RECAP_PROMPT } from '../recap-feature.ts';

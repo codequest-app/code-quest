@@ -1,4 +1,4 @@
-import type { ClientMessage, ContentBlock } from '@code-quest/shared';
+import type { ClientMessage, ContentBlock } from '@code-quest/schemas';
 import type { z } from 'zod';
 import { asString } from '../../utils.ts';
 import type { userSchema } from '../schemas.ts';
@@ -39,7 +39,7 @@ export function transformUser(raw: UserMessage): ClientMessage | null {
 
   const uuid = typeof raw.uuid === 'string' ? raw.uuid : undefined;
   const history = raw.isSynthetic !== true && !parentToolUseId;
-  const renderAs = raw.isSynthetic === true || !!parentToolUseId ? 'markdown' : 'plain';
+  const renderAs = raw.isSynthetic === true || parentToolUseId ? 'markdown' : 'plain';
   return {
     name: 'message:user',
     payload: { ...buildMessagePayload(blocks, parentToolUseId, uuid), history, renderAs },

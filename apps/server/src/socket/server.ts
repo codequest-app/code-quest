@@ -1,4 +1,4 @@
-import type { TransportHandle } from '@code-quest/shared/node';
+import type { TransportHandle } from '@code-quest/schemas';
 import type {
   DiffFileService,
   FilesystemService,

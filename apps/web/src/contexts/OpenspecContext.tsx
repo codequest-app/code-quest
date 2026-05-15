@@ -9,7 +9,7 @@ import {
   openspecDirtyEventSchema,
   openspecListResultSchema,
   openspecToggleTaskResultSchema,
-} from '@code-quest/shared';
+} from '@code-quest/schemas';
 import {
   createContext,
   type ReactNode,

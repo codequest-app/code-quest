@@ -1,4 +1,4 @@
-import type { PendingControl } from '@code-quest/shared';
+import type { PendingControl } from '@code-quest/schemas';
 import type { Meta, StoryObj } from '@storybook/react-vite';
 import { ChatView } from '../components/chat/ChatView.tsx';
 import { expectTextbox, SCENARIO_CLASS, withStoryChannel } from '../test/story-decorator.tsx';

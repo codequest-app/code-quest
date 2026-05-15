@@ -5,7 +5,7 @@ import type {
   GitService,
   GitStatusResult,
   WorktreeInfo,
-} from '@code-quest/shared';
+} from '@code-quest/schemas';
 import { GitCommands } from './commands.ts';
 import { GitWorktreeOps } from './worktree.ts';
 

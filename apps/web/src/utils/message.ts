@@ -1,4 +1,4 @@
-import type { ChatStats, SessionStats } from '@code-quest/shared';
+import type { ChatStats, SessionStats } from '@code-quest/schemas';
 import type { ChannelState } from '../types/chat.ts';
 import type { Message } from '../types/ui.ts';
 

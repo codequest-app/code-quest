@@ -1,4 +1,4 @@
-import type { ServerToClientEvents } from '@code-quest/shared';
+import type { ServerToClientEvents } from '@code-quest/schemas';
 
 /** Extract payload type from a ServerToClientEvents event. */
 export type Payload<E extends keyof ServerToClientEvents> = Parameters<ServerToClientEvents[E]>[0];

@@ -1,4 +1,4 @@
-import type { RpcResult } from '@code-quest/shared';
+import type { RpcResult } from '@code-quest/schemas';
 import { useSyncExternalStore } from 'react';
 import type { Feature } from '@/lib/feature';
 

@@ -5,7 +5,7 @@ import type {
   MessageRole,
   RewindResult,
   RpcResult,
-} from '@code-quest/shared';
+} from '@code-quest/schemas';
 
 export type SessionStatus =
   | 'disconnected'

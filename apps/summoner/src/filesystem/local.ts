@@ -9,9 +9,8 @@ import type {
   ReadFileAbsoluteResult,
   ReadFileResult,
   WriteFileResult,
-} from '@code-quest/shared';
-import { getOrSet, PathOutsideRootsError, type RootGuard } from '@code-quest/shared';
-import { errMsg } from '@code-quest/shared/node';
+} from '@code-quest/schemas';
+import { errMsg, getOrSet, PathOutsideRootsError, type RootGuard } from '@code-quest/schemas';
 import Fuse from 'fuse.js';
 import { glob } from 'glob';
 import type { Unsubscribe, WatchService } from '../fs-watch/types.ts';

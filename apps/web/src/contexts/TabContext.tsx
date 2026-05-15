@@ -1,4 +1,4 @@
-import type { SessionStateSummary } from '@code-quest/shared';
+import type { SessionStateSummary } from '@code-quest/schemas';
 import { createContext, type ReactNode, useContext, useEffect, useRef, useState } from 'react';
 import type { SessionStatus } from '../types/ui.ts';
 import type { SessionMode } from './channel/ChannelContext.tsx';

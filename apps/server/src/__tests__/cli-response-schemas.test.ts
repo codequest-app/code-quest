@@ -1,4 +1,4 @@
-import { controlAuthenticateResponseSchema, controlInitResponseSchema } from '@code-quest/shared';
+import { controlAuthenticateResponseSchema, controlInitResponseSchema } from '@code-quest/schemas';
 import { describe, expect, it } from 'vitest';
 
 describe('control response schemas', () => {

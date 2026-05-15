@@ -1,4 +1,4 @@
-import type { ClientMessage, ContentBlock } from '@code-quest/shared';
+import type { ClientMessage, ContentBlock } from '@code-quest/schemas';
 import type { z } from 'zod';
 import { asString } from '../../utils.ts';
 import type { assistantSchema } from '../schemas.ts';

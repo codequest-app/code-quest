@@ -1,4 +1,4 @@
-import type { ContentBlock } from '@code-quest/shared';
+import type { ContentBlock } from '@code-quest/schemas';
 import type { ChannelState } from '@/types/chat';
 import type { AssistantTurn, Block } from '@/types/ui';
 import { addMessage } from '@/utils/message';

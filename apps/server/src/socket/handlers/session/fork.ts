@@ -1,11 +1,11 @@
+import type { SocketCallback, TypedSocket } from '@code-quest/schemas';
 import {
   EVENTS,
+  errMsg,
   gitUpdateSkippedBranchPayloadSchema,
   sessionForkPayloadSchema,
   sessionTeleportPayloadSchema,
-} from '@code-quest/shared';
-import type { SocketCallback, TypedSocket } from '@code-quest/shared/node';
-import { errMsg } from '@code-quest/shared/node';
+} from '@code-quest/schemas';
 import type { RawEvent } from '@code-quest/summoner';
 import { logger } from '../../../logger.ts';
 import type { HandlerContext } from '../../../types.ts';

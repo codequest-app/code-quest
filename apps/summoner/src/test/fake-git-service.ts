@@ -5,7 +5,7 @@ import type {
   GitService,
   GitStatusResult,
   WorktreeInfo,
-} from '@code-quest/shared';
+} from '@code-quest/schemas';
 import { AlreadyRepoError, NotARepoError } from '../git/errors.ts';
 
 export class FakeGitService implements GitService {

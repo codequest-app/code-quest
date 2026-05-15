@@ -1,4 +1,4 @@
-import { isRecord } from '@code-quest/shared';
+import { isRecord } from '@code-quest/schemas';
 import { logger } from '../logger.ts';
 import type { RawEventService } from '../services/raw-event-service.ts';
 import type { Channel } from './channel.ts';

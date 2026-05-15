@@ -1,4 +1,4 @@
-import { isRecord } from '@code-quest/shared';
+import { isRecord } from '@code-quest/schemas';
 
 export { isRecord };
 

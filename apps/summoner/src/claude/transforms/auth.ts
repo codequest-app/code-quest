@@ -1,4 +1,4 @@
-import type { ClientMessage } from '@code-quest/shared';
+import type { ClientMessage } from '@code-quest/schemas';
 import type { z } from 'zod';
 import type { authStatusSchema, authUrlSchema } from '../schemas.ts';
 

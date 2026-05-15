@@ -1,4 +1,4 @@
-import { EVENTS } from '@code-quest/shared';
+import { EVENTS } from '@code-quest/schemas';
 import type { Meta, StoryObj } from '@storybook/react-vite';
 import { fn } from 'storybook/test';
 import { RawEventPanel } from './RawEventPanel.tsx';

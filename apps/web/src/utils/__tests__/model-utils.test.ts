@@ -1,4 +1,4 @@
-import type { ModelInfo } from '@code-quest/shared';
+import type { ModelInfo } from '@code-quest/schemas';
 import { describe, expect, it } from 'vitest';
 import { getModelDisplayInfo, getModelInfoDisplayName, shortModelName } from '../model-utils.ts';
 

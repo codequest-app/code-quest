@@ -6,7 +6,7 @@ import type {
   OpenspecListResult,
   OpenspecReadResult,
   OpenspecToggleTaskResult,
-} from '@code-quest/shared';
+} from '@code-quest/schemas';
 
 export interface OpenspecArchiveOptions {
   /** Skip propagating the change's delta specs into the main spec tree. */

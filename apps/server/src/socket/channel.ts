@@ -4,14 +4,14 @@ import type {
   ControlResponse,
   SessionConfig,
   WorktreeInfo,
-} from '@code-quest/shared';
+} from '@code-quest/schemas';
 import {
   errorMessageEventSchema,
   isRecord,
   sessionInitConfigSchema,
   sessionInitEventSchema,
   sessionStatusEventSchema,
-} from '@code-quest/shared';
+} from '@code-quest/schemas';
 import {
   detectWorktree,
   type ProcessRunner,

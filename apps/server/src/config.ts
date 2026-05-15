@@ -1,7 +1,7 @@
 import 'dotenv/config';
 import { randomUUID } from 'node:crypto';
-import { parseFsRoots, type ThinkingDisplay } from '@code-quest/shared';
-import { type LogConfig, parseLogConfig } from '@code-quest/shared/node';
+import { type LogConfig, parseLogConfig } from '@code-quest/node-utils';
+import { parseFsRoots, type ThinkingDisplay } from '@code-quest/schemas';
 
 type Env = Record<string, string | undefined>;
 

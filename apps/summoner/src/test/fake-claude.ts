@@ -1,6 +1,6 @@
 /* biome-ignore-all lint/suspicious/noExplicitAny: test harness uses type assertions */
 
-import type { ServerToClientEvents, SessionBroadcastState } from '@code-quest/shared';
+import type { ServerToClientEvents, SessionBroadcastState } from '@code-quest/schemas';
 import type {
   FakeProcessHandle,
   FakeProcessProvider,

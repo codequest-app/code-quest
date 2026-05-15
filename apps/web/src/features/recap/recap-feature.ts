@@ -1,4 +1,4 @@
-import type { RpcResult, SideQuestionResult } from '@code-quest/shared';
+import type { RpcResult, SideQuestionResult } from '@code-quest/schemas';
 import type { Feature } from '@/lib/feature';
 import type { msg } from '@/utils/message';
 

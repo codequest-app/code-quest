@@ -1,4 +1,5 @@
 import type {
+  AgentTransport,
   FilesystemService,
   GitService,
   ProcessExitParams,
@@ -6,14 +7,14 @@ import type {
   ProcessProvider,
   ProcessStderrParams,
   ProcessStdoutParams,
-} from '@code-quest/shared';
+} from '@code-quest/schemas';
 import {
   processKillParamsSchema,
   processSpawnParamsSchema,
   processStdinParamsSchema,
   REMOTE_METHODS,
-} from '@code-quest/shared';
-import type { AgentTransport } from '@code-quest/shared/node';
+} from '@code-quest/schemas';
+
 import { logger } from '../logger.ts';
 import { registerFsHandlers } from './fs-handlers.ts';
 import { registerGitHandlers } from './git-handlers.ts';

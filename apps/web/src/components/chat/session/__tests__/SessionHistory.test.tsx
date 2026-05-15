@@ -1,4 +1,4 @@
-import type { Ack, SessionSummary } from '@code-quest/shared';
+import type { Ack, SessionSummary } from '@code-quest/schemas';
 import { render, screen, waitFor } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { describe, expect, it, vi } from 'vitest';

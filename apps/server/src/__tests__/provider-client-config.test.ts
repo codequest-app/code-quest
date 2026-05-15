@@ -1,4 +1,4 @@
-import { providerClientConfigSchema } from '@code-quest/shared';
+import { providerClientConfigSchema } from '@code-quest/schemas';
 import { describe, expect, it } from 'vitest';
 
 describe('providerClientConfigSchema', () => {

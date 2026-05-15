@@ -1,4 +1,4 @@
-import type { ServerToClientEvents } from '@code-quest/shared';
+import type { ServerToClientEvents } from '@code-quest/schemas';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 import { ChannelSocketRouter, type SubscriptionAdapter } from '../socket-router.ts';
 

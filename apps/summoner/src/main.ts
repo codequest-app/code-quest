@@ -1,6 +1,6 @@
 import 'dotenv/config';
-import { formatBanner } from '@code-quest/shared';
-import { WsClient } from '@code-quest/shared/node';
+import { formatBanner } from '@code-quest/schemas';
+import { WsClient } from '@code-quest/transport';
 import { loadConfig } from './config.ts';
 import { Agent } from './connection/agent.ts';
 import { LocalFilesystemService } from './filesystem/local.ts';

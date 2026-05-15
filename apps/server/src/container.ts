@@ -1,5 +1,5 @@
 import 'reflect-metadata';
-import type { FilesystemService, GitService, ProcessProvider } from '@code-quest/shared';
+import type { FilesystemService, GitService, ProcessProvider } from '@code-quest/schemas';
 import {
   ChildProcessProvider,
   ClaudeAdapter,

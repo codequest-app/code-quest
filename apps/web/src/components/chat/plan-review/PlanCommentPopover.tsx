@@ -1,4 +1,4 @@
-import type { PlanCommentData } from '@code-quest/shared';
+import type { PlanCommentData } from '@code-quest/schemas';
 import * as Popover from '@radix-ui/react-popover';
 import { useEffect, useRef, useState } from 'react';
 import { InlineAction } from '@/components/chat/ui/InlineAction';

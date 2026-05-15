@@ -1,4 +1,4 @@
-import { type ControlPermissionResponse, EVENTS, type PendingControl } from '@code-quest/shared';
+import { type ControlPermissionResponse, EVENTS, type PendingControl } from '@code-quest/schemas';
 import type { RefObject } from 'react';
 import type { TypedSocket } from '@/socket/client';
 import { channelEmit } from '@/socket/rpc';

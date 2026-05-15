@@ -1,4 +1,4 @@
-import { DISMISSIBLE_IDS } from '@code-quest/shared';
+import { DISMISSIBLE_IDS } from '@code-quest/schemas';
 import { Button } from '@/components/ui/Button';
 import { useChannelConfig } from '@/contexts/channel';
 import { usePreferencesStore } from '@/stores/usePreferencesStore';

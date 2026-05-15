@@ -1,4 +1,4 @@
-import type { ClientMessage } from '@code-quest/shared';
+import type { ClientMessage } from '@code-quest/schemas';
 import { describe, expect, it } from 'vitest';
 import { ClaudeAdapter } from '../claude/adapter.ts';
 import { ProcessRunner } from '../runner.ts';

@@ -1,4 +1,4 @@
-import type { WorktreeInfo } from '@code-quest/shared';
+import type { WorktreeInfo } from '@code-quest/schemas';
 import { useChannelConfig } from '@/contexts/channel';
 
 interface WorktreeBannerProps {

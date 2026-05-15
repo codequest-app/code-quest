@@ -1,4 +1,4 @@
-import type { ContentBlock } from '@code-quest/shared';
+import type { ContentBlock } from '@code-quest/schemas';
 
 /**
  * Build the shared `message:*` payload shape for user and assistant transforms.

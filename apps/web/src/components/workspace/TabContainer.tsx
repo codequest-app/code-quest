@@ -1,4 +1,4 @@
-import type { WorktreeInfo } from '@code-quest/shared';
+import type { WorktreeInfo } from '@code-quest/schemas';
 import { ChatBubbleLeftRightIcon } from '@heroicons/react/24/outline';
 import * as Tabs from '@radix-ui/react-tabs';
 import { memo, useEffect, useState } from 'react';

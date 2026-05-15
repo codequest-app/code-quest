@@ -26,7 +26,9 @@
   },
   "dependencies": {
     "@code-quest/db-schema": "workspace:*",
-    "@code-quest/shared": "workspace:*",
+    "@code-quest/schemas": "workspace:*",
+    "@code-quest/transport": "workspace:*",
+    "@code-quest/node-utils": "workspace:*",
     "@code-quest/summoner": "workspace:*",
     "better-sqlite3": "^12.10.0",
     "cors": "^2.8.6",

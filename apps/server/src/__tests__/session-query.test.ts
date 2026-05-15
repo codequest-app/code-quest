@@ -1,4 +1,4 @@
-import type { GetSessionResponse, SessionListResponse } from '@code-quest/shared';
+import type { GetSessionResponse, SessionListResponse } from '@code-quest/schemas';
 import { segments as s } from '@code-quest/summoner/test';
 
 type SessionListOk = Extract<SessionListResponse, { ok: true }>;

@@ -1,4 +1,4 @@
-import type { SessionStateSummary } from '@code-quest/shared';
+import type { SessionStateSummary } from '@code-quest/schemas';
 import * as Popover from '@radix-ui/react-popover';
 import type { ReactNode } from 'react';
 import { basename } from '@/utils/basename';

@@ -9,7 +9,7 @@ import {
   type RpcResult,
   type SideQuestionResult,
   type TerminalGetContentsResponse,
-} from '@code-quest/shared';
+} from '@code-quest/schemas';
 import {
   createContext,
   type ReactNode,

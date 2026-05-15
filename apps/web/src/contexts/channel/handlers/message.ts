@@ -1,5 +1,5 @@
-import type { ContentBlock } from '@code-quest/shared';
-import { EVENTS } from '@code-quest/shared';
+import type { ContentBlock } from '@code-quest/schemas';
+import { EVENTS } from '@code-quest/schemas';
 import type { RefObject } from 'react';
 import type { TypedSocket } from '@/socket/client';
 import { channelEmit } from '@/socket/rpc';

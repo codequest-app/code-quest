@@ -1,4 +1,4 @@
-import type { Ack, McpServerInfo, ProviderClientConfig, RpcResult } from '@code-quest/shared';
+import type { Ack, McpServerInfo, ProviderClientConfig, RpcResult } from '@code-quest/schemas';
 import { useState } from 'react';
 import { InlineAction } from '@/components/chat/ui/InlineAction';
 import { useChannelConfig } from '@/contexts/channel';

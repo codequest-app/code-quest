@@ -21,7 +21,9 @@
     "clean": "rimraf --glob \"dist/*\" \"!dist/.env\""
   },
   "dependencies": {
-    "@code-quest/shared": "workspace:*",
+    "@code-quest/schemas": "workspace:*",
+    "@code-quest/transport": "workspace:*",
+    "@code-quest/node-utils": "workspace:*",
     "@types/ws": "^8.18.1",
     "chokidar": "^5.0.0",
     "dotenv": "^17.4.2",

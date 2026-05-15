@@ -5,8 +5,8 @@ import type {
   RewindResult,
   RpcResult,
   SideQuestionResult,
-} from '@code-quest/shared';
-import { EVENTS, isRecord } from '@code-quest/shared';
+} from '@code-quest/schemas';
+import { EVENTS, isRecord } from '@code-quest/schemas';
 import type { TypedSocket } from '@/socket/client';
 import { rpc } from '@/socket/rpc';
 import type { ChannelState } from '@/types/chat';

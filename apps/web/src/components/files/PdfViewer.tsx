@@ -1,4 +1,4 @@
-import { CONTENT_TYPE } from '@code-quest/shared';
+import { CONTENT_TYPE } from '@code-quest/schemas';
 import workerUrl from 'pdfjs-dist/build/pdf.worker.min.mjs?url';
 import type React from 'react';
 import { useEffect, useMemo, useRef, useState } from 'react';

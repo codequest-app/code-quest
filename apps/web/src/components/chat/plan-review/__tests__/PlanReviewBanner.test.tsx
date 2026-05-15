@@ -1,4 +1,4 @@
-import type { PlanCommentData } from '@code-quest/shared';
+import type { PlanCommentData } from '@code-quest/schemas';
 import { segments as s } from '@code-quest/summoner/test';
 import { act, render, screen, waitFor } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';

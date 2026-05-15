@@ -1,4 +1,4 @@
-import type { GitService } from '@code-quest/shared';
+import type { GitService } from '@code-quest/schemas';
 import { describe, expect, it } from 'vitest';
 import { AlreadyRepoError, NotARepoError } from '../errors.ts';
 

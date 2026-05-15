@@ -1,4 +1,4 @@
-import { EVENTS, type Project } from '@code-quest/shared';
+import { EVENTS, type Project } from '@code-quest/schemas';
 import { logger } from '../logger.ts';
 import type { ProjectStore } from './project-store.ts';
 
