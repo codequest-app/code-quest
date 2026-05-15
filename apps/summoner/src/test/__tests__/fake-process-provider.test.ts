@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { FakeProcessHandle, FakeProcessProvider } from './fake-process-provider.ts';
+import { FakeProcessHandle, FakeProcessProvider } from '../fake-process-provider.ts';
 
 describe('FakeProcessHandle', () => {
   it('emit pushes to lines iterable', async () => {

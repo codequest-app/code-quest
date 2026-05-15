@@ -3,7 +3,7 @@ import { mkdirSync, mkdtempSync, realpathSync, rmSync, writeFileSync } from 'nod
 import os from 'node:os';
 import { join } from 'node:path';
 import { afterAll, beforeAll, describe, expect, it } from 'vitest';
-import { LocalGitService } from '../git/local.ts';
+import { LocalGitService } from '../local.ts';
 
 let tmpDir: string;
 let service: LocalGitService;

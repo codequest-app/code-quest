@@ -2,10 +2,10 @@ import { join } from 'node:path';
 import { PathOutsideRootsError } from '@code-quest/shared';
 import { vol } from 'memfs';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
-import { LocalFilesystemService } from '../filesystem/local.ts';
-import { LocalRootGuard } from '../filesystem/local-root-guard.ts';
-import type { DirectoryEntry } from '../filesystem/types.ts';
-import { FakeWatchService } from '../test/fake-watch-service.ts';
+import { FakeWatchService } from '../../test/fake-watch-service.ts';
+import { LocalFilesystemService } from '../local.ts';
+import { LocalRootGuard } from '../local-root-guard.ts';
+import type { DirectoryEntry } from '../types.ts';
 
 vi.mock('node:fs', async () => (await import('memfs')).fs);
 vi.mock('node:fs/promises', async () => (await import('memfs')).fs.promises);
