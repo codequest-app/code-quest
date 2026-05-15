@@ -19,6 +19,7 @@
     "lint": "biome check src"
   },
   "dependencies": {
+    "@code-quest/git": "workspace:*",
     "@code-quest/node-utils": "workspace:*",
     "@code-quest/schemas": "workspace:*",
     "@code-quest/summoner": "workspace:*",

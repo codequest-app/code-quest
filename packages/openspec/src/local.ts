@@ -12,8 +12,13 @@ import type {
   ProcessProvider,
 } from '@code-quest/schemas';
 import { z } from 'zod';
-import { errorCode } from '../utils.ts';
 import type { OpenspecArchiveOptions, OpenspecService } from './types.ts';
+
+function errorCode(err: unknown): string | undefined {
+  if (typeof err !== 'object' || err === null || !('code' in err)) return undefined;
+  const { code } = err as { code: unknown };
+  return typeof code === 'string' ? code : undefined;
+}
 
 const ARTIFACT_FILENAME: Record<OpenspecArtifactKind, string> = {
   proposal: 'proposal.md',

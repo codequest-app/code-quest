@@ -1,9 +1,9 @@
 {
-  "name": "@code-quest/filesystem",
+  "name": "@code-quest/diff-file",
   "version": "0.1.0",
   "private": true,
   "type": "module",
-  "description": "LocalFilesystemService and RemoteFilesystemService",
+  "description": "LocalDiffFileService and DiffFileService interface",
   "exports": {
     ".": "./src/index.ts"
   },
@@ -12,16 +12,9 @@
     "test:watch": "vitest",
     "lint": "biome check src"
   },
-  "dependencies": {
-    "@code-quest/schemas": "workspace:*",
-    "@code-quest/node-utils": "workspace:*",
-    "fuse.js": "^7.3.0",
-    "glob": "^13.0.6"
-  },
+  "dependencies": {},
   "devDependencies": {
-    "@code-quest/test-kit": "workspace:*",
     "@types/node": "^22.15.3",
-    "memfs": "^4.17.0",
     "typescript": "6.0.3",
     "vitest": "^4.1.6"
   }

@@ -1,8 +1,8 @@
+import { LocalOpenspecService } from '@code-quest/openspec';
 import type { AgentTransport } from '@code-quest/schemas';
 import { REMOTE_METHODS } from '@code-quest/schemas';
 import { FakeFilesystemService, FakeGitService, FakeWatchService } from '@code-quest/test-kit';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
-import { LocalOpenspecService } from '../../openspec/local.ts';
 import { registerWatchHandlers } from '../watch-handlers.ts';
 
 function makeFakeRpc() {

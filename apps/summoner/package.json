@@ -10,8 +10,7 @@
     "./connection": "./src/connection/agent.ts",
     "./test": "./src/test/index.ts",
     "./test-browser": "./src/test/index-browser.ts",
-    "./schemas": "./src/claude/schemas.ts",
-    "./git-contract": "./src/git/__tests__/git-service.contract.ts"
+    "./schemas": "./src/claude/schemas.ts"
   },
   "scripts": {
     "dev": "tsx --env-file=.env src/main.ts",
@@ -23,8 +22,10 @@
     "clean": "rimraf --glob \"dist/*\" \"!dist/.env\""
   },
   "dependencies": {
+    "@code-quest/diff-file": "workspace:*",
     "@code-quest/filesystem": "workspace:*",
     "@code-quest/git": "workspace:*",
+    "@code-quest/openspec": "workspace:*",
     "@code-quest/schemas": "workspace:*",
     "@code-quest/transport": "workspace:*",
     "@code-quest/node-utils": "workspace:*",

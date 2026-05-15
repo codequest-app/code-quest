@@ -1,4 +1,4 @@
-import type { DiffFileService } from '../diff-file/types.ts';
+import type { DiffFileService } from '@code-quest/diff-file';
 
 /** In-memory DiffFileService for tests. Seed contents via `set`; unseeded
  *  paths return '' (matches LocalDiffFileService's missing-file behavior). */

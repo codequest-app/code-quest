@@ -2,7 +2,7 @@ import { mkdtempSync, rmSync, writeFileSync } from 'node:fs';
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
 import { afterAll, beforeAll, describe, expect, it } from 'vitest';
-import { LocalDiffFileService } from '../../diff-file/local.ts';
+import { LocalDiffFileService } from '../local.ts';
 
 let dir: string;
 

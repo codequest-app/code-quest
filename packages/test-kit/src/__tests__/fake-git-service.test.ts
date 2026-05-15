@@ -213,7 +213,7 @@ describe('FakeGitService', () => {
 });
 
 // ── Contract tests (run the same suite against the real GitService too) ──
-import { type ContractSetup, gitServiceContract } from '@code-quest/summoner/git-contract';
+import { type ContractSetup, gitServiceContract } from '@code-quest/git/contract';
 
 let pathCounter = 0;
 const uniquePath = (prefix: string): string => `${prefix}-${++pathCounter}`;

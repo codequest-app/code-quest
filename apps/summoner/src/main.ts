@@ -1,14 +1,13 @@
 import 'dotenv/config';
-import { LocalFilesystemService } from '@code-quest/filesystem';
+import { LocalFilesystemService, LocalRootGuard } from '@code-quest/filesystem';
 import { LocalGitService } from '@code-quest/git';
+import { LocalOpenspecService } from '@code-quest/openspec';
 import { formatBanner } from '@code-quest/schemas';
 import { WsClient } from '@code-quest/transport';
 import { LocalWatchService } from '@code-quest/watch';
 import { loadConfig } from './config.ts';
 import { Agent } from './connection/agent.ts';
-import { LocalRootGuard } from './filesystem/local-root-guard.ts';
 import { logger } from './logger.ts';
-import { LocalOpenspecService } from './openspec/local.ts';
 import { ChildProcessProvider } from './transports/child-process.ts';
 
 const config = loadConfig({

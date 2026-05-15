@@ -5,6 +5,7 @@ import {
   GitDataSource,
   OpenspecDataSource,
 } from '@code-quest/broadcaster';
+import type { OpenspecService } from '@code-quest/openspec';
 import type {
   AgentTransport,
   FilesystemService,
@@ -12,7 +13,6 @@ import type {
   WatchService,
 } from '@code-quest/schemas';
 import { REMOTE_METHODS } from '@code-quest/schemas';
-import type { OpenspecService } from '../openspec/types.ts';
 
 interface WatchSnapshot {
   cwd: string;

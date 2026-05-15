@@ -1,9 +1,9 @@
 {
-  "name": "@code-quest/filesystem",
+  "name": "@code-quest/openspec",
   "version": "0.1.0",
   "private": true,
   "type": "module",
-  "description": "LocalFilesystemService and RemoteFilesystemService",
+  "description": "LocalOpenspecService and OpenspecService interface",
   "exports": {
     ".": "./src/index.ts"
   },
@@ -13,15 +13,13 @@
     "lint": "biome check src"
   },
   "dependencies": {
+    "@code-quest/filesystem": "workspace:*",
     "@code-quest/schemas": "workspace:*",
-    "@code-quest/node-utils": "workspace:*",
-    "fuse.js": "^7.3.0",
-    "glob": "^13.0.6"
+    "zod": "^3.24.4"
   },
   "devDependencies": {
     "@code-quest/test-kit": "workspace:*",
     "@types/node": "^22.15.3",
-    "memfs": "^4.17.0",
     "typescript": "6.0.3",
     "vitest": "^4.1.6"
   }

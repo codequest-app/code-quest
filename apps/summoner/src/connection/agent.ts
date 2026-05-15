@@ -1,3 +1,4 @@
+import type { OpenspecService } from '@code-quest/openspec';
 import type {
   AgentTransport,
   FilesystemService,
@@ -16,9 +17,7 @@ import {
   REMOTE_METHODS,
 } from '@code-quest/schemas';
 import { LocalWatchService } from '@code-quest/watch';
-
 import { logger } from '../logger.ts';
-import type { OpenspecService } from '../openspec/types.ts';
 import { registerFsHandlers } from './fs-handlers.ts';
 import { registerGitHandlers } from './git-handlers.ts';
 import { registerWatchHandlers } from './watch-handlers.ts';

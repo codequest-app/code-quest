@@ -1,3 +1,4 @@
+import type { OpenspecArchiveOptions, OpenspecService } from '@code-quest/openspec';
 import type {
   OpenspecArchiveResult,
   OpenspecArtifactKind,
@@ -8,7 +9,6 @@ import type {
   OpenspecSpecSummary,
   OpenspecToggleTaskResult,
 } from '@code-quest/schemas';
-import type { OpenspecArchiveOptions, OpenspecService } from '../openspec/types.ts';
 
 /** In-memory fake for `OpenspecService` — mirrors `FakeGitService` shape.
  *  Tests seed changes/specs/file content imperatively via `setXxx` helpers;
