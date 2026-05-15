@@ -164,12 +164,17 @@ export type FsMovePayload = z.infer<typeof fsMovePayloadSchema>;
 
 // ── Watch / unwatch ──
 
-export const fsWatchPayloadSchema: z.ZodObject<{ cwd: z.ZodString }, z.core.$strip> = z.object({
+export const fsWatchPayloadSchema: z.ZodObject<
+  { cwd: z.ZodString; subscriberId: z.ZodString },
+  z.core.$strip
+> = z.object({
   cwd: z.string(),
+  subscriberId: z.string(),
 });
 export type FsWatchPayload = z.infer<typeof fsWatchPayloadSchema>;
 
-export const fsUnwatchPayloadSchema: z.ZodObject<{ cwd: z.ZodString }, z.core.$strip> = z.object({
-  cwd: z.string(),
-});
+export const fsUnwatchPayloadSchema: z.ZodObject<{ subscriberId: z.ZodString }, z.core.$strip> =
+  z.object({
+    subscriberId: z.string(),
+  });
 export type FsUnwatchPayload = z.infer<typeof fsUnwatchPayloadSchema>;

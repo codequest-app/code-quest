@@ -1,4 +1,11 @@
 import 'reflect-metadata';
+import {
+  Broadcaster,
+  CachedDataSource,
+  FilesDataSource,
+  GitDataSource,
+  OpenspecDataSource,
+} from '@code-quest/broadcaster';
 import { RemoteFilesystemService } from '@code-quest/filesystem';
 import { RemoteGitService } from '@code-quest/git';
 import type { FilesystemService, GitService, ProcessProvider } from '@code-quest/schemas';
@@ -25,12 +32,12 @@ import { createDatabase, type DrizzleDatabase } from './db/sqlite-client.ts';
 import { logger } from './logger.ts';
 import { RemoteProcessProvider } from './remote/process-provider.ts';
 import type { ReconnectableRpc } from './remote/reconnectable-rpc.ts';
+import { RemoteBroadcaster } from './remote/remote-broadcaster.ts';
 import { CompositeProjectStore } from './services/composite-project-store.ts';
 import { CompositeRawDeltaStore } from './services/composite-raw-delta-store.ts';
 import { CompositeRawEventStore } from './services/composite-raw-event-store.ts';
 import { CompositeSessionStore } from './services/composite-session-store.ts';
 import { CompositeSettingsStore } from './services/composite-settings-store.ts';
-import { DirtyBroadcaster } from './services/dirty-broadcaster.ts';
 import { DrizzleRawDeltaStore } from './services/drizzle-raw-delta-store.ts';
 import { DrizzleRawEventStore } from './services/drizzle-raw-event-store.ts';
 import { DrizzleSessionStore } from './services/drizzle-session-store.ts';
@@ -45,7 +52,6 @@ import type { SettingsStore } from './services/settings-store.ts';
 import { UsageTracker } from './services/usage-tracker.ts';
 import { ChannelEmitter } from './socket/channel-emitter.ts';
 import { ChannelManager, type SessionLookup } from './socket/channel-manager.ts';
-import { matchesFs, matchesGit, matchesOpenspec } from './socket/dirty-matchers.ts';
 import { SessionHistory } from './socket/handlers/session/history.ts';
 import { RawRecorder } from './socket/raw-recorder.ts';
 import { SocketServer } from './socket/server.ts';
@@ -144,19 +150,17 @@ export function createContainer(options: ContainerOptions): Container {
   };
   const watchService: WatchService = options.watchService ?? new LocalWatchService();
   container.bind<WatchService>(TYPES.WatchService).toConstantValue(watchService);
-  const { fsDirtyBroadcaster, gitDirtyBroadcaster, openspecDirtyBroadcaster } =
-    bindDirtyBroadcasters(container, watchService);
+  if (remoteRpc) {
+    bindRemoteSnapshotBroadcasters(container, remoteRpc);
+  } else {
+    bindSnapshotBroadcasters(container, watchService);
+  }
   const channelManager = new ChannelManager(
     runnerFactory,
     adapter,
     rawRecorder,
     emitter,
     sessionLookup,
-    {
-      fs: fsDirtyBroadcaster,
-      git: gitDirtyBroadcaster,
-      openspec: openspecDirtyBroadcaster,
-    },
   );
   sessionHistory = new SessionHistory(
     rawEventService,
@@ -221,28 +225,45 @@ function pickOrComposite<T>(stores: T[], makeComposite: (stores: T[]) => T): T {
   return stores.length === 1 ? (stores[0] as T) : makeComposite(stores);
 }
 
-function bindDirtyBroadcasters(container: Container, watchService: WatchService) {
-  const fsDirtyBroadcaster = new DirtyBroadcaster<string[]>(
-    watchService,
-    matchesFs,
-    (paths) => paths,
+function bindRemoteSnapshotBroadcasters(container: Container, remoteRpc: ReconnectableRpc): void {
+  container
+    .bind(TYPES.FilesBroadcaster)
+    .toConstantValue(
+      new RemoteBroadcaster<import('@code-quest/schemas').FileResult[]>(remoteRpc, 'files'),
+    );
+  container
+    .bind(TYPES.GitBroadcaster)
+    .toConstantValue(
+      new RemoteBroadcaster<import('@code-quest/schemas').GitStatusResult>(remoteRpc, 'git'),
+    );
+  container
+    .bind(TYPES.OpenspecBroadcaster)
+    .toConstantValue(
+      new RemoteBroadcaster<import('@code-quest/schemas').OpenspecListResult>(
+        remoteRpc,
+        'openspec',
+      ),
+    );
+}
+
+function bindSnapshotBroadcasters(container: Container, watchService: WatchService): void {
+  const filesBroadcaster = new Broadcaster<import('@code-quest/schemas').FileResult[]>((cwd) => {
+    const fs = container.get<FilesystemService>(TYPES.FilesystemService);
+    return new CachedDataSource(new FilesDataSource(cwd, '', watchService, fs));
+  });
+  const gitBroadcaster = new Broadcaster<import('@code-quest/schemas').GitStatusResult>((cwd) => {
+    const git = container.get<GitService>(TYPES.GitService);
+    return new GitDataSource(cwd, watchService, git);
+  });
+  const openspecBroadcaster = new Broadcaster<import('@code-quest/schemas').OpenspecListResult>(
+    (cwd) => {
+      const openspec = container.get<OpenspecService>(TYPES.OpenspecService);
+      return new OpenspecDataSource(cwd, watchService, openspec);
+    },
   );
-  const gitDirtyBroadcaster = new DirtyBroadcaster<void>(watchService, matchesGit, () => undefined);
-  const openspecDirtyBroadcaster = new DirtyBroadcaster<void>(
-    watchService,
-    matchesOpenspec,
-    () => undefined,
-  );
-  container
-    .bind<DirtyBroadcaster<string[]>>(TYPES.FsDirtyBroadcaster)
-    .toConstantValue(fsDirtyBroadcaster);
-  container
-    .bind<DirtyBroadcaster<void>>(TYPES.GitDirtyBroadcaster)
-    .toConstantValue(gitDirtyBroadcaster);
-  container
-    .bind<DirtyBroadcaster<void>>(TYPES.OpenspecDirtyBroadcaster)
-    .toConstantValue(openspecDirtyBroadcaster);
-  return { fsDirtyBroadcaster, gitDirtyBroadcaster, openspecDirtyBroadcaster };
+  container.bind(TYPES.FilesBroadcaster).toConstantValue(filesBroadcaster);
+  container.bind(TYPES.GitBroadcaster).toConstantValue(gitBroadcaster);
+  container.bind(TYPES.OpenspecBroadcaster).toConstantValue(openspecBroadcaster);
 }
 
 function buildStores(

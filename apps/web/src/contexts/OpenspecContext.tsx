@@ -77,6 +77,12 @@ const extractOpenspecCwd = (payload: unknown): string | null => {
   return parsed.success ? parsed.data.cwd : null;
 };
 
+const extractOpenspecSnapshot = (payload: unknown): OpenspecListResult | null => {
+  if (typeof payload !== 'object' || payload === null || !('snapshot' in payload)) return null;
+  const parsed = openspecListResultSchema.safeParse((payload as { snapshot: unknown }).snapshot);
+  return parsed.success ? parsed.data : null;
+};
+
 export function OpenspecProvider({ children }: { children: ReactNode }): React.JSX.Element {
   const { socket } = useSocket();
   const [store] = useState(() =>
@@ -94,7 +100,13 @@ export function OpenspecProvider({ children }: { children: ReactNode }): React.J
     if (!socket) return;
     const onDirty = (payload: unknown) => {
       const cwd = extractOpenspecCwd(payload);
-      if (cwd) void store.refetchIfSubscribed(cwd);
+      if (!cwd) return;
+      const snapshot = extractOpenspecSnapshot(payload);
+      if (snapshot) {
+        store.set(cwd, snapshot);
+      } else {
+        void store.refetchIfSubscribed(cwd);
+      }
     };
     socket.on(EVENTS.openspec.dirty, onDirty);
     return () => {

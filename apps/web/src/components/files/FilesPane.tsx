@@ -3,7 +3,6 @@ import { toast } from 'sonner';
 import { EmptyState } from '@/components/ui/EmptyState';
 import { useFsActions } from '@/contexts/FsContext';
 import { useGitStatus } from '@/contexts/GitContext';
-import { useKeepFsWatcherAlive } from '@/hooks/useKeepFsWatcherAlive';
 import { FilePreviewModal } from './FilePreviewModal.tsx';
 import { FileTree } from './FileTree.tsx';
 
@@ -17,7 +16,6 @@ export function FilesPane({ cwd, onMention }: FilesPaneProps): React.JSX.Element
   const [rootError, setRootError] = useState<string | null>(null);
   const { browse } = useFsActions();
   const gitData = useGitStatus(cwd);
-  useKeepFsWatcherAlive(cwd);
 
   // Probe the cwd once per change to surface "outside allowed roots" (and any
   // other early errors) as a clear empty state instead of a blank tree. The

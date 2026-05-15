@@ -7,6 +7,7 @@ import type {
   OpenspecService,
   PluginCliService,
   ProcessProvider,
+  WatchService,
 } from '@code-quest/summoner';
 import {
   FakeDiffFileService,
@@ -29,6 +30,7 @@ interface TestContainerOverrides {
   openspecService?: OpenspecService;
   pluginCli?: PluginCliService;
   diffFileService?: DiffFileService;
+  watchService?: WatchService;
   historyBatchSize?: number;
   autoMode?: boolean;
   rawEvents?: { writeDeltas?: boolean; readDeltas?: boolean };
@@ -40,7 +42,7 @@ export function createTestContainer(overrides: TestContainerOverrides = {}): Con
 
   const container = createContainer({
     ...overrides,
-    watchService: new FakeWatchService(),
+    watchService: overrides.watchService ?? new FakeWatchService(),
     storeConfig: {
       databases: [
         { type: 'sqlite', url: 'file::memory:', db: sqliteDatabase, schema: sqliteSchema },

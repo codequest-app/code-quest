@@ -44,4 +44,9 @@ export const REMOTE_METHODS = {
     renameWorktree: 'git/renameWorktree',
     archiveWorktree: 'git/archiveWorktree',
   },
+  watch: {
+    start: 'watch/start',
+    stop: 'watch/stop',
+    snapshot: 'watch/snapshot',
+  },
 } as const;

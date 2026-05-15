@@ -3,10 +3,12 @@ import { LocalFilesystemService } from '@code-quest/filesystem';
 import { LocalGitService } from '@code-quest/git';
 import { formatBanner } from '@code-quest/schemas';
 import { WsClient } from '@code-quest/transport';
+import { LocalWatchService } from '@code-quest/watch';
 import { loadConfig } from './config.ts';
 import { Agent } from './connection/agent.ts';
 import { LocalRootGuard } from './filesystem/local-root-guard.ts';
 import { logger } from './logger.ts';
+import { LocalOpenspecService } from './openspec/local.ts';
 import { ChildProcessProvider } from './transports/child-process.ts';
 
 const config = loadConfig({
@@ -49,6 +51,8 @@ const processProvider = new ChildProcessProvider();
 const rootGuard = new LocalRootGuard(config.fsRoots);
 const filesystem = new LocalFilesystemService(config.fsRoots, rootGuard);
 const git = new LocalGitService();
+const watchService = new LocalWatchService();
+const openspec = new LocalOpenspecService(filesystem, processProvider);
 
 const serverUrl = new URL(config.server);
 serverUrl.searchParams.set('sessionKey', crypto.randomUUID());
@@ -57,7 +61,7 @@ const client = new WsClient(serverUrl.toString(), {
   headers: { Authorization: `Bearer ${config.token}` },
 });
 
-const agent = new Agent(processProvider, filesystem, git);
+const agent = new Agent(processProvider, filesystem, git, watchService, openspec);
 agent.attach(client);
 
 client.setLifecycleListener({

@@ -1,3 +1,5 @@
+import type { Broadcaster } from '@code-quest/broadcaster';
+import type { FileResult, GitStatusResult, OpenspecListResult } from '@code-quest/schemas';
 import type {
   DiffFileService,
   FilesystemService,
@@ -7,7 +9,6 @@ import type {
   PluginCliService,
   ProcessRunner,
 } from '@code-quest/summoner';
-import type { DirtyBroadcaster } from './services/dirty-broadcaster.ts';
 import type { ProjectAutoUpserter } from './services/project-auto-upserter.ts';
 import type { ProjectStore } from './services/project-store.ts';
 import type { RawEventService } from './services/raw-event-service.ts';
@@ -44,10 +45,10 @@ export const TYPES: {
   readonly DiffFileService: symbol;
   readonly ProcessProvider: symbol;
   readonly WatchService: symbol;
-  readonly FsDirtyBroadcaster: symbol;
-  readonly GitDirtyBroadcaster: symbol;
   readonly AutoMode: symbol;
-  readonly OpenspecDirtyBroadcaster: symbol;
+  readonly FilesBroadcaster: symbol;
+  readonly GitBroadcaster: symbol;
+  readonly OpenspecBroadcaster: symbol;
 } = {
   RunnerFactory: Symbol.for('RunnerFactory'),
   SessionStore: Symbol.for('SessionStore'),
@@ -68,10 +69,10 @@ export const TYPES: {
   DiffFileService: Symbol.for('DiffFileService'),
   ProcessProvider: Symbol.for('ProcessProvider'),
   WatchService: Symbol.for('WatchService'),
-  FsDirtyBroadcaster: Symbol.for('FsDirtyBroadcaster'),
-  GitDirtyBroadcaster: Symbol.for('GitDirtyBroadcaster'),
   AutoMode: Symbol.for('AutoMode'),
-  OpenspecDirtyBroadcaster: Symbol.for('OpenspecDirtyBroadcaster'),
+  FilesBroadcaster: Symbol.for('FilesBroadcaster'),
+  GitBroadcaster: Symbol.for('GitBroadcaster'),
+  OpenspecBroadcaster: Symbol.for('OpenspecBroadcaster'),
 } as const;
 
 export interface HandlerContext {
@@ -91,7 +92,7 @@ export interface HandlerContext {
   pluginCli: PluginCliService;
   diffFileService: DiffFileService;
   planHandler: PlanApi;
-  fsDirtyBroadcaster: DirtyBroadcaster<string[]>;
-  gitDirtyBroadcaster: DirtyBroadcaster<void>;
-  openspecDirtyBroadcaster: DirtyBroadcaster<void>;
+  filesBroadcaster: Broadcaster<FileResult[]>;
+  gitBroadcaster: Broadcaster<GitStatusResult>;
+  openspecBroadcaster: Broadcaster<OpenspecListResult>;
 }

@@ -1,11 +1,12 @@
 import type {
   GitStatusByCwdResult,
+  GitStatusResult,
   WorktreeAddedEvent,
   WorktreeBranchChangedEvent,
   WorktreeInfo,
   WorktreeRemovedEvent,
 } from '@code-quest/schemas';
-import { EVENTS, gitStatusByCwdResultSchema } from '@code-quest/schemas';
+import { EVENTS, gitStatusByCwdResultSchema, gitStatusResultSchema } from '@code-quest/schemas';
 import {
   createContext,
   type ReactNode,
@@ -133,6 +134,12 @@ const extractGitDirtyCwd = (payload: unknown): string | null => {
   return null;
 };
 
+const extractGitSnapshot = (payload: unknown): GitStatusResult | null => {
+  if (typeof payload !== 'object' || payload === null || !('snapshot' in payload)) return null;
+  const parsed = gitStatusResultSchema.safeParse((payload as { snapshot: unknown }).snapshot);
+  return parsed.success ? parsed.data : null;
+};
+
 export function GitProvider({ children }: { children: ReactNode }): React.JSX.Element {
   const { socket } = useSocket();
   const [listing, setListing] = useState<Record<string, WorktreeListingEntry>>({});
@@ -152,7 +159,13 @@ export function GitProvider({ children }: { children: ReactNode }): React.JSX.El
     if (!socket) return;
     const onDirty = (payload: unknown) => {
       const cwd = extractGitDirtyCwd(payload);
-      if (cwd) void statusStore.refetchIfSubscribed(cwd);
+      if (!cwd) return;
+      const snapshot = extractGitSnapshot(payload);
+      if (snapshot) {
+        statusStore.set(cwd, snapshot);
+      } else {
+        void statusStore.refetchIfSubscribed(cwd);
+      }
     };
     socket.on(EVENTS.git.dirty, onDirty);
     return () => {

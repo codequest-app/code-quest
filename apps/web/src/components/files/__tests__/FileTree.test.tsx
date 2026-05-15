@@ -223,8 +223,7 @@ describe('FileTree', () => {
       return { Wrapper, FsWatchKeeper, summoner, watch };
     }
 
-    it('refetches an expanded directory when a child path appears in dirty paths', async () => {
-      const user = userEvent.setup();
+    it('file change triggers root refetch (snapshot-based refresh)', async () => {
       const { Wrapper, FsWatchKeeper, summoner, watch } = setupWithWatch();
       const browseSpy = vi.spyOn(summoner.filesystem(), 'browseEntries');
 
@@ -235,52 +234,14 @@ describe('FileTree', () => {
         </Wrapper>,
       );
 
-      // Initial: tree fetches /projects/app's children
       await screen.findByRole('treeitem', { name: 'src' });
-      const initialAppCalls = browseSpy.mock.calls.filter((c) => c[0] === '/projects/app').length;
-
-      // Expand src — fetches /projects/app/src
-      await user.click(screen.getByRole('treeitem', { name: 'src' }));
-      await screen.findByRole('treeitem', { name: 'foo.ts' });
       browseSpy.mockClear();
 
-      // Simulate file change under src/
       await act(async () => {
         watch.simulate('/projects/app', { type: 'change', path: 'src/bar.ts' });
       });
 
-      // src directory should refetch (its children list may have changed).
-      // Root (/projects/app) should NOT refetch since the change wasn't a
-      // direct child of the root.
-      await waitFor(() => {
-        const srcCalls = browseSpy.mock.calls.filter((c) => c[0] === '/projects/app/src').length;
-        expect(srcCalls).toBeGreaterThan(0);
-      });
-      const rootCalls = browseSpy.mock.calls.filter((c) => c[0] === '/projects/app').length;
-      expect(rootCalls).toBe(0);
-      // Sanity: initial calls weren't bizarre
-      expect(initialAppCalls).toBeGreaterThan(0);
-    });
-
-    it('refetches root when a top-level path is in dirty paths', async () => {
-      const { Wrapper, FsWatchKeeper, summoner, watch } = setupWithWatch();
-      const browseSpy = vi.spyOn(summoner.filesystem(), 'browseEntries');
-
-      render(
-        <Wrapper>
-          <FsWatchKeeper cwd="/projects/app" />
-          <FileTree rootCwd="/projects/app" />
-        </Wrapper>,
-      );
-
-      await screen.findByRole('treeitem', { name: 'src' });
-      browseSpy.mockClear();
-
-      await act(async () => {
-        watch.simulate('/projects/app', { type: 'change', path: 'NEWFILE.md' });
-      });
-
-      // Top-level path → root invalidates → /projects/app refetched.
+      // Snapshot-based updates always refresh from root.
       await waitFor(() => {
         const rootCalls = browseSpy.mock.calls.filter((c) => c[0] === '/projects/app').length;
         expect(rootCalls).toBeGreaterThan(0);

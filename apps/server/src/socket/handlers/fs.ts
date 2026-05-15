@@ -17,7 +17,7 @@ import type { Unsubscribe } from '@code-quest/summoner';
 import type { ZodType } from 'zod';
 import { logger } from '../../logger.ts';
 import type { HandlerContext } from '../../types.ts';
-import { subscribeDirtyForSocket } from '../dirty-subscriber.ts';
+import { subscribeSnapshotForSocket } from '../snapshot-subscriber.ts';
 import { ok } from '../utils/rpc.ts';
 
 function createFsHandler<T>(
@@ -44,18 +44,14 @@ function createFsHandler<T>(
 export function create({
   emitter,
   filesystemService: fs,
-  fsDirtyBroadcaster,
-  gitDirtyBroadcaster,
-  openspecDirtyBroadcaster,
+  filesBroadcaster,
+  gitBroadcaster,
+  openspecBroadcaster,
 }: Pick<
   HandlerContext,
-  | 'emitter'
-  | 'filesystemService'
-  | 'fsDirtyBroadcaster'
-  | 'gitDirtyBroadcaster'
-  | 'openspecDirtyBroadcaster'
+  'emitter' | 'filesystemService' | 'filesBroadcaster' | 'gitBroadcaster' | 'openspecBroadcaster'
 >): void {
-  const subsBySocket = new Map<string, Map<string, Unsubscribe[]>>();
+  const subsBySocket = new Map<string, Map<string, { cwd: string; offs: Unsubscribe[] }>>();
 
   const handleBrowse = createFsHandler(
     fsBrowsePayloadSchema,
@@ -123,31 +119,32 @@ export function create({
       return;
     }
     try {
-      const { cwd } = fsWatchPayloadSchema.parse(payload);
-      let perCwd = subsBySocket.get(socket.id);
-      if (!perCwd) {
-        perCwd = new Map();
-        subsBySocket.set(socket.id, perCwd);
+      const { cwd, subscriberId } = fsWatchPayloadSchema.parse(payload);
+      let perSub = subsBySocket.get(socket.id);
+      if (!perSub) {
+        perSub = new Map();
+        subsBySocket.set(socket.id, perSub);
         socket.on('disconnect', () => {
           const m = subsBySocket.get(socket.id);
           if (!m) return;
-          for (const unsubs of m.values()) {
-            for (const off of unsubs) off();
+          for (const { offs } of m.values()) {
+            for (const off of offs) off();
           }
           subsBySocket.delete(socket.id);
         });
       }
-      perCwd.get(cwd)?.forEach((off) => {
-        off();
-      });
-      perCwd.set(
+      const existing = perSub.get(subscriberId);
+      if (existing) {
+        for (const off of existing.offs) off();
+      }
+      perSub.set(subscriberId, {
         cwd,
-        subscribeDirtyForSocket(socket, cwd, {
-          fs: fsDirtyBroadcaster,
-          git: gitDirtyBroadcaster,
-          openspec: openspecDirtyBroadcaster,
+        offs: subscribeSnapshotForSocket(socket, subscriberId, cwd, {
+          files: filesBroadcaster,
+          git: gitBroadcaster,
+          openspec: openspecBroadcaster,
         }),
-      );
+      });
       callback?.({});
     } catch (err) {
       logger.warn({ err }, 'fs:watch failed');
@@ -166,12 +163,12 @@ export function create({
       return;
     }
     try {
-      const { cwd } = fsUnwatchPayloadSchema.parse(payload);
-      const perCwd = subsBySocket.get(socket.id);
-      const unsubs = perCwd?.get(cwd);
-      if (unsubs) {
-        for (const off of unsubs) off();
-        perCwd?.delete(cwd);
+      const { subscriberId } = fsUnwatchPayloadSchema.parse(payload);
+      const perSub = subsBySocket.get(socket.id);
+      const entry = perSub?.get(subscriberId);
+      if (entry) {
+        for (const off of entry.offs) off();
+        perSub?.delete(subscriberId);
       }
       callback?.({});
     } catch (err) {

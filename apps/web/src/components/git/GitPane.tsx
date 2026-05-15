@@ -16,7 +16,6 @@ import type { ZodType } from 'zod';
 import { EmptyState } from '@/components/ui/EmptyState';
 import { useGitActions, useGitStatus } from '@/contexts/GitContext';
 import { useSocket } from '@/contexts/SocketContext';
-import { useKeepFsWatcherAlive } from '@/hooks/useKeepFsWatcherAlive';
 import type { TypedSocket } from '@/socket/client';
 import { rpc } from '@/socket/rpc';
 import { cn } from '@/utils/cn';
@@ -61,7 +60,6 @@ export function GitPane({ cwd }: GitPaneProps): React.JSX.Element {
   const { socket } = useSocket();
   const { checkout, discardFile, fetch, listBranches, pull, refetchGitStatus } = useGitActions();
   const data = useGitStatus(cwd);
-  useKeepFsWatcherAlive(cwd);
   function refetch() {
     return refetchGitStatus(cwd);
   }

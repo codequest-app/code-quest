@@ -43,10 +43,6 @@ export function useFsActions(): FsActions {
 export function FsProvider({ children }: { children: ReactNode }): React.JSX.Element {
   const { socket } = useSocket();
   const emitterRef = useRef<TopicEmitter<string, string[]>>(new TopicEmitter());
-  const refCounts = useRef<Map<string, number>>(new Map());
-  // Stable subscriber id counter — each subscribe gets a unique id so
-  // repeated subscribes from the same component don't collapse to one
-  // entry in the TopicEmitter.
   const nextIdRef = useRef(0);
 
   useEffect(() => {
@@ -54,7 +50,13 @@ export function FsProvider({ children }: { children: ReactNode }): React.JSX.Ele
     const onDirty = (payload: unknown) => {
       const parsed = filesDirtyEventSchema.safeParse(payload);
       if (!parsed.success) return;
-      emitterRef.current.publish(parsed.data.cwd, parsed.data.paths);
+      const { cwd, paths, snapshot } = parsed.data;
+      if (paths.length > 0) {
+        emitterRef.current.publish(cwd, paths);
+      } else if (snapshot !== undefined) {
+        // Snapshot present but no specific paths: refresh from root
+        emitterRef.current.publish(cwd, ['']);
+      }
     };
     socket.on(EVENTS.fs.dirty, onDirty);
     return () => {
@@ -101,24 +103,15 @@ export function FsProvider({ children }: { children: ReactNode }): React.JSX.Ele
         return parsed.success ? parsed.data : { error: 'Invalid response' };
       },
       subscribeFsDirty(cwd, onDirty) {
-        const id = `sub-${nextIdRef.current++}`;
-        const off = emitterRef.current.subscribe(cwd, id, onDirty);
-        const prev = refCounts.current.get(cwd) ?? 0;
-        refCounts.current.set(cwd, prev + 1);
-        if (prev === 0) socket.emit(EVENTS.fs.watch, { cwd });
+        const subscriberId = `sub-${nextIdRef.current++}`;
+        const off = emitterRef.current.subscribe(cwd, subscriberId, onDirty);
+        socket.emit(EVENTS.fs.watch, { cwd, subscriberId });
         let active = true;
         return () => {
           if (!active) return;
           active = false;
           off();
-          const c = refCounts.current.get(cwd) ?? 0;
-          if (c <= 0) return;
-          if (c === 1) {
-            refCounts.current.delete(cwd);
-            socket.emit(EVENTS.fs.unwatch, { cwd });
-          } else {
-            refCounts.current.set(cwd, c - 1);
-          }
+          socket.emit(EVENTS.fs.unwatch, { subscriberId });
         };
       },
     }),

@@ -116,10 +116,16 @@ export const openspecReadResultSchema: z.ZodUnion<
 export type OpenspecReadResult = z.infer<typeof openspecReadResultSchema>;
 
 /** Server → client broadcast: openspec/* file changed in cwd. */
-export const openspecDirtyEventSchema: z.ZodObject<{ cwd: z.ZodString }, z.core.$strip> = z.object({
+export const openspecDirtyEventSchema: z.ZodObject<
+  { cwd: z.ZodString; snapshot: z.ZodOptional<z.ZodUnknown> },
+  z.core.$strip
+> = z.object({
   cwd: z.string(),
+  snapshot: z.unknown().optional(),
 });
-export type OpenspecDirtyEvent = z.infer<typeof openspecDirtyEventSchema>;
+export type OpenspecDirtyEvent = Omit<z.infer<typeof openspecDirtyEventSchema>, 'snapshot'> & {
+  snapshot?: OpenspecListResult;
+};
 
 /** Slug accepted by `openspec change new` — lowercase letters, digits, hyphens. */
 const openspecChangeSlugSchema: z.ZodString = z.string().regex(/^[a-z0-9-]+$/, {

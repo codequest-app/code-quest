@@ -7,6 +7,7 @@ import type {
   ProcessProvider,
   ProcessStderrParams,
   ProcessStdoutParams,
+  WatchService,
 } from '@code-quest/schemas';
 import {
   processKillParamsSchema,
@@ -14,22 +15,35 @@ import {
   processStdinParamsSchema,
   REMOTE_METHODS,
 } from '@code-quest/schemas';
+import { LocalWatchService } from '@code-quest/watch';
 
 import { logger } from '../logger.ts';
+import type { OpenspecService } from '../openspec/types.ts';
 import { registerFsHandlers } from './fs-handlers.ts';
 import { registerGitHandlers } from './git-handlers.ts';
+import { registerWatchHandlers } from './watch-handlers.ts';
 
 export class Agent {
   private readonly spawned = new Map<string, ProcessHandle>();
   private readonly processProvider: ProcessProvider;
   private readonly filesystem: FilesystemService;
   private readonly git: GitService;
+  private readonly watchService: WatchService;
+  private readonly openspec: OpenspecService | null;
   private rpc: AgentTransport | null = null;
 
-  constructor(processProvider: ProcessProvider, filesystem: FilesystemService, git: GitService) {
+  constructor(
+    processProvider: ProcessProvider,
+    filesystem: FilesystemService,
+    git: GitService,
+    watchService?: WatchService,
+    openspec?: OpenspecService,
+  ) {
     this.processProvider = processProvider;
     this.filesystem = filesystem;
     this.git = git;
+    this.watchService = watchService ?? new LocalWatchService();
+    this.openspec = openspec ?? null;
   }
 
   attach(rpc: AgentTransport): void {
@@ -37,6 +51,9 @@ export class Agent {
     this.registerProcessHandlers(rpc);
     registerFsHandlers(rpc, this.filesystem);
     registerGitHandlers(rpc, this.git);
+    if (this.openspec) {
+      registerWatchHandlers(rpc, this.watchService, this.filesystem, this.git, this.openspec);
+    }
   }
 
   // rpc is set in attach() before connect() is called, so it is always non-null

@@ -28,68 +28,86 @@ describe('FsContext pub/sub', () => {
     vi.restoreAllMocks();
   });
 
-  it('two subscribers for the same cwd produce exactly one server-side watch', () => {
+  it('first subscriber starts server-side watch', async () => {
     const { Wrapper, watch } = makeEnv();
 
     const { result } = renderHook(() => useFsActions(), { wrapper: Wrapper });
     expect(watch.isWatching('/repo')).toBe(false);
 
-    const off1 = result.current.subscribeFsDirty('/repo', vi.fn());
-    expect(watch.isWatching('/repo')).toBe(true);
-    const countAfterFirst = watch.subscriberCount('/repo');
+    const off = result.current.subscribeFsDirty('/repo', vi.fn());
+    await waitFor(() => expect(watch.isWatching('/repo')).toBe(true));
 
-    const off2 = result.current.subscribeFsDirty('/repo', vi.fn());
-    expect(watch.subscriberCount('/repo')).toBe(countAfterFirst);
+    off();
+  });
+
+  it('second subscriber also receives initial snapshot', async () => {
+    const { Wrapper } = makeEnv();
+
+    const { result } = renderHook(() => useFsActions(), { wrapper: Wrapper });
+    const cb1 = vi.fn();
+    const cb2 = vi.fn();
+
+    const off1 = result.current.subscribeFsDirty('/repo', cb1);
+    await waitFor(() => expect(cb1).toHaveBeenCalled());
+
+    const off2 = result.current.subscribeFsDirty('/repo', cb2);
+    await waitFor(() => expect(cb2).toHaveBeenCalled());
 
     off1();
     off2();
   });
 
-  it('both subscribers releasing removes the server-side watch', () => {
+  it('all subscribers releasing stops server-side watch', async () => {
     const { Wrapper, watch } = makeEnv();
 
     const { result } = renderHook(() => useFsActions(), { wrapper: Wrapper });
     const off1 = result.current.subscribeFsDirty('/repo', vi.fn());
     const off2 = result.current.subscribeFsDirty('/repo', vi.fn());
 
+    await waitFor(() => expect(watch.isWatching('/repo')).toBe(true));
+
     off1();
-    expect(watch.isWatching('/repo')).toBe(true);
+    await waitFor(() => expect(watch.isWatching('/repo')).toBe(true));
+
     off2();
-    expect(watch.isWatching('/repo')).toBe(false);
+    await waitFor(() => expect(watch.isWatching('/repo')).toBe(false));
   });
 
-  it('unsubscribe is idempotent (second call no-op)', () => {
+  it('unsubscribe is idempotent (second call no-op)', async () => {
     const { Wrapper, watch } = makeEnv();
 
     const { result } = renderHook(() => useFsActions(), { wrapper: Wrapper });
     const off = result.current.subscribeFsDirty('/repo', vi.fn());
-    off();
-    off();
+    await waitFor(() => expect(watch.isWatching('/repo')).toBe(true));
 
-    expect(watch.isWatching('/repo')).toBe(false);
+    off();
+    off();
+    await waitFor(() => expect(watch.isWatching('/repo')).toBe(false));
   });
 
-  it('files:dirty for a watched cwd fires the callback with paths', async () => {
+  it('file change triggers root-refresh signal on subscriber', async () => {
     const { Wrapper, watch } = makeEnv();
 
     const { result } = renderHook(() => useFsActions(), { wrapper: Wrapper });
     const cb = vi.fn<(paths: string[]) => void>();
     const off = result.current.subscribeFsDirty('/repo', cb);
 
+    // wait for initial snapshot
+    await waitFor(() => expect(cb).toHaveBeenCalled());
+    cb.mockClear();
+
     await act(async () => {
       watch.simulate('/repo', { type: 'change', path: 'src/foo.ts' });
-      watch.simulate('/repo', { type: 'change', path: 'src/bar.ts' });
     });
 
-    await waitFor(() => {
-      expect(cb).toHaveBeenCalled();
-    });
-    expect([...cb.mock.calls[0]![0]].sort()).toEqual(['src/bar.ts', 'src/foo.ts']);
+    await waitFor(() => expect(cb).toHaveBeenCalled());
+    // snapshot-based updates always signal root refresh with ['']
+    expect(cb.mock.calls[0]![0]).toEqual(['']);
 
     off();
   });
 
-  it('different cwds isolated — only matching subscriber fires', async () => {
+  it('different cwds isolated — only matching subscriber fires on change', async () => {
     const { Wrapper, watch, summoner } = makeEnv();
     summoner.filesystem().setRoots(['/repo', '/other']);
 
@@ -99,13 +117,17 @@ describe('FsContext pub/sub', () => {
     const offA = result.current.subscribeFsDirty('/repo', cbRepo);
     const offB = result.current.subscribeFsDirty('/other', cbOther);
 
+    // wait for initial snapshots
+    await waitFor(() => expect(cbRepo).toHaveBeenCalled());
+    await waitFor(() => expect(cbOther).toHaveBeenCalled());
+    cbRepo.mockClear();
+    cbOther.mockClear();
+
     await act(async () => {
       watch.simulate('/repo', { type: 'change', path: 'a.ts' });
     });
 
-    await waitFor(() => {
-      expect(cbRepo).toHaveBeenCalledTimes(1);
-    });
+    await waitFor(() => expect(cbRepo).toHaveBeenCalledTimes(1));
     expect(cbOther).not.toHaveBeenCalled();
 
     offA();

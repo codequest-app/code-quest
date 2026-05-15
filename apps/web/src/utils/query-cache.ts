@@ -7,6 +7,7 @@ interface QueryCacheConfig<R> {
 
 interface QueryCache<R> {
   get: (key: string) => R | undefined;
+  set: (key: string, value: R) => void;
   subscribe: (key: string, onChange: () => void) => () => void;
   refetch: (key: string) => Promise<void>;
   refetchIfSubscribed: (key: string) => Promise<void>;
@@ -31,6 +32,10 @@ export function createQueryCache<R>({
 
   return {
     get: (key) => cache.get(key),
+    set: (key, value) => {
+      cache.set(key, value);
+      emitter.publish(key, undefined);
+    },
     subscribe: (key, onChange) => {
       const off = emitter.subscribe(key, `${idPrefix}-${nextSubId++}`, onChange);
       if (!cache.has(key))
