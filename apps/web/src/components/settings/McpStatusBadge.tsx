@@ -49,7 +49,7 @@ export function McpStatusBadge({
 
   return (
     <span className={cn('shrink-0 rounded px-2 py-1 text-xs font-medium', badgeClass, className)}>
-      {rich && icon ? `${icon} ${label}` : rich ? label : status}
+      {!rich ? status : icon ? `${icon} ${label}` : label}
     </span>
   );
 }

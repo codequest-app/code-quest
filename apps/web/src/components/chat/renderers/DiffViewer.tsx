@@ -86,12 +86,14 @@ function DiffFileHeader({
   actions?: React.ReactNode;
   lines?: string[];
 }) {
-  const insertions = lines
-    ? lines.filter((l) => l.startsWith('+') && !l.startsWith('+++')).length
-    : 0;
-  const deletions = lines
-    ? lines.filter((l) => l.startsWith('-') && !l.startsWith('---')).length
-    : 0;
+  let insertions = 0;
+  let deletions = 0;
+  if (lines) {
+    for (const l of lines) {
+      if (l.startsWith('+') && !l.startsWith('+++')) insertions++;
+      else if (l.startsWith('-') && !l.startsWith('---')) deletions++;
+    }
+  }
   return (
     <section
       className="flex items-center justify-between bg-surface-hover px-3 py-1.5 rounded-t-lg border border-border border-b-0"

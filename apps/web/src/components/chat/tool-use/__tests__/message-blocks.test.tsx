@@ -1,13 +1,3 @@
-import {
-  CommandLineIcon,
-  CpuChipIcon,
-  DocumentMagnifyingGlassIcon,
-  DocumentPlusIcon,
-  MagnifyingGlassIcon,
-  PencilSquareIcon,
-  ServerIcon,
-  WrenchIcon,
-} from '@heroicons/react/24/outline';
 import { render, screen } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { describe, expect, it } from 'vitest';
@@ -28,25 +18,10 @@ import {
 import { TaskBadge } from '@/components/chat/tool-use/TaskBadge';
 import { ToolResultBlock } from '@/components/chat/tool-use/ToolResultBlock';
 import { ToolUseBlock } from '@/components/chat/tool-use/ToolUseBlock';
-import { ToolUseHeader } from '@/components/chat/tool-use/ToolUseHeader';
+import { getToolIcon, ToolUseHeader } from '@/components/chat/tool-use/ToolUseHeader';
 import { CollapsibleBlock } from '@/components/chat/ui/CollapsibleBlock';
 import { Expandable } from '@/components/chat/ui/Expandable';
-import { AGENT_TOOLS, getToolHeaderInfo, isMcpTool } from '@/utils/tool-utils';
-
-const TOOL_ICON_CLASS = 'w-4 h-4 shrink-0';
-
-function getToolIcon(toolName: string): React.ReactNode {
-  if (toolName === 'Bash') return <CommandLineIcon className={TOOL_ICON_CLASS} />;
-  if (toolName === 'Read') return <DocumentMagnifyingGlassIcon className={TOOL_ICON_CLASS} />;
-  if (toolName === 'Write') return <DocumentPlusIcon className={TOOL_ICON_CLASS} />;
-  if (toolName === 'Edit' || toolName === 'MultiEdit')
-    return <PencilSquareIcon className={TOOL_ICON_CLASS} />;
-  if (toolName === 'WebSearch') return <MagnifyingGlassIcon className={TOOL_ICON_CLASS} />;
-  if (toolName === 'Agent' || toolName === 'Task')
-    return <CpuChipIcon className={TOOL_ICON_CLASS} />;
-  if (isMcpTool(toolName)) return <ServerIcon className={TOOL_ICON_CLASS} />;
-  return <WrenchIcon className={TOOL_ICON_CLASS} />;
-}
+import { AGENT_TOOLS, getToolHeaderInfo } from '@/utils/tool-utils';
 
 function WrappedToolUseBlock({
   toolName,

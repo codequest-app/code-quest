@@ -8,6 +8,7 @@ import { generateUnifiedDiff } from '@/utils/diff';
 import { CODE_BLOCK_CLASS } from '../renderers/ansi.tsx';
 import { AlertBanner } from '../ui/AlertBanner';
 import { ContentRenderer } from './ContentRenderer';
+import { ToolBlock } from './ToolBlock.tsx';
 
 function Labeled({
   label,
@@ -31,8 +32,6 @@ function Labeled({
     </div>
   );
 }
-
-import { ToolBlock } from './ToolBlock.tsx';
 
 function PartialInputPlaceholder({ content }: { content: string }) {
   return <pre className={cn(CODE_BLOCK_CLASS, 'text-subtle animate-pulse')}>{content}</pre>;
@@ -111,8 +110,11 @@ function tryParsePartialInput(
 ): { file_path?: string; old_string?: string; new_string?: string } | null {
   try {
     const parsed: unknown = JSON.parse(partialInput);
-    if (typeof parsed === 'object' && parsed !== null) return parsed as Record<string, string>;
-  } catch {}
+    if (typeof parsed === 'object' && parsed !== null)
+      return parsed as { file_path?: string; old_string?: string; new_string?: string };
+  } catch (_) {
+    // partial JSON from streaming — parse failure is expected
+  }
   return null;
 }
 

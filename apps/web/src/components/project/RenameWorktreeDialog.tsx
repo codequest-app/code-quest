@@ -22,8 +22,8 @@ export function RenameWorktreeDialog({
   const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
-    setName(currentBranch);
-  }, [currentBranch]);
+    if (open) setName(currentBranch);
+  }, [open, currentBranch]);
 
   function submit() {
     const trimmed = name.trim();

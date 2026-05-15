@@ -10,7 +10,7 @@ export function UserTextContent({ content }: { content: string }): React.JSX.Ele
 
   return (
     <>
-      <Expandable maxHeight={600} defaultOpen={true}>
+      <Expandable maxHeight={600} defaultOpen>
         <div className="leading-relaxed whitespace-pre-wrap">
           {text}
           {attachments.length > 0 && (

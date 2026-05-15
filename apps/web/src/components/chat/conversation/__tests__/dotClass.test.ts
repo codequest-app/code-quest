@@ -22,11 +22,11 @@ describe('dotClass', () => {
     'text',
     'thinking',
     'streamlined_text',
-  ] as const)('%s → bg-muted/60 (no result)', (type) => {
+  ] as const)('%s → bg-border (no result)', (type) => {
     expect(dotClass(make(type))).toBe('bg-border');
   });
 
-  it('assistant_turn with no tool_use blocks → bg-muted/60', () => {
+  it('assistant_turn with no tool_use blocks → bg-border', () => {
     expect(dotClass(turn(false))).toBe('bg-border');
   });
 

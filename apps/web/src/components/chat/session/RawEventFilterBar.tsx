@@ -26,28 +26,34 @@ export function RawEventFilterBar({
 
   return (
     <div className="border-b border-floating-border-subtle py-1.5 pl-3 flex flex-col gap-1 flex-shrink-0">
-      {/* header row */}
       <div className="flex items-center justify-between pr-3">
         <span className="text-2xs font-mono tracking-widest uppercase text-border">channels</span>
         <div className="flex gap-2">
-          <button
-            type="button"
-            onClick={() => onChange(new Set(sorted.map((e) => e.type)))}
-            className="text-2xs font-mono text-text-faint bg-transparent border-0 cursor-pointer p-0 tracking-wider transition-colors duration-100 hover:text-accent"
-          >
-            all
-          </button>
-          <button
-            type="button"
-            onClick={() => onChange(new Set())}
-            className="text-2xs font-mono text-text-faint bg-transparent border-0 cursor-pointer p-0 tracking-wider transition-colors duration-100 hover:text-text"
-          >
-            none
-          </button>
+          {(
+            [
+              {
+                label: 'all',
+                onClick: () => onChange(new Set(sorted.map((e) => e.type))),
+                hoverCls: 'hover:text-accent',
+              },
+              { label: 'none', onClick: () => onChange(new Set()), hoverCls: 'hover:text-text' },
+            ] as const
+          ).map(({ label, onClick, hoverCls }) => (
+            <button
+              key={label}
+              type="button"
+              onClick={onClick}
+              className={cn(
+                'text-2xs font-mono text-text-faint bg-transparent border-0 cursor-pointer p-0 tracking-wider transition-colors duration-100',
+                hoverCls,
+              )}
+            >
+              {label}
+            </button>
+          ))}
         </div>
       </div>
 
-      {/* chips row — horizontal scroll */}
       <div className="flex gap-1 overflow-x-auto pr-3 pb-0.5 [scrollbar-width:none]">
         {sorted.map((entry) => {
           const active = selected.has(entry.type);

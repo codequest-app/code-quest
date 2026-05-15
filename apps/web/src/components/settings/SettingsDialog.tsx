@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useMemo, useState } from 'react';
 import { defaultEnabledTypes } from '@/contexts/channel/MessageVisibilityContext';
 import { createColorThemeFeature } from '@/features/color-theme/color-theme-feature';
 import { createDensityFeature } from '@/features/density/density-feature';
@@ -16,6 +16,8 @@ interface SettingsDialogProps {
 }
 
 const SECTIONS = ['Theme', 'Display'] as const;
+const EMPTY_SET = new Set<string>();
+const EMPTY_MAP = new Map<string, unknown>();
 type Section = (typeof SECTIONS)[number];
 
 export function SettingsDialog({ open, onClose }: SettingsDialogProps): React.JSX.Element {
@@ -80,11 +82,14 @@ function ThemeSection() {
   const setFontSize = usePreferencesStore((s) => s.setFontSize);
   const setDensity = usePreferencesStore((s) => s.setDensity);
 
-  const features = [
-    createColorThemeFeature({ colorTheme, setColorTheme }),
-    createFontSizeFeature({ fontSize, setFontSize }),
-    createDensityFeature({ density, setDensity }),
-  ];
+  const features = useMemo(
+    () => [
+      createColorThemeFeature({ colorTheme, setColorTheme }),
+      createFontSizeFeature({ fontSize, setFontSize }),
+      createDensityFeature({ density, setDensity }),
+    ],
+    [colorTheme, fontSize, density, setColorTheme, setFontSize, setDensity],
+  );
 
   return (
     <div className="flex flex-col">
@@ -99,22 +104,32 @@ function DisplaySection() {
   const visibilityTypes = usePreferencesStore((s) => s.enabledTypes);
   const setStoreEnabledTypes = usePreferencesStore((s) => s.setEnabledTypes);
 
-  const enabledTypes = visibilityTypes !== null ? new Set(visibilityTypes) : defaultEnabledTypes();
+  const enabledTypes = useMemo(
+    () => (visibilityTypes !== null ? new Set(visibilityTypes) : defaultEnabledTypes()),
+    [visibilityTypes],
+  );
 
-  function toggleType(type: string) {
-    const current = usePreferencesStore.getState().enabledTypes;
-    const base = current !== null ? new Set(current) : defaultEnabledTypes();
-    if (base.has(type)) base.delete(type);
-    else base.add(type);
-    setStoreEnabledTypes([...base]);
-  }
+  const toggleType = useMemo(
+    () => (type: string) => {
+      const current = usePreferencesStore.getState().enabledTypes;
+      const base = current !== null ? new Set(current) : defaultEnabledTypes();
+      if (base.has(type)) base.delete(type);
+      else base.add(type);
+      setStoreEnabledTypes([...base]);
+    },
+    [setStoreEnabledTypes],
+  );
 
-  const features = createFilterFeatures({
-    enabledTypes,
-    unknownTypes: new Set(),
-    toggleType,
-    latestByType: new Map(),
-  });
+  const features = useMemo(
+    () =>
+      createFilterFeatures({
+        enabledTypes,
+        unknownTypes: EMPTY_SET,
+        toggleType,
+        latestByType: EMPTY_MAP as Map<string, never>,
+      }),
+    [enabledTypes, toggleType],
+  );
 
   return (
     <div className="flex flex-col">

@@ -1,14 +1,20 @@
-export function HighlightText({
-  text,
-  query,
-  highlightClassName = 'bg-accent/30 text-inherit rounded-sm',
-  as: As = 'mark',
-}: {
+import { memo } from 'react';
+
+interface HighlightTextProps {
   text: string;
   query?: string;
   highlightClassName?: string;
   as?: 'mark' | 'span';
-}): React.ReactNode {
+}
+
+export const HighlightText: React.MemoExoticComponent<
+  (props: HighlightTextProps) => React.ReactNode
+> = memo(function HighlightText({
+  text,
+  query,
+  highlightClassName = 'bg-accent/30 text-inherit rounded-sm',
+  as: As = 'mark',
+}: HighlightTextProps): React.ReactNode {
   if (!query) return <>{text}</>;
   const idx = text.toLowerCase().indexOf(query.toLowerCase());
   if (idx === -1) return <>{text}</>;
@@ -19,4 +25,4 @@ export function HighlightText({
       {text.slice(idx + query.length)}
     </>
   );
-}
+});

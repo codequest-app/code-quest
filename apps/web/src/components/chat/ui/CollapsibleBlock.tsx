@@ -8,16 +8,15 @@ export function CollapsibleBlock({
   onOpenChange,
   children,
 }: {
-  header?: React.ReactNode;
+  header: React.ReactNode;
   defaultOpen?: boolean;
   open?: boolean;
   onOpenChange?: (open: boolean) => void;
   children?: React.ReactNode;
 }): React.JSX.Element {
-  const controlled = open !== undefined;
   return (
     <Collapsible.Root
-      {...(controlled ? { open, onOpenChange } : { defaultOpen: defaultOpen ?? false })}
+      {...(open !== undefined ? { open, onOpenChange } : { defaultOpen: defaultOpen ?? false })}
     >
       <Collapsible.Trigger asChild>
         <button

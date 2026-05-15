@@ -1,5 +1,5 @@
 import { FolderOpenIcon } from '@heroicons/react/24/outline';
-import { useEffect, useState } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 import { useHotkeys } from 'react-hotkeys-hook';
 import { toast } from 'sonner';
 import { DrawerAside } from '@/components/ui/DrawerAside';
@@ -90,7 +90,7 @@ function WorkspaceLayoutInner() {
   function onToggleLeft() {
     setLeftOpen((v) => !v);
   }
-  const addedProjectCwds = new Set(projects.map((p) => p.cwd));
+  const addedProjectCwds = useMemo(() => new Set(projects.map((p) => p.cwd)), [projects]);
 
   return (
     <div className="flex flex-col flex-1 overflow-hidden">

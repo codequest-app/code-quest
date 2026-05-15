@@ -16,13 +16,12 @@ export function FloatingCard<C extends ElementType = 'div'>({
   ...rest
 }: FloatingCardProps<C>): React.JSX.Element {
   const Tag = As as React.ElementType;
-  return (
-    <Tag
-      {...(rest as ComponentPropsWithoutRef<C>)}
-      ref={ref}
-      className={cn('bg-surface border border-border rounded-lg shadow-floating p-3', className)}
-    >
-      {children}
-    </Tag>
-  );
+  const props = {
+    ...(rest as ComponentPropsWithoutRef<C>),
+    ref,
+    className: cn('bg-surface border border-border rounded-lg shadow-floating p-3', className),
+    children,
+  };
+  // biome-ignore lint/suspicious/noExplicitAny: polymorphic component requires any for JSX spread
+  return <Tag {...(props as any)} />;
 }

@@ -1,5 +1,5 @@
 import type { WorktreeInfo } from '@code-quest/shared';
-import { useEffect, useState } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 import { toast } from 'sonner';
 import { useGitActions } from '@/contexts/GitContext';
 import { useNavigationActions, useNavigationState } from '@/contexts/NavigationContext';
@@ -89,12 +89,16 @@ export function WorktreeChildList({
     };
   }, [worktrees, status]);
 
-  function liveCountFor(wt: WorktreeInfo): number {
-    // Match by `cwd` (where the session actually runs), NOT `projectRoot`
-    // (which is always the project root and would attribute every session
-    // to the main worktree row).
-    return sessions.filter((s) => s.cwd === wt.path && s.state !== 'exited').length;
-  }
+  // Match by `cwd` (where the session actually runs), NOT `projectRoot`
+  // (which is always the project root and would attribute every session
+  // to the main worktree row).
+  const liveCountByPath = useMemo(() => {
+    const m = new Map<string, number>();
+    for (const s of sessions) {
+      if (s.cwd && s.state !== 'exited') m.set(s.cwd, (m.get(s.cwd) ?? 0) + 1);
+    }
+    return m;
+  }, [sessions]);
 
   return (
     <div className="ml-5 border-l border-border pl-2">
@@ -107,14 +111,15 @@ export function WorktreeChildList({
           },
           onRename: () => setDialog({ kind: 'rename', wt }),
           onArchive: () => setDialog({ kind: 'archive', wt, dirty: false }),
-          onDelete: () => setDialog({ kind: 'remove', wt, activeCount: liveCountFor(wt) }),
+          onDelete: () =>
+            setDialog({ kind: 'remove', wt, activeCount: liveCountByPath.get(wt.path) ?? 0 }),
         };
         return (
           <WorktreeContextMenu key={wt.name} {...menuCallbacks}>
             <WorktreeRow
               worktree={wt}
               active={selectedWorktreeCwd[projectCwd] === wt.path}
-              liveSessions={liveCountFor(wt)}
+              liveSessions={liveCountByPath.get(wt.path) ?? 0}
               changes={changesByPath[wt.path] ?? 0}
               onSelect={() => selectWorktree(projectCwd, wt.path)}
               wrapBranchTrigger={(badge) => (

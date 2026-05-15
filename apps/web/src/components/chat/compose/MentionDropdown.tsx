@@ -8,17 +8,6 @@ export type SearchStatus = 'idle' | 'loading' | 'done';
 
 const noop = () => {};
 
-function HighlightMatch({ text, query }: { text: string; query: string }) {
-  return (
-    <HighlightText
-      text={text}
-      query={query}
-      as="span"
-      highlightClassName="text-accent font-semibold"
-    />
-  );
-}
-
 function TypeIcon({ type }: { type: string }) {
   switch (type) {
     case 'directory':
@@ -78,7 +67,12 @@ function FileResultItem({
       {file.type === 'file' ? (
         <>
           <span className="text-xs font-mono text-text truncate">
-            <HighlightMatch text={file.name} query={mentionQuery} />
+            <HighlightText
+              text={file.name}
+              query={mentionQuery}
+              as="span"
+              highlightClassName="text-accent font-semibold"
+            />
           </span>
           {directoryPath && (
             <span className="text-xs font-mono text-text-muted truncate">{directoryPath}</span>
@@ -86,7 +80,12 @@ function FileResultItem({
         </>
       ) : (
         <span className="text-xs font-mono text-text truncate">
-          <HighlightMatch text={file.path} query={mentionQuery} />
+          <HighlightText
+            text={file.path}
+            query={mentionQuery}
+            as="span"
+            highlightClassName="text-accent font-semibold"
+          />
         </span>
       )}
     </div>

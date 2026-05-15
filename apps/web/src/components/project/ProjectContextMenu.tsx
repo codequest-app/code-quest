@@ -1,12 +1,35 @@
 import * as ContextMenu from '@radix-ui/react-context-menu';
 import * as DropdownMenu from '@radix-ui/react-dropdown-menu';
-import { type ReactNode, useContext } from 'react';
+import { type ComponentType, type ReactNode, useContext } from 'react';
 import { AppInitStateContext } from '@/contexts/AppInitContext';
 import { menuContentClass as MENU_CONTENT_CLASS } from '../ui/MenuContent.tsx';
-import {
-  dangerMenuItemClass as DANGER_MENU_ITEM_CLASS,
-  menuItemClass as MENU_ITEM_CLASS,
-} from '../ui/MenuItem.tsx';
+import { dangerMenuItemClass, menuItemClass } from '../ui/MenuItem.tsx';
+
+type MenuItem = {
+  key: string;
+  label: ReactNode;
+  onSelect: () => void;
+  danger?: boolean;
+  separatorBefore?: boolean;
+};
+
+type ItemProps = { onSelect: () => void; className: string; children: ReactNode };
+type SeparatorProps = { className: string };
+
+function renderItems(
+  items: MenuItem[],
+  Item: ComponentType<ItemProps>,
+  Separator: ComponentType<SeparatorProps>,
+) {
+  return items.map((item) => (
+    <div key={item.key}>
+      {item.separatorBefore && <Separator className="my-1 border-t border-border" />}
+      <Item onSelect={item.onSelect} className={item.danger ? dangerMenuItemClass : menuItemClass}>
+        {item.label}
+      </Item>
+    </div>
+  ));
+}
 
 export interface ProjectMenuCallbacks {
   onSelectResume: () => void;
@@ -70,19 +93,7 @@ export function ProjectDropdownMenu({ trigger, ...callbacks }: DropdownProps): R
           collisionPadding={8}
           className={MENU_CONTENT_CLASS}
         >
-          {items.map((item) => (
-            <div key={item.key}>
-              {item.separatorBefore && (
-                <DropdownMenu.Separator className="my-1 border-t border-border" />
-              )}
-              <DropdownMenu.Item
-                onSelect={item.onSelect}
-                className={item.danger ? DANGER_MENU_ITEM_CLASS : MENU_ITEM_CLASS}
-              >
-                {item.label}
-              </DropdownMenu.Item>
-            </div>
-          ))}
+          {renderItems(items, DropdownMenu.Item, DropdownMenu.Separator)}
         </DropdownMenu.Content>
       </DropdownMenu.Portal>
     </DropdownMenu.Root>
@@ -107,19 +118,7 @@ export function ProjectContextMenu({
       <ContextMenu.Trigger asChild>{children}</ContextMenu.Trigger>
       <ContextMenu.Portal>
         <ContextMenu.Content className={MENU_CONTENT_CLASS}>
-          {items.map((item) => (
-            <div key={item.key}>
-              {item.separatorBefore && (
-                <ContextMenu.Separator className="my-1 border-t border-border" />
-              )}
-              <ContextMenu.Item
-                onSelect={item.onSelect}
-                className={item.danger ? DANGER_MENU_ITEM_CLASS : MENU_ITEM_CLASS}
-              >
-                {item.label}
-              </ContextMenu.Item>
-            </div>
-          ))}
+          {renderItems(items, ContextMenu.Item, ContextMenu.Separator)}
         </ContextMenu.Content>
       </ContextMenu.Portal>
     </ContextMenu.Root>

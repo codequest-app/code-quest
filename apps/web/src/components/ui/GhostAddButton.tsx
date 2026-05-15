@@ -1,7 +1,7 @@
 import type { ButtonHTMLAttributes } from 'react';
 import { cn } from '@/utils/cn';
 
-interface GhostAddButtonProps extends ButtonHTMLAttributes<HTMLButtonElement> {}
+type GhostAddButtonProps = ButtonHTMLAttributes<HTMLButtonElement>;
 
 export function GhostAddButton({
   className,

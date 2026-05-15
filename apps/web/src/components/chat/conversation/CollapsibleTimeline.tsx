@@ -93,7 +93,7 @@ function ToolGroup({
     <div data-collapsed-ids={collapsedIds}>
       <TimelineItem
         position={expanded ? 'first' : position}
-        dotClass="tint-10"
+        dotClass="bg-tint-10"
         showDot={!expanded}
         py="py-1.5"
       >

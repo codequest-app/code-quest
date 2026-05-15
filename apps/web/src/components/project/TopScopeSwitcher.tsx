@@ -7,14 +7,11 @@ import { cn } from '@/utils/cn';
 import { focusRing } from '../ui/_tokens.ts';
 import { MenuItem } from '../ui/MenuItem.tsx';
 import { SectionLabel } from '../ui/SectionLabel.tsx';
+import { byLastOpenedDesc } from './project-utils.ts';
 
 function displayName(p: Project): string {
   if (p.name.includes('/')) return basename(p.name);
   return p.name || basename(p.cwd);
-}
-
-function byLastOpenedDesc(a: Project, b: Project): number {
-  return a.lastOpenedAt < b.lastOpenedAt ? 1 : -1;
 }
 
 function matchesSearch(p: Project, q: string): boolean {
