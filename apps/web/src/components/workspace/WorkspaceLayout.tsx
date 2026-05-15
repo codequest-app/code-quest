@@ -1,5 +1,5 @@
 import { FolderOpenIcon } from '@heroicons/react/24/outline';
-import { useCallback, useEffect, useMemo, useState } from 'react';
+import { useEffect, useState } from 'react';
 import { useHotkeys } from 'react-hotkeys-hook';
 import { toast } from 'sonner';
 import { DrawerAside } from '@/components/ui/DrawerAside';
@@ -73,28 +73,24 @@ function WorkspaceLayoutInner() {
   const { isMobile, isDesktop } = useBreakpoint();
   const [leftOpen, setLeftOpen] = useState(() => isDesktop);
 
-  const handleAddProject = useCallback(
-    async (cwd: string) => {
-      const res = await addProject(cwd);
-      if ('error' in res) {
-        toast.error(formatAddProjectError(res.error, res.path, cwd));
-        return;
-      }
-      setDialogOpen(false);
-    },
-    [addProject],
-  );
+  async function handleAddProject(cwd: string) {
+    const res = await addProject(cwd);
+    if ('error' in res) {
+      toast.error(formatAddProjectError(res.error, res.path, cwd));
+      return;
+    }
+    setDialogOpen(false);
+  }
 
-  const handleActivateSession = useCallback(
-    (channelId: string) => {
-      const s = sessionsMap.get(channelId);
-      if (s) setActiveProject(s.projectRoot);
-    },
-    [sessionsMap, setActiveProject],
-  );
+  function handleActivateSession(channelId: string) {
+    const s = sessionsMap.get(channelId);
+    if (s) setActiveProject(s.projectRoot);
+  }
 
-  const onToggleLeft = useCallback(() => setLeftOpen((v) => !v), []);
-  const addedProjectCwds = useMemo(() => new Set(projects.map((p) => p.cwd)), [projects]);
+  function onToggleLeft() {
+    setLeftOpen((v) => !v);
+  }
+  const addedProjectCwds = new Set(projects.map((p) => p.cwd));
 
   return (
     <div className="flex flex-col flex-1 overflow-hidden">

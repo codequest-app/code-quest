@@ -7,8 +7,6 @@ type BlockCollapsibleProps = {
   blockId: string;
   initialOpen?: boolean;
   header?: React.ReactNode;
-  icon?: React.ReactNode;
-  label?: string;
   children?: React.ReactNode;
 };
 
@@ -16,8 +14,6 @@ export function BlockCollapsible({
   blockId,
   initialOpen,
   header,
-  icon,
-  label,
   children,
 }: BlockCollapsibleProps): React.JSX.Element {
   useLayoutEffect(() => {
@@ -31,13 +27,7 @@ export function BlockCollapsible({
   );
 
   return (
-    <CollapsibleBlock
-      open={open}
-      onOpenChange={(next) => setOpen(blockId, next)}
-      header={header}
-      icon={icon}
-      label={label}
-    >
+    <CollapsibleBlock open={open} onOpenChange={(next) => setOpen(blockId, next)} header={header}>
       {children}
     </CollapsibleBlock>
   );

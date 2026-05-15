@@ -1,24 +1,9 @@
+import { StatusLine } from '@/components/chat/ui/StatusLine';
 import { cn } from '@/utils/cn';
 import { CODE_BLOCK_CLASS } from '../renderers/ansi.tsx';
 import { CollapsibleBlock } from '../ui/CollapsibleBlock';
 import { renderIcon } from './message-type-icons.tsx';
-
-function StatusLine({
-  icon,
-  children,
-  className,
-}: {
-  icon: React.ReactNode;
-  children: React.ReactNode;
-  className?: string;
-}) {
-  return (
-    <div className={cn('flex items-center gap-2 text-xs', className)}>
-      <span className="inline-flex items-center">{icon}</span>
-      {children}
-    </div>
-  );
-}
+import { ToolUseHeader } from './ToolUseHeader';
 
 export function HookStartedContent({
   content,
@@ -49,7 +34,9 @@ export function HookResponseContent({
       </StatusLine>
     );
   return (
-    <CollapsibleBlock icon={renderIcon('hook_response')} label={`Hook done: ${content}`}>
+    <CollapsibleBlock
+      header={<ToolUseHeader icon={renderIcon('hook_response')} name={`Hook done: ${content}`} />}
+    >
       <pre className={cn(CODE_BLOCK_CLASS, 'text-subtle')}>{output}</pre>
     </CollapsibleBlock>
   );
@@ -64,8 +51,12 @@ export function HookDiagnosticsContent({
 }): React.JSX.Element {
   return (
     <CollapsibleBlock
-      icon={renderIcon('hook_diagnostics', 'w-4 h-4 shrink-0 text-warning')}
-      label={`Hook Diagnostics: ${content}`}
+      header={
+        <ToolUseHeader
+          icon={renderIcon('hook_diagnostics', 'w-4 h-4 shrink-0 text-warning')}
+          name={`Hook Diagnostics: ${content}`}
+        />
+      }
     >
       <pre className={cn(CODE_BLOCK_CLASS, 'whitespace-pre-wrap')}>{diagnostics ?? content}</pre>
     </CollapsibleBlock>

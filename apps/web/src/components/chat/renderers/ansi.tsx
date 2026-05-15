@@ -10,8 +10,10 @@ const Ansi =
 export const CODE_BLOCK_CLASS =
   'bg-code-block p-3 rounded-lg overflow-x-auto text-xs font-mono border border-border';
 
+// biome-ignore lint/suspicious/noControlCharactersInRegex: ANSI escape sequence requires literal ESC char
+const ANSI_PATTERN = /\x1b\[[\d;]*m/;
+
 export function hasAnsi(content: string): boolean {
-  const ANSI_PATTERN = new RegExp(`${String.fromCharCode(0x1b)}\\[[\\d;]*m`);
   return ANSI_PATTERN.test(content);
 }
 

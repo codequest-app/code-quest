@@ -102,7 +102,12 @@ export function CreateWorktreeDialog({
     <Dialog open={open} onOpenChange={(next) => !next && resetAndClose()}>
       <DialogContent title="New worktree" className="w-120">
         <form onSubmit={handleSubmit} className="flex flex-col gap-3">
-          <Tabs.Root value={mode} onValueChange={(v) => setMode(v as Mode)}>
+          <Tabs.Root
+            value={mode}
+            onValueChange={(v) => {
+              if (v === 'existing' || v === 'new') setMode(v);
+            }}
+          >
             <Tabs.List className="flex gap-1 border-b border-border -mx-4 px-4">
               <Tabs.Trigger value="existing" className={tabTriggerCompact}>
                 Checkout existing

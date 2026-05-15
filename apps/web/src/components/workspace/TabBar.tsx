@@ -5,7 +5,7 @@ import { cn } from '@/utils/cn';
 import { Button } from '../ui/Button.tsx';
 import { Dialog, DialogClose, DialogContent } from '../ui/Dialog.tsx';
 import { IconButton } from '../ui/IconButton.tsx';
-import { StatusDot } from '../ui/StatusDot.tsx';
+import { type DotColor, StatusDot } from '../ui/StatusDot.tsx';
 
 export interface TabInfo {
   sessionId: string;
@@ -36,7 +36,6 @@ interface TabBarProps {
   onOpenHistory?: () => void;
 }
 
-type DotColor = 'success' | 'warning' | 'danger' | 'accent' | 'muted';
 const statusDot: Record<SessionStatus, { color: DotColor; pulse?: boolean }> = {
   disconnected: { color: 'danger' },
   idle: { color: 'success' },

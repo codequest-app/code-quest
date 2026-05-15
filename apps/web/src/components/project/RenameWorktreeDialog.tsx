@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import { Button } from '../ui/Button.tsx';
 import { Dialog, DialogContent } from '../ui/Dialog.tsx';
 import { DialogFooter } from '../ui/DialogFooter.tsx';
@@ -20,6 +20,10 @@ export function RenameWorktreeDialog({
 }: RenameWorktreeDialogProps): React.JSX.Element {
   const [name, setName] = useState(currentBranch);
   const [error, setError] = useState<string | null>(null);
+
+  useEffect(() => {
+    setName(currentBranch);
+  }, [currentBranch]);
 
   function submit() {
     const trimmed = name.trim();

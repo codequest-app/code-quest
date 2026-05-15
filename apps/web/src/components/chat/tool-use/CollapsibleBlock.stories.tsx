@@ -1,6 +1,7 @@
 import type { Meta, StoryObj } from '@storybook/react-vite';
 import { expect, userEvent } from 'storybook/test';
 import { CollapsibleBlock } from '../ui/CollapsibleBlock';
+import { ToolUseHeader } from './ToolUseHeader';
 
 const meta: Meta<typeof CollapsibleBlock> = {
   component: CollapsibleBlock,
@@ -19,8 +20,7 @@ type Story = StoryObj<typeof meta>;
 
 export const Collapsed: Story = {
   args: {
-    icon: '📄',
-    label: 'example.ts',
+    header: <ToolUseHeader icon="📄" name="example.ts" />,
     children: (
       <pre className="bg-code-block p-3 rounded text-xs font-mono">
         {`function hello() {\n  return 'world';\n}`}
@@ -37,8 +37,7 @@ export const Collapsed: Story = {
 
 export const DefaultOpen: Story = {
   args: {
-    icon: '✏️',
-    label: 'main.ts',
+    header: <ToolUseHeader icon="✏️" name="main.ts" />,
     defaultOpen: true,
     children: (
       <pre className="bg-code-block p-3 rounded text-xs font-mono">

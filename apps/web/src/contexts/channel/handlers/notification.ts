@@ -116,7 +116,7 @@ function showInteractiveNotification(
 
 function showSeverityToast(p: Payload<'notification:show'>): void {
   const toastFn = { error: toast.error, warning: toast.warning, info: toast.info };
-  toastFn[p.severity ?? 'info'](p.message ?? '');
+  (toastFn[p.severity ?? 'info'] ?? toast.info)(p.message ?? '');
 }
 
 function onNotificationShowEffect(

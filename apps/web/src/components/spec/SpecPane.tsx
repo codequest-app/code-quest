@@ -5,6 +5,7 @@ import { toast } from 'sonner';
 import { InlineAction } from '@/components/chat/ui/InlineAction';
 import { EmptyState } from '@/components/ui/EmptyState';
 import { useOpenspecActions, useOpenspecList } from '@/contexts/OpenspecContext';
+import { pluralize } from '@/utils/pluralize';
 import { Badge } from '../ui/Badge.tsx';
 import { CommandHint } from '../ui/CommandHint.tsx';
 import { PaneStatusFooter } from '../ui/PaneStatusFooter.tsx';
@@ -98,7 +99,7 @@ export function SpecPane({ cwd }: SpecPaneProps): React.JSX.Element {
         >
           {isLoading ? (
             <SkeletonRows count={3} />
-          ) : data && data.changes.length > 0 ? (
+          ) : data.changes.length > 0 ? (
             <ul className="flex flex-col">
               {data.changes.map((c) => {
                 const ready = c.status === 'complete';
@@ -164,7 +165,7 @@ export function SpecPane({ cwd }: SpecPaneProps): React.JSX.Element {
         <Section title="Specs" scope="project">
           {isLoading ? (
             <SkeletonRows count={3} />
-          ) : data && data.specs.length > 0 ? (
+          ) : data.specs.length > 0 ? (
             <ul className="flex flex-col">
               {data.specs.map((s) => (
                 <li key={s.capability}>
@@ -189,13 +190,9 @@ export function SpecPane({ cwd }: SpecPaneProps): React.JSX.Element {
       </div>
       {data && !('error' in data) && (
         <PaneStatusFooter>
-          <span>
-            {data.changes.length} {data.changes.length === 1 ? 'change' : 'changes'}
-          </span>
+          <span>{pluralize(data.changes.length, 'change')}</span>
           <span>·</span>
-          <span>
-            {data.specs.length} {data.specs.length === 1 ? 'spec' : 'specs'}
-          </span>
+          <span>{pluralize(data.specs.length, 'spec')}</span>
         </PaneStatusFooter>
       )}
       {open && (

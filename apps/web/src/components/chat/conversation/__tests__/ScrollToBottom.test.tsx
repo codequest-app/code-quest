@@ -6,15 +6,16 @@ import { COMPOSE_PLACEHOLDER, emitAssistantTurn } from '@/test/helpers';
 import { renderWithChannel } from '@/test/render-with-channel';
 import { ComposeInput } from '../../compose/ComposeInput.tsx';
 
-const containerRef = createRef<HTMLDivElement>();
-
 import { MessageList } from '../MessageList.tsx';
+
+let containerRef: React.RefObject<HTMLDivElement | null>;
 
 // Fake only setTimeout/clearTimeout so the 500ms scroll-lock can be
 // advanced instantly. fireEvent is used over userEvent because the
 // latter relies on real-timer microtask scheduling which deadlocks
 // even with the limited toFake list.
 beforeEach(() => {
+  containerRef = createRef<HTMLDivElement>();
   vi.useFakeTimers({ toFake: ['setTimeout', 'clearTimeout'] });
 });
 
@@ -136,7 +137,7 @@ describe('Auto-scroll behavior', () => {
     fireEvent.keyDown(input, { key: 'Enter' });
 
     // Submitting a message MUST pull the view back to the bottom
-    expect(scrollIntoView).toHaveBeenCalled();
+    expect(scrollIntoView).toHaveBeenCalledWith({ behavior: 'smooth' });
   });
 
   it('auto-scrolls when streaming delta grows content while user is at bottom', async () => {

@@ -3,7 +3,8 @@ import { HighlightText } from '@/components/chat/ui/HighlightText';
 import { FileIcon, FolderIcon } from '@/components/icons/MentionIcons';
 import { cn } from '@/utils/cn';
 import { slugify } from '@/utils/slugify';
-import type { SearchStatus } from './ComposeInput.tsx';
+
+export type SearchStatus = 'idle' | 'loading' | 'done';
 
 const noop = () => {};
 

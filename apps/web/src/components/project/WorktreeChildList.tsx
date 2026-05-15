@@ -71,15 +71,19 @@ export function WorktreeChildList({
 
   useEffect(() => {
     let cancelled = false;
-    for (const wt of worktrees) {
-      void (async () => {
-        const res = await status(wt.path);
-        if (cancelled) return;
+    void (async () => {
+      const results = await Promise.all(
+        worktrees.map((wt) => status(wt.path).then((res) => ({ wt, res }))),
+      );
+      if (cancelled) return;
+      const updates: Record<string, number> = {};
+      for (const { wt, res } of results) {
         if ('changedFilesCount' in res) {
-          setChangesByPath((prev) => ({ ...prev, [wt.path]: res.changedFilesCount }));
+          updates[wt.path] = res.changedFilesCount;
         }
-      })();
-    }
+      }
+      setChangesByPath((prev) => ({ ...prev, ...updates }));
+    })();
     return () => {
       cancelled = true;
     };

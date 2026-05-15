@@ -20,6 +20,7 @@ import {
   ErrorContent,
   ImageContent,
   InterruptContent,
+  RedactedThinkingContent,
   ResultContent,
   SlashCommandResultContent,
   StreamlinedToolSummaryContent,
@@ -345,7 +346,7 @@ describe('tool-use', () => {
     });
 
     it('renders redacted_thinking as placeholder', () => {
-      render(<div className="text-xs text-text-muted italic">Thinking (redacted)</div>);
+      render(<RedactedThinkingContent />);
       expect(screen.getByText(/thinking.*redacted/i)).toBeInTheDocument();
     });
 

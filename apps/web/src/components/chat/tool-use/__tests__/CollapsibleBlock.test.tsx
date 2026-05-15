@@ -2,11 +2,14 @@ import { render, screen } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { describe, expect, it } from 'vitest';
 import { CollapsibleBlock } from '../../ui/CollapsibleBlock';
+import { ToolUseHeader } from '../ToolUseHeader';
 
 describe('CollapsibleBlock', () => {
   it('accepts a ReactNode icon (SVG element)', () => {
     render(
-      <CollapsibleBlock icon={<svg role="img" aria-label="custom icon" />} label="Test">
+      <CollapsibleBlock
+        header={<ToolUseHeader icon={<svg role="img" aria-label="custom icon" />} name="Test" />}
+      >
         <span>content</span>
       </CollapsibleBlock>,
     );
@@ -15,7 +18,7 @@ describe('CollapsibleBlock', () => {
 
   it('hides children by default', () => {
     render(
-      <CollapsibleBlock icon="📄" label="Test">
+      <CollapsibleBlock header={<ToolUseHeader icon="📄" name="Test" />}>
         <span>content</span>
       </CollapsibleBlock>,
     );
@@ -25,7 +28,7 @@ describe('CollapsibleBlock', () => {
   it('shows children after clicking the trigger', async () => {
     const user = userEvent.setup();
     render(
-      <CollapsibleBlock icon="📄" label="Test">
+      <CollapsibleBlock header={<ToolUseHeader icon="📄" name="Test" />}>
         <span>content</span>
       </CollapsibleBlock>,
     );
@@ -36,7 +39,7 @@ describe('CollapsibleBlock', () => {
   it('hides children again after clicking trigger twice', async () => {
     const user = userEvent.setup();
     render(
-      <CollapsibleBlock icon="📄" label="Test">
+      <CollapsibleBlock header={<ToolUseHeader icon="📄" name="Test" />}>
         <span>content</span>
       </CollapsibleBlock>,
     );
@@ -47,7 +50,7 @@ describe('CollapsibleBlock', () => {
 
   it('shows children when defaultOpen is true', () => {
     render(
-      <CollapsibleBlock icon="📄" label="Test" defaultOpen>
+      <CollapsibleBlock header={<ToolUseHeader icon="📄" name="Test" />} defaultOpen>
         <span>content</span>
       </CollapsibleBlock>,
     );

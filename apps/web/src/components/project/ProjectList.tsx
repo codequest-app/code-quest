@@ -3,10 +3,7 @@ import { GhostAddButton } from '../ui/GhostAddButton.tsx';
 import { GroupHeader } from '../ui/GroupHeader.tsx';
 import { SectionHeader } from '../ui/SectionHeader.tsx';
 import { ProjectCard } from './ProjectCard.tsx';
-
-function byLastOpenedDesc(a: Project, b: Project): number {
-  return a.lastOpenedAt < b.lastOpenedAt ? 1 : -1;
-}
+import { splitPinnedRecent } from './project-utils.ts';
 
 export function ProjectList({
   projects,
@@ -19,11 +16,8 @@ export function ProjectList({
   onSelect: (cwd: string) => void;
   onAdd: () => void;
 }): React.JSX.Element {
-  const pinned = projects.filter((p) => p.pinned).sort(byLastOpenedDesc);
-  const recent = projects.filter((p) => !p.pinned).sort(byLastOpenedDesc);
-  // Show Pinned header whenever pinned items exist (emphasizes the curated set).
+  const { pinned, recent } = splitPinnedRecent(projects);
   // Show Recent header only when both groups exist (otherwise it's just a flat list).
-  const showPinnedHeader = pinned.length > 0;
   const showRecentHeader = pinned.length > 0 && recent.length > 0;
 
   return (
@@ -32,7 +26,7 @@ export function ProjectList({
       <div className="flex-1 overflow-auto px-2">
         {pinned.length > 0 && (
           <>
-            {showPinnedHeader && <GroupHeader>Pinned</GroupHeader>}
+            <GroupHeader>Pinned</GroupHeader>
             {pinned.map((p) => (
               <ProjectCard
                 key={p.cwd}

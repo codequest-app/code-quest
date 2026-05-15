@@ -54,8 +54,8 @@ export function EffortSwitch({ level, levels, onSelect }: EffortSwitchProps): Re
     if (e.detail === 0) return;
     const rect = e.currentTarget.getBoundingClientRect();
     const x = Math.max(0, Math.min(1, (e.clientX - rect.left) / rect.width));
-    const level = levels[Math.round(x * (count - 1))];
-    if (level) onSelect(level);
+    const nextLevel = levels[Math.round(x * (count - 1))];
+    if (nextLevel) onSelect(nextLevel);
   };
 
   const ticksAfterThumb = Array.from({ length: count - idx - 1 }, (_, k) => idx + 1 + k);
@@ -81,8 +81,8 @@ export function EffortSwitch({ level, levels, onSelect }: EffortSwitchProps): Re
         else if (e.key === 'End') next = count - 1;
         else return;
         e.preventDefault();
-        const level = levels[next];
-        if (next !== idx && level) onSelect(level);
+        const nextLevel = levels[next];
+        if (next !== idx && nextLevel) onSelect(nextLevel);
       }}
       title="Click a position to set effort level"
     >

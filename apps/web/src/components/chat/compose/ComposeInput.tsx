@@ -1,8 +1,6 @@
 import type { FsSearchResult } from '@code-quest/shared';
 import * as Popover from '@radix-ui/react-popover';
 
-export type SearchStatus = 'idle' | 'loading' | 'done';
-
 import { type ClipboardEvent, type KeyboardEvent, useEffect, useRef, useState } from 'react';
 import { useDebouncedCallback } from 'use-debounce';
 import { slashPaletteState } from '@/components/chat/compose/command-menu/slash-palette-state';
@@ -12,7 +10,7 @@ import { selectIsActive, useChannelStore } from '@/stores/ChannelStoreContext';
 import { cn } from '@/utils/cn';
 import { getMentionQuery, MENTION_REGEX } from '@/utils/slash-query';
 import { sortEntriesDirsFirst } from '@/utils/sort-entries';
-import { MentionDropdown } from './MentionDropdown.tsx';
+import { MentionDropdown, type SearchStatus } from './MentionDropdown.tsx';
 
 const DEFAULT_PERMISSION_MODES = ['normal', 'acceptEdits', 'plan', 'bypassPermissions'];
 

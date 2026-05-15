@@ -1,4 +1,4 @@
-import { useCallback, useMemo, useState } from 'react';
+import { useState } from 'react';
 import { defaultEnabledTypes } from '@/contexts/channel/MessageVisibilityContext';
 import { createColorThemeFeature } from '@/features/color-theme/color-theme-feature';
 import { createDensityFeature } from '@/features/density/density-feature';
@@ -99,21 +99,15 @@ function DisplaySection() {
   const visibilityTypes = usePreferencesStore((s) => s.enabledTypes);
   const setStoreEnabledTypes = usePreferencesStore((s) => s.setEnabledTypes);
 
-  const enabledTypes = useMemo(
-    () => (visibilityTypes !== null ? new Set(visibilityTypes) : defaultEnabledTypes()),
-    [visibilityTypes],
-  );
+  const enabledTypes = visibilityTypes !== null ? new Set(visibilityTypes) : defaultEnabledTypes();
 
-  const toggleType = useCallback(
-    (type: string) => {
-      const current = usePreferencesStore.getState().enabledTypes;
-      const base = current !== null ? new Set(current) : defaultEnabledTypes();
-      if (base.has(type)) base.delete(type);
-      else base.add(type);
-      setStoreEnabledTypes([...base]);
-    },
-    [setStoreEnabledTypes],
-  );
+  function toggleType(type: string) {
+    const current = usePreferencesStore.getState().enabledTypes;
+    const base = current !== null ? new Set(current) : defaultEnabledTypes();
+    if (base.has(type)) base.delete(type);
+    else base.add(type);
+    setStoreEnabledTypes([...base]);
+  }
 
   const features = createFilterFeatures({
     enabledTypes,

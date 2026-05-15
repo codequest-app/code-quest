@@ -28,6 +28,7 @@ import {
   MetaContent,
   PendingActionContent,
   RateLimitContent,
+  RedactedThinkingContent,
   ResultContent,
   SlashCommandResultContent,
   StreamlinedTextContent,
@@ -36,6 +37,7 @@ import {
 } from '../tool-use/SystemBlocks.tsx';
 import { ToolResultBlock } from '../tool-use/ToolResultBlock.tsx';
 import { ToolUseCollapsible } from '../tool-use/ToolUseCollapsible.tsx';
+import { ToolUseHeader } from '../tool-use/ToolUseHeader';
 import { CollapsibleBlock } from '../ui/CollapsibleBlock';
 import { Expandable } from '../ui/Expandable';
 import { AssistantTurnContent } from './AssistantTurnContent.tsx';
@@ -264,18 +266,21 @@ function renderContent(
   }
   if (message.type === 'unknown_delta' || message.type === 'raw_event')
     return (
-      <CollapsibleBlock icon={renderIcon(message.type)} label={message.content}>
+      <CollapsibleBlock
+        header={<ToolUseHeader icon={renderIcon(message.type)} name={message.content} />}
+      >
         {message.data != null && <JsonViewer data={message.data} className={CODE_BLOCK_CLASS} />}
       </CollapsibleBlock>
     );
   if (message.type === 'unhandled')
     return (
-      <CollapsibleBlock icon={renderIcon('unknown_delta')} label={message.content}>
+      <CollapsibleBlock
+        header={<ToolUseHeader icon={renderIcon('unknown_delta')} name={message.content} />}
+      >
         {message.event != null && <JsonViewer data={message.event} className={CODE_BLOCK_CLASS} />}
       </CollapsibleBlock>
     );
-  if (message.type === 'redacted_thinking')
-    return <div className="text-xs text-text-muted italic">Thinking (redacted)</div>;
+  if (message.type === 'redacted_thinking') return <RedactedThinkingContent />;
   if (message.type === 'pending_action') return <PendingActionContent content={message.content} />;
   if (message.type === 'action_result') return <ControlResponseContent content={message.content} />;
   if (message.type === 'streamlined_text')

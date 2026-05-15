@@ -3,6 +3,7 @@ import userEvent from '@testing-library/user-event';
 import { beforeEach, describe, expect, it } from 'vitest';
 import { useBlockOpenStore } from '@/stores/useBlockOpenStore.ts';
 import { BlockCollapsible } from '../BlockCollapsible.tsx';
+import { ToolUseHeader } from '../ToolUseHeader';
 
 beforeEach(() => {
   useBlockOpenStore.getState().reset();
@@ -11,7 +12,7 @@ beforeEach(() => {
 describe('BlockCollapsible', () => {
   it('starts collapsed by default', () => {
     render(
-      <BlockCollapsible blockId="b1" icon="📄" label="Test">
+      <BlockCollapsible blockId="b1" header={<ToolUseHeader icon="📄" name="Test" />}>
         <span>content</span>
       </BlockCollapsible>,
     );
@@ -21,7 +22,7 @@ describe('BlockCollapsible', () => {
   it('opens when trigger is clicked', async () => {
     const user = userEvent.setup();
     render(
-      <BlockCollapsible blockId="b1" icon="📄" label="Test">
+      <BlockCollapsible blockId="b1" header={<ToolUseHeader icon="📄" name="Test" />}>
         <span>content</span>
       </BlockCollapsible>,
     );
@@ -32,7 +33,7 @@ describe('BlockCollapsible', () => {
   it('closes again when trigger is clicked twice', async () => {
     const user = userEvent.setup();
     render(
-      <BlockCollapsible blockId="b1" icon="📄" label="Test">
+      <BlockCollapsible blockId="b1" header={<ToolUseHeader icon="📄" name="Test" />}>
         <span>content</span>
       </BlockCollapsible>,
     );
@@ -44,7 +45,7 @@ describe('BlockCollapsible', () => {
   it('persists open state across remount', async () => {
     const user = userEvent.setup();
     const { unmount } = render(
-      <BlockCollapsible blockId="b1" icon="📄" label="Test">
+      <BlockCollapsible blockId="b1" header={<ToolUseHeader icon="📄" name="Test" />}>
         <span>content</span>
       </BlockCollapsible>,
     );
@@ -54,7 +55,7 @@ describe('BlockCollapsible', () => {
     unmount();
 
     render(
-      <BlockCollapsible blockId="b1" icon="📄" label="Test">
+      <BlockCollapsible blockId="b1" header={<ToolUseHeader icon="📄" name="Test" />}>
         <span>content</span>
       </BlockCollapsible>,
     );
@@ -64,7 +65,11 @@ describe('BlockCollapsible', () => {
 
   it('initialOpen opens the block on first mount', () => {
     render(
-      <BlockCollapsible blockId="b-init" initialOpen label="Init">
+      <BlockCollapsible
+        blockId="b-init"
+        initialOpen
+        header={<ToolUseHeader icon={null} name="Init" />}
+      >
         <span>init-content</span>
       </BlockCollapsible>,
     );
@@ -74,7 +79,11 @@ describe('BlockCollapsible', () => {
   it('initialOpen does not override a user-closed state on remount', async () => {
     const user = userEvent.setup();
     const { unmount } = render(
-      <BlockCollapsible blockId="b-init2" initialOpen label="Init2">
+      <BlockCollapsible
+        blockId="b-init2"
+        initialOpen
+        header={<ToolUseHeader icon={null} name="Init2" />}
+      >
         <span>init-content-2</span>
       </BlockCollapsible>,
     );
@@ -86,7 +95,11 @@ describe('BlockCollapsible', () => {
 
     // remount — initialOpen should NOT reopen it (user closed it)
     render(
-      <BlockCollapsible blockId="b-init2" initialOpen label="Init2">
+      <BlockCollapsible
+        blockId="b-init2"
+        initialOpen
+        header={<ToolUseHeader icon={null} name="Init2" />}
+      >
         <span>init-content-2</span>
       </BlockCollapsible>,
     );
@@ -97,10 +110,10 @@ describe('BlockCollapsible', () => {
     const user = userEvent.setup();
     render(
       <>
-        <BlockCollapsible blockId="b1" icon="📄" label="Block1">
+        <BlockCollapsible blockId="b1" header={<ToolUseHeader icon="📄" name="Block1" />}>
           <span>content-1</span>
         </BlockCollapsible>
-        <BlockCollapsible blockId="b2" icon="📄" label="Block2">
+        <BlockCollapsible blockId="b2" header={<ToolUseHeader icon="📄" name="Block2" />}>
           <span>content-2</span>
         </BlockCollapsible>
       </>,

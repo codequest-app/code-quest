@@ -71,7 +71,7 @@ export function MarketplaceSection({
                 <div className="flex-1 min-w-0">
                   <div className="flex items-center gap-2 mb-1">
                     <span className="text-text font-medium text-sm">{mp.name}</span>
-                    <span className="text-xs text-text-muted">{src.source}</span>
+                    <span className="text-xs text-text-muted">{src?.source ?? '—'}</span>
                   </div>
                   {detail && <p className="text-text-muted text-xs m-0 truncate">{detail}</p>}
                   <p className="text-text-muted text-xs mt-1 m-0">

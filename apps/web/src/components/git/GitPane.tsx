@@ -1,3 +1,4 @@
+import type { ClientToServerEvents } from '@code-quest/shared';
 import {
   EVENTS,
   type GitAddResult,
@@ -9,12 +10,14 @@ import {
   gitDiffByCwdResultSchema,
   gitPushResultSchema,
 } from '@code-quest/shared';
-import { useCallback, useState } from 'react';
+import { useState } from 'react';
 import { toast } from 'sonner';
+import type { ZodType } from 'zod';
 import { EmptyState } from '@/components/ui/EmptyState';
 import { useGitActions, useGitStatus } from '@/contexts/GitContext';
 import { useSocket } from '@/contexts/SocketContext';
 import { useKeepFsWatcherAlive } from '@/hooks/useKeepFsWatcherAlive';
+import type { TypedSocket } from '@/socket/client';
 import { rpc } from '@/socket/rpc';
 import { cn } from '@/utils/cn';
 import { type DiffFile, parseUnifiedDiff } from '@/utils/parse-unified-diff';
@@ -28,6 +31,17 @@ import { DiffModal } from './DiffModal.tsx';
 
 interface GitPaneProps {
   cwd: string;
+}
+
+async function rpcParsed<T, E extends keyof ClientToServerEvents>(
+  socket: TypedSocket,
+  schema: ZodType<T>,
+  event: E,
+  ...args: Parameters<ClientToServerEvents[E]> extends [...infer P, infer _Cb] ? P : never
+): Promise<T | { error: string }> {
+  // biome-ignore lint/suspicious/noExplicitAny: rpc generic constraints can't express this call pattern without an escape hatch
+  const raw = await (rpc as any)(socket, event, ...args);
+  return schema.safeParse(raw).data ?? { error: 'Invalid response' };
 }
 
 const STATUS_LABEL: Record<string, { mark: string; cls: string }> = {
@@ -48,7 +62,9 @@ export function GitPane({ cwd }: GitPaneProps): React.JSX.Element {
   const { checkout, discardFile, fetch, listBranches, pull, refetchGitStatus } = useGitActions();
   const data = useGitStatus(cwd);
   useKeepFsWatcherAlive(cwd);
-  const refetch = useCallback(() => refetchGitStatus(cwd), [cwd, refetchGitStatus]);
+  function refetch() {
+    return refetchGitStatus(cwd);
+  }
   const [diffFile, setDiffFile] = useState<DiffFile | null>(null);
   const [branchPopoverOpen, setBranchPopoverOpen] = useState(false);
   const [branches, setBranches] = useState<string[]>([]);
@@ -62,18 +78,21 @@ export function GitPane({ cwd }: GitPaneProps): React.JSX.Element {
   }
 
   async function stageAll() {
-    const response = await rpc(socket, EVENTS.git.add, { cwd });
-    const parsed = gitAddResultSchema.safeParse(response);
-    const result: GitAddResult = parsed.success ? parsed.data : { error: 'Invalid response' };
+    const result: GitAddResult = await rpcParsed(socket, gitAddResultSchema, EVENTS.git.add, {
+      cwd,
+    });
     if ('error' in result) toast.error(`Stage failed: ${result.error}`);
     else toast.success('Staged all changes');
     await refetch();
   }
 
   async function commit(message: string) {
-    const response = await rpc(socket, EVENTS.git.commit, { cwd, message });
-    const parsed = gitCommitResultSchema.safeParse(response);
-    const result: GitCommitResult = parsed.success ? parsed.data : { error: 'Invalid response' };
+    const result: GitCommitResult = await rpcParsed(
+      socket,
+      gitCommitResultSchema,
+      EVENTS.git.commit,
+      { cwd, message },
+    );
     if ('error' in result) {
       if (result.error === 'nothing-to-commit') {
         toast('Nothing to commit. Stage first.');
@@ -109,9 +128,9 @@ export function GitPane({ cwd }: GitPaneProps): React.JSX.Element {
   }
 
   async function push() {
-    const response = await rpc(socket, EVENTS.git.push, { cwd });
-    const parsed = gitPushResultSchema.safeParse(response);
-    const result: GitPushResult = parsed.success ? parsed.data : { error: 'Invalid response' };
+    const result: GitPushResult = await rpcParsed(socket, gitPushResultSchema, EVENTS.git.push, {
+      cwd,
+    });
     if ('error' in result) {
       if (result.error === 'no-upstream') toast('No upstream — set one with git push -u');
       else if (result.error === 'rejected') toast('Push rejected (non-FF). Pull first.');

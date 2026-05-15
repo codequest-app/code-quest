@@ -3,10 +3,7 @@ import { GhostAddButton } from '../ui/GhostAddButton.tsx';
 import { GroupHeader } from '../ui/GroupHeader.tsx';
 import { SectionHeader } from '../ui/SectionHeader.tsx';
 import { ProjectRow } from './ProjectRow.tsx';
-
-function byLastOpenedDesc(a: Project, b: Project): number {
-  return a.lastOpenedAt < b.lastOpenedAt ? 1 : -1;
-}
+import { splitPinnedRecent } from './project-utils.ts';
 
 export function ProjectTree({
   projects,
@@ -19,16 +16,14 @@ export function ProjectTree({
   onSelectProject: (cwd: string) => void;
   onAdd: () => void;
 }): React.JSX.Element {
-  const pinned = projects.filter((p) => p.pinned).sort(byLastOpenedDesc);
-  const recent = projects.filter((p) => !p.pinned).sort(byLastOpenedDesc);
-  const showPinnedHeader = pinned.length > 0;
+  const { pinned, recent } = splitPinnedRecent(projects);
   const showRecentHeader = pinned.length > 0 && recent.length > 0;
 
   return (
     <div className="flex flex-col h-full">
       <SectionHeader>Projects</SectionHeader>
       <div className="flex-1 overflow-auto px-2">
-        {showPinnedHeader && <GroupHeader>Pinned</GroupHeader>}
+        {pinned.length > 0 && <GroupHeader>Pinned</GroupHeader>}
         {pinned.map((p) => (
           <ProjectRow
             key={p.cwd}

@@ -1,5 +1,6 @@
 import { MarkdownContent } from '../renderers/MarkdownContent.tsx';
 import { BlockCollapsible } from '../tool-use/BlockCollapsible';
+import { ToolUseHeader } from '../tool-use/ToolUseHeader';
 
 interface ThinkingBlockProps {
   content: string;
@@ -33,7 +34,7 @@ export function ThinkingBlock({
 
   const label = thinkingLabel(isStreaming, durationMs, budgetTokens);
   return (
-    <BlockCollapsible blockId={blockId} label={label}>
+    <BlockCollapsible blockId={blockId} header={<ToolUseHeader icon={null} name={label} />}>
       <div className="pl-3 border-l-2 border-border-subtle text-sm text-subtle">
         <MarkdownContent content={content} />
       </div>

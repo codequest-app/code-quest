@@ -1,6 +1,7 @@
 import type { ChatStats } from '@code-quest/shared';
 import { MarkdownContent } from '@/components/chat/renderers/MarkdownContent';
 import { Expandable } from '@/components/chat/ui/Expandable';
+import { StatusLine } from '@/components/chat/ui/StatusLine';
 import { Badge } from '@/components/ui/Badge';
 import type { DocumentMeta, ImageMeta } from '@/types/ui';
 import { cn } from '@/utils/cn';
@@ -8,25 +9,8 @@ import { CODE_BLOCK_CLASS } from '../renderers/ansi.tsx';
 import { AlertBanner } from '../ui/AlertBanner';
 import { CenterDivider } from '../ui/CenterDivider';
 import { CollapsibleBlock } from '../ui/CollapsibleBlock';
-
-function StatusLine({
-  icon,
-  children,
-  className,
-}: {
-  icon: React.ReactNode;
-  children: React.ReactNode;
-  className?: string;
-}) {
-  return (
-    <div className={cn('flex items-center gap-2 text-xs', className)}>
-      <span className="inline-flex items-center">{icon}</span>
-      {children}
-    </div>
-  );
-}
-
 import { renderIcon } from './message-type-icons.tsx';
+import { ToolUseHeader } from './ToolUseHeader';
 
 const SET_MODEL_PREFIX = /^Set model to /;
 
@@ -135,24 +119,23 @@ export function RateLimitContent({
   content: string;
   rateLimitInfo?: Record<string, unknown>;
 }): React.ReactNode {
-  const info = rateLimitInfo;
   return (
     <AlertBanner className="bg-warning-bg border-l-warning px-4 py-2.5">
       <span className="text-warning text-sm font-medium flex items-center gap-1">
         {renderIcon('rate_limit_event')}
         {content}
       </span>
-      {info && (
+      {rateLimitInfo && (
         <span className="ml-2 text-xs text-text-muted flex items-center gap-2">
-          {info.rateLimitType ? <span>{String(info.rateLimitType)}</span> : null}
-          {info.resetsAt ? (
-            <span>resets {new Date(Number(info.resetsAt)).toLocaleTimeString()}</span>
+          {rateLimitInfo.rateLimitType ? <span>{String(rateLimitInfo.rateLimitType)}</span> : null}
+          {rateLimitInfo.resetsAt ? (
+            <span>resets {new Date(Number(rateLimitInfo.resetsAt)).toLocaleTimeString()}</span>
           ) : null}
-          {info.isUsingOverage === true && (
+          {rateLimitInfo.isUsingOverage === true && (
             <span className="text-danger font-medium">Overage active</span>
           )}
-          {info.overageStatus && info.isUsingOverage !== true ? (
-            <span className="text-warning">Overage: {String(info.overageStatus)}</span>
+          {rateLimitInfo.overageStatus && rateLimitInfo.isUsingOverage !== true ? (
+            <span className="text-warning">Overage: {String(rateLimitInfo.overageStatus)}</span>
           ) : null}
         </span>
       )}
@@ -198,7 +181,11 @@ export function StreamlinedTextContent({
 
 export function StreamlinedToolSummaryContent({ content }: { content: string }): React.ReactNode {
   return (
-    <CollapsibleBlock icon={renderIcon('streamlined_tool_use_summary')} label="Tool Summary">
+    <CollapsibleBlock
+      header={
+        <ToolUseHeader icon={renderIcon('streamlined_tool_use_summary')} name="Tool Summary" />
+      }
+    >
       <pre className={CODE_BLOCK_CLASS}>{content}</pre>
     </CollapsibleBlock>
   );
@@ -249,6 +236,10 @@ export function DocumentContent({
       <span className="max-w-50 truncate">{title}</span>
     </button>
   );
+}
+
+export function RedactedThinkingContent(): React.ReactNode {
+  return <div className="text-xs text-text-muted italic">Thinking (redacted)</div>;
 }
 
 export function ContentBlockStart({ blockType }: { blockType?: string }): React.ReactNode {

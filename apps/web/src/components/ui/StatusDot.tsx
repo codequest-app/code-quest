@@ -1,7 +1,7 @@
 import type { HTMLAttributes } from 'react';
 import { cn } from '@/utils/cn';
 
-type DotColor = 'success' | 'warning' | 'danger' | 'accent' | 'muted';
+export type DotColor = 'success' | 'warning' | 'danger' | 'accent' | 'muted';
 
 interface StatusDotProps extends HTMLAttributes<HTMLSpanElement> {
   color?: DotColor;

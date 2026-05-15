@@ -36,7 +36,7 @@ export function FilesPane({ cwd, onMention }: FilesPaneProps): React.JSX.Element
   }, [cwd, browse]);
 
   const gitMarks = useMemo(() => {
-    const m = new Map<string, string>();
+    const marks = new Map<string, string>();
     if (gitData && 'changedFiles' in gitData) {
       // POSIX-only path joining — server emits forward-slash paths from git
       // status (`f.file` is repo-relative) and FileTree's absolute paths
@@ -44,10 +44,10 @@ export function FilesPane({ cwd, onMention }: FilesPaneProps): React.JSX.Element
       // to avoid double-slash when cwd is a root like '/'.
       const normalizedCwd = cwd.endsWith('/') ? cwd.slice(0, -1) : cwd;
       for (const f of gitData.changedFiles) {
-        m.set(`${normalizedCwd}/${f.file}`, f.status);
+        marks.set(`${normalizedCwd}/${f.file}`, f.status);
       }
     }
-    return m;
+    return marks;
   }, [gitData, cwd]);
 
   function handleActivate(path: string, event: MouseEvent<Element>) {

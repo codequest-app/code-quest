@@ -1,6 +1,7 @@
 import { CheckIcon } from '@heroicons/react/24/solid';
 import { ContentRenderer } from '@/components/chat/tool-use/ContentRenderer';
 import { CollapsibleBlock } from '../ui/CollapsibleBlock';
+import { ToolUseHeader } from './ToolUseHeader';
 
 function extractTextFromArray(arr: unknown): string | null {
   if (!Array.isArray(arr)) return null;
@@ -36,7 +37,9 @@ export function ToolResultBlock({
   const rejectHandler = canDiff ? () => onDiffRespond?.(toolId, false) : undefined;
 
   return (
-    <CollapsibleBlock icon={<CheckIcon className="w-4 h-4 shrink-0" />} label={label}>
+    <CollapsibleBlock
+      header={<ToolUseHeader icon={<CheckIcon className="w-4 h-4 shrink-0" />} name={label} />}
+    >
       <ContentRenderer
         content={displayContent}
         editable={!!acceptHandler}

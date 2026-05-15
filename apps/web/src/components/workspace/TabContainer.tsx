@@ -1,7 +1,7 @@
 import type { WorktreeInfo } from '@code-quest/shared';
 import { ChatBubbleLeftRightIcon } from '@heroicons/react/24/outline';
 import * as Tabs from '@radix-ui/react-tabs';
-import { memo, useCallback, useEffect, useState } from 'react';
+import { memo, useEffect, useState } from 'react';
 import { toast } from 'sonner';
 import { EmptyState } from '@/components/ui/EmptyState';
 import { ChannelProvider } from '@/contexts/channel';
@@ -73,7 +73,9 @@ export const TabContainer: React.FC<{ projectCwd: string }> = memo(function TabC
   const { activeProjectCwd } = useProjectState();
   const { isDesktop } = useBreakpoint();
   const [rightOpen, setRightOpen] = useState(() => isDesktop);
-  const toggleRight = useCallback(() => setRightOpen((v) => !v), []);
+  function toggleRight() {
+    setRightOpen((v) => !v);
+  }
 
   const isThisActive = projectCwd === activeProjectCwd;
   const activeTabCwd = activeTabId ? (tabs[activeTabId]?.cwd ?? null) : null;

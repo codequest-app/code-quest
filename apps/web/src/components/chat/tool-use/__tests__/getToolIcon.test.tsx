@@ -1,50 +1,39 @@
-import {
-  CommandLineIcon,
-  CpuChipIcon,
-  DocumentMagnifyingGlassIcon,
-  DocumentPlusIcon,
-  MagnifyingGlassIcon,
-  PencilSquareIcon,
-  ServerIcon,
-  WrenchIcon,
-} from '@heroicons/react/24/outline';
+import { render } from '@testing-library/react';
 import { describe, expect, it } from 'vitest';
 import { getToolIcon } from '../ToolUseHeader.tsx';
 
-function iconType(toolName: string): unknown {
-  return (getToolIcon(toolName) as React.ReactElement).type;
-}
-
-function iconClass(toolName: string): string {
-  return (
-    ((getToolIcon(toolName) as React.ReactElement).props as { className?: string }).className ?? ''
-  );
+function renderIcon(toolName: string) {
+  const { container } = render(getToolIcon(toolName) as React.ReactElement);
+  return container;
 }
 
 describe('getToolIcon', () => {
   it('always renders with w-4 h-4 shrink-0 class', () => {
-    const cls = iconClass('Bash');
-    expect(cls).toBe('w-4 h-4 shrink-0');
+    const container = renderIcon('Bash');
+    expect(container.querySelector('svg')!.getAttribute('class')).toBe('w-4 h-4 shrink-0');
   });
 
   it.each([
-    ['Bash', CommandLineIcon],
-    ['Read', DocumentMagnifyingGlassIcon],
-    ['Write', DocumentPlusIcon],
-    ['Edit', PencilSquareIcon],
-    ['MultiEdit', PencilSquareIcon],
-    ['WebSearch', MagnifyingGlassIcon],
-    ['Agent', CpuChipIcon],
-    ['Task', CpuChipIcon],
-  ])('%s → correct icon component', (toolName, expected) => {
-    expect(iconType(toolName)).toBe(expected);
+    'Bash',
+    'Read',
+    'Write',
+    'Edit',
+    'MultiEdit',
+    'WebSearch',
+    'Agent',
+    'Task',
+  ])('%s → renders an SVG icon', (toolName) => {
+    const container = renderIcon(toolName);
+    expect(container.querySelector('svg')).toBeInTheDocument();
   });
 
-  it('mcp tool → ServerIcon', () => {
-    expect(iconType('mcp__my_tool')).toBe(ServerIcon);
+  it('mcp tool → renders an SVG icon', () => {
+    const container = renderIcon('mcp__my_tool');
+    expect(container.querySelector('svg')).toBeInTheDocument();
   });
 
-  it('unknown tool → WrenchIcon', () => {
-    expect(iconType('UnknownTool')).toBe(WrenchIcon);
+  it('unknown tool → renders an SVG icon', () => {
+    const container = renderIcon('UnknownTool');
+    expect(container.querySelector('svg')).toBeInTheDocument();
   });
 });

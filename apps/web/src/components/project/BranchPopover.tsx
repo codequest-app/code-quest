@@ -2,6 +2,7 @@ import * as Popover from '@radix-ui/react-popover';
 import { type ReactNode, useEffect, useMemo, useRef, useState } from 'react';
 import { MenuItem } from '@/components/ui/MenuItem';
 import { SectionLabel } from '@/components/ui/SectionLabel';
+import { cn } from '@/utils/cn';
 
 interface Props {
   /** Element that opens the popover when clicked. Wrapped in `Popover.Trigger asChild`. */
@@ -79,8 +80,7 @@ function BranchPopoverBody({ branches, current, onSelect, onCreateBranch }: Body
   const visible = useMemo(() => {
     const ordered = pinCurrent(branches, current);
     const needle = filter.trim().toLowerCase();
-    if (!needle) return ordered;
-    return ordered.filter((b) => b.toLowerCase().includes(needle));
+    return needle ? ordered.filter((b) => b.toLowerCase().includes(needle)) : ordered;
   }, [branches, current, filter]);
 
   useEffect(() => {
@@ -144,7 +144,7 @@ function BranchPopoverBody({ branches, current, onSelect, onCreateBranch }: Body
                   data-kind="branch"
                   data-cursor={isCursor || undefined}
                   onClick={() => onSelect(b)}
-                  className={`flex items-center gap-2 ${isCursor ? 'bg-hover-tint' : ''}`}
+                  className={cn('flex items-center gap-2', isCursor && 'bg-hover-tint')}
                 >
                   <span className="w-3 text-text-subtle">{isCurrent ? '✓' : ''}</span>
                   <span className="truncate">{b}</span>
