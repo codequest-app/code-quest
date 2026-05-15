@@ -1,8 +1,2 @@
 export { LocalWatchService } from './local.ts';
-export type {
-  MinimalLogger,
-  Unsubscribe,
-  WatchCallback,
-  WatchEvent,
-  WatchService,
-} from './types.ts';
+export type { Unsubscribe, WatchCallback, WatchEvent, WatchService } from './types.ts';

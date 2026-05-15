@@ -1,9 +1,6 @@
-import type {
-  FilesystemService,
-  GitService,
-  OpenspecService,
-  PluginCliService,
-} from '@code-quest/summoner';
+import type { OpenspecService } from '@code-quest/openspec';
+import type { FilesystemService, GitService } from '@code-quest/schemas';
+import type { PluginCliService } from '@code-quest/summoner';
 import type { FakeOpenspecService, FakePluginCliService } from '@code-quest/summoner/test';
 import {
   createFakeSocket,

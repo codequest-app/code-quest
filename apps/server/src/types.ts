@@ -1,14 +1,14 @@
 import type { Broadcaster } from '@code-quest/broadcaster';
-import type { FileResult, GitStatusResult, OpenspecListResult } from '@code-quest/schemas';
+import type { DiffFileService } from '@code-quest/diff-file';
+import type { OpenspecService } from '@code-quest/openspec';
 import type {
-  DiffFileService,
+  FileResult,
   FilesystemService,
   GitService,
-  LaunchOptions,
-  OpenspecService,
-  PluginCliService,
-  ProcessRunner,
-} from '@code-quest/summoner';
+  GitStatusResult,
+  OpenspecListResult,
+} from '@code-quest/schemas';
+import type { LaunchOptions, PluginCliService, ProcessRunner } from '@code-quest/summoner';
 import type { ProjectAutoUpserter } from './services/project-auto-upserter.ts';
 import type { ProjectStore } from './services/project-store.ts';
 import type { RawEventService } from './services/raw-event-service.ts';

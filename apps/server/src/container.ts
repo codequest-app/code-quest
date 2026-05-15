@@ -6,25 +6,23 @@ import {
   GitDataSource,
   OpenspecDataSource,
 } from '@code-quest/broadcaster';
-import { RemoteFilesystemService } from '@code-quest/filesystem';
-import { RemoteGitService } from '@code-quest/git';
+import { type DiffFileService, LocalDiffFileService } from '@code-quest/diff-file';
+import {
+  LocalFilesystemService,
+  LocalRootGuard,
+  RemoteFilesystemService,
+} from '@code-quest/filesystem';
+import { LocalGitService, RemoteGitService } from '@code-quest/git';
+import { LocalOpenspecService, type OpenspecService } from '@code-quest/openspec';
 import type { FilesystemService, GitService, ProcessProvider } from '@code-quest/schemas';
 import {
   ChildProcessProvider,
   ClaudeAdapter,
-  type DiffFileService,
-  LocalDiffFileService,
-  LocalFilesystemService,
-  LocalGitService,
-  LocalOpenspecService,
   LocalPluginCliService,
-  LocalRootGuard,
-  LocalWatchService,
-  type OpenspecService,
   type PluginCliService,
   ProcessRunner,
-  type WatchService,
 } from '@code-quest/summoner';
+import { LocalWatchService, type WatchService } from '@code-quest/watch';
 import { Container } from 'inversify';
 import { config } from './config.ts';
 import type { DatabaseEntry } from './db/create-database.ts';

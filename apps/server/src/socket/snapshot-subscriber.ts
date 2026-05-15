@@ -6,7 +6,7 @@ import type {
   TypedSocket,
 } from '@code-quest/schemas';
 import { EVENTS } from '@code-quest/schemas';
-import type { Unsubscribe } from '@code-quest/summoner';
+import type { Unsubscribe } from '@code-quest/watch';
 
 export interface SnapshotBroadcasters {
   files: Broadcaster<FileResult[]>;

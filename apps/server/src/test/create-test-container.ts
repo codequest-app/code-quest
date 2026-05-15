@@ -1,20 +1,16 @@
 import 'reflect-metadata';
 import { sqliteMigrationsFolder, sqliteSchema } from '@code-quest/db-schema';
-import type {
-  DiffFileService,
-  FilesystemService,
-  GitService,
-  OpenspecService,
-  PluginCliService,
-  ProcessProvider,
-  WatchService,
-} from '@code-quest/summoner';
+import type { DiffFileService } from '@code-quest/diff-file';
+import type { OpenspecService } from '@code-quest/openspec';
+import type { FilesystemService, GitService, ProcessProvider } from '@code-quest/schemas';
+import type { PluginCliService } from '@code-quest/summoner';
 import {
   FakeDiffFileService,
   FakeOpenspecService,
   FakePluginCliService,
 } from '@code-quest/summoner/test';
 import { FakeFilesystemService, FakeGitService, FakeWatchService } from '@code-quest/test-kit';
+import type { WatchService } from '@code-quest/watch';
 import { migrate } from 'drizzle-orm/better-sqlite3/migrator';
 import type { Container } from 'inversify';
 import { createContainer } from '../container.ts';

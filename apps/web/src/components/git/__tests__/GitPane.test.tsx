@@ -95,7 +95,7 @@ describe('GitPane', () => {
 
   it('renders not-a-repo state when status returns notARepo', async () => {
     const { summoner, Wrapper } = setup();
-    const { NotARepoError } = await import('@code-quest/summoner');
+    const { NotARepoError } = await import('@code-quest/schemas');
     summoner.git()!.setStatusError(new NotARepoError('/repo'));
     render(<GitPane cwd="/repo" />, { wrapper: Wrapper });
     expect(await screen.findByText(/not a git repository/i)).toBeInTheDocument();

@@ -35,6 +35,9 @@ importers:
       '@code-quest/db-schema':
         specifier: workspace:*
         version: link:../../packages/db-schema
+      '@code-quest/diff-file':
+        specifier: workspace:*
+        version: link:../../packages/diff-file
       '@code-quest/filesystem':
         specifier: workspace:*
         version: link:../../packages/filesystem
@@ -44,6 +47,9 @@ importers:
       '@code-quest/node-utils':
         specifier: workspace:*
         version: link:../../packages/node-utils
+      '@code-quest/openspec':
+        specifier: workspace:*
+        version: link:../../packages/openspec
       '@code-quest/schemas':
         specifier: workspace:*
         version: link:../../packages/schemas
@@ -53,6 +59,9 @@ importers:
       '@code-quest/transport':
         specifier: workspace:*
         version: link:../../packages/transport
+      '@code-quest/watch':
+        specifier: workspace:*
+        version: link:../../packages/watch
       better-sqlite3:
         specifier: ^12.10.0
         version: 12.10.0

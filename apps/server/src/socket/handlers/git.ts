@@ -1,3 +1,4 @@
+import { AlreadyRepoError, NotARepoError } from '@code-quest/git';
 import type { SocketCallback, TypedSocket } from '@code-quest/schemas';
 import {
   createWorktreePayloadSchema,
@@ -20,7 +21,6 @@ import {
   worktreeRenamePayloadSchema,
   worktreeStatusPayloadSchema,
 } from '@code-quest/schemas';
-import { AlreadyRepoError, NotARepoError } from '@code-quest/summoner';
 import { logger } from '../../logger.ts';
 import type { HandlerContext } from '../../types.ts';
 import { err, ok } from '../utils/rpc.ts';

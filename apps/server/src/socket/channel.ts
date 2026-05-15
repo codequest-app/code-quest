@@ -1,7 +1,9 @@
+import { detectWorktree } from '@code-quest/git';
 import type {
   ChannelMetaCache,
   ClientMessage,
   ControlResponse,
+  ResolvedControlResponse,
   SessionConfig,
   WorktreeInfo,
 } from '@code-quest/schemas';
@@ -12,11 +14,7 @@ import {
   sessionInitEventSchema,
   sessionStatusEventSchema,
 } from '@code-quest/schemas';
-import {
-  detectWorktree,
-  type ProcessRunner,
-  type ResolvedControlResponse,
-} from '@code-quest/summoner';
+import type { ProcessRunner } from '@code-quest/summoner';
 import type { z } from 'zod';
 import { logger } from '../logger.ts';
 import { ControlRequestTracker, DEFAULT_CONTROL_TIMEOUT } from './control-request-tracker.ts';

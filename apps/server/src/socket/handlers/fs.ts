@@ -13,7 +13,7 @@ import {
   fsUnwatchPayloadSchema,
   fsWatchPayloadSchema,
 } from '@code-quest/schemas';
-import type { Unsubscribe } from '@code-quest/summoner';
+import type { Unsubscribe } from '@code-quest/watch';
 import type { ZodType } from 'zod';
 import { logger } from '../../logger.ts';
 import type { HandlerContext } from '../../types.ts';

@@ -27,9 +27,12 @@
   "dependencies": {
     "@code-quest/broadcaster": "workspace:*",
     "@code-quest/db-schema": "workspace:*",
+    "@code-quest/diff-file": "workspace:*",
     "@code-quest/filesystem": "workspace:*",
     "@code-quest/git": "workspace:*",
+    "@code-quest/openspec": "workspace:*",
     "@code-quest/schemas": "workspace:*",
+    "@code-quest/watch": "workspace:*",
     "@code-quest/transport": "workspace:*",
     "@code-quest/node-utils": "workspace:*",
     "@code-quest/summoner": "workspace:*",

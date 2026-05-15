@@ -1,5 +1,6 @@
 import { homedir } from 'node:os';
 import { resolve } from 'node:path';
+import type { FilesystemService } from '@code-quest/schemas';
 import {
   EVENTS,
   errMsg,
@@ -14,7 +15,6 @@ import {
   type SocketCallback,
   type TypedSocket,
 } from '@code-quest/schemas';
-import type { FilesystemService } from '@code-quest/summoner';
 import { logger } from '../../logger.ts';
 import type { HandlerContext } from '../../types.ts';
 

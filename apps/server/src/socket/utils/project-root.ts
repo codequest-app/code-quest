@@ -1,4 +1,4 @@
-import type { GitService } from '@code-quest/summoner';
+import type { GitService } from '@code-quest/schemas';
 import { logger } from '../../logger.ts';
 
 /**
