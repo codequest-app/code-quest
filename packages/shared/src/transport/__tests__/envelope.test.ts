@@ -8,8 +8,14 @@ describe('EnvelopeSchema', () => {
       expect(EnvelopeSchema.parse(env)).toEqual(env);
     });
 
-    it('request', () => {
+    it('request with data', () => {
       const env = { kind: 'request', id: 'r-1', event: 'session:launch', data: { cwd: '/tmp' } };
+      expect(EnvelopeSchema.parse(env)).toEqual(env);
+    });
+
+    it('request without data', () => {
+      // data is optional — JSON.stringify silently drops undefined fields on the wire.
+      const env = { kind: 'request', id: 'r-2', event: 'app:init' };
       expect(EnvelopeSchema.parse(env)).toEqual(env);
     });
 
@@ -122,5 +128,12 @@ describe('parseEnvelope', () => {
   it('parses event envelope', () => {
     const env = { kind: 'event', seq: 1, event: 'test', data: { x: 1 } };
     expect(parseEnvelope(JSON.stringify(env))).toEqual(env);
+  });
+
+  it('parses request envelope without data field', () => {
+    // Regression: app:init arrived without data and parseEnvelope returned null,
+    // silently swallowing the request. Root cause: data was required in the schema.
+    const raw = '{"kind":"request","id":"r-1","event":"app:init"}';
+    expect(parseEnvelope(raw)).toEqual({ kind: 'request', id: 'r-1', event: 'app:init' });
   });
 });

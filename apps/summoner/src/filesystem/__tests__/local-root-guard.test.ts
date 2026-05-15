@@ -2,7 +2,7 @@ import { mkdtempSync, symlinkSync, writeFileSync } from 'node:fs';
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
 import { describe, expect, it } from 'vitest';
-import { LocalRootGuard } from '../filesystem/local-root-guard.ts';
+import { LocalRootGuard } from '../local-root-guard.ts';
 
 const ROOT = '/test-root';
 

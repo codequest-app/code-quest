@@ -72,7 +72,7 @@ export function AppInitProvider({ children }: { children: ReactNode }): React.JS
         pending = false;
         const parsed = initResponseSchema.safeParse(raw);
         if (!parsed.success) {
-          console.warn('[AppInit] invalid init response shape', parsed.error);
+          console.warn('[AppInitContext] initResponseSchema parse failed', parsed.error);
           return;
         }
         lastInitRef.current = parsed.data;

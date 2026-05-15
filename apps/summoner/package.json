@@ -12,7 +12,7 @@
     "./test-browser": "./src/test/index-browser.ts"
   },
   "scripts": {
-    "dev": "bun run --env-file=.env src/main.ts",
+    "dev": "tsx --env-file=.env src/main.ts",
     "build": "pnpm clean && bun run build.ts",
     "build:release": "pnpm clean && tsdown && tsx obfuscate.ts",
     "compile": "bun build dist/main.js --compile --outfile dist/summoner",

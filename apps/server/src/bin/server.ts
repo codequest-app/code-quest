@@ -23,9 +23,11 @@ import helmet from 'helmet';
 import { config, resolveSqlitePath } from '../config.ts';
 import { createContainer, type StoreConfig } from '../container.ts';
 import { createDatabaseFromUrl } from '../db/create-database.ts';
+import { buildChannelsSnapshot } from '../http/debug-channels.ts';
 import { logger } from '../logger.ts';
 import { ReconnectableRpc } from '../remote/reconnectable-rpc.ts';
 import type { ChannelEmitter } from '../socket/channel-emitter.ts';
+import type { ChannelManager } from '../socket/channel-manager.ts';
 import type { SocketServer } from '../socket/server.ts';
 import { TokenAuthenticator } from '../socket/token-authenticator.ts';
 import { TYPES } from '../types.ts';
@@ -69,10 +71,8 @@ const app = express();
 // It must be off when Node serves plain HTTP (default); set HTTPS_MODE=true
 // when Node terminates TLS directly to re-enable HSTS and this directive.
 const cspDirectives = helmet.contentSecurityPolicy.getDefaultDirectives();
-if (!config.httpsMode) cspDirectives['upgrade-insecure-requests'] = null;
-app.use(
-  helmet({ hsts: config.httpsMode, contentSecurityPolicy: { directives: cspDirectives } }),
-);
+if (!config.httpsMode) delete cspDirectives['upgrade-insecure-requests'];
+app.use(helmet({ hsts: config.httpsMode, contentSecurityPolicy: { directives: cspDirectives } }));
 app.use(cors());
 
 const httpServer = createServer(app);
@@ -175,6 +175,17 @@ const HEALTH_PATH = '/health';
 app.get(HEALTH_PATH, (_req, res) => {
   res.json({ status: 'ok', uptime: process.uptime() });
 });
+
+if (config.debug) {
+  app.get('/debug/channels', (_req, res) => {
+    const channelManager = container?.get<ChannelManager>(TYPES.ChannelManager);
+    if (!channelManager) {
+      res.status(503).json({ error: 'Server not ready' });
+      return;
+    }
+    res.json(buildChannelsSnapshot(channelManager));
+  });
+}
 
 const publicDir = process.env.PUBLIC_DIR
   ? join(process.cwd(), process.env.PUBLIC_DIR)

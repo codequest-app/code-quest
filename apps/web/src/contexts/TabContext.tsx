@@ -166,7 +166,6 @@ export function TabProvider({
       (s) => !prevSessionIds.current.has(s.channelId) && !TERMINAL_STATES.has(s.state),
     );
     const removed = [...prevSessionIds.current].filter((id) => !currentIds.has(id));
-
     if (added.length === 1 && removed.length === 1 && added[0]) {
       actions.replaceActiveTab(added[0].channelId, added[0].cwd);
     } else {

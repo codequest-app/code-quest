@@ -1,7 +1,50 @@
 import { readdirSync, readFileSync, writeFileSync } from 'node:fs';
 import { join } from 'node:path';
 import JavaScriptObfuscator from 'javascript-obfuscator';
-import { getObfuscationOptions } from './src/obfuscation-config.ts';
+
+type ObfuscationLevel = 'none' | 'low' | 'medium' | 'high';
+
+const levels: Record<ObfuscationLevel, object> = {
+  none: {},
+  low: {
+    target: 'node',
+    compact: true,
+    controlFlowFlattening: true,
+    controlFlowFlatteningThreshold: 0.5,
+    stringArray: true,
+    stringArrayThreshold: 0.5,
+  },
+  medium: {
+    target: 'node',
+    compact: true,
+    controlFlowFlattening: true,
+    controlFlowFlatteningThreshold: 0.75,
+    stringArray: true,
+    stringArrayThreshold: 0.75,
+    stringArrayRotate: true,
+    stringArrayShuffle: true,
+    splitStrings: true,
+    splitStringsChunkLength: 5,
+    identifierNamesGenerator: 'hexadecimal',
+    selfDefending: true,
+    transformObjectKeys: true,
+  },
+  get high() {
+    return {
+      ...this.medium,
+      deadCodeInjection: true,
+      deadCodeInjectionThreshold: 0.4,
+    };
+  },
+};
+
+function getObfuscationOptions(
+  envLevel?: string,
+  defaultLevel: ObfuscationLevel = 'high',
+): { level: ObfuscationLevel; options: object } {
+  const level = (envLevel && envLevel in levels ? envLevel : defaultLevel) as ObfuscationLevel;
+  return { level, options: levels[level] };
+}
 
 const { level, options } = getObfuscationOptions(process.env.OBFUSCATE_LEVEL, 'high');
 

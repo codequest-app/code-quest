@@ -22,8 +22,9 @@ export function create({
       state: ch.isProcessing ? 'busy' : 'idle',
       title: ch.title,
       cwd: ch.cwd,
-      ...(ch.projectRoot ? { projectRoot: ch.projectRoot } : {}),
+      projectRoot: ch.projectRoot ?? ch.cwd,
     }));
+    logger.debug({ sessionCount: sessions.length }, 'returning sessions');
     let settings: Record<string, unknown> = {};
     try {
       settings = await settingsStore.getMany(channelManager.provider, [...SETTINGS_STATE_KEYS]);

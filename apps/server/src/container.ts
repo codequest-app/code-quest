@@ -132,16 +132,14 @@ export function createContainer(options: ContainerOptions): Container {
   let sessionHistory: SessionHistory;
   const sessionLookup: SessionLookup = {
     resolveSessionId: (channelId) => sessionHistory.resolveSessionId(channelId),
-    resolveCwd: async (channelId) => {
-      const sessionId = await sessionHistory.resolveSessionId(channelId);
+    resolveCwdAndProjectRoot: async (channelId, sessionId) => {
       const row = await sessionStore.getById(sessionId);
       if (!row?.cwd) {
-        // L2 territory: legacy rows with null cwd exist until the DB
-        // migration runs. This throw surfaces the bad state clearly.
-        logger.error({ channelId }, `Channel ${channelId} has no recorded cwd`);
+        // L2 territory: legacy rows with null cwd exist until the DB migration runs.
+        logger.error({ channelId }, 'no recorded cwd');
         throw new Error(`Channel ${channelId} has no recorded cwd`);
       }
-      return row.cwd;
+      return { cwd: row.cwd, projectRoot: row.projectRoot ?? row.cwd };
     },
   };
   const watchService: WatchService = options.watchService ?? new LocalWatchService();

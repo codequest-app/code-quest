@@ -66,6 +66,8 @@ interface AppConfig {
   readonly authToken: string | undefined;
   /** True when Node terminates TLS directly (no reverse proxy). Enables HSTS. */
   readonly httpsMode: boolean;
+  /** Enable debug HTTP endpoints (e.g. GET /debug/channels). Never enable in production. */
+  readonly debug: boolean;
 }
 
 export function loadConfig(env: Env = process.env): AppConfig {
@@ -87,6 +89,7 @@ export function loadConfig(env: Env = process.env): AppConfig {
     summonerMode: env.SUMMONER_MODE === 'local' ? 'local' : 'remote',
     authToken: env.AUTH_TOKEN || undefined,
     httpsMode: parseBool(env.HTTPS_MODE, false),
+    debug: parseBool(env.DEBUG, false),
     ...resolveSummonerToken(env),
   } as const;
 }
