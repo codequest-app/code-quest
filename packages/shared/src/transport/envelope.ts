@@ -11,7 +11,7 @@ const RequestEnvelope = z.object({
   kind: z.literal('request'),
   id: z.string(),
   event: z.string(),
-  data: z.unknown(),
+  data: z.unknown().optional(),
 });
 
 const ResponseEnvelope = z.object({
@@ -37,7 +37,12 @@ export const EnvelopeSchema: z.ZodDiscriminatedUnion<
       z.core.$strip
     >,
     z.ZodObject<
-      { kind: z.ZodLiteral<'request'>; id: z.ZodString; event: z.ZodString; data: z.ZodUnknown },
+      {
+        kind: z.ZodLiteral<'request'>;
+        id: z.ZodString;
+        event: z.ZodString;
+        data: z.ZodOptional<z.ZodUnknown>;
+      },
       z.core.$strip
     >,
     z.ZodObject<
