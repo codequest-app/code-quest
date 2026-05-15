@@ -1,6 +1,6 @@
 export { FakeClaude, type FakeClaudeOptions } from './fake-claude.ts';
 export { FakeDiffFileService } from './fake-diff-file-service.ts';
-export { FakeFilesystemService, FakeRootGuard } from './fake-filesystem-service.ts';
+export { FakeFilesystemService, FakeRootGuard, type FileTree } from './fake-filesystem-service.ts';
 export { FakeGitService } from './fake-git-service.ts';
 export { FakeOpenspecService } from './fake-openspec-service.ts';
 export { FakePluginCliService } from './fake-plugin-cli-service.ts';

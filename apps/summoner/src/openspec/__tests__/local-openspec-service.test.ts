@@ -5,8 +5,7 @@ import { LocalOpenspecService } from '../local.ts';
 
 function setup({ seedOpenspecDir = true } = {}) {
   const fs = new FakeFilesystemService();
-  fs.setRoots(['/repo']);
-  if (seedOpenspecDir) fs.addDirectory('/repo', ['openspec']);
+  fs.fromTree('/repo', seedOpenspecDir ? { openspec: {} } : {});
   const process = new FakeProcessProvider();
   return { fs, process, reader: new LocalOpenspecService(fs, process) };
 }
@@ -136,8 +135,7 @@ describe('LocalOpenspecService', () => {
       const failing = new FakeProcessProvider();
       failing.enqueueRunOnce({ exitCode: 0, stdout: '', stderr: '' });
       const fs = new FakeFilesystemService();
-      fs.setRoots(['/repo']);
-      fs.addDirectory('/repo', ['openspec']);
+      fs.fromTree('/repo', { openspec: {} });
       const broken = new LocalOpenspecService(fs, {
         spawn: () => {
           throw new Error('not used');
@@ -162,10 +160,7 @@ describe('LocalOpenspecService', () => {
   describe('read', () => {
     it('reads a change artifact', async () => {
       const { fs, reader } = setup();
-      fs.addDirectory('/repo', ['openspec']);
-      fs.addDirectory('/repo/openspec', ['changes']);
-      fs.addDirectory('/repo/openspec/changes', ['x']);
-      fs.addFile('/repo/openspec/changes/x/proposal.md', '# X proposal');
+      fs.fromTree('/repo', { openspec: { changes: { x: { 'proposal.md': '# X proposal' } } } });
 
       const result = await reader.read('/repo', 'change', 'x', 'proposal');
       expect(result).toMatchObject({ content: '# X proposal' });
@@ -261,11 +256,15 @@ describe('LocalOpenspecService', () => {
 
   describe('toggleTask', () => {
     function seedTasks(fs: FakeFilesystemService, content: string) {
-      fs.addDirectory('/repo', ['openspec']);
-      fs.addDirectory('/repo/openspec', ['changes']);
-      fs.addDirectory('/repo/openspec/changes', ['add-foo']);
-      fs.addDirectory('/repo/openspec/changes/add-foo', []);
-      fs.addFile('/repo/openspec/changes/add-foo/tasks.md', content);
+      fs.fromTree('/repo', {
+        openspec: {
+          changes: {
+            'add-foo': {
+              'tasks.md': content,
+            },
+          },
+        },
+      });
     }
 
     it('flips `- [ ]` → `- [x]` at lineIndex and writes back', async () => {

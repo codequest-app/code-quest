@@ -28,7 +28,7 @@ async function setup(): Promise<SetupResult> {
   const container = createTestContainer();
   const server = createFakeServer(container);
   const summoner = createFakeSummoner(server);
-  summoner.filesystem().addDirectory(SESSION_CWD, []);
+  summoner.filesystem().fromTree(SESSION_CWD, {});
   const claude = summoner.claude();
   await claude.initialize({ launch: { cwd: SESSION_CWD } }, s.init('test-sess'));
   const projectStore = container.get<ProjectStore>(TYPES.ProjectStore);
@@ -50,8 +50,7 @@ describe('projects socket handler', () => {
 
     it('returns added projects', async () => {
       const { claude, summoner } = await setup();
-      summoner.filesystem().setRoots(['/tmp']);
-      summoner.filesystem().addDirectory('/tmp', ['code-quest']);
+      summoner.filesystem().fromTree('/tmp', { 'code-quest': {} });
 
       await claude.send<ProjectsAddResponse>('projects:add', { path: '/tmp/code-quest' });
       const list = await claude.send<ProjectsListResponse>('projects:list', {});
@@ -65,8 +64,7 @@ describe('projects socket handler', () => {
   describe('projects:add', () => {
     it('success: ① RPC returns project, ② emits projects:added, ③ DB has row', async () => {
       const { claude, summoner, projectStore } = await setup();
-      summoner.filesystem().setRoots(['/tmp']);
-      summoner.filesystem().addDirectory('/tmp', ['foo']);
+      summoner.filesystem().fromTree('/tmp', { foo: {} });
 
       // ① RPC response
       const res = await claude.send<ProjectsAddResponse>('projects:add', { path: '/tmp/foo' });
@@ -90,8 +88,7 @@ describe('projects socket handler', () => {
       const { claude, summoner, projectStore } = await setup();
       const home = homedir();
       const expected = `${home}/tilde-project`;
-      summoner.filesystem().setRoots([home]);
-      summoner.filesystem().addDirectory(home, ['tilde-project']);
+      summoner.filesystem().fromTree(home, { 'tilde-project': {} });
 
       const res = await claude.send<ProjectsAddResponse>('projects:add', {
         path: '~/tilde-project',
@@ -107,7 +104,7 @@ describe('projects socket handler', () => {
     it('reject non-existent path: ① error response, ② no emit, ③ no DB row', async () => {
       const { claude, summoner, projectStore } = await setup();
       // Path /does is within roots scope but doesn't exist as a directory in fs
-      summoner.filesystem().setRoots(['/does']);
+      summoner.filesystem().fromTree('/does', {});
       const beforeEvents = claude.receivedEvents('projects:added').length;
 
       const res = await claude.send<ProjectsAddResponse>('projects:add', {
@@ -123,7 +120,7 @@ describe('projects socket handler', () => {
     it('reject path outside EXPLORER_ROOTS: ① error, ② no emit, ③ no DB row', async () => {
       const { claude, summoner, projectStore } = await setup();
       // Setup root scope = ['/tmp']; the candidate path is OUTSIDE.
-      summoner.filesystem().setRoots(['/tmp']);
+      summoner.filesystem().fromTree('/tmp', {});
       summoner.filesystem().addDirectory('/forbidden', []);
       const beforeEvents = claude.receivedEvents('projects:added').length;
 
@@ -140,8 +137,7 @@ describe('projects socket handler', () => {
 
     it('accepts the EXPLORER_ROOT itself (boundary inclusive)', async () => {
       const { claude, summoner, projectStore } = await setup();
-      summoner.filesystem().setRoots(['/projects-root']);
-      summoner.filesystem().addDirectory('/projects-root', []);
+      summoner.filesystem().fromTree('/projects-root', {});
 
       const res = await claude.send<ProjectsAddResponse>('projects:add', {
         path: '/projects-root',
@@ -153,8 +149,7 @@ describe('projects socket handler', () => {
 
     it('reject file path: ① error, ② no emit, ③ no DB row', async () => {
       const { claude, summoner, projectStore } = await setup();
-      summoner.filesystem().setRoots(['/tmp']);
-      summoner.filesystem().addFile('/tmp/some-file.txt', 'hello');
+      summoner.filesystem().fromTree('/tmp', { 'some-file.txt': 'hello' });
       const beforeEvents = claude.receivedEvents('projects:added').length;
 
       const res = await claude.send<ProjectsAddResponse>('projects:add', {
@@ -169,8 +164,7 @@ describe('projects socket handler', () => {
 
     it('idempotent: ① same id returned, ③ only one DB row', async () => {
       const { claude, summoner, projectStore } = await setup();
-      summoner.filesystem().setRoots(['/tmp']);
-      summoner.filesystem().addDirectory('/tmp', ['foo']);
+      summoner.filesystem().fromTree('/tmp', { foo: {} });
 
       const a = (await claude.send<ProjectsAddResponse>('projects:add', {
         path: '/tmp/foo',
@@ -187,8 +181,7 @@ describe('projects socket handler', () => {
   describe('projects:update', () => {
     it('name: ① RPC updated project, ② emits projects:updated, ③ DB reflects change', async () => {
       const { claude, summoner, projectStore } = await setup();
-      summoner.filesystem().setRoots(['/tmp']);
-      summoner.filesystem().addDirectory('/tmp', ['foo']);
+      summoner.filesystem().fromTree('/tmp', { foo: {} });
 
       const added = (await claude.send<ProjectsAddResponse>('projects:add', {
         path: '/tmp/foo',
@@ -207,8 +200,7 @@ describe('projects socket handler', () => {
 
     it('pinned toggle: ② emits updated, ③ DB reflects', async () => {
       const { claude, summoner, projectStore } = await setup();
-      summoner.filesystem().setRoots(['/tmp']);
-      summoner.filesystem().addDirectory('/tmp', ['foo']);
+      summoner.filesystem().fromTree('/tmp', { foo: {} });
 
       const added = (await claude.send<ProjectsAddResponse>('projects:add', {
         path: '/tmp/foo',
@@ -253,8 +245,7 @@ describe('projects socket handler', () => {
   describe('projects:remove', () => {
     it('no active sessions: ① ok, ② emits removed, ③ DB empty, ④ client broadcast', async () => {
       const { claude, summoner, projectStore } = await setup();
-      summoner.filesystem().setRoots(['/tmp']);
-      summoner.filesystem().addDirectory('/tmp', ['foo']);
+      summoner.filesystem().fromTree('/tmp', { foo: {} });
 
       const added = (await claude.send<ProjectsAddResponse>('projects:add', {
         path: '/tmp/foo',
@@ -293,8 +284,7 @@ describe('projects socket handler', () => {
       // status='active' but no actual process. Old impl checked sessionStore
       // and refused to remove. Correct check is "live channel exists".
       const { claude, summoner, projectStore, container } = await setup();
-      summoner.filesystem().setRoots(['/tmp']);
-      summoner.filesystem().addDirectory('/tmp', ['orphaned']);
+      summoner.filesystem().fromTree('/tmp', { orphaned: {} });
       const added = (await claude.send<ProjectsAddResponse>('projects:add', {
         path: '/tmp/orphaned',
       })) as Project;
@@ -342,8 +332,7 @@ describe('projects socket handler', () => {
     it('projects:update succeeds when path is outside current EXPLORER_ROOTS', async () => {
       const { claude, summoner, projectStore } = await setup();
       // Add while /tmp is a root
-      summoner.filesystem().setRoots(['/tmp']);
-      summoner.filesystem().addDirectory('/tmp', ['legacy']);
+      summoner.filesystem().fromTree('/tmp', { legacy: {} });
       const added = (await claude.send<ProjectsAddResponse>('projects:add', {
         path: '/tmp/legacy',
       })) as Project;
@@ -363,8 +352,7 @@ describe('projects socket handler', () => {
 
     it('projects:remove succeeds when path is outside current EXPLORER_ROOTS', async () => {
       const { claude, summoner, projectStore } = await setup();
-      summoner.filesystem().setRoots(['/tmp']);
-      summoner.filesystem().addDirectory('/tmp', ['legacy']);
+      summoner.filesystem().fromTree('/tmp', { legacy: {} });
       const added = (await claude.send<ProjectsAddResponse>('projects:add', {
         path: '/tmp/legacy',
       })) as Project;

@@ -74,14 +74,13 @@ describe('RemoteFilesystemService', () => {
   });
 
   it('browseDirectories — returns root entries', async () => {
-    ctx.filesystem.setRoots(['/projects']);
+    ctx.filesystem.fromTree('/projects', {});
     const entries = await ctx.fsService.browseDirectories();
     expect(entries).toEqual([{ name: 'projects', path: '/projects' }]);
   });
 
   it('browseDirectories — returns children of a path', async () => {
-    ctx.filesystem.setRoots(['/projects']);
-    ctx.filesystem.addDirectory('/projects', ['app', 'blog']);
+    ctx.filesystem.fromTree('/projects', { app: {}, blog: {} });
     const entries = await ctx.fsService.browseDirectories('/projects');
     expect(entries).toEqual([
       { name: 'app', path: '/projects/app' },
@@ -90,87 +89,73 @@ describe('RemoteFilesystemService', () => {
   });
 
   it('browseEntries — returns directories and files', async () => {
-    ctx.filesystem.setRoots(['/src']);
-    ctx.filesystem.addDirectory('/src', ['lib']);
-    ctx.filesystem.addFile('/src/index.ts', '');
+    ctx.filesystem.fromTree('/src', { lib: {}, 'index.ts': '' });
     const result = await ctx.fsService.browseEntries('/src');
     expect(result.directories).toEqual([{ name: 'lib', path: '/src/lib' }]);
     expect(result.files).toEqual([{ name: 'index.ts', path: '/src/index.ts' }]);
   });
 
   it('readFileAbsolute — returns file content', async () => {
-    ctx.filesystem.setRoots(['/tmp']);
-    ctx.filesystem.addFile('/tmp/hello.txt', 'hello world');
+    ctx.filesystem.fromTree('/tmp', { 'hello.txt': 'hello world' });
     const result = await ctx.fsService.readFileAbsolute('/tmp/hello.txt');
     expect(result).toMatchObject({ content: 'hello world' });
   });
 
   it('writeFileAbsolute — writes and reads back content', async () => {
-    ctx.filesystem.setRoots(['/tmp']);
+    ctx.filesystem.fromTree('/tmp', {});
     await ctx.fsService.writeFileAbsolute('/tmp/out.txt', 'written');
     const result = await ctx.fsService.readFileAbsolute('/tmp/out.txt');
     expect(result).toMatchObject({ content: 'written' });
   });
 
   it('readFile — reads file relative to cwd', async () => {
-    ctx.filesystem.setRoots(['/workspace']);
-    ctx.filesystem.addFile('/workspace/src/main.ts', 'export {}');
+    ctx.filesystem.fromTree('/workspace', { src: { 'main.ts': 'export {}' } });
     const result = await ctx.fsService.readFile('/workspace', 'src/main.ts');
     expect(result).toEqual({ content: 'export {}' });
   });
 
   it('listFiles — returns matching files', async () => {
-    ctx.filesystem.setRoots(['/workspace']);
-    ctx.filesystem.addDirectory('/workspace', ['src']);
-    ctx.filesystem.addFile('/workspace/src/main.ts', '');
-    ctx.filesystem.addFile('/workspace/src/util.ts', '');
+    ctx.filesystem.fromTree('/workspace', { src: { 'main.ts': '', 'util.ts': '' } });
     const files = await ctx.fsService.listFiles('/workspace/src', 'main');
     expect(files.map((f) => f.name)).toContain('main.ts');
     expect(files.map((f) => f.name)).not.toContain('util.ts');
   });
 
   it('exists — true for known file, false for missing', async () => {
-    ctx.filesystem.setRoots(['/']);
-    ctx.filesystem.addFile('/tmp/hello.txt', '');
+    ctx.filesystem.fromTree('/', { tmp: { 'hello.txt': '' } });
     expect(await ctx.fsService.exists('/tmp/hello.txt')).toBe(true);
     expect(await ctx.fsService.exists('/tmp/missing.txt')).toBe(false);
   });
 
   it('isDirectory — true for directory, false for file', async () => {
-    ctx.filesystem.setRoots(['/']);
-    ctx.filesystem.addDirectory('/tmp', []);
-    ctx.filesystem.addFile('/tmp/file.txt', '');
+    ctx.filesystem.fromTree('/', { tmp: { 'file.txt': '' } });
     expect(await ctx.fsService.isDirectory('/tmp')).toBe(true);
     expect(await ctx.fsService.isDirectory('/tmp/file.txt')).toBe(false);
   });
 
   it('statKind — returns file/directory/null', async () => {
-    ctx.filesystem.setRoots(['/tmp']);
-    ctx.filesystem.addDirectory('/tmp', []);
-    ctx.filesystem.addFile('/tmp/a.txt', '');
+    ctx.filesystem.fromTree('/tmp', { 'a.txt': '' });
     expect(await ctx.fsService.statKind('/tmp')).toBe('directory');
     expect(await ctx.fsService.statKind('/tmp/a.txt')).toBe('file');
     expect(await ctx.fsService.statKind('/tmp/nope')).toBeNull();
   });
 
   it('create — creates a file', async () => {
-    ctx.filesystem.setRoots(['/tmp']);
+    ctx.filesystem.fromTree('/tmp', {});
     const result = await ctx.fsService.create('/tmp/new.txt', 'file');
     expect(result).toEqual({ ok: true });
     expect(await ctx.fsService.exists('/tmp/new.txt')).toBe(true);
   });
 
   it('delete — removes a file', async () => {
-    ctx.filesystem.setRoots(['/tmp']);
-    ctx.filesystem.addFile('/tmp/to-delete.txt', '');
+    ctx.filesystem.fromTree('/tmp', { 'to-delete.txt': '' });
     const result = await ctx.fsService.delete('/tmp/to-delete.txt');
     expect(result).toEqual({ ok: true });
     expect(await ctx.fsService.exists('/tmp/to-delete.txt')).toBe(false);
   });
 
   it('rename — moves a file to a new path', async () => {
-    ctx.filesystem.setRoots(['/tmp']);
-    ctx.filesystem.addFile('/tmp/old.txt', 'data');
+    ctx.filesystem.fromTree('/tmp', { 'old.txt': 'data' });
     const result = await ctx.fsService.rename('/tmp/old.txt', '/tmp/new.txt');
     expect(result).toEqual({ ok: true });
     expect(await ctx.fsService.exists('/tmp/new.txt')).toBe(true);
@@ -178,8 +163,7 @@ describe('RemoteFilesystemService', () => {
   });
 
   it('copy — duplicates a file', async () => {
-    ctx.filesystem.setRoots(['/tmp']);
-    ctx.filesystem.addFile('/tmp/src.txt', 'hello');
+    ctx.filesystem.fromTree('/tmp', { 'src.txt': 'hello' });
     const result = await ctx.fsService.copy('/tmp/src.txt', '/tmp/dst.txt');
     expect(result).toEqual({ ok: true });
     expect(await ctx.fsService.exists('/tmp/src.txt')).toBe(true);
@@ -187,8 +171,7 @@ describe('RemoteFilesystemService', () => {
   });
 
   it('move — aliases rename', async () => {
-    ctx.filesystem.setRoots(['/tmp']);
-    ctx.filesystem.addFile('/tmp/a.txt', '');
+    ctx.filesystem.fromTree('/tmp', { 'a.txt': '' });
     const result = await ctx.fsService.move('/tmp/a.txt', '/tmp/b.txt');
     expect(result).toEqual({ ok: true });
     expect(await ctx.fsService.exists('/tmp/b.txt')).toBe(true);

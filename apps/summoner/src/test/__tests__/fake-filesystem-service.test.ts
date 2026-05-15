@@ -124,6 +124,58 @@ describe('FakeFilesystemService', () => {
     });
   });
 
+  describe('fromTree', () => {
+    it('sets root from first argument', async () => {
+      const fs = new FakeFilesystemService();
+      fs.fromTree('/projects', {});
+      expect(await fs.browseDirectories()).toEqual([{ name: 'projects', path: '/projects' }]);
+    });
+
+    it('creates nested directories', async () => {
+      const fs = new FakeFilesystemService();
+      fs.fromTree('/projects', { app: {}, blog: {} });
+      expect(await fs.browseDirectories('/projects')).toEqual([
+        { name: 'app', path: '/projects/app' },
+        { name: 'blog', path: '/projects/blog' },
+      ]);
+    });
+
+    it('creates files with content', async () => {
+      const fs = new FakeFilesystemService();
+      fs.fromTree('/root', { 'readme.md': '# Hello' });
+      const result = await fs.readFileAbsolute('/root/readme.md');
+      expect(result).toMatchObject({ content: '# Hello' });
+    });
+
+    it('creates deeply nested structure', async () => {
+      const fs = new FakeFilesystemService();
+      fs.fromTree('/repo', {
+        openspec: {
+          changes: {
+            'add-foo': {
+              'tasks.md': '- [ ] task',
+            },
+          },
+        },
+      });
+      const result = await fs.readFileAbsolute('/repo/openspec/changes/add-foo/tasks.md');
+      expect(result).toMatchObject({ content: '- [ ] task' });
+    });
+
+    it('accumulates roots when called multiple times', async () => {
+      const fs = new FakeFilesystemService();
+      fs.fromTree('/a', {});
+      fs.fromTree('/b', {});
+      const roots = await fs.browseDirectories();
+      expect(roots).toEqual(
+        expect.arrayContaining([
+          { name: 'a', path: '/a' },
+          { name: 'b', path: '/b' },
+        ]),
+      );
+    });
+  });
+
   describe('mutations (create / delete / rename / copy / move)', () => {
     function setup() {
       const fs = new FakeFilesystemService();

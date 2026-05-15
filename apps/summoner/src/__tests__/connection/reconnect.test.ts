@@ -82,8 +82,7 @@ describe('Connection reconnect loop', () => {
     expect(events.filter((e) => e === 'connect')).toHaveLength(2);
 
     // Handlers persist on WsClient — new server connection can call fs/exists
-    filesystem.setRoots(['/']);
-    filesystem.addFile('/tmp/test.txt', 'content');
+    filesystem.fromTree('/', { tmp: { 'test.txt': 'content' } });
     const result = await serverRpcs[1]!.request('fs/exists', { path: '/tmp/test.txt' });
     expect(result).toEqual({ exists: true });
 

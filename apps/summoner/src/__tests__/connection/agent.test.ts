@@ -168,8 +168,7 @@ describe('Agent', () => {
 
   describe('fs dispatch', () => {
     it('browseDirectories returns entries from FilesystemService', async () => {
-      ctx.filesystem.setRoots(['/projects']);
-      ctx.filesystem.addDirectory('/projects', ['app', 'blog']);
+      ctx.filesystem.fromTree('/projects', { app: {}, blog: {} });
 
       const result = await ctx.rpc<{ entries: { name: string; path: string }[] }>(
         'fs/browseDirectories',
@@ -183,8 +182,7 @@ describe('Agent', () => {
     });
 
     it('fs/exists returns true for a known file', async () => {
-      ctx.filesystem.setRoots(['/']);
-      ctx.filesystem.addFile('/tmp/hello.txt', 'hello');
+      ctx.filesystem.fromTree('/', { tmp: { 'hello.txt': 'hello' } });
 
       const result = await ctx.rpc<{ exists: boolean }>('fs/exists', { path: '/tmp/hello.txt' });
       expect(result.exists).toBe(true);

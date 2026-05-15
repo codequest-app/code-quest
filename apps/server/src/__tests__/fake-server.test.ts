@@ -13,8 +13,7 @@ describe('FakeSummoner', () => {
 
   it('fs:browse uses FakeFilesystemService', async () => {
     const summoner = createFakeSummoner();
-    summoner.filesystem().setRoots(['/projects']);
-    summoner.filesystem().addDirectory('/projects', ['app', 'blog']);
+    summoner.filesystem().fromTree('/projects', { app: {}, blog: {} });
 
     const claude = summoner.claude();
     await claude.initialize();
@@ -35,7 +34,7 @@ describe('FakeSummoner', () => {
 
   it('fs:browse returns error when path is outside allowed roots', async () => {
     const summoner = createFakeSummoner();
-    summoner.filesystem().setRoots(['/projects']);
+    summoner.filesystem().fromTree('/projects', {});
 
     const claude = summoner.claude();
     await claude.initialize();
@@ -52,8 +51,7 @@ describe('FakeSummoner', () => {
     const windowA = createFakeSummoner(server);
     const windowB = createFakeSummoner(server);
 
-    windowA.filesystem().setRoots(['/shared']);
-    windowA.filesystem().addDirectory('/shared', ['data']);
+    windowA.filesystem().fromTree('/shared', { data: {} });
 
     const claudeA = windowA.claude();
     await claudeA.initialize();

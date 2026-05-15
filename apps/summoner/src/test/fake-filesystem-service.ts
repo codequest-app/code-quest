@@ -11,6 +11,8 @@ import type {
 import { PathOutsideRootsError, type RootGuard } from '@code-quest/shared';
 import { mimeForPath } from '../filesystem/mime-types.ts';
 
+export type FileTree = { [name: string]: string | FileTree };
+
 export class FakeRootGuard implements RootGuard {
   private roots: string[] = [];
 
@@ -63,6 +65,30 @@ export class FakeFilesystemService implements FilesystemService {
     this.rootGuard.reset();
     this.dirs.clear();
     this.files.clear();
+  }
+
+  fromTree(root: string, tree: FileTree): void {
+    const existing = this.rootGuard.getRoots();
+    if (!existing.includes(root)) {
+      this.rootGuard.setRoots([...existing, root]);
+    }
+    this.populateTree(root, tree);
+  }
+
+  private populateTree(parent: string, tree: FileTree): void {
+    const dirChildren: string[] = [];
+    for (const [name, value] of Object.entries(tree)) {
+      const childPath = join(parent, name);
+      if (typeof value === 'string') {
+        this.files.set(childPath, value);
+      } else {
+        dirChildren.push(name);
+        this.populateTree(childPath, value);
+      }
+    }
+    if (dirChildren.length > 0) {
+      this.addDirectory(parent, dirChildren);
+    }
   }
 
   private async ensureWithinRoots(path: string): Promise<void> {
