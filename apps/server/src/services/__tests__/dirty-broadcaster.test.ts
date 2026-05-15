@@ -1,4 +1,4 @@
-import { FakeWatchService } from '@code-quest/summoner/test';
+import { FakeWatchService } from '@code-quest/test-kit';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { DirtyBroadcaster } from '../dirty-broadcaster.ts';
 

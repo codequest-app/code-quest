@@ -9,7 +9,9 @@
     "./browser": "./src/browser.ts",
     "./connection": "./src/connection/agent.ts",
     "./test": "./src/test/index.ts",
-    "./test-browser": "./src/test/index-browser.ts"
+    "./test-browser": "./src/test/index-browser.ts",
+    "./schemas": "./src/claude/schemas.ts",
+    "./git-contract": "./src/git/__tests__/git-service.contract.ts"
   },
   "scripts": {
     "dev": "tsx --env-file=.env src/main.ts",
@@ -35,6 +37,7 @@
     "zod": "^4.4.3"
   },
   "devDependencies": {
+    "@code-quest/test-kit": "workspace:*",
     "@types/node": "^25.7.0",
     "javascript-obfuscator": "^5.4.2",
     "knip": "^6.13.1",

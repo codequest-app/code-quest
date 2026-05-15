@@ -1,5 +1,5 @@
 import type { PendingControl, SessionStateSummary } from '@code-quest/schemas';
-import { segments } from '@code-quest/summoner/test-browser';
+import { segments } from '@code-quest/test-kit/browser';
 import type { ChannelState } from '../types/chat.ts';
 import type { Message } from '../types/ui.ts';
 import { buildChannelState } from './build-channel-state.ts';

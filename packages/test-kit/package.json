@@ -1,0 +1,30 @@
+{
+  "name": "@code-quest/test-kit",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "description": "Code Quest shared test fakes and segment builders",
+  "exports": {
+    ".": "./src/index.ts",
+    "./fakes": "./src/fakes.ts",
+    "./segments": "./src/segments.ts",
+    "./browser": "./src/index-browser.ts"
+  },
+  "scripts": {
+    "test": "vitest run --passWithNoTests",
+    "test:watch": "vitest",
+    "lint": "biome check src"
+  },
+  "dependencies": {
+    "@code-quest/node-utils": "workspace:*",
+    "@code-quest/schemas": "workspace:*",
+    "@code-quest/summoner": "workspace:*",
+    "zod": "^4.4.3"
+  },
+  "devDependencies": {
+    "@types/node": "^25.7.0",
+    "typescript": "6.0.3",
+    "vite": "^8.0.12",
+    "vitest": "^4.1.6"
+  }
+}

@@ -1,4 +1,4 @@
-import { segments as s } from '@code-quest/summoner/test';
+import { segments as s } from '@code-quest/test-kit';
 import { renderHook } from '@testing-library/react';
 import type { ReactNode } from 'react';
 import { describe, expect, it, vi } from 'vitest';

@@ -1,5 +1,5 @@
+import { createSegments } from '@code-quest/test-kit';
 import { beforeEach, describe, expect, it } from 'vitest';
-import { createSegments } from '../test/segment-builders.ts';
 
 const parse = (s: string) => JSON.parse(s) as Record<string, unknown>;
 

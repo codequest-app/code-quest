@@ -1,5 +1,5 @@
 import { createFakeServer, createTestContainer } from '@code-quest/server/test';
-import { segments as s } from '@code-quest/summoner/test';
+import { segments as s } from '@code-quest/test-kit';
 import { act, screen, waitFor } from '@testing-library/react';
 import { describe, expect, it } from 'vitest';
 import { MessageList } from '@/components/chat/conversation/MessageList';

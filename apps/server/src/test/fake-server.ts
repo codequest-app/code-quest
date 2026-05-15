@@ -4,19 +4,18 @@ import type {
   OpenspecService,
   PluginCliService,
 } from '@code-quest/summoner';
+import type { FakeOpenspecService, FakePluginCliService } from '@code-quest/summoner/test';
 import {
   createFakeSocket,
   type FakeClaude,
   type FakeFilesystemService,
   type FakeGitService,
-  type FakeOpenspecService,
-  type FakePluginCliService,
   FakeProcessProvider,
   type FakeSocket,
   type FakeSummoner,
   segments as s,
   createFakeSummoner as summonerCreateFakeSummoner,
-} from '@code-quest/summoner/test';
+} from '@code-quest/test-kit';
 import type { Container } from 'inversify';
 import type { ChannelManager } from '../socket/channel-manager.ts';
 import type { SocketServer } from '../socket/server.ts';

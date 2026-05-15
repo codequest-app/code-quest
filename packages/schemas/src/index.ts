@@ -2,7 +2,7 @@
 export { CONTENT_TYPE } from './content-types.ts';
 
 // Errors
-export { ERROR_CODES, type ErrorCode } from './errors.ts';
+export { AlreadyRepoError, ERROR_CODES, type ErrorCode, NotARepoError } from './errors.ts';
 
 // Logger interface (runtime-free, isomorphic)
 export { type Logger, type LogLevel, NOOP_LOGGER } from './logger.ts';
@@ -19,6 +19,7 @@ export * from './schemas/index.ts';
 export * from './services/filesystem.ts';
 export * from './services/git.ts';
 export * from './services/process.ts';
+export * from './services/watch.ts';
 
 // Socket event types
 export type {

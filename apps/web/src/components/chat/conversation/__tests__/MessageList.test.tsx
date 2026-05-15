@@ -1,4 +1,4 @@
-import { segments as s } from '@code-quest/summoner/test';
+import { segments as s } from '@code-quest/test-kit';
 import { act, screen, waitFor } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { createRef } from 'react';

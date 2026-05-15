@@ -1,5 +1,5 @@
+import { segments as s } from '@code-quest/test-kit';
 import { describe, expect, it } from 'vitest';
-import { segments as s } from '../../../test/segments-node.ts';
 import { expectName, toClientMessage, transformResult } from '../helpers.ts';
 
 describe('transform — result events', () => {

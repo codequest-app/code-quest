@@ -3,7 +3,7 @@ import {
   type FakeSocket,
   type ServerConnector,
   FakeSummoner as SummonerFakeSummoner,
-} from '@code-quest/summoner/test';
+} from '@code-quest/test-kit';
 import type { TypedSocket } from '../socket/client.ts';
 
 export class FakeSummoner extends SummonerFakeSummoner {

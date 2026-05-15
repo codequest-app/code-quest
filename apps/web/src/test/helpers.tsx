@@ -1,5 +1,5 @@
 import { createFakeServer } from '@code-quest/server/test';
-import { type FakeClaude, segments as s } from '@code-quest/summoner/test';
+import { type FakeClaude, segments as s } from '@code-quest/test-kit';
 import { act, screen } from '@testing-library/react';
 import type userEvent from '@testing-library/user-event';
 import { useChannelMessages } from '../contexts/channel/index.ts';

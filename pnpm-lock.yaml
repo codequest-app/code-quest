@@ -87,6 +87,9 @@ importers:
         specifier: ^4.4.3
         version: 4.4.3
     devDependencies:
+      '@code-quest/test-kit':
+        specifier: workspace:*
+        version: link:../../packages/test-kit
       '@types/better-sqlite3':
         specifier: ^7.6.13
         version: 7.6.13
@@ -172,6 +175,9 @@ importers:
         specifier: ^4.4.3
         version: 4.4.3
     devDependencies:
+      '@code-quest/test-kit':
+        specifier: workspace:*
+        version: link:../../packages/test-kit
       '@types/node':
         specifier: ^25.7.0
         version: 25.7.0
@@ -344,6 +350,9 @@ importers:
       '@code-quest/summoner':
         specifier: workspace:*
         version: link:../summoner
+      '@code-quest/test-kit':
+        specifier: workspace:*
+        version: link:../../packages/test-kit
       '@rolldown/plugin-babel':
         specifier: ^0.2.3
         version: 0.2.3(@babel/core@7.29.0)(@babel/runtime@7.29.2)(rolldown@1.0.0)(vite@8.0.12(@types/node@25.7.0)(esbuild@0.27.3)(jiti@2.7.0)(tsx@4.21.0)(yaml@2.9.0))
@@ -482,6 +491,34 @@ importers:
       vitest:
         specifier: ^4.1.6
         version: 4.1.6(@types/node@22.19.19)(@vitest/coverage-v8@4.1.6)(@vitest/ui@4.1.6)(happy-dom@20.9.0)(vite@8.0.12(@types/node@22.19.19)(esbuild@0.27.3)(jiti@2.7.0)(tsx@4.21.0)(yaml@2.9.0))
+
+  packages/test-kit:
+    dependencies:
+      '@code-quest/node-utils':
+        specifier: workspace:*
+        version: link:../node-utils
+      '@code-quest/schemas':
+        specifier: workspace:*
+        version: link:../schemas
+      '@code-quest/summoner':
+        specifier: workspace:*
+        version: link:../../apps/summoner
+      zod:
+        specifier: ^4.4.3
+        version: 4.4.3
+    devDependencies:
+      '@types/node':
+        specifier: ^25.7.0
+        version: 25.7.0
+      typescript:
+        specifier: 6.0.3
+        version: 6.0.3
+      vite:
+        specifier: ^8.0.12
+        version: 8.0.12(@types/node@25.7.0)(esbuild@0.27.3)(jiti@2.7.0)(tsx@4.21.0)(yaml@2.9.0)
+      vitest:
+        specifier: ^4.1.6
+        version: 4.1.6(@types/node@25.7.0)(@vitest/coverage-v8@4.1.6)(@vitest/ui@4.1.6)(happy-dom@20.9.0)(vite@8.0.12(@types/node@25.7.0)(esbuild@0.27.3)(jiti@2.7.0)(tsx@4.21.0)(yaml@2.9.0))
 
   packages/transport:
     dependencies:

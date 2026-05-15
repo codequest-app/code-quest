@@ -1,4 +1,4 @@
-export { FakeClaude } from '@code-quest/summoner/test';
+export { FakeClaude } from '@code-quest/test-kit';
 export type { ProjectStore } from '../services/project-store.ts';
 export type { SessionStore } from '../services/session-store.ts';
 export { TYPES } from '../types.ts';

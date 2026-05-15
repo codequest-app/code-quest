@@ -1,11 +1,3 @@
-export { FakeClaude, type FakeClaudeOptions } from './fake-claude.ts';
 export { FakeDiffFileService } from './fake-diff-file-service.ts';
-export { FakeFilesystemService, FakeRootGuard, type FileTree } from './fake-filesystem-service.ts';
-export { FakeGitService } from './fake-git-service.ts';
 export { FakeOpenspecService } from './fake-openspec-service.ts';
 export { FakePluginCliService } from './fake-plugin-cli-service.ts';
-export { FakeProcessHandle, FakeProcessProvider } from './fake-process-provider.ts';
-export { createFakeSocket, type FakeSocket } from './fake-socket.ts';
-export { createFakeSummoner, FakeSummoner, type ServerConnector } from './fake-summoner.ts';
-export { FakeWatchService } from './fake-watch-service.ts';
-export { resetSeq, segments } from './segments-node.ts';

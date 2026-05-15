@@ -1,0 +1,120 @@
+/* biome-ignore-all lint/suspicious/noExplicitAny: test file uses type assertions */
+
+import type { Ack } from '@code-quest/schemas';
+import { segments as s } from '@code-quest/test-kit';
+import { setupSession } from '../../../test/index.ts';
+
+type PlanEmptyResp = Ack;
+
+describe('ChatHandler > plan', () => {
+  it('plan:comment adds a comment and plan:comments retrieves it', async () => {
+    const { claude, channelId } = await setupSession();
+
+    const comment = {
+      id: 'c1',
+      selectedText: 'some text',
+      sectionHeading: 'heading',
+      comment: 'my note',
+    };
+
+    const addResult = await claude.send<PlanEmptyResp>('plan:comment', {
+      channelId,
+      comment,
+    });
+    expect(addResult.ok).toBe(true);
+
+    const getResult = await claude.send<{ comments: any[] }>('plan:comments', { channelId });
+    expect(getResult.comments).toHaveLength(1);
+    expect(getResult.comments[0]).toMatchObject(comment);
+  });
+
+  it('plan:remove_comment removes a specific comment', async () => {
+    const { claude, channelId } = await setupSession();
+
+    await claude.send<PlanEmptyResp>('plan:comment', {
+      channelId,
+      comment: { id: 'c1', selectedText: 't1', sectionHeading: 'h1', comment: 'n1' },
+    });
+    await claude.send<PlanEmptyResp>('plan:comment', {
+      channelId,
+      comment: { id: 'c2', selectedText: 't2', sectionHeading: 'h2', comment: 'n2' },
+    });
+
+    const removeResult = await claude.send<PlanEmptyResp>('plan:remove_comment', {
+      channelId,
+      commentId: 'c1',
+    });
+    expect(removeResult.ok).toBe(true);
+
+    const getResult = await claude.send<{ comments: any[] }>('plan:comments', { channelId });
+    expect(getResult.comments).toHaveLength(1);
+    expect(getResult.comments[0].id).toBe('c2');
+  });
+
+  it('plan:remove_comment returns error for unknown commentId', async () => {
+    const { claude, channelId } = await setupSession();
+
+    const result = await claude.send<PlanEmptyResp>('plan:remove_comment', {
+      channelId,
+      commentId: 'unknown',
+    });
+    expect(result.ok).toBe(false);
+    if (!result.ok) expect(result.error).toBe('Comment not found');
+  });
+
+  it('plan:close_preview clears all comments for session', async () => {
+    const { claude, channelId } = await setupSession();
+
+    await claude.send<PlanEmptyResp>('plan:comment', {
+      channelId,
+      comment: { id: 'c1', selectedText: 't1', sectionHeading: 'h1', comment: 'n1' },
+    });
+
+    const closeResult = await claude.send<PlanEmptyResp>('plan:close_preview', {
+      channelId,
+    });
+    expect(closeResult.ok).toBe(true);
+
+    const getResult = await claude.send<{ comments: any[] }>('plan:comments', { channelId });
+    expect(getResult.comments).toHaveLength(0);
+  });
+
+  it('chat:control_response serializes plan comments as userFeedback for ExitPlanMode', async () => {
+    const { claude, channelId } = await setupSession();
+
+    await claude.send('chat:send', { channelId, message: 'plan something' });
+
+    await claude.emitSegment(s.controlRequestExitPlanMode('req-plan-1'));
+
+    // Add plan comments
+    await claude.send<PlanEmptyResp>('plan:comment', {
+      channelId,
+      comment: {
+        id: 'c1',
+        selectedText: 'step 1',
+        sectionHeading: 'Plan',
+        comment: 'needs more detail',
+      },
+    });
+    await claude.send<PlanEmptyResp>('plan:comment', {
+      channelId,
+      comment: {
+        id: 'c2',
+        selectedText: 'step 3',
+        sectionHeading: 'Plan',
+        comment: 'remove this',
+      },
+    });
+
+    // Approve the plan
+    await claude.send('chat:respond', {
+      channelId,
+      requestId: 'req-plan-1',
+      response: { behavior: 'allow', updatedInput: {} },
+    });
+
+    // Comments should be cleared (serialized into userFeedback)
+    const getResult = await claude.send<{ comments: any[] }>('plan:comments', { channelId });
+    expect(getResult.comments).toHaveLength(0);
+  });
+});

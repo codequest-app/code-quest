@@ -1,5 +1,5 @@
 import type { PendingControl } from '@code-quest/schemas';
-import { segments as s } from '@code-quest/summoner/test';
+import { segments as s } from '@code-quest/test-kit';
 import type { RefObject } from 'react';
 import { describe, expect, it, vi } from 'vitest';
 import { createFakeSummoner } from '@/test/fake-summoner';

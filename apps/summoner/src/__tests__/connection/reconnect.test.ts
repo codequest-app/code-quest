@@ -1,12 +1,10 @@
 import { createServer, type Server as HttpServer } from 'node:http';
 import type { AddressInfo } from 'node:net';
+import { FakeFilesystemService, FakeGitService, FakeProcessProvider } from '@code-quest/test-kit';
 import { RpcChannel, toRpcSocket, WsClient } from '@code-quest/transport';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { WebSocketServer } from 'ws';
 import { Agent } from '../../connection/agent.ts';
-import { FakeFilesystemService } from '../../test/fake-filesystem-service.ts';
-import { FakeGitService } from '../../test/fake-git-service.ts';
-import { FakeProcessProvider } from '../../test/fake-process-provider.ts';
 
 describe('Connection reconnect loop', () => {
   let httpServer: HttpServer;

@@ -1,5 +1,5 @@
 import { createFakeServer, createTestContainer, TYPES } from '@code-quest/server/test';
-import { segments as s } from '@code-quest/summoner/test';
+import { segments as s } from '@code-quest/test-kit';
 import { act, screen } from '@testing-library/react';
 import { describe, expect, it } from 'vitest';
 import { useChannelConfig } from '@/contexts/channel/index';

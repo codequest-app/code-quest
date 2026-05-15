@@ -1,4 +1,4 @@
-import type { FakeClaude } from '@code-quest/summoner/test';
+import type { FakeClaude } from '@code-quest/test-kit';
 import { screen } from '@testing-library/react';
 import type userEvent from '@testing-library/user-event';
 import { afterEach, describe, expect, it } from 'vitest';

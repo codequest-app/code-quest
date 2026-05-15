@@ -1,13 +1,13 @@
 import { readFileSync } from 'node:fs';
 import { join } from 'node:path';
+import { FIXTURES_DIR } from '@code-quest/test-kit';
 import { describe, expect, it } from 'vitest';
 import { ClaudeProtocol } from '../../claude/protocol.ts';
 
 const protocol = new ClaudeProtocol();
 
-const FIXTURE_BASE = join(import.meta.dirname, '../../__fixtures__/claude');
-const REAL_DIR = join(FIXTURE_BASE, 'real');
-const SYNTHETIC_DIR = join(FIXTURE_BASE, 'synthetic');
+const REAL_DIR = join(FIXTURES_DIR, 'real');
+const SYNTHETIC_DIR = join(FIXTURES_DIR, 'synthetic');
 
 function fixtureLines(dir: string, file: string): string[] {
   return readFileSync(join(dir, file), 'utf-8')

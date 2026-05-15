@@ -1,5 +1,5 @@
 import { EVENTS } from '@code-quest/schemas';
-import { segments as s } from '@code-quest/summoner/test';
+import { segments as s } from '@code-quest/test-kit';
 import { act, screen, waitFor } from '@testing-library/react';
 import { describe, expect, it } from 'vitest';
 import { COMPOSE_PLACEHOLDER, emitAssistantTurn, sendUserMessage } from '@/test/helpers';

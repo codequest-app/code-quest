@@ -1,4 +1,4 @@
-import { segments as s } from '@code-quest/summoner/test';
+import { segments as s } from '@code-quest/test-kit';
 import { act, screen, within } from '@testing-library/react';
 import { describe, expect, it } from 'vitest';
 import { createFakeSummoner } from '@/test/fake-summoner';

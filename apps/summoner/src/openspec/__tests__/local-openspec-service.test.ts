@@ -1,6 +1,5 @@
+import { FakeFilesystemService, FakeProcessProvider } from '@code-quest/test-kit';
 import { describe, expect, it } from 'vitest';
-import { FakeFilesystemService } from '../../test/fake-filesystem-service.ts';
-import { FakeProcessProvider } from '../../test/fake-process-provider.ts';
 import { LocalOpenspecService } from '../local.ts';
 
 function setup({ seedOpenspecDir = true } = {}) {

@@ -10,12 +10,10 @@ import type {
 } from '@code-quest/summoner';
 import {
   FakeDiffFileService,
-  FakeFilesystemService,
-  FakeGitService,
   FakeOpenspecService,
   FakePluginCliService,
-  FakeWatchService,
 } from '@code-quest/summoner/test';
+import { FakeFilesystemService, FakeGitService, FakeWatchService } from '@code-quest/test-kit';
 import { migrate } from 'drizzle-orm/better-sqlite3/migrator';
 import type { Container } from 'inversify';
 import { createContainer } from '../container.ts';

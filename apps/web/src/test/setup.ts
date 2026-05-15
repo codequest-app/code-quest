@@ -1,5 +1,5 @@
 import '@testing-library/jest-dom/vitest';
-import { createFakeSocket } from '@code-quest/summoner/test';
+import { createFakeSocket } from '@code-quest/test-kit';
 import { cleanup } from '@testing-library/react';
 import { afterEach, beforeEach, vi } from 'vitest';
 

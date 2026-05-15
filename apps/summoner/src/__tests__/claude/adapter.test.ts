@@ -1,5 +1,5 @@
+import { resetSeq, segments as s } from '@code-quest/test-kit';
 import { describe, expect, it } from 'vitest';
-import { resetSeq, segments as s } from '../../test/segments-node.ts';
 import { adapter, toClientMessage } from './helpers.ts';
 
 describe('ClaudeAdapter', () => {

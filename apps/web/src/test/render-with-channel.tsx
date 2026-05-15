@@ -1,4 +1,4 @@
-import { type FakeClaude, segments as s } from '@code-quest/summoner/test';
+import { type FakeClaude, segments as s } from '@code-quest/test-kit';
 import { act, type RenderResult, render } from '@testing-library/react';
 import type { ReactElement } from 'react';
 import { AppInitProvider } from '../contexts/AppInitContext.tsx';

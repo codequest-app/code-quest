@@ -1,5 +1,5 @@
 import { createFakeServer, createTestContainer, TYPES } from '@code-quest/server/test';
-import type { FakeWatchService } from '@code-quest/summoner/test';
+import type { FakeWatchService } from '@code-quest/test-kit';
 import { act, render, screen, waitFor } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { type ReactNode, useEffect } from 'react';

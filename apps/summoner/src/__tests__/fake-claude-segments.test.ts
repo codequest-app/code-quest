@@ -1,5 +1,5 @@
+import { resetSeq, segments } from '@code-quest/test-kit';
 import { beforeEach, describe, expect, it } from 'vitest';
-import { resetSeq, segments } from '../test/segments-node.ts';
 
 /** Parse a segment string into an object for assertions */
 const parse = (s: string) => JSON.parse(s) as Record<string, unknown>;
