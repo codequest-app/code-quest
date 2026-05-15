@@ -109,6 +109,7 @@ export type {
   FsSearchResult,
   FsUnwatchPayload,
   FsWatchPayload,
+  WatchStartPayload,
 } from './fs.ts';
 export {
   fsBrowsePayloadSchema,
@@ -129,6 +130,7 @@ export {
   fsSearchResultSchema,
   fsUnwatchPayloadSchema,
   fsWatchPayloadSchema,
+  watchStartPayloadSchema,
 } from './fs.ts';
 export type { FilesDirtyEvent, GitDirtyEvent } from './fs-dirty.ts';
 export { filesDirtyEventSchema, gitDirtyEventSchema } from './fs-dirty.ts';

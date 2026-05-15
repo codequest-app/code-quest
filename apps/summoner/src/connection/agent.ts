@@ -5,7 +5,7 @@ import type { AgentHandler } from './agent-handler.ts';
 export class Agent {
   private readonly handlers: AgentHandler[];
 
-  constructor(handlers: AgentHandler[] = []) {
+  constructor(handlers: AgentHandler[]) {
     this.handlers = handlers;
   }
 

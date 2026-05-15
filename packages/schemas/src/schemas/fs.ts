@@ -178,3 +178,8 @@ export const fsUnwatchPayloadSchema: z.ZodObject<{ subscriberId: z.ZodString }, 
     subscriberId: z.string(),
   });
 export type FsUnwatchPayload = z.infer<typeof fsUnwatchPayloadSchema>;
+
+export const watchStartPayloadSchema: z.ZodObject<{ cwd: z.ZodString }, z.core.$strip> = z.object({
+  cwd: z.string(),
+});
+export type WatchStartPayload = z.infer<typeof watchStartPayloadSchema>;
