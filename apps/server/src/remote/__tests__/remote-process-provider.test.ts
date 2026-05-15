@@ -1,6 +1,6 @@
 import { createServer, type Server as HttpServer } from 'node:http';
 import type { AddressInfo } from 'node:net';
-import { Agent, FsHandler, GitHandler } from '@code-quest/summoner/connection';
+import { Agent, FsHandler, GitHandler, ProcessHandler } from '@code-quest/summoner/connection';
 import { FakeFilesystemService, FakeGitService, FakeProcessProvider } from '@code-quest/test-kit';
 import { RpcChannel, type RpcChannelSocket } from '@code-quest/transport';
 import { afterEach, beforeEach, describe, expect, it } from 'vitest';
@@ -28,7 +28,8 @@ function makeSetup() {
 
     httpServer.on('upgrade', (req, socket, head) => {
       wss.handleUpgrade(req, socket, head, (ws) => {
-        new Agent(agentProcessProvider, [
+        new Agent([
+          new ProcessHandler(agentProcessProvider),
           new FsHandler(new FakeFilesystemService()),
           new GitHandler(new FakeGitService()),
         ]).attach(new RpcChannel(wrapWs(ws)));

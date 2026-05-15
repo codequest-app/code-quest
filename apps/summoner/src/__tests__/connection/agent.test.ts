@@ -7,6 +7,7 @@ import { WebSocket, WebSocketServer } from 'ws';
 import { Agent } from '../../connection/agent.ts';
 import { FsHandler } from '../../connection/fs-handler.ts';
 import { GitHandler } from '../../connection/git-handler.ts';
+import { ProcessHandler } from '../../connection/process-handler.ts';
 
 function makeSetup() {
   let httpServer: HttpServer;
@@ -20,7 +21,11 @@ function makeSetup() {
     httpServer = createServer();
     wss = new WebSocketServer({ noServer: true });
 
-    const agent = new Agent(processProvider, [new FsHandler(filesystem), new GitHandler(git)]);
+    const agent = new Agent([
+      new ProcessHandler(processProvider),
+      new FsHandler(filesystem),
+      new GitHandler(git),
+    ]);
     httpServer.on('upgrade', (req, socket, head) => {
       wss.handleUpgrade(req, socket, head, (ws) => {
         agent.attach(new RpcChannel(toRpcSocket(ws)));

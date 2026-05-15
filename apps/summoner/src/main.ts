@@ -17,6 +17,7 @@ import { Agent } from './connection/agent.ts';
 import { BroadcasterHandler } from './connection/broadcaster-handler.ts';
 import { FsHandler } from './connection/fs-handler.ts';
 import { GitHandler } from './connection/git-handler.ts';
+import { ProcessHandler } from './connection/process-handler.ts';
 import { logger } from './logger.ts';
 import { ChildProcessProvider } from './transports/child-process.ts';
 
@@ -78,7 +79,8 @@ const client = new WsClient(serverUrl.toString(), {
   headers: { Authorization: `Bearer ${config.token}` },
 });
 
-const agent = new Agent(processProvider, [
+const agent = new Agent([
+  new ProcessHandler(processProvider),
   new FsHandler(filesystem),
   new GitHandler(git),
   new BroadcasterHandler(broadcaster),

@@ -74,17 +74,82 @@ const broadcaster = new Broadcaster()
 
 一個 `WatchService` instance，三個 DataSource 各自 subscribe 同一個 watcher，底層只開一個 chokidar watcher per cwd。
 
-### Agent 簡化
+### AgentHandler 介面
+
+```ts
+interface AgentHandler {
+  attach(rpc: AgentTransport): void;
+  dispose?(): void;
+}
+```
+
+`attach` 在連線建立時呼叫一次，`dispose` 在連線關閉時由 `Agent.dispose()` 統一委派。
+
+### Agent 簡化為純 orchestrator
 
 ```ts
 // 之前
 constructor(processProvider, filesystem, git, watchService?, openspec?)
+this.rpc = rpc; // attach 時儲存，多個 rpc 共用同一個 this.rpc — 有 bug
 
 // 之後
-constructor(processProvider, filesystem, git, broadcaster: Broadcaster)
+constructor(handlers: AgentHandler[])
+attach(rpc: AgentTransport): void { this.handlers.forEach(h => h.attach(rpc)); }
+dispose(): void { this.handlers.forEach(h => h.dispose?.()); }
 ```
 
-`registerWatchHandlers` 接收一個 `Broadcaster`，`watch.start` 直接呼叫 `broadcaster.subscribe()`。
+Agent 不再持有 `processProvider` 或 `this.rpc`，所有具體邏輯下沉到各 handler。
+
+### ProcessHandler
+
+```ts
+class ProcessHandler implements AgentHandler {
+  private readonly processProvider: ProcessProvider;
+  private readonly spawned = new Map<string, ProcessHandle>();
+  private rpc: AgentTransport | null = null;
+
+  attach(rpc: AgentTransport): void {
+    this.rpc = rpc;
+    rpc.onRequest('process/spawn', ...);
+    rpc.onRequest('process/stdin', ...);
+    rpc.onRequest('process/kill', ...);
+  }
+
+  dispose(): void {
+    for (const handle of this.spawned.values()) handle.abort();
+    this.spawned.clear();
+  }
+}
+```
+
+`streamProcess` / `streamStderr` 移進 `ProcessHandler`，`emitViaRpc` 變成內部方法使用 `this.rpc`。
+
+### 建立方式（summoner main.ts）
+
+```ts
+new Agent([
+  new ProcessHandler(processProvider),
+  new FsHandler(filesystem),
+  new GitHandler(git),
+  new BroadcasterHandler(broadcaster),
+])
+```
+
+### 檔案結構
+
+```
+apps/summoner/src/connection/
+  agent.ts
+  agent-handler.ts
+  handlers/
+    process-handler.ts
+    fs-handler.ts
+    git-handler.ts
+    broadcaster-handler.ts
+  index.ts
+```
+
+`fs-handlers.ts` / `git-handlers.ts` inline 進各自的 handler 檔案後刪除。
 
 ### RemoteBroadcaster 更新
 

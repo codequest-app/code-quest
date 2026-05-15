@@ -98,6 +98,43 @@ The single `Broadcaster` instance SHALL be created in the summoner process with 
 - **WHEN** `watch.start({ cwd })` is received while a subscription for that cwd already exists
 - **THEN** summoner SHALL NOT create a second subscription for that cwd
 
+### Requirement: AgentHandler interface supports lifecycle hooks
+`AgentHandler` SHALL define `attach(rpc: AgentTransport): void` as a required method and `dispose?(): void` as an optional method. `Agent` SHALL call `attach` on each handler when a connection is established, and SHALL call `dispose` (if present) on each handler when the connection is torn down.
+
+#### Scenario: attach is called once per connection
+- **WHEN** a new RPC connection is established
+- **THEN** `Agent` SHALL call `handler.attach(rpc)` on every registered handler exactly once
+
+#### Scenario: dispose cleans up handler resources
+- **WHEN** `Agent.dispose()` is called
+- **THEN** `Agent` SHALL call `handler.dispose()` for every handler that defines it
+
+### Requirement: ProcessHandler encapsulates all process lifecycle management
+`ProcessHandler` SHALL implement `AgentHandler` and be the sole holder of `ProcessProvider` and the spawned process map. It SHALL register `process/spawn`, `process/stdin`, and `process/kill` RPC handlers in `attach()`, and SHALL abort all spawned processes in `dispose()`.
+
+#### Scenario: Spawned processes are terminated on dispose
+- **WHEN** `ProcessHandler.dispose()` is called
+- **THEN** every process in the spawned map SHALL be aborted
+
+### Requirement: Agent is a pure orchestrator with no process or RPC logic
+`Agent` SHALL only hold a list of `AgentHandler` instances. Its `attach(rpc)` SHALL iterate and call `handler.attach(rpc)` for each. Its `dispose()` SHALL iterate and call `handler.dispose?.()` for each. `Agent` SHALL NOT hold a reference to `ProcessProvider`, `this.rpc`, or any process-related state.
+
+#### Scenario: Agent delegates attach to all handlers
+- **WHEN** `Agent.attach(rpc)` is called
+- **THEN** each registered handler's `attach(rpc)` SHALL be called in order
+
+### Requirement: BroadcasterHandler registers watch.start / watch.stop RPC handlers
+`BroadcasterHandler` SHALL implement `AgentHandler`. In `attach()`, it SHALL register handlers for `watch.start` and `watch.stop` RPC methods, using a per-connection `connectionId` as the `subscriberId` when calling `broadcaster.subscribe()`.
+
+#### Scenario: watch.start creates a broadcaster subscription
+- **WHEN** `watch.start({ cwd })` RPC is received
+- **THEN** `BroadcasterHandler` SHALL call `broadcaster.subscribe(cwd, connectionId, cb)`
+- **THEN** subsequent snapshot updates SHALL be emitted via `rpc.emit(watch.snapshot, { cwd, type, data })`
+
+#### Scenario: watch.stop removes the broadcaster subscription
+- **WHEN** `watch.stop({ cwd })` RPC is received
+- **THEN** `BroadcasterHandler` SHALL call the unsubscribe function returned by `broadcaster.subscribe`
+
 ### Requirement: Socket events carry optional snapshot payload
 Existing `EVENTS.fs.dirty`, `EVENTS.git.dirty`, `EVENTS.openspec.dirty` events SHALL gain an optional `snapshot` field carrying the complete data. The `cwd` and existing fields SHALL remain unchanged for backwards compatibility.
 
