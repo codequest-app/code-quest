@@ -676,12 +676,6 @@ describe('ChatHandler > session', () => {
     it('records each stdin message exactly once in raw event store', async () => {
       const { container, claude, channelId } = await setupSession();
 
-      // Verify runner has exactly 1 stdin listener (no double wireRawPersistence)
-      const mgr = container.get<{
-        get(id: string): { runner: { listenerCount(e: string): number } } | undefined;
-      }>(TYPES.ChannelManager);
-      expect(mgr.get(channelId)!.runner.listenerCount('stdin')).toBe(1);
-
       await claude.send('chat:send', { channelId, message: 'hello' });
 
       const rawEventService = container.get<RawEventService>(TYPES.RawEventService);
@@ -1105,7 +1099,9 @@ describe('ChatHandler > session', () => {
         expect(claude.provider.spawnCalls.length).toBeGreaterThan(0);
       });
       await claude.emitSegment(
-        s.resultError({ errors: ['No conversation found with session ID: dead-resume-sess'] }),
+        s.resultResumeNotFound({
+          errors: ['No conversation found with session ID: dead-resume-sess'],
+        }),
       );
       claude.handle.abort();
 

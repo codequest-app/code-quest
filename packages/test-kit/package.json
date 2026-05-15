@@ -7,7 +7,10 @@
   "exports": {
     ".": "./src/index.ts",
     "./fakes": "./src/fakes.ts",
-    "./segments": "./src/segments.ts",
+    "./segments": {
+      "browser": "./src/segments-browser.ts",
+      "default": "./src/segments-node.ts"
+    },
     "./browser": "./src/index-browser.ts"
   },
   "scripts": {

@@ -21,7 +21,10 @@ const DEFAULT_RESET_AFTER_MS = 60_000;
 const BACKOFF_MULTIPLIER = 2;
 
 function sleep(ms: number): Promise<void> {
-  return new Promise((resolve) => setTimeout(resolve, ms));
+  return new Promise((resolve) => {
+    const timer = setTimeout(resolve, ms);
+    timer.unref?.();
+  });
 }
 
 export function createConnectionLoop(

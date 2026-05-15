@@ -1,4 +1,6 @@
 // JSON-RPC 2.0 types for remote summoner ↔ server communication.
+import type { z } from 'zod';
+import type { fsReadFileAbsoluteResponseSchema } from './protocol-schemas.ts';
 
 // ---------- Framing ----------
 
@@ -129,7 +131,7 @@ export interface FsReadFileAbsoluteParams {
   absolutePath: string;
 }
 
-export type FsReadFileAbsoluteResult = { content: string } | { error: string };
+export type FsReadFileAbsoluteResult = z.infer<typeof fsReadFileAbsoluteResponseSchema>;
 
 // ---------- fs/writeFileAbsolute ----------
 

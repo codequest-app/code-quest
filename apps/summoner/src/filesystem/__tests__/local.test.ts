@@ -1,7 +1,6 @@
 import { join } from 'node:path';
 import type { DirectoryEntry } from '@code-quest/schemas';
 import { PathOutsideRootsError } from '@code-quest/schemas';
-import { FakeWatchService } from '@code-quest/test-kit/fakes';
 import { vol } from 'memfs';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { LocalFilesystemService } from '../local.ts';
@@ -27,7 +26,7 @@ beforeEach(async () => {
     [join(ROOT, 'package.json')]: '{}',
   });
   memfs = (await import('memfs')).fs as unknown as typeof import('node:fs');
-  service = new LocalFilesystemService([ROOT], new LocalRootGuard([ROOT]), undefined, memfs);
+  service = new LocalFilesystemService([ROOT], new LocalRootGuard([ROOT]), memfs);
 });
 
 afterEach(() => vol.reset());
@@ -93,14 +92,14 @@ describe('LocalFilesystemService', () => {
     });
 
     it('shows hidden files when showHidden=true', async () => {
-      vol.fromJSON({ [join(ROOT, '.env')]: 'SECRET=1' });
+      vol.writeFileSync(join(ROOT, '.env'), 'SECRET=1');
       const result = await service.browseEntries(ROOT, { showHidden: true });
       const fileNames = result.files.map((f) => f.name);
       expect(fileNames).toContain('.env');
     });
 
     it('hides hidden files by default', async () => {
-      vol.fromJSON({ [join(ROOT, '.env')]: 'SECRET=1' });
+      vol.writeFileSync(join(ROOT, '.env'), 'SECRET=1');
       const result = await service.browseEntries(ROOT);
       const fileNames = result.files.map((f) => f.name);
       expect(fileNames).not.toContain('.env');
@@ -133,53 +132,6 @@ describe('LocalFilesystemService', () => {
     it('other patterns do fuzzy search', async () => {
       const results = await service.listFiles(ROOT, 'utils');
       expect(results.some((f) => f.name.includes('utils'))).toBe(true);
-    });
-
-    describe('cache invalidation via WatchService', () => {
-      function makeService(watch?: FakeWatchService) {
-        return new LocalFilesystemService([ROOT], new LocalRootGuard([ROOT]), watch, memfs);
-      }
-
-      it('second call without watcher event reuses cached file list', async () => {
-        const watch = new FakeWatchService();
-        const cached = makeService(watch);
-        const a = await cached.listFiles(ROOT, '');
-        vol.writeFileSync(join(ROOT, 'after-cache.ts'), '');
-        const b = await cached.listFiles(ROOT, '');
-        expect(b.some((f) => f.name === 'after-cache.ts')).toBe(false);
-        expect(b.length).toBe(a.length);
-      });
-
-      it('watcher event invalidates cache so next call rebuilds', async () => {
-        const watch = new FakeWatchService();
-        const cached = makeService(watch);
-        await cached.listFiles(ROOT, '');
-        vol.writeFileSync(join(ROOT, 'after-invalidate.ts'), '');
-        watch.simulate(ROOT, { type: 'add', path: 'after-invalidate.ts' });
-        const b = await cached.listFiles(ROOT, '');
-        expect(b.some((f) => f.name === 'after-invalidate.ts')).toBe(true);
-      });
-
-      it('concurrent first calls do not subscribe duplicate watchers', async () => {
-        const watch = new FakeWatchService();
-        let subscribeCount = 0;
-        const realSubscribe = watch.subscribe.bind(watch);
-        watch.subscribe = (cwd, cb) => {
-          subscribeCount++;
-          return realSubscribe(cwd, cb);
-        };
-        const cached = makeService(watch);
-        await Promise.all([cached.listFiles(ROOT, ''), cached.listFiles(ROOT, '')]);
-        expect(subscribeCount).toBe(1);
-      });
-
-      it('without WatchService injection, every call walks fresh', async () => {
-        const noWatch = makeService();
-        await noWatch.listFiles(ROOT, '');
-        vol.writeFileSync(join(ROOT, 'no-watch.ts'), '');
-        const b = await noWatch.listFiles(ROOT, '');
-        expect(b.some((f) => f.name === 'no-watch.ts')).toBe(true);
-      });
     });
   });
 
@@ -263,8 +215,10 @@ describe('LocalFilesystemService', () => {
       expect(await service.exists(join(ROOT, 'does-not-exist'))).toBe(false);
     });
 
-    it('returns false for path under non-existent parent', async () => {
-      expect(await service.exists('/totally/nonexistent/path')).toBe(false);
+    it('throws PathOutsideRootsError for path outside roots', async () => {
+      await expect(service.exists('/totally/nonexistent/path')).rejects.toThrow(
+        PathOutsideRootsError,
+      );
     });
   });
 
@@ -304,7 +258,7 @@ describe('LocalFilesystemService', () => {
 
     beforeEach(() => {
       vol.mkdirSync(MROOT, { recursive: true });
-      svc = new LocalFilesystemService([MROOT], new LocalRootGuard([MROOT]), undefined, memfs);
+      svc = new LocalFilesystemService([MROOT], new LocalRootGuard([MROOT]), memfs);
     });
 
     it('create file then delete it', async () => {

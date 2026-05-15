@@ -138,14 +138,20 @@ describe('DirtyBroadcaster', () => {
 
   it('second subscriber on same cwd does not re-subscribe underlying WatchService', () => {
     const { watch, broadcaster } = setupPaths();
-    const cb = vi.fn();
-    broadcaster.subscribe('/repo', 's1', cb);
+    const cb1 = vi.fn();
+    const cb2 = vi.fn();
+    broadcaster.subscribe('/repo', 's1', cb1);
     const subscribeSpy = vi.spyOn(watch, 'subscribe');
-    broadcaster.subscribe('/repo', 's2', vi.fn());
+    broadcaster.subscribe('/repo', 's2', cb2);
     expect(subscribeSpy).not.toHaveBeenCalled();
+
+    watch.simulate('/repo', { type: 'change', path: 'x.ts' });
+    vi.advanceTimersByTime(200);
+    expect(cb1).toHaveBeenCalledWith(['x.ts']);
+    expect(cb2).toHaveBeenCalledWith(['x.ts']);
   });
 
-  it('no subscribers → no chokidar subscribe', () => {
+  it('no subscribers → underlying watch.subscribe is never called', () => {
     const { watch } = setupPaths();
     const subscribeSpy = vi.spyOn(watch, 'subscribe');
     expect(subscribeSpy).not.toHaveBeenCalled();

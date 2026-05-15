@@ -16,6 +16,30 @@ export interface ReceivedMessageMap {
   stop_speech_to_text: { type: 'stop_speech_to_text'; channelId: string };
 }
 
+function makeAsyncQueue(
+  getQueue: () => string[],
+  _getResolver: () => ((result: IteratorResult<string>) => void) | null,
+  setResolver: (fn: ((result: IteratorResult<string>) => void) | null) => void,
+  signal: AbortSignal,
+): AsyncIterable<string> {
+  return {
+    [Symbol.asyncIterator]: () => ({
+      next: (): Promise<IteratorResult<string>> => {
+        const queue = getQueue();
+        if (queue.length > 0) {
+          return Promise.resolve({ value: queue.shift() ?? '', done: false });
+        }
+        if (signal.aborted) {
+          return Promise.resolve({ value: undefined, done: true });
+        }
+        return new Promise<IteratorResult<string>>((resolve) => {
+          setResolver(resolve);
+        });
+      },
+    }),
+  };
+}
+
 export class FakeProcessHandle implements ProcessHandle {
   private readonly controller = new AbortController();
   private readonly lineQueue: string[] = [];
@@ -80,37 +104,23 @@ export class FakeProcessHandle implements ProcessHandle {
     }
   }
 
-  lines: AsyncIterable<string> = {
-    [Symbol.asyncIterator]: () => ({
-      next: (): Promise<IteratorResult<string>> => {
-        if (this.lineQueue.length > 0) {
-          return Promise.resolve({ value: this.lineQueue.shift() ?? '', done: false });
-        }
-        if (this.signal.aborted) {
-          return Promise.resolve({ value: undefined, done: true });
-        }
-        return new Promise<IteratorResult<string>>((resolve) => {
-          this.resolver = resolve;
-        });
-      },
-    }),
-  };
+  readonly lines: AsyncIterable<string> = makeAsyncQueue(
+    () => this.lineQueue,
+    () => this.resolver,
+    (fn) => {
+      this.resolver = fn;
+    },
+    this.signal,
+  );
 
-  stderr: AsyncIterable<string> = {
-    [Symbol.asyncIterator]: () => ({
-      next: (): Promise<IteratorResult<string>> => {
-        if (this.stderrQueue.length > 0) {
-          return Promise.resolve({ value: this.stderrQueue.shift() ?? '', done: false });
-        }
-        if (this.signal.aborted) {
-          return Promise.resolve({ value: undefined, done: true });
-        }
-        return new Promise<IteratorResult<string>>((resolve) => {
-          this.stderrResolver = resolve;
-        });
-      },
-    }),
-  };
+  readonly stderr: AsyncIterable<string> = makeAsyncQueue(
+    () => this.stderrQueue,
+    () => this.stderrResolver,
+    (fn) => {
+      this.stderrResolver = fn;
+    },
+    this.signal,
+  );
 }
 
 interface SpawnCall {

@@ -108,12 +108,16 @@ export class FakeSummoner {
     return this.claude().send<T>(event, payload);
   }
 
+  private _queryEvents(store: Array<{ event: string; payload: any }>, eventName?: string): any {
+    if (!eventName) return store;
+    return store.filter((e) => e.event === eventName).map((e) => e.payload);
+  }
+
   /** Query recorded server → client events. */
   receivedEvents(): Array<{ event: string; payload: any }>;
   receivedEvents(eventName: string): any[];
   receivedEvents(eventName?: string): any {
-    if (!eventName) return this._recordedEvents;
-    return this._recordedEvents.filter((e) => e.event === eventName).map((e) => e.payload);
+    return this._queryEvents(this._recordedEvents, eventName);
   }
 
   /** Query client → server emits (mirror of `events()`). Use to assert which
@@ -122,8 +126,7 @@ export class FakeSummoner {
   sentEvents(): Array<{ event: string; payload: any }>;
   sentEvents(eventName: string): any[];
   sentEvents(eventName?: string): any {
-    if (!eventName) return this._sentEvents;
-    return this._sentEvents.filter((e) => e.event === eventName).map((e) => e.payload);
+    return this._queryEvents(this._sentEvents, eventName);
   }
 
   /** Hold the next emit of a specific event — the server handler runs but the

@@ -8,8 +8,8 @@ import {
   createFakeSummoner,
   createTestContainer,
   setupSession,
-  TYPES,
 } from '../../../../test/index.ts';
+import { TYPES } from '../../../../types.ts';
 
 type UpdateStateResp = Ack;
 type SessionListOk = Extract<SessionListResponse, { ok: true }>;

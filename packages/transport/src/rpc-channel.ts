@@ -75,7 +75,10 @@ export class RpcChannel {
       this.listeners.set(event, set);
     }
     set.add(fn);
-    return () => set.delete(fn);
+    return () => {
+      set.delete(fn);
+      if (set.size === 0) this.listeners.delete(event);
+    };
   }
 
   close(): void {
@@ -124,6 +127,7 @@ export class RpcChannel {
       const response: Envelope = { kind: 'response', id, ok: true, data: result };
       this.socket.send(JSON.stringify(response));
     } catch (err) {
+      console.error('[rpc-channel] handler error:', err);
       const response: Envelope = {
         kind: 'response',
         id,

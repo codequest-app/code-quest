@@ -175,7 +175,7 @@ describe('TabProvider', () => {
       const project = await addProject();
       await project.launchSession();
       await act(async () => {
-        await claude.emitSegment(s.resultError({ errors: ['No conversation found'] }));
+        await claude.emitSegment(s.resultResumeNotFound({ errors: ['No conversation found'] }));
       });
       await act(async () => {
         claude.handle.abort();

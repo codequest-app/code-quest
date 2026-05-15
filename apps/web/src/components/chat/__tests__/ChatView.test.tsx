@@ -286,7 +286,7 @@ describe('ChatSession', () => {
       await userEvent.type(textarea, 'go{Enter}');
 
       await act(async () => {
-        await claude.emitSegment(s.resultError({ errors: ['Something failed'] }));
+        await claude.emitSegment(s.resultResumeNotFound({ errors: ['Something failed'] }));
       });
 
       expect((await screen.findAllByText(/Something failed/)).length).toBeGreaterThan(0);

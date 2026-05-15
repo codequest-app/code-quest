@@ -78,6 +78,6 @@ describe('ReconnectableRpc', () => {
     expect(rpc.connected).toBe(true);
 
     await rpc.request('test', {});
-    expect(second.request).toHaveBeenCalled();
+    expect(second.request).toHaveBeenCalledWith('test', {});
   });
 });

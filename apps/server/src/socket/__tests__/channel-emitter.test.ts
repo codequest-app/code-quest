@@ -59,11 +59,10 @@ describe('ChannelEmitter', () => {
       });
 
       const ch = makeChannel();
-      emitter.dispatch('test:event', ch, {});
+      await emitter.dispatch('test:event', ch, {});
 
       // setImmediate runs after pending microtasks/rejections are flushed
       await new Promise((r) => setImmediate(r));
-      // If we get here without unhandled rejection, the test passes
     });
 
     it('calls cb with error response when async handler throws and cb is provided', async () => {
@@ -175,7 +174,8 @@ describe('ChannelEmitter', () => {
 
     it('does not call resolveChannel when channelId is null', () => {
       const emitter = new ChannelEmitter();
-      emitter.on('chat:send', vi.fn());
+      const handler = vi.fn();
+      emitter.on('chat:send', handler);
 
       const resolveChannel = vi.fn(() => undefined);
       const fake = createFakeSocket();
@@ -184,11 +184,18 @@ describe('ChannelEmitter', () => {
       fake.emit('chat:send', { channelId: null, message: 'hello' });
 
       expect(resolveChannel).not.toHaveBeenCalled();
+      expect(handler).toHaveBeenCalledWith(
+        null,
+        { channelId: null, message: 'hello' },
+        fake.serverSocket,
+        undefined,
+      );
     });
 
     it('does not call resolveChannel when channelId is undefined', () => {
       const emitter = new ChannelEmitter();
-      emitter.on('chat:send', vi.fn());
+      const handler = vi.fn();
+      emitter.on('chat:send', handler);
 
       const resolveChannel = vi.fn(() => undefined);
       const fake = createFakeSocket();
@@ -197,11 +204,18 @@ describe('ChannelEmitter', () => {
       fake.emit('chat:send', { channelId: undefined, message: 'hello' });
 
       expect(resolveChannel).not.toHaveBeenCalled();
+      expect(handler).toHaveBeenCalledWith(
+        null,
+        { channelId: undefined, message: 'hello' },
+        fake.serverSocket,
+        undefined,
+      );
     });
 
     it('does not call resolveChannel when channelId is missing from payload', () => {
       const emitter = new ChannelEmitter();
-      emitter.on('chat:send', vi.fn());
+      const handler = vi.fn();
+      emitter.on('chat:send', handler);
 
       const resolveChannel = vi.fn(() => undefined);
       const fake = createFakeSocket();
@@ -210,6 +224,12 @@ describe('ChannelEmitter', () => {
       fake.emit('chat:send', { message: 'hello' });
 
       expect(resolveChannel).not.toHaveBeenCalled();
+      expect(handler).toHaveBeenCalledWith(
+        null,
+        { message: 'hello' },
+        fake.serverSocket,
+        undefined,
+      );
     });
   });
 

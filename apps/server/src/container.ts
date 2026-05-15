@@ -179,7 +179,7 @@ export function createContainer(options: ContainerOptions): Container {
   container.bind<boolean>(TYPES.AutoMode).toConstantValue(autoMode);
   container.bind<UsageTracker>(TYPES.UsageTracker).to(UsageTracker).inSingletonScope();
   container.bind<SocketServer>(TYPES.SocketServer).to(SocketServer).inSingletonScope();
-  bindServices(container, remoteRpc, options.fsRoots ?? [], watchService);
+  bindServices(container, remoteRpc, options.fsRoots ?? []);
 
   return container;
 }
@@ -188,7 +188,6 @@ function bindServices(
   container: Container,
   remoteRpc: ReconnectableRpc | undefined,
   fsRoots: string[],
-  watchService: WatchService,
 ): void {
   if (remoteRpc) {
     container.bind(TYPES.FilesystemService).toConstantValue(new RemoteFilesystemService(remoteRpc));
@@ -196,9 +195,7 @@ function bindServices(
   } else {
     container
       .bind(TYPES.FilesystemService)
-      .toConstantValue(
-        new LocalFilesystemService(fsRoots, new LocalRootGuard(fsRoots), watchService),
-      );
+      .toConstantValue(new LocalFilesystemService(fsRoots, new LocalRootGuard(fsRoots)));
     container.bind<GitService>(TYPES.GitService).toConstantValue(new LocalGitService());
   }
   container

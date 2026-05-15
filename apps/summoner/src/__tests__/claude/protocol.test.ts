@@ -1,6 +1,6 @@
 import { readFileSync } from 'node:fs';
 import { join } from 'node:path';
-import { FIXTURES_DIR } from '@code-quest/test-kit';
+import { FIXTURES_DIR } from '@code-quest/test-kit/fakes';
 import { describe, expect, it } from 'vitest';
 import { ClaudeProtocol } from '../../claude/protocol.ts';
 

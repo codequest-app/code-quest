@@ -120,18 +120,15 @@ export const fsReadParamsSchema: z.ZodObject<
   filePath: z.string(),
 });
 
-export const fsExistsParamsSchema: z.ZodObject<{ path: z.ZodString }, z.core.$strip> = z.object({
+const pathParamSchema: z.ZodObject<{ path: z.ZodString }, z.core.$strip> = z.object({
   path: z.string(),
 });
 
-export const fsIsDirectoryParamsSchema: z.ZodObject<{ path: z.ZodString }, z.core.$strip> =
-  z.object({
-    path: z.string(),
-  });
+export const fsExistsParamsSchema: typeof pathParamSchema = pathParamSchema;
 
-export const fsStatKindParamsSchema: z.ZodObject<{ path: z.ZodString }, z.core.$strip> = z.object({
-  path: z.string(),
-});
+export const fsIsDirectoryParamsSchema: typeof pathParamSchema = pathParamSchema;
+
+export const fsStatKindParamsSchema: typeof pathParamSchema = pathParamSchema;
 
 // ── Filesystem responses ──
 

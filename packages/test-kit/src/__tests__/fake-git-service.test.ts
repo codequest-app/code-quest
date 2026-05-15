@@ -134,7 +134,9 @@ describe('FakeGitService', () => {
 
     it('throws when worktree path is not registered', async () => {
       const git = new FakeGitService();
-      await expect(git.renameWorktree('/unknown', 'x')).rejects.toThrow();
+      await expect(git.renameWorktree('/unknown', 'x')).rejects.toThrow(
+        'Worktree not registered at /unknown',
+      );
     });
   });
 

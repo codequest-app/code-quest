@@ -10,10 +10,9 @@ import type {
   ReadFileResult,
   WriteFileResult,
 } from '@code-quest/schemas';
-import { errMsg, getOrSet, PathOutsideRootsError, type RootGuard } from '@code-quest/schemas';
+import { errMsg, PathOutsideRootsError, type RootGuard } from '@code-quest/schemas';
 import Fuse from 'fuse.js';
 import { glob } from 'glob';
-import type { Unsubscribe, WatchService } from '../fs-watch/types.ts';
 import { logger } from '../logger.ts';
 import { mimeForPath } from './mime-types.ts';
 
@@ -22,7 +21,6 @@ interface ListCacheEntry {
   dirs: string[];
   /** Built lazily on first fuzzy query. */
   fuse: Fuse<{ path: string; filename: string; isDirectory: boolean }> | null;
-  unsubscribe: Unsubscribe;
 }
 
 const MAX_RESULTS = 20;
@@ -43,28 +41,13 @@ function toRootEntry(root: string): DirectoryEntry {
 }
 
 export class LocalFilesystemService implements FilesystemService {
-  /** Per-cwd file-list cache for `listFiles`. Populated on first query,
-   *  invalidated by chokidar (when a `WatchService` is injected). When
-   *  no `WatchService` is provided (tests), every call walks fresh. */
-  private listCache = new Map<string, ListCacheEntry>();
-  /** In-flight builds keyed by cwd. Concurrent first-callers share one
-   *  promise — without this each caller would walk the FS *and* subscribe
-   *  its own watcher, leaking duplicates. */
-  private listCacheInflight = new Map<string, Promise<ListCacheEntry>>();
   private readonly fsRoots: readonly string[];
   private readonly rootGuard: RootGuard;
-  private readonly watch?: WatchService;
   private readonly fsImpl?: typeof import('node:fs');
 
-  constructor(
-    fsRoots: readonly string[],
-    rootGuard: RootGuard,
-    watch?: WatchService,
-    fsImpl?: typeof import('node:fs'),
-  ) {
+  constructor(fsRoots: readonly string[], rootGuard: RootGuard, fsImpl?: typeof import('node:fs')) {
     this.fsRoots = fsRoots;
     this.rootGuard = rootGuard;
-    this.watch = watch;
     this.fsImpl = fsImpl;
   }
 
@@ -118,7 +101,10 @@ export class LocalFilesystemService implements FilesystemService {
   // ── listFiles ──
 
   async listFiles(cwd: string, pattern: string): Promise<FileResult[]> {
-    const entry = await this.getOrBuildListCache(cwd);
+    await this.guardPath(cwd);
+    const files = await this.getAllFiles(cwd);
+    const dirs = this.extractDirectories(files);
+    const entry: ListCacheEntry = { files, dirs, fuse: null };
 
     if (!pattern) {
       return this.listRootEntries(entry.files, entry.dirs);
@@ -127,36 +113,6 @@ export class LocalFilesystemService implements FilesystemService {
       return this.listDirectory(pattern, entry.files, entry.dirs);
     }
     return this.fuzzySearch(pattern.toLowerCase(), entry);
-  }
-
-  /** Build (or return cached) file list for `cwd`. When a WatchService is
-   *  injected, subscribes once; the first FS event drops the entry so the
-   *  next query rebuilds. Without a WatchService, skips the cache and walks
-   *  the FS fresh on every call. */
-  private async getOrBuildListCache(cwd: string): Promise<ListCacheEntry> {
-    if (!this.watch) {
-      return this.buildListCacheEntry(cwd);
-    }
-    const cached = this.listCache.get(cwd);
-    if (cached) return cached;
-    return getOrSet(this.listCacheInflight, cwd, () => this.buildListCacheEntry(cwd));
-  }
-
-  private async buildListCacheEntry(cwd: string): Promise<ListCacheEntry> {
-    await this.guardPath(cwd);
-    const files = await this.getAllFiles(cwd);
-    const dirs = this.extractDirectories(files);
-    const unsubscribe: Unsubscribe = this.watch
-      ? this.watch.subscribe(cwd, () => {
-          const e = this.listCache.get(cwd);
-          if (!e) return;
-          this.listCache.delete(cwd);
-          e.unsubscribe();
-        })
-      : () => {};
-    const entry: ListCacheEntry = { files, dirs, fuse: null, unsubscribe };
-    this.listCache.set(cwd, entry);
-    return entry;
   }
 
   // ── readFileAbsolute ──
@@ -191,6 +147,15 @@ export class LocalFilesystemService implements FilesystemService {
 
   // ── Mutations ──
 
+  private async wrapMutation(fn: () => Promise<void>): Promise<FsMutationResult> {
+    try {
+      await fn();
+      return { ok: true };
+    } catch (err) {
+      return { error: errMsg(err) };
+    }
+  }
+
   async create(absolutePath: string, kind: FileKind): Promise<FsMutationResult> {
     const validated = await this.guardPath(absolutePath);
     try {
@@ -210,12 +175,7 @@ export class LocalFilesystemService implements FilesystemService {
 
   async delete(absolutePath: string): Promise<FsMutationResult> {
     const validated = await this.guardPath(absolutePath);
-    try {
-      await rm(validated, { recursive: true, force: true });
-      return { ok: true };
-    } catch (err) {
-      return { error: errMsg(err) };
-    }
+    return this.wrapMutation(() => rm(validated, { recursive: true, force: true }));
   }
 
   async rename(from: string, to: string): Promise<FsMutationResult> {
@@ -226,12 +186,7 @@ export class LocalFilesystemService implements FilesystemService {
     // race for files but doesn't generalize (directories EPERM, EXDEV).
     // Single-user dev tool — TOCTOU window is negligible in practice.
     if (await this.exists(toV)) return { error: 'exists' };
-    try {
-      await rename(fromV, toV);
-      return { ok: true };
-    } catch (err) {
-      return { error: errMsg(err) };
-    }
+    return this.wrapMutation(() => rename(fromV, toV));
   }
 
   async copy(from: string, to: string): Promise<FsMutationResult> {
@@ -399,35 +354,30 @@ export class LocalFilesystemService implements FilesystemService {
     }));
   }
 
-  async exists(path: string): Promise<boolean> {
+  private async tryStat(path: string): Promise<import('node:fs').Stats | null> {
+    const validated = await this.guardPath(path);
     try {
-      const validated = await this.guardPath(path);
-      await stat(validated);
-      return true;
-    } catch {
-      return false;
+      return await stat(validated);
+    } catch (e: unknown) {
+      if (e instanceof Error && (e as NodeJS.ErrnoException).code === 'ENOENT') return null;
+      throw e;
     }
+  }
+
+  async exists(path: string): Promise<boolean> {
+    return (await this.tryStat(path)) !== null;
   }
 
   async isDirectory(path: string): Promise<boolean> {
-    try {
-      const validated = await this.guardPath(path);
-      const s = await stat(validated);
-      return s.isDirectory();
-    } catch {
-      return false;
-    }
+    const s = await this.tryStat(path);
+    return s?.isDirectory() ?? false;
   }
 
   async statKind(path: string): Promise<FileKind | null> {
-    try {
-      const validated = await this.guardPath(path);
-      const s = await stat(validated);
-      if (s.isDirectory()) return 'directory';
-      if (s.isFile()) return 'file';
-      return null;
-    } catch {
-      return null;
-    }
+    const s = await this.tryStat(path);
+    if (!s) return null;
+    if (s.isDirectory()) return 'directory';
+    if (s.isFile()) return 'file';
+    return null;
   }
 }

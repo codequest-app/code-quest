@@ -60,7 +60,6 @@ interface SegmentTemplates {
   SYSTEM_MIRROR_ERROR?: string;
   CONTROL_SEED_READ_STATE?: string;
   CONTROL_CHANNEL_ENABLE?: string;
-  [key: string]: string | undefined;
 }
 
 export type SegmentBuilders = ReturnType<typeof buildSegments>;
@@ -369,14 +368,25 @@ function buildSegments(T: SegmentTemplates, ref: { seq: number }) {
       return JSON.stringify(line);
     },
 
-    resultError(opts?: {
+    resultError(opts?: { durationMs?: number; costUsd?: number; terminalReason?: string }): string {
+      const line = JSON.parse(T.RESULT_ERROR) as Record<string, unknown>;
+      if (opts?.durationMs != null) {
+        line.duration_ms = opts.durationMs;
+        line.duration_api_ms = opts.durationMs;
+      }
+      if (opts?.costUsd != null) line.total_cost_usd = opts.costUsd;
+      if (opts?.terminalReason != null) line.terminal_reason = opts.terminalReason;
+      line.uuid = `fake-result-err-${next()}`;
+      return JSON.stringify(line);
+    },
+
+    resultResumeNotFound(opts?: {
       durationMs?: number;
       costUsd?: number;
       errors?: string[];
       terminalReason?: string;
     }): string {
-      const template = opts?.errors ? T.RESULT_RESUME_NOT_FOUND : T.RESULT_ERROR;
-      const line = JSON.parse(template) as Record<string, unknown>;
+      const line = JSON.parse(T.RESULT_RESUME_NOT_FOUND) as Record<string, unknown>;
       if (opts?.durationMs != null) {
         line.duration_ms = opts.durationMs;
         line.duration_api_ms = opts.durationMs;

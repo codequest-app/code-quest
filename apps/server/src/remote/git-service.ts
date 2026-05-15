@@ -89,14 +89,17 @@ export class RemoteGitService implements GitService {
     return gitDiscardFileResultSchema.parse(raw);
   }
 
-  async getRepoRoot(cwd: string): Promise<string | null> {
-    const raw = await this.rpc.request(REMOTE_METHODS.git.getRepoRoot, { cwd });
+  private async _getRoot(method: string, cwd: string): Promise<string | null> {
+    const raw = await this.rpc.request(method, { cwd });
     return gitNullableRootSchema.parse(raw);
   }
 
+  async getRepoRoot(cwd: string): Promise<string | null> {
+    return this._getRoot(REMOTE_METHODS.git.getRepoRoot, cwd);
+  }
+
   async getProjectRoot(cwd: string): Promise<string | null> {
-    const raw = await this.rpc.request(REMOTE_METHODS.git.getProjectRoot, { cwd });
-    return gitNullableRootSchema.parse(raw);
+    return this._getRoot(REMOTE_METHODS.git.getProjectRoot, cwd);
   }
 
   async initRepo(cwd: string): Promise<{ branch: string }> {
