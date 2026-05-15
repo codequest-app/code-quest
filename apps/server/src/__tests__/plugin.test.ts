@@ -13,6 +13,9 @@ async function setup(sessionId = 'cli-sess') {
 }
 
 describe('ChatHandler > plugin', () => {
+  // NOTE: resetClaudeState() is needed because state.ts holds module-level state shared across
+  // tests. Eliminating this would require making the state injectable via the DI container
+  // (binding it to TYPES.ClaudeState), which is a larger refactor. Left as-is intentionally.
   beforeEach(() => resetClaudeState());
 
   describe('plugin handlers', () => {

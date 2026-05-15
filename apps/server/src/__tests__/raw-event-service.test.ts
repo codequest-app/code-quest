@@ -61,7 +61,10 @@ describe('RawEventService', () => {
   it('appendEvent routes to eventStore.append and returns the id', async () => {
     const id = await service.appendEvent(makeEvent());
     expect(id).toBe('evt-id');
-    expect(eventStore.append).toHaveBeenCalledTimes(1);
+    expect(eventStore.append).toHaveBeenCalledWith(
+      expect.objectContaining({ sessionId: 'sess', direction: 'out', raw: 'x' }),
+      undefined,
+    );
     expect(deltaStore.append).not.toHaveBeenCalled();
   });
 

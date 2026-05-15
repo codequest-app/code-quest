@@ -21,20 +21,16 @@ describe('auto mode visibility based on supportsAutoMode', () => {
     return { user };
   }
 
-  it.each([
-    { supportsAutoMode: true, visible: true },
-    { supportsAutoMode: false, visible: false },
-  ])('Auto mode visibility is $visible when supportsAutoMode=$supportsAutoMode', async ({
-    supportsAutoMode,
-    visible,
-  }) => {
-    const { user } = await setupWithAutoMode(supportsAutoMode);
+  it('Auto mode is visible when supportsAutoMode=true', async () => {
+    const { user } = await setupWithAutoMode(true);
     await user.click(screen.getByRole('button', { name: /ask before edits/i }));
-    if (visible) {
-      expect(await screen.findByText('Auto mode')).toBeInTheDocument();
-    } else {
-      expect(screen.queryByText('Auto mode')).not.toBeInTheDocument();
-    }
+    expect(await screen.findByText('Auto mode')).toBeInTheDocument();
+  });
+
+  it('Auto mode is not visible when supportsAutoMode=false', async () => {
+    const { user } = await setupWithAutoMode(false);
+    await user.click(screen.getByRole('button', { name: /ask before edits/i }));
+    expect(screen.queryByText('Auto mode')).not.toBeInTheDocument();
   });
 
   it('PermissionModePicker effort cycles through xhigh when model supports it', async () => {

@@ -75,13 +75,18 @@ describe('Agent', () => {
     await teardown();
   });
 
+  function collectNotifications(client: (typeof ctx)['client']): Envelope[] {
+    const notifications: Envelope[] = [];
+    client.on('message', (raw) => {
+      const env = JSON.parse(raw.toString()) as Envelope;
+      if (env.kind === 'event') notifications.push(env);
+    });
+    return notifications;
+  }
+
   describe('process dispatch', () => {
     it('spawns a process and streams stdout lines then exit', async () => {
-      const notifications: Envelope[] = [];
-      ctx.client.on('message', (raw) => {
-        const env = JSON.parse(raw.toString()) as Envelope;
-        if (env.kind === 'event') notifications.push(env);
-      });
+      const notifications = collectNotifications(ctx.client);
 
       await ctx.rpc<{ ok: true }>('process/spawn', {
         sessionId: 'sess-1',
@@ -108,11 +113,7 @@ describe('Agent', () => {
     });
 
     it('forwards real exit code via process/exit notification', async () => {
-      const notifications: Envelope[] = [];
-      ctx.client.on('message', (raw) => {
-        const env = JSON.parse(raw.toString()) as Envelope;
-        if (env.kind === 'event') notifications.push(env);
-      });
+      const notifications = collectNotifications(ctx.client);
 
       await ctx.rpc('process/spawn', {
         sessionId: 'sess-exit',
@@ -129,11 +130,7 @@ describe('Agent', () => {
     });
 
     it('streams stderr via process/stderr notification', async () => {
-      const notifications: Envelope[] = [];
-      ctx.client.on('message', (raw) => {
-        const env = JSON.parse(raw.toString()) as Envelope;
-        if (env.kind === 'event') notifications.push(env);
-      });
+      const notifications = collectNotifications(ctx.client);
 
       await ctx.rpc('process/spawn', {
         sessionId: 'sess-stderr',

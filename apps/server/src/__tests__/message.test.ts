@@ -3,27 +3,17 @@
 import type { SessionJoinResponse } from '@code-quest/shared';
 import { type FakeClaude, segments as s } from '@code-quest/summoner/test';
 import type { RawEventStore } from '../services/raw-event-store.ts';
-import { createFakeServer, createFakeSummoner, createTestContainer } from '../test/index.ts';
+import { createFakeServer, createFakeSummoner, setupSession } from '../test/index.ts';
 import { TYPES } from '../types.ts';
 
 type JoinOk = Extract<SessionJoinResponse, { ok: true }>;
 
-async function setup(sessionId = 'cli-sess') {
-  const container = createTestContainer();
-  const server = createFakeServer(container);
-  const summoner = createFakeSummoner(server);
-  const claude = summoner.claude();
-  const channelId = await claude.initialize(s.init(sessionId));
-  return { container, claude, channelId };
-}
-
 async function setupLive() {
-  return setup('task-live-sess');
+  return setupSession('task-live-sess');
 }
 
 async function setupHistory() {
-  const ctx = await setup('task-history-sess');
-  return ctx;
+  return setupSession('task-history-sess');
 }
 
 function historyEventNames(claude: FakeClaude): string[] {
@@ -81,7 +71,7 @@ describe('ChatHandler > message', () => {
   });
 
   it('sends message and receives assistant text via chat:event', async () => {
-    const { claude, channelId } = await setup();
+    const { claude, channelId } = await setupSession();
 
     await claude.send('chat:send', { channelId, message: 'hi' });
     await claude.emitSegment(s.assistant('Hello!'));
@@ -93,7 +83,7 @@ describe('ChatHandler > message', () => {
   });
 
   it('forwards tool_use and tool_result events through control_request flow', async () => {
-    const { claude, channelId } = await setup();
+    const { claude, channelId } = await setupSession();
 
     await claude.send('chat:send', { channelId, message: 'read file' });
 
@@ -129,7 +119,7 @@ describe('ChatHandler > message', () => {
   });
 
   it('emits stream:text for streamlined_text', async () => {
-    const { claude, channelId } = await setup();
+    const { claude, channelId } = await setupSession();
 
     await claude.send('chat:send', { channelId, message: 'go' });
     await claude.emitSegment(s.streamlinedText('fast mode text'));
@@ -140,7 +130,7 @@ describe('ChatHandler > message', () => {
   });
 
   it('persists raw events to store', async () => {
-    const { container, claude, channelId } = await setup();
+    const { container, claude, channelId } = await setupSession();
 
     await claude.send('chat:send', { channelId, message: 'hello' });
 
@@ -162,7 +152,7 @@ describe('ChatHandler > message', () => {
 
   describe('chat:stop_task', () => {
     it('sends stop_task control_request to CLI', async () => {
-      const { claude, channelId } = await setup();
+      const { claude, channelId } = await setupSession();
 
       await claude.send('chat:stop_task', { channelId, taskId: 'task-1' });
 
@@ -184,7 +174,7 @@ describe('ChatHandler > message', () => {
   });
 
   it('first chat:cancel sends interrupt, second chat:cancel aborts', async () => {
-    const { claude, channelId } = await setup();
+    const { claude, channelId } = await setupSession();
 
     // First cancel → interrupt (sends interrupt JSON via stdin)
     await claude.send('chat:cancel', { channelId });
@@ -199,7 +189,7 @@ describe('ChatHandler > message', () => {
   });
 
   it('after session returns to idle, next cancel is graceful interrupt (not force abort)', async () => {
-    const { claude, channelId } = await setup();
+    const { claude, channelId } = await setupSession();
 
     // Turn 1: send message
     await claude.send('chat:send', { channelId, message: 'go' });
@@ -216,7 +206,7 @@ describe('ChatHandler > message', () => {
   });
 
   it('interrupts a session', async () => {
-    const { claude, channelId } = await setup();
+    const { claude, channelId } = await setupSession();
 
     await claude.send('chat:cancel', { channelId });
 
@@ -225,7 +215,7 @@ describe('ChatHandler > message', () => {
   });
 
   it('cancel_request C→S calls respondToControlRequest with deny to unblock CLI', async () => {
-    const { claude, channelId } = await setup();
+    const { claude, channelId } = await setupSession();
 
     await claude.send('chat:send', { channelId, message: 'go' });
 
@@ -248,7 +238,7 @@ describe('ChatHandler > message', () => {
   });
 
   it('cancel_request C→S is received by server without error', async () => {
-    const { claude, channelId } = await setup();
+    const { claude, channelId } = await setupSession();
 
     await claude.send('chat:send', { channelId, message: 'go' });
     await claude.emitSegment(

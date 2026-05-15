@@ -25,6 +25,7 @@ export interface RenderWithWorkspaceResult {
   claude: FakeClaude;
   summoner: FakeSummoner;
   user: ReturnType<typeof userEvent.setup>;
+  unmount: () => void;
   addProject: (opts?: {
     path?: string;
     dirName?: string;
@@ -109,7 +110,7 @@ export async function renderWithWorkspace(
     claude.prepareInit();
   }
 
-  render(
+  const { unmount } = render(
     <SocketProvider socket={summoner.socket}>
       <AppInitProvider>
         <SessionProvider>
@@ -136,6 +137,7 @@ export async function renderWithWorkspace(
     claude,
     summoner,
     user,
+    unmount,
     addProject: (projectOpts?: { path?: string; dirName?: string }) =>
       addProject(user, summoner, projectOpts),
   };

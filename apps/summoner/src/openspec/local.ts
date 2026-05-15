@@ -1,4 +1,5 @@
 import type {
+  FilesystemService,
   OpenspecArchiveResult,
   OpenspecArtifactKind,
   OpenspecChangeNewResult,
@@ -11,7 +12,6 @@ import type {
   ProcessProvider,
 } from '@code-quest/shared';
 import { z } from 'zod';
-import type { FilesystemService } from '../filesystem/types.ts';
 import { errorCode } from '../utils.ts';
 import type { OpenspecArchiveOptions, OpenspecService } from './types.ts';
 

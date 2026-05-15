@@ -1,4 +1,4 @@
-import { readdirSync, readFileSync } from 'node:fs';
+import { readFileSync } from 'node:fs';
 import { join } from 'node:path';
 import { describe, expect, it } from 'vitest';
 import { ClaudeProtocol } from '../../claude/protocol.ts';
@@ -9,25 +9,17 @@ const FIXTURE_BASE = join(import.meta.dirname, '../../__fixtures__/claude');
 const REAL_DIR = join(FIXTURE_BASE, 'real');
 const SYNTHETIC_DIR = join(FIXTURE_BASE, 'synthetic');
 
-function loadFixtureLines(dir: string): Array<{ file: string; lineNo: number; line: string }> {
-  const entries: Array<{ file: string; lineNo: number; line: string }> = [];
-  for (const file of readdirSync(dir)
-    .filter((f) => f.endsWith('.jsonl'))
-    .sort()) {
-    const content = readFileSync(join(dir, file), 'utf-8');
-    const lines = content.split('\n').filter((l) => l.trim());
-    for (let i = 0; i < lines.length; i++) {
-      entries.push({ file, lineNo: i + 1, line: lines[i]! });
-    }
-  }
-  return entries;
+function fixtureLines(dir: string, file: string): string[] {
+  return readFileSync(join(dir, file), 'utf-8')
+    .split('\n')
+    .filter((l) => l.trim());
 }
 
 // ── Snapshot tests: every fixture line → parseLine → snapshot ──
 
 describe('ClaudeProtocol.parseLine (real fixtures)', () => {
-  const entries = loadFixtureLines(REAL_DIR);
-  for (const { file, lineNo, line } of entries) {
+  function realIt(file: string, lineNo: number) {
+    const line = fixtureLines(REAL_DIR, file)[lineNo - 1]!;
     it(`parses ${file}:${lineNo}`, () => {
       const result = protocol.parseLine(line);
       expect(result.status).toBe('ok');
@@ -36,11 +28,61 @@ describe('ClaudeProtocol.parseLine (real fixtures)', () => {
       }
     });
   }
+
+  realIt('api-retry.jsonl', 1);
+  realIt('assistant-agent.jsonl', 1);
+  realIt('assistant-text.jsonl', 1);
+  realIt('assistant-tool.jsonl', 1);
+  realIt('auth-status.jsonl', 1);
+  realIt('cli-error.jsonl', 1);
+  realIt('control-cancel-request.jsonl', 1);
+  realIt('control-get-context-usage.jsonl', 1);
+  realIt('control-get-context-usage.jsonl', 2);
+  realIt('control-get-settings.jsonl', 1);
+  realIt('control-initialize.jsonl', 1);
+  realIt('control-initialize.jsonl', 2);
+  realIt('control-request-ask-user-question.jsonl', 1);
+  realIt('control-request-bash.jsonl', 1);
+  realIt('control-request-can-use-tool.jsonl', 1);
+  realIt('control-request-exit-plan-mode.jsonl', 1);
+  realIt('control-request-hook-callback.jsonl', 1);
+  realIt('control-request.jsonl', 1);
+  realIt('control-response-error.jsonl', 1);
+  realIt('control-response.jsonl', 1);
+  realIt('control-set-effort.jsonl', 1);
+  realIt('control-set-effort.jsonl', 2);
+  realIt('hook-response.jsonl', 1);
+  realIt('hook-started.jsonl', 1);
+  realIt('init.jsonl', 1);
+  realIt('rate-limit-event.jsonl', 1);
+  realIt('result-error.jsonl', 1);
+  realIt('result-is-error-no-errors.jsonl', 1);
+  realIt('result-success.jsonl', 1);
+  realIt('status.jsonl', 1);
+  realIt('stream-content-block-start.jsonl', 1);
+  realIt('stream-content-block-stop.jsonl', 1);
+  realIt('stream-input-json-delta.jsonl', 1);
+  realIt('stream-message-delta.jsonl', 1);
+  realIt('stream-message-start.jsonl', 1);
+  realIt('stream-message-stop.jsonl', 1);
+  realIt('stream-signature-delta.jsonl', 1);
+  realIt('stream-text-delta.jsonl', 1);
+  realIt('stream-thinking-delta.jsonl', 1);
+  realIt('task-notification.jsonl', 1);
+  realIt('task-progress.jsonl', 1);
+  realIt('task-started-local-bash.jsonl', 1);
+  realIt('task-started.jsonl', 1);
+  realIt('thinking.jsonl', 1);
+  realIt('tool-result.jsonl', 1);
+  realIt('tool-use.jsonl', 1);
+  realIt('user-skill-body.jsonl', 1);
+  realIt('user-synthetic-slash.jsonl', 1);
+  realIt('user-text.jsonl', 1);
 });
 
 describe('ClaudeProtocol.parseLine (synthetic fixtures)', () => {
-  const entries = loadFixtureLines(SYNTHETIC_DIR);
-  for (const { file, lineNo, line } of entries) {
+  function syntheticIt(file: string, lineNo: number) {
+    const line = fixtureLines(SYNTHETIC_DIR, file)[lineNo - 1]!;
     it(`parses ${file}:${lineNo}`, () => {
       const result = protocol.parseLine(line);
       // Files with unknown event types produce 'unknown' status
@@ -55,6 +97,43 @@ describe('ClaudeProtocol.parseLine (synthetic fixtures)', () => {
       }
     });
   }
+
+  syntheticIt('auth-status.jsonl', 1);
+  syntheticIt('auth-url.jsonl', 1);
+  syntheticIt('bridge-state.jsonl', 1);
+  syntheticIt('citations-delta.jsonl', 1);
+  syntheticIt('compact-boundary.jsonl', 1);
+  syntheticIt('compaction-delta.jsonl', 1);
+  syntheticIt('control-channel-enable.jsonl', 1);
+  syntheticIt('control-channel-enable.jsonl', 2);
+  syntheticIt('control-claude-authenticate.jsonl', 1);
+  syntheticIt('control-claude-authenticate.jsonl', 2);
+  syntheticIt('control-claude-oauth-callback.jsonl', 1);
+  syntheticIt('control-claude-oauth-callback.jsonl', 2);
+  syntheticIt('control-claude-oauth-wait.jsonl', 1);
+  syntheticIt('control-claude-oauth-wait.jsonl', 2);
+  syntheticIt('control-reload-plugins.jsonl', 1);
+  syntheticIt('control-request-elicitation.jsonl', 1);
+  syntheticIt('control-request-open-diff.jsonl', 1);
+  syntheticIt('control-request-open-in-editor.jsonl', 1);
+  syntheticIt('control-request-show-notification.jsonl', 1);
+  syntheticIt('control-seed-read-state.jsonl', 1);
+  syntheticIt('control-seed-read-state.jsonl', 2);
+  syntheticIt('control-side-question.jsonl', 1);
+  syntheticIt('control-side-question.jsonl', 2);
+  syntheticIt('control-ultrareview-launch.jsonl', 1);
+  syntheticIt('experiment-gates.jsonl', 1);
+  syntheticIt('new-session-notification.jsonl', 1);
+  syntheticIt('notification.jsonl', 1);
+  syntheticIt('post-turn-summary.jsonl', 1);
+  syntheticIt('result-resume-not-found.jsonl', 1);
+  syntheticIt('session-state-changed.jsonl', 1);
+  syntheticIt('speech-to-text-message.jsonl', 1);
+  syntheticIt('stream-thinking-delta-legacy.jsonl', 1);
+  syntheticIt('streamlined-text.jsonl', 1);
+  syntheticIt('streamlined-tool-use-summary.jsonl', 1);
+  syntheticIt('system-mirror-error.jsonl', 1);
+  syntheticIt('unknown-event.jsonl', 1);
 });
 
 // ── Edge cases ──

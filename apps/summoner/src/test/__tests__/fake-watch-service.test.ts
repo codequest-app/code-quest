@@ -42,7 +42,7 @@ describe('FakeWatchService', () => {
     service.subscribe('/repo', thrower);
     service.subscribe('/repo', healthy);
     expect(() => service.simulate('/repo', { type: 'change', path: 'x' })).not.toThrow();
-    expect(healthy).toHaveBeenCalled();
+    expect(healthy).toHaveBeenCalledWith({ type: 'change', path: 'x' });
   });
 
   it('idempotent unsubscribe — second call is a no-op', () => {

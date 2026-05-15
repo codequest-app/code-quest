@@ -2,19 +2,13 @@
 
 import type { Ack } from '@code-quest/shared';
 import { segments as s } from '@code-quest/summoner/test';
-import { createFakeSummoner } from '../test/index.ts';
+import { setupSession } from '../test/index.ts';
 
 type PlanEmptyResp = Ack;
 
-async function setup(sessionId = 'cli-sess') {
-  const claude = createFakeSummoner().claude();
-  const channelId = await claude.initialize(s.init(sessionId));
-  return { claude, channelId };
-}
-
 describe('ChatHandler > plan', () => {
   it('plan:comment adds a comment and plan:comments retrieves it', async () => {
-    const { claude, channelId } = await setup();
+    const { claude, channelId } = await setupSession();
 
     const comment = {
       id: 'c1',
@@ -35,7 +29,7 @@ describe('ChatHandler > plan', () => {
   });
 
   it('plan:remove_comment removes a specific comment', async () => {
-    const { claude, channelId } = await setup();
+    const { claude, channelId } = await setupSession();
 
     await claude.send<PlanEmptyResp>('plan:comment', {
       channelId,
@@ -58,7 +52,7 @@ describe('ChatHandler > plan', () => {
   });
 
   it('plan:remove_comment returns error for unknown commentId', async () => {
-    const { claude, channelId } = await setup();
+    const { claude, channelId } = await setupSession();
 
     const result = await claude.send<PlanEmptyResp>('plan:remove_comment', {
       channelId,
@@ -69,7 +63,7 @@ describe('ChatHandler > plan', () => {
   });
 
   it('plan:close_preview clears all comments for session', async () => {
-    const { claude, channelId } = await setup();
+    const { claude, channelId } = await setupSession();
 
     await claude.send<PlanEmptyResp>('plan:comment', {
       channelId,
@@ -86,7 +80,7 @@ describe('ChatHandler > plan', () => {
   });
 
   it('chat:control_response serializes plan comments as userFeedback for ExitPlanMode', async () => {
-    const { claude, channelId } = await setup();
+    const { claude, channelId } = await setupSession();
 
     await claude.send('chat:send', { channelId, message: 'plan something' });
 

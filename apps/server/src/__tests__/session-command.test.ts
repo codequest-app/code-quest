@@ -3,21 +3,21 @@
 import type { Ack, SessionListResponse } from '@code-quest/shared';
 import { segments as s } from '@code-quest/summoner/test';
 import type { RawEventStore } from '../services/raw-event-store.ts';
-import { createFakeServer, createFakeSummoner, createTestContainer, TYPES } from '../test/index.ts';
+import {
+  createFakeServer,
+  createFakeSummoner,
+  createTestContainer,
+  setupSession,
+  TYPES,
+} from '../test/index.ts';
 
 type UpdateStateResp = Ack;
 type SessionListOk = Extract<SessionListResponse, { ok: true }>;
 
-async function setup(sessionId = 'cli-sess') {
-  const claude = createFakeSummoner().claude();
-  const channelId = await claude.initialize(s.init(sessionId));
-  return { claude, channelId };
-}
-
 describe('ChatHandler > session', () => {
   describe('session:close', () => {
     it('close_channel terminates session immediately', async () => {
-      const { claude, channelId } = await setup();
+      const { claude, channelId } = await setupSession();
 
       await claude.send('session:close', { channelId });
 
@@ -25,7 +25,7 @@ describe('ChatHandler > session', () => {
     });
 
     it('emits chat:exit on process close', async () => {
-      const { claude, channelId } = await setup();
+      const { claude, channelId } = await setupSession();
 
       await claude.send('chat:send', { channelId, message: 'done' });
       await claude.emitSegment(s.assistant('bye'));
@@ -39,7 +39,7 @@ describe('ChatHandler > session', () => {
     });
 
     it('kills a session', async () => {
-      const { claude, channelId } = await setup();
+      const { claude, channelId } = await setupSession();
 
       await claude.send('session:close', { channelId });
 
@@ -49,7 +49,7 @@ describe('ChatHandler > session', () => {
 
   describe('chat:cancel_request broadcast', () => {
     it('chat:cancel_request fires when permission is responded', async () => {
-      const { claude, channelId } = await setup();
+      const { claude, channelId } = await setupSession();
 
       await claude.send('chat:send', { channelId, message: 'read file' });
       await claude.emitSegment(
@@ -72,7 +72,7 @@ describe('ChatHandler > session', () => {
 
   describe('session:list isActive', () => {
     it('session:list returns isActive=true for sessions with live process', async () => {
-      const { claude, channelId } = await setup();
+      const { claude, channelId } = await setupSession();
 
       const result = (await claude.send<SessionListResponse>('session:list', {})) as SessionListOk;
 
@@ -86,7 +86,7 @@ describe('ChatHandler > session', () => {
 
 describe('session:update_state', () => {
   it('should broadcast state change to all sockets', async () => {
-    const { claude, channelId } = await setup();
+    const { claude, channelId } = await setupSession();
 
     const result = await claude.send<UpdateStateResp>('session:update_state', {
       channelId,
@@ -102,7 +102,7 @@ describe('session:update_state', () => {
   });
 
   it('should broadcast state and title together', async () => {
-    const { claude, channelId } = await setup();
+    const { claude, channelId } = await setupSession();
 
     const result = await claude.send<UpdateStateResp>('session:update_state', {
       channelId,
@@ -155,7 +155,7 @@ describe('session:delete', () => {
 
 describe('session_states_update enrichment', () => {
   it('should include system.init config fields in session_states_update after init', async () => {
-    const { claude, channelId } = await setup();
+    const { claude, channelId } = await setupSession();
 
     await claude.send('chat:send', { channelId, message: 'hello' });
     await claude.emitSegment(s.assistant('hi'));
@@ -181,7 +181,7 @@ describe('session_states_update enrichment', () => {
   });
 
   it('should clear config cache on session exit', async () => {
-    const { claude, channelId } = await setup();
+    const { claude, channelId } = await setupSession();
 
     await claude.send('chat:send', { channelId, message: 'hello' });
     await claude.emitSegment(s.result());

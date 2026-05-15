@@ -412,15 +412,54 @@ describe('NodeContent', () => {
   });
 
   // NOTE: action_result has no segment builder. Kept as direct render.
-  it.each([
-    { content: 'Approved: Read', expectedIcon: '✓', desc: 'approved' },
-    { content: 'Allowed Always: Read', expectedIcon: '✓✓', desc: 'allowed always' },
-    { content: 'Denied: Bash', expectedIcon: '✗', desc: 'denied' },
-    { content: 'Denied & Stopped: Write', expectedIcon: '⊘', desc: 'denied & stopped' },
-    { content: 'Cancelled: Bash', expectedIcon: '↩', desc: 'cancelled' },
-  ])('renders action_result with $desc styling', ({ content, expectedIcon }) => {
-    render(<NodeContent message={{ ...base, role: 'user', type: 'action_result', content }} />);
-    expect(screen.getByText(`${expectedIcon} ${content}`)).toBeInTheDocument();
+  it('renders action_result with approved styling', () => {
+    render(
+      <NodeContent
+        message={{ ...base, role: 'user', type: 'action_result', content: 'Approved: Read' }}
+      />,
+    );
+    expect(screen.getByText('✓ Approved: Read')).toBeInTheDocument();
+  });
+
+  it('renders action_result with allowed always styling', () => {
+    render(
+      <NodeContent
+        message={{ ...base, role: 'user', type: 'action_result', content: 'Allowed Always: Read' }}
+      />,
+    );
+    expect(screen.getByText('✓✓ Allowed Always: Read')).toBeInTheDocument();
+  });
+
+  it('renders action_result with denied styling', () => {
+    render(
+      <NodeContent
+        message={{ ...base, role: 'user', type: 'action_result', content: 'Denied: Bash' }}
+      />,
+    );
+    expect(screen.getByText('✗ Denied: Bash')).toBeInTheDocument();
+  });
+
+  it('renders action_result with denied and stopped styling', () => {
+    render(
+      <NodeContent
+        message={{
+          ...base,
+          role: 'user',
+          type: 'action_result',
+          content: 'Denied & Stopped: Write',
+        }}
+      />,
+    );
+    expect(screen.getByText('⊘ Denied & Stopped: Write')).toBeInTheDocument();
+  });
+
+  it('renders action_result with cancelled styling', () => {
+    render(
+      <NodeContent
+        message={{ ...base, role: 'user', type: 'action_result', content: 'Cancelled: Bash' }}
+      />,
+    );
+    expect(screen.getByText('↩ Cancelled: Bash')).toBeInTheDocument();
   });
 
   // NOTE: s.result() builder doesn't support inputTokens/outputTokens/numTurns.

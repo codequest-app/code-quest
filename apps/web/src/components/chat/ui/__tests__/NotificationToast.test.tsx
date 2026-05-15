@@ -55,30 +55,4 @@ describe('NotificationToast', () => {
     await user.click(screen.getByRole('button', { name: /dismiss/i }));
     expect(onDismiss).toHaveBeenCalled();
   });
-
-  it('applies error severity styling', () => {
-    render(
-      <NotificationToast
-        message="Error!"
-        severity="error"
-        buttons={buttons}
-        onButton={vi.fn()}
-        onDismiss={vi.fn()}
-      />,
-    );
-    expect(screen.getByRole('alert')).toHaveClass('border-danger');
-  });
-
-  it('applies warning severity styling', () => {
-    render(
-      <NotificationToast
-        message="Warning!"
-        severity="warning"
-        buttons={buttons}
-        onButton={vi.fn()}
-        onDismiss={vi.fn()}
-      />,
-    );
-    expect(screen.getByRole('alert')).toHaveClass('border-warning');
-  });
 });

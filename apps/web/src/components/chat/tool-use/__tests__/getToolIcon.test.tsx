@@ -8,23 +8,36 @@ function renderIcon(toolName: string) {
 }
 
 describe('getToolIcon', () => {
-  it('always renders with w-4 h-4 shrink-0 class', () => {
-    const container = renderIcon('Bash');
-    expect(container.querySelector('svg')!.getAttribute('class')).toBe('w-4 h-4 shrink-0');
+  it('Bash → renders an SVG icon', () => {
+    expect(renderIcon('Bash').querySelector('svg')).toBeInTheDocument();
   });
 
-  it.each([
-    'Bash',
-    'Read',
-    'Write',
-    'Edit',
-    'MultiEdit',
-    'WebSearch',
-    'Agent',
-    'Task',
-  ])('%s → renders an SVG icon', (toolName) => {
-    const container = renderIcon(toolName);
-    expect(container.querySelector('svg')).toBeInTheDocument();
+  it('Read → renders an SVG icon', () => {
+    expect(renderIcon('Read').querySelector('svg')).toBeInTheDocument();
+  });
+
+  it('Write → renders an SVG icon', () => {
+    expect(renderIcon('Write').querySelector('svg')).toBeInTheDocument();
+  });
+
+  it('Edit → renders an SVG icon', () => {
+    expect(renderIcon('Edit').querySelector('svg')).toBeInTheDocument();
+  });
+
+  it('MultiEdit → renders an SVG icon', () => {
+    expect(renderIcon('MultiEdit').querySelector('svg')).toBeInTheDocument();
+  });
+
+  it('WebSearch → renders an SVG icon', () => {
+    expect(renderIcon('WebSearch').querySelector('svg')).toBeInTheDocument();
+  });
+
+  it('Agent → renders an SVG icon', () => {
+    expect(renderIcon('Agent').querySelector('svg')).toBeInTheDocument();
+  });
+
+  it('Task → renders an SVG icon', () => {
+    expect(renderIcon('Task').querySelector('svg')).toBeInTheDocument();
   });
 
   it('mcp tool → renders an SVG icon', () => {

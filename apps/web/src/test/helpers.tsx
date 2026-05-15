@@ -1,7 +1,38 @@
+import { createFakeServer } from '@code-quest/server/test';
 import { type FakeClaude, segments as s } from '@code-quest/summoner/test';
 import { act, screen } from '@testing-library/react';
 import type userEvent from '@testing-library/user-event';
 import { useChannelMessages } from '../contexts/channel/index.ts';
+import { createFakeSummoner } from './fake-summoner.ts';
+
+export type { FakeSummoner } from './fake-summoner.ts';
+
+/** Create a shared FakeServer with two connected summoners and an initialized session. */
+export async function setupClientWindows(
+  serverOpts?: Parameters<typeof createFakeServer>[0],
+): Promise<{
+  server: ReturnType<typeof createFakeServer>;
+  windowA: ReturnType<typeof createFakeSummoner>;
+  windowB: ReturnType<typeof createFakeSummoner>;
+  channelId: string;
+}> {
+  const server = createFakeServer(serverOpts);
+  const windowA = createFakeSummoner(server);
+  const windowB = createFakeSummoner(server);
+  const channelId = await windowA.claude().initialize(s.init('cli-sess'));
+  return { server, windowA, windowB, channelId };
+}
+
+/** Send session:join and flush microtasks. */
+export async function joinChannel(
+  summoner: ReturnType<typeof createFakeSummoner>,
+  channelId: string,
+): Promise<void> {
+  await act(async () => {
+    await summoner.send('session:join', { channelId });
+    await new Promise<void>((r) => queueMicrotask(r));
+  });
+}
 
 /** Placeholder regex for the compose textarea — use this instead of hardcoded strings. */
 export const COMPOSE_PLACEHOLDER: RegExp = /Esc to focus/i;

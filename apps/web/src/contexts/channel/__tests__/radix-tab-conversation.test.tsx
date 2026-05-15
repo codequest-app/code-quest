@@ -1,31 +1,20 @@
-import { createFakeServer, createTestContainer } from '@code-quest/server/test';
+import { createTestContainer } from '@code-quest/server/test';
 import { segments as s } from '@code-quest/summoner/test';
 import { act, screen, waitFor } from '@testing-library/react';
 import { describe, expect, it } from 'vitest';
 import { MessageList } from '@/components/chat/conversation/MessageList';
 import { createFakeSummoner } from '@/test/fake-summoner';
+import { joinChannel, setupClientWindows } from '@/test/helpers';
 import { renderWithChannel } from '@/test/render-with-channel';
 
 type Summoner = ReturnType<typeof createFakeSummoner>;
 
-async function joinChannel(summoner: Summoner, channelId: string) {
-  await act(async () => {
-    await summoner.send('session:join', { channelId });
-    await new Promise<void>((r) => queueMicrotask(r));
-  });
-}
-
-async function renderAndJoinB(summoner: Summoner, channelId: string) {
+async function renderAndJoinB(
+  summoner: ReturnType<typeof createFakeSummoner>,
+  channelId: string,
+): Promise<void> {
   await renderWithChannel(<MessageList />, { summoner, channelId, skipInit: true });
   await joinChannel(summoner, channelId);
-}
-
-async function setupClientWindows(serverOpts?: Parameters<typeof createFakeServer>[0]) {
-  const server = createFakeServer(serverOpts);
-  const windowA = createFakeSummoner(server);
-  const windowB = createFakeSummoner(server);
-  const channelId = await windowA.claude().initialize(s.init('cli-sess'));
-  return { server, windowA, windowB, channelId };
 }
 
 async function setupLive() {

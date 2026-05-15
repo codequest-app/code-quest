@@ -4,6 +4,7 @@ import userEvent from '@testing-library/user-event';
 import { createRef } from 'react';
 import { describe, expect, it } from 'vitest';
 import { useCommandPalette } from '@/contexts/CommandPaletteContext';
+import { useChannelMessages } from '@/contexts/channel/ChannelMessagesContext';
 import { type GroupId, useMessageVisibility } from '@/contexts/channel/MessageVisibilityContext';
 import { createFakeSummoner } from '@/test/fake-summoner';
 import { emitAssistantTurn, SendButton } from '@/test/helpers';
@@ -98,9 +99,6 @@ describe('MessageList', () => {
   });
 
   it('renders unknown type messages (registers type so message passes visibility filter)', async () => {
-    const { useChannelMessages } = await import(
-      '../../../../contexts/channel/ChannelMessagesContext'
-    );
     function AddUnknown() {
       const { addSystemMessage } = useChannelMessages();
       return (
@@ -112,12 +110,11 @@ describe('MessageList', () => {
         </button>
       );
     }
-    const summoner = (await import('../../../../test/fake-summoner')).createFakeSummoner();
+    const summoner = createFakeSummoner();
     const claude = summoner.claude();
     const channelId = crypto.randomUUID();
-    const { renderWithChannel: rwc } = await import('../../../../test/render-with-channel');
     await claude.initialize({ launch: { channelId } }, s.init('cli-session'));
-    await rwc(
+    await renderWithChannel(
       <>
         <AddUnknown />
         <MessageList />

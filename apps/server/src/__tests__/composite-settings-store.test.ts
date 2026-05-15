@@ -35,7 +35,7 @@ describe('CompositeSettingsStore', () => {
     const value = await composite.get('claude', 'model');
 
     expect(value).toBe('from-A');
-    expect(a.get).toHaveBeenCalled();
+    expect(a.get).toHaveBeenCalledWith('claude', 'model');
     expect(b.get).not.toHaveBeenCalled();
   });
 
@@ -61,8 +61,8 @@ describe('CompositeSettingsStore', () => {
 
     await expect(composite.set('claude', 'model', 'x')).resolves.toBeUndefined();
 
-    expect(failing.set).toHaveBeenCalled();
-    expect(healthy.set).toHaveBeenCalled();
+    expect(failing.set).toHaveBeenCalledWith('claude', 'model', 'x');
+    expect(healthy.set).toHaveBeenCalledWith('claude', 'model', 'x');
   });
 
   it('throws AggregateError when all stores fail', async () => {

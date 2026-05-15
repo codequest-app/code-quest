@@ -1,5 +1,6 @@
 export type {
   CreateWorktreeOptions,
+  FilesystemService,
   GitService,
   InitializeOptions,
   ProcessHandle,
@@ -16,7 +17,6 @@ export { LocalDiffFileService } from './diff-file/local.ts';
 export type { DiffFileService } from './diff-file/types.ts';
 export { LocalFilesystemService } from './filesystem/local.ts';
 export { LocalRootGuard } from './filesystem/local-root-guard.ts';
-export type { FilesystemService } from './filesystem/types.ts';
 export { LocalWatchService } from './fs-watch/local.ts';
 export type { Unsubscribe, WatchCallback, WatchEvent, WatchService } from './fs-watch/types.ts';
 export { AlreadyRepoError, NotARepoError } from './git/errors.ts';

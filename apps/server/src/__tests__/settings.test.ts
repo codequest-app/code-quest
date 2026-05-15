@@ -6,7 +6,12 @@ type SettingsApplyResp = Ack;
 type SettingsStateResp = RpcResult<{ state: Record<string, unknown> }>;
 type SettingsStateOk = Extract<SettingsStateResp, { ok: true }>;
 
-import { createFakeServer, createFakeSummoner, createTestContainer } from '../test/index.ts';
+import {
+  createFakeServer,
+  createFakeSummoner,
+  createTestContainer,
+  getChannelManager,
+} from '../test/index.ts';
 import { TYPES } from '../types.ts';
 
 async function setup(sessionId = 'cli-sess') {
@@ -51,10 +56,7 @@ describe('ChatHandler > settings', () => {
 
     it('updates channel.sessionConfig.permissionMode after success', async () => {
       const { container, claude, channelId } = await setup();
-      const { ChannelManager } = await import('../socket/channel-manager.ts');
-      const channelManager = container.get(TYPES.ChannelManager) as InstanceType<
-        typeof ChannelManager
-      >;
+      const channelManager = getChannelManager(container);
 
       await claude.send('settings:set_permission_mode', { channelId, mode: 'bypassPermissions' });
 
@@ -107,10 +109,7 @@ describe('ChatHandler > settings', () => {
 
       await claude.send('settings:set_model', { channelId, model: 'claude-opus-4-6' });
 
-      const { ChannelManager } = await import('../socket/channel-manager.ts');
-      const channelManager = container.get(TYPES.ChannelManager) as InstanceType<
-        typeof ChannelManager
-      >;
+      const channelManager = getChannelManager(container);
       const channel = channelManager.get(channelId);
       expect(channel?.sessionConfig.model).toBe('claude-opus-4-6');
     });
@@ -370,10 +369,7 @@ describe('ChatHandler > settings', () => {
 
       const channelId = await claude.initialize({ launch: { cwd: '/some/path' } });
 
-      const { ChannelManager } = await import('../socket/channel-manager.ts');
-      const channelManager = container.get(TYPES.ChannelManager) as InstanceType<
-        typeof ChannelManager
-      >;
+      const channelManager = getChannelManager(container);
       const channel = channelManager.get(channelId);
       expect(channel?.cwd).toBe('/some/path');
     });
@@ -385,10 +381,7 @@ describe('ChatHandler > settings', () => {
 
       const channelId = await claude.initialize({ launch: { cwd: '../' } });
 
-      const { ChannelManager } = await import('../socket/channel-manager.ts');
-      const channelManager = container.get(TYPES.ChannelManager) as InstanceType<
-        typeof ChannelManager
-      >;
+      const channelManager = getChannelManager(container);
       const channel = channelManager.get(channelId);
       expect(channel?.cwd).not.toBe('../');
       expect(channel?.cwd?.startsWith('/')).toBe(true);
@@ -719,10 +712,7 @@ describe('ChatHandler > settings', () => {
         s.controlRequest('sm-1', 'set_model', undefined, { model: 'haiku' }),
       );
 
-      const { ChannelManager } = await import('../socket/channel-manager.ts');
-      const channelManager = container.get(TYPES.ChannelManager) as InstanceType<
-        typeof ChannelManager
-      >;
+      const channelManager = getChannelManager(container);
       const channel = channelManager.get(channelId);
       expect(channel?.sessionConfig.model).toBe('haiku');
       expect(
@@ -737,10 +727,7 @@ describe('ChatHandler > settings', () => {
         s.controlRequest('sp-1', 'set_permission_mode', undefined, { mode: 'plan' }),
       );
 
-      const { ChannelManager } = await import('../socket/channel-manager.ts');
-      const channelManager = container.get(TYPES.ChannelManager) as InstanceType<
-        typeof ChannelManager
-      >;
+      const channelManager = getChannelManager(container);
       const channel = channelManager.get(channelId);
       expect(channel?.sessionConfig.permissionMode).toBe('plan');
       expect(

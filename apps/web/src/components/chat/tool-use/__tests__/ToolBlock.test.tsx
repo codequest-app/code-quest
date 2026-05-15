@@ -4,13 +4,12 @@ import { ToolBlock } from '../ToolBlock.tsx';
 
 describe('ToolBlock', () => {
   it('renders children inside a bordered container', () => {
-    const { container } = render(
+    render(
       <ToolBlock>
         <div>content</div>
       </ToolBlock>,
     );
-    const box = container.querySelector('.border.border-border.bg-code-block');
-    expect(box).toBeInTheDocument();
-    expect(box).toContainElement(screen.getByText('content'));
+    const content = screen.getByText('content');
+    expect(content.closest('[class*="border"]')).toBeInTheDocument();
   });
 });

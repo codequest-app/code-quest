@@ -233,7 +233,6 @@ describe('DrizzleRawEventStore', () => {
     it('does not include delta table events', async () => {
       const db2 = createDatabase(':memory:');
       migrate(db2, { migrationsFolder: sqliteMigrationsFolder });
-      const { rawDeltas } = await import('@code-quest/db-schema/sqlite');
       const unionStore = new DrizzleRawEventStore(db2, rawEvents, rawDeltas);
       const deltaStore = new DrizzleRawDeltaStore(db2, rawDeltas);
       const now = Date.now();

@@ -8,12 +8,36 @@ function item(id: string, section = 'test'): MenuItem {
 }
 
 describe('isNavKey', () => {
-  it.each(['ArrowDown', 'ArrowUp', 'Enter', 'Tab'])('returns true for %s', (key) => {
-    expect(isNavKey(key)).toBe(true);
+  it('returns true for ArrowDown', () => {
+    expect(isNavKey('ArrowDown')).toBe(true);
   });
 
-  it.each(['Escape', 'a', ' ', ''])('returns false for %s', (key) => {
-    expect(isNavKey(key)).toBe(false);
+  it('returns true for ArrowUp', () => {
+    expect(isNavKey('ArrowUp')).toBe(true);
+  });
+
+  it('returns true for Enter', () => {
+    expect(isNavKey('Enter')).toBe(true);
+  });
+
+  it('returns true for Tab', () => {
+    expect(isNavKey('Tab')).toBe(true);
+  });
+
+  it('returns false for Escape', () => {
+    expect(isNavKey('Escape')).toBe(false);
+  });
+
+  it('returns false for a letter key', () => {
+    expect(isNavKey('a')).toBe(false);
+  });
+
+  it('returns false for space', () => {
+    expect(isNavKey(' ')).toBe(false);
+  });
+
+  it('returns false for empty string', () => {
+    expect(isNavKey('')).toBe(false);
   });
 });
 

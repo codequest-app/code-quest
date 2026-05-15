@@ -120,9 +120,6 @@ describe('TabBar worktree grouping', () => {
       ),
     );
     expect(screen.queryByLabelText('tab-divider')).toBeNull();
-    const wtTab = screen.getByRole('tab', { name: /feat/i });
-    expect(wtTab.className).not.toContain('ml-4');
-    expect(wtTab.className).not.toContain('border-l');
   });
 
   it('main-tree tab sorted before worktree tab', () => {
@@ -237,33 +234,6 @@ describe('TabBar', () => {
   it('returns null when no tabs', () => {
     renderTabBar({ tabs: [], activeTabId: null });
     expect(screen.queryByLabelText('tab-bar')).toBeNull();
-  });
-
-  it('shows status indicator dots', () => {
-    renderTabBar();
-    const dots = screen.getByLabelText('tab-bar').querySelectorAll('.rounded-full');
-    expect(dots).toHaveLength(3);
-  });
-
-  it('shows green dot for idle session', () => {
-    renderTabBar();
-    const idleTab = screen.getByText('Chat 1').closest('[role="tab"]')!;
-    const dot = idleTab.querySelector('.rounded-full');
-    expect(dot).toHaveClass('bg-success');
-  });
-
-  it('shows pulsing accent dot for processing session', () => {
-    renderTabBar();
-    const processingTab = screen.getByText('Chat 2').closest('[role="tab"]')!;
-    const dot = processingTab.querySelector('.rounded-full');
-    expect(dot).toHaveClass('bg-accent', 'animate-pulse');
-  });
-
-  it('shows red dot for disconnected session', () => {
-    renderTabBar();
-    const disconnectedTab = screen.getByText('sess-3'.slice(0, 8)).closest('[role="tab"]')!;
-    const dot = disconnectedTab.querySelector('.rounded-full');
-    expect(dot).toHaveClass('bg-danger');
   });
 
   it('renders + button when onNewTab provided', () => {

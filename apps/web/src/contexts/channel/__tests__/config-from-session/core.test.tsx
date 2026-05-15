@@ -1,8 +1,9 @@
+import { createFakeServer, createTestContainer, TYPES } from '@code-quest/server/test';
 import { segments as s } from '@code-quest/summoner/test';
 import { act, screen } from '@testing-library/react';
 import { describe, expect, it } from 'vitest';
 import { useChannelConfig } from '@/contexts/channel/index';
-import { createFakeSummoner } from '@/test/fake-summoner';
+import { createFakeSummoner, FakeSummoner } from '@/test/fake-summoner';
 import { emitAssistantTurn, sendUserMessage } from '@/test/helpers';
 import { renderWithChannel } from '@/test/render-with-channel';
 import { renderWithWorkspace } from '@/test/render-with-workspace';
@@ -184,9 +185,6 @@ describe('ChannelConfigContext', () => {
   });
 
   it('new channel shows DB default model and permissionMode from initialConfig', async () => {
-    const { createTestContainer, createFakeServer, TYPES } = await import(
-      '@code-quest/server/test'
-    );
     const container = createTestContainer();
     const settingsStore = container.get<{
       set(p: string, k: string, v: unknown): Promise<void>;
@@ -195,7 +193,7 @@ describe('ChannelConfigContext', () => {
     await settingsStore.set('claude', 'permissionMode', 'plan');
 
     const server = createFakeServer(container);
-    const summoner = new (await import('@/test/fake-summoner')).FakeSummoner(server);
+    const summoner = new FakeSummoner(server);
     summoner.claude().prepareInit(s.init('sess-defaults', { permissionMode: 'plan' }));
 
     const { addProject } = await renderWithWorkspace({ summoner });

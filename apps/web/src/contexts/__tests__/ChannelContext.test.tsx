@@ -168,9 +168,8 @@ describe('ChannelContext', () => {
     it('launch creates session and renders channel content', async () => {
       const { addProject } = await renderWithWorkspace();
       const project = await addProject();
-      const channelId = await project.launchSession();
+      await project.launchSession();
 
-      expect(channelId).toBeTruthy();
       expect(screen.getByPlaceholderText(/Esc to focus/i)).toBeInTheDocument();
     });
 

@@ -13,7 +13,13 @@ import { type FakeClaude, segments as s } from '@code-quest/summoner/test';
 import { logger } from '../logger.ts';
 import type { RawEventService } from '../services/raw-event-service.ts';
 import type { SessionStore } from '../services/session-store.ts';
-import { createFakeServer, createFakeSummoner, createTestContainer } from '../test/index.ts';
+import {
+  createFakeServer,
+  createFakeSummoner,
+  createTestContainer,
+  getChannelManager,
+  setupSession,
+} from '../test/index.ts';
 import { TYPES } from '../types.ts';
 
 async function upsertSession(
@@ -34,15 +40,6 @@ async function upsertSession(
   });
 }
 
-async function setup(sessionId = 'cli-sess') {
-  const container = createTestContainer();
-  const server = createFakeServer(container);
-  const summoner = createFakeSummoner(server);
-  const claude = summoner.claude();
-  const channelId = await claude.initialize(s.init(sessionId));
-  return { container, claude, channelId };
-}
-
 function historyEventNames(claude: FakeClaude): string[] {
   const batches = claude.receivedEvents('session:history') as Array<{
     events: Array<{ name: string }>;
@@ -54,11 +51,10 @@ function historyEventNames(claude: FakeClaude): string[] {
 describe('ChatHandler > session', () => {
   describe('session creation', () => {
     it('creates a session and emits chat:created', async () => {
-      const { container, channelId } = await setup();
+      const { container, channelId } = await setupSession();
 
       expect(channelId).toBeDefined();
-      const { ChannelManager } = await import('../socket/channel-manager.ts');
-      const mgr = container.get(TYPES.ChannelManager) as InstanceType<typeof ChannelManager>;
+      const mgr = getChannelManager(container);
       expect(mgr.get(channelId)).toBeDefined();
     });
 
@@ -101,14 +97,13 @@ describe('ChatHandler > session', () => {
       });
       const channelId = result.data.channelId;
 
-      const { ChannelManager } = await import('../socket/channel-manager.ts');
-      const mgr = container.get(TYPES.ChannelManager) as InstanceType<typeof ChannelManager>;
+      const mgr = getChannelManager(container);
       const channel = mgr.get(channelId ?? 'ch-wt');
       expect(channel?.worktree).toEqual({ name: 'my-feature', path: worktreeCwd });
     });
 
     it('session record is written to DB with session_id set (from system/init, not started)', async () => {
-      const { container, channelId } = await setup();
+      const { container, channelId } = await setupSession();
 
       const sessionStore = container.get<SessionStore>(TYPES.SessionStore);
       const record = await sessionStore.getByChannelId(channelId);
@@ -198,8 +193,7 @@ describe('ChatHandler > session', () => {
       const channelId = await claude.initialize();
 
       expect(channelId).toBeDefined();
-      const { ChannelManager } = await import('../socket/channel-manager.ts');
-      const mgr = container.get(TYPES.ChannelManager) as InstanceType<typeof ChannelManager>;
+      const mgr = getChannelManager(container);
       expect(mgr.get(channelId)).toBeDefined();
     });
 
@@ -320,7 +314,7 @@ describe('ChatHandler > session', () => {
     });
 
     it('joins an existing session and receives state + cwd', async () => {
-      const { claude, channelId } = await setup();
+      const { claude, channelId } = await setupSession();
 
       const result = await claude.send<JoinOk>('session:join', { channelId });
 
@@ -330,7 +324,7 @@ describe('ChatHandler > session', () => {
     });
 
     it('join returns busy state when session is streaming', async () => {
-      const { claude, channelId } = await setup();
+      const { claude, channelId } = await setupSession();
 
       // Send a message to make session busy (no result yet = still streaming)
       await claude.send('chat:send', { channelId, message: 'hello' });
@@ -343,7 +337,7 @@ describe('ChatHandler > session', () => {
     });
 
     it('returns error for non-existent session', async () => {
-      const { claude } = await setup();
+      const { claude } = await setupSession();
 
       const result = await claude.send<SessionJoinResponse>('session:join', {
         channelId: 'nonexistent',
@@ -354,7 +348,7 @@ describe('ChatHandler > session', () => {
     });
 
     it('resumes CLI with stored session_id when no live process exists', async () => {
-      const { container, claude, channelId } = await setup();
+      const { container, claude, channelId } = await setupSession();
 
       // Verify session was persisted with sessionId
       const sessionStore = container.get<SessionStore>(TYPES.SessionStore);
@@ -375,7 +369,7 @@ describe('ChatHandler > session', () => {
     });
 
     it('falls back to error when no live process and no DB record', async () => {
-      const { claude } = await setup();
+      const { claude } = await setupSession();
 
       const unknownChannelId = crypto.randomUUID();
       const result = await claude.send<SessionJoinResponse>('session:join', {
@@ -387,7 +381,7 @@ describe('ChatHandler > session', () => {
     });
 
     it('emits session:history event before callback after join', async () => {
-      const { claude, channelId } = await setup();
+      const { claude, channelId } = await setupSession();
 
       // Send message + receive reply (stored in raw_events)
       await claude.send('chat:send', { channelId, message: 'hi' });
@@ -403,7 +397,7 @@ describe('ChatHandler > session', () => {
     });
 
     it('session:history contains user message after join', async () => {
-      const { claude, channelId } = await setup();
+      const { claude, channelId } = await setupSession();
 
       await claude.send('chat:send', { channelId, message: 'hi' });
       await claude.emitSegment(s.assistant('hello world'));
@@ -424,7 +418,7 @@ describe('ChatHandler > session', () => {
     });
 
     it('session:history preserves user→assistant order after join', async () => {
-      const { claude, channelId } = await setup();
+      const { claude, channelId } = await setupSession();
 
       await claude.send('chat:send', { channelId, message: 'today?' });
       await claude.emitSegment(s.assistant('Tuesday'));
@@ -441,7 +435,7 @@ describe('ChatHandler > session', () => {
     });
 
     it('does not duplicate user message in history when CLI echoes it back', async () => {
-      const { container, claude, channelId } = await setup();
+      const { container, claude, channelId } = await setupSession();
 
       await claude.send('chat:send', { channelId, message: 'hello' });
 
@@ -459,8 +453,7 @@ describe('ChatHandler > session', () => {
 
       // Verify raw_event_store has both stdin and stdout records
       const rawStore = container.get<RawEventService>(TYPES.RawEventService);
-      const { ChannelManager } = await import('../socket/channel-manager.ts');
-      const mgr = container.get(TYPES.ChannelManager) as InstanceType<typeof ChannelManager>;
+      const mgr = getChannelManager(container);
       const channel = mgr.get(channelId)!;
       const rawEvents = await rawStore.getBySession(channel.sessionId!);
       const userRawEntries = rawEvents.filter((e) => {
@@ -494,7 +487,7 @@ describe('ChatHandler > session', () => {
     });
 
     it('session:history contains only session:init when session has no user messages', async () => {
-      const { claude, channelId } = await setup();
+      const { claude, channelId } = await setupSession();
       // No sendMessage — only session_init in raw_events
 
       const result = await claude.send<JoinOk>('session:join', { channelId });
@@ -508,7 +501,7 @@ describe('ChatHandler > session', () => {
     });
 
     it('session:history excludes transient stream events', async () => {
-      const { claude, channelId } = await setup();
+      const { claude, channelId } = await setupSession();
 
       await claude.send('chat:send', { channelId, message: 'hi' });
       await claude.emitSegment(s.messageStart());
@@ -565,7 +558,7 @@ describe('ChatHandler > session', () => {
 
   describe('session persist timing', () => {
     it('session record has sessionId immediately after launch', async () => {
-      const { container, channelId } = await setup();
+      const { container, channelId } = await setupSession();
       const sessionStore = container.get<SessionStore>(TYPES.SessionStore);
       await vi.waitFor(async () => {
         const record = await sessionStore.getByChannelId(channelId);
@@ -602,7 +595,7 @@ describe('ChatHandler > session', () => {
     });
 
     it('persist happens when session:init arrives with sessionId', async () => {
-      const { container, channelId } = await setup();
+      const { container, channelId } = await setupSession();
       const sessionStore = container.get<SessionStore>(TYPES.SessionStore);
 
       // session:init already arrived during setup() — persist should have happened
@@ -643,6 +636,10 @@ describe('ChatHandler > session', () => {
 
   describe('session:launch error logging', () => {
     it('logs error when session:launch fails', async () => {
+      // NOTE: This test uses vi.spyOn(logger) because the error is swallowed internally
+      // (session:launch catches and logs, not returning an error response to the client).
+      // There is no observable socket event or response payload to assert on instead —
+      // the only observable output is the logger call. Kept as-is intentionally.
       const claude = createFakeSummoner().claude();
       const errorSpy = vi.spyOn(logger, 'error').mockImplementation(() => logger);
 
@@ -659,7 +656,7 @@ describe('ChatHandler > session', () => {
 
   describe('session persistence', () => {
     it('session persists after socket disconnect (no grace kill)', async () => {
-      const { claude } = await setup();
+      const { claude } = await setupSession();
 
       claude.disconnect();
       await new Promise<void>((r) => queueMicrotask(r));
@@ -669,7 +666,7 @@ describe('ChatHandler > session', () => {
     });
 
     it('raw events are persisted to DB after session is created (no FK error)', async () => {
-      const { container } = await setup();
+      const { container } = await setupSession();
 
       const rawEventService = container.get<RawEventService>(TYPES.RawEventService);
       const events = await rawEventService.getBySession('cli-sess');
@@ -677,7 +674,7 @@ describe('ChatHandler > session', () => {
     });
 
     it('records each stdin message exactly once in raw event store', async () => {
-      const { container, claude, channelId } = await setup();
+      const { container, claude, channelId } = await setupSession();
 
       // Verify runner has exactly 1 stdin listener (no double wireRawPersistence)
       const mgr = container.get<{
@@ -699,7 +696,7 @@ describe('ChatHandler > session', () => {
 
   describe('multi-socket', () => {
     it('session persists after socket disconnect (no kill)', async () => {
-      const { claude } = await setup();
+      const { claude } = await setupSession();
 
       claude.disconnect();
       await new Promise<void>((r) => queueMicrotask(r));
@@ -708,7 +705,7 @@ describe('ChatHandler > session', () => {
     });
 
     it('second client joins and receives user message via session:history', async () => {
-      const { claude, channelId } = await setup();
+      const { claude, channelId } = await setupSession();
 
       await claude.send('chat:send', { channelId, message: 'first msg' });
       await claude.emitSegment(s.assistant('reply'));
@@ -932,8 +929,7 @@ describe('ChatHandler > session', () => {
       });
 
       expect(channelId).toBeDefined();
-      const { ChannelManager } = await import('../socket/channel-manager.ts');
-      const mgr = container.get(TYPES.ChannelManager) as InstanceType<typeof ChannelManager>;
+      const mgr = getChannelManager(container);
       expect(mgr.get(channelId)).toBeDefined();
     });
   });
@@ -1004,8 +1000,7 @@ describe('ChatHandler > session', () => {
       const clientId = 'direct-lookup-uuid';
       await claude.initialize(s.init('cli-sess'), { launch: { channelId: clientId } });
 
-      const { ChannelManager } = await import('../socket/channel-manager.ts');
-      const mgr = container.get(TYPES.ChannelManager) as InstanceType<typeof ChannelManager>;
+      const mgr = getChannelManager(container);
       expect(mgr.get(clientId)).toBeDefined();
     });
   });
@@ -1043,8 +1038,7 @@ describe('ChatHandler > session', () => {
       const channelId = await claude.initialize(s.init('cli-sess'));
 
       expect(channelId).toBeDefined();
-      const { ChannelManager } = await import('../socket/channel-manager.ts');
-      const mgr = container.get(TYPES.ChannelManager) as InstanceType<typeof ChannelManager>;
+      const mgr = getChannelManager(container);
       expect(mgr.get(channelId)).toBeDefined();
     });
 

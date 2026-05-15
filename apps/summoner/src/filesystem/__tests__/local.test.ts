@@ -1,11 +1,11 @@
 import { join } from 'node:path';
+import type { DirectoryEntry } from '@code-quest/shared';
 import { PathOutsideRootsError } from '@code-quest/shared';
 import { vol } from 'memfs';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { FakeWatchService } from '../../test/fake-watch-service.ts';
 import { LocalFilesystemService } from '../local.ts';
 import { LocalRootGuard } from '../local-root-guard.ts';
-import type { DirectoryEntry } from '../types.ts';
 
 vi.mock('node:fs', async () => (await import('memfs')).fs);
 vi.mock('node:fs/promises', async () => (await import('memfs')).fs.promises);
@@ -136,9 +136,13 @@ describe('LocalFilesystemService', () => {
     });
 
     describe('cache invalidation via WatchService', () => {
+      function makeService(watch?: FakeWatchService) {
+        return new LocalFilesystemService([ROOT], new LocalRootGuard([ROOT]), watch, memfs);
+      }
+
       it('second call without watcher event reuses cached file list', async () => {
         const watch = new FakeWatchService();
-        const cached = new LocalFilesystemService([ROOT], new LocalRootGuard([ROOT]), watch, memfs);
+        const cached = makeService(watch);
         const a = await cached.listFiles(ROOT, '');
         vol.writeFileSync(join(ROOT, 'after-cache.ts'), '');
         const b = await cached.listFiles(ROOT, '');
@@ -148,7 +152,7 @@ describe('LocalFilesystemService', () => {
 
       it('watcher event invalidates cache so next call rebuilds', async () => {
         const watch = new FakeWatchService();
-        const cached = new LocalFilesystemService([ROOT], new LocalRootGuard([ROOT]), watch, memfs);
+        const cached = makeService(watch);
         await cached.listFiles(ROOT, '');
         vol.writeFileSync(join(ROOT, 'after-invalidate.ts'), '');
         watch.simulate(ROOT, { type: 'add', path: 'after-invalidate.ts' });
@@ -164,18 +168,13 @@ describe('LocalFilesystemService', () => {
           subscribeCount++;
           return realSubscribe(cwd, cb);
         };
-        const cached = new LocalFilesystemService([ROOT], new LocalRootGuard([ROOT]), watch, memfs);
+        const cached = makeService(watch);
         await Promise.all([cached.listFiles(ROOT, ''), cached.listFiles(ROOT, '')]);
         expect(subscribeCount).toBe(1);
       });
 
       it('without WatchService injection, every call walks fresh (back-compat)', async () => {
-        const noWatch = new LocalFilesystemService(
-          [ROOT],
-          new LocalRootGuard([ROOT]),
-          undefined,
-          memfs,
-        );
+        const noWatch = makeService();
         await noWatch.listFiles(ROOT, '');
         vol.writeFileSync(join(ROOT, 'no-watch.ts'), '');
         const b = await noWatch.listFiles(ROOT, '');

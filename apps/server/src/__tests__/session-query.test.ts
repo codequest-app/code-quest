@@ -5,22 +5,18 @@ type SessionListOk = Extract<SessionListResponse, { ok: true }>;
 type GetSessionOk = Extract<GetSessionResponse, { ok: true }>;
 
 import type { SessionStore } from '../services/session-store.ts';
-import { createFakeServer, createFakeSummoner, createTestContainer } from '../test/index.ts';
+import {
+  createFakeServer,
+  createFakeSummoner,
+  createTestContainer,
+  setupSession,
+} from '../test/index.ts';
 import { TYPES } from '../types.ts';
-
-async function setup(sessionId = 'cli-sess') {
-  const container = createTestContainer();
-  const server = createFakeServer(container);
-  const summoner = createFakeSummoner(server);
-  const claude = summoner.claude();
-  const channelId = await claude.initialize(s.init(sessionId));
-  return { container, claude, channelId };
-}
 
 describe('ChatHandler > session', () => {
   describe('session:list', () => {
     it('returns sessions and total', async () => {
-      const { claude } = await setup();
+      const { claude } = await setupSession();
 
       const result = await (claude.send<SessionListResponse>(
         'session:list',
@@ -33,7 +29,7 @@ describe('ChatHandler > session', () => {
     });
 
     it('uses first user message as title when session has no title', async () => {
-      const { claude, channelId } = await setup();
+      const { claude, channelId } = await setupSession();
 
       // Send a user message so raw_events has a 'user' entry
       await claude.send('chat:send', { channelId, message: 'Hello world' });
@@ -53,7 +49,7 @@ describe('ChatHandler > session', () => {
     });
 
     it('session:init during processing does not wipe pendingTitlePrompt', async () => {
-      const { container, claude, channelId } = await setup();
+      const { container, claude, channelId } = await setupSession();
 
       claude.setControlRequestHandler((req) => {
         if (req.subtype === 'generate_session_title') {
@@ -87,7 +83,7 @@ describe('ChatHandler > session', () => {
     });
 
     it('filters sessions by cwd when provided', async () => {
-      const { claude } = await setup();
+      const { claude } = await setupSession();
 
       const allResult = await (claude.send<SessionListResponse>(
         'session:list',
@@ -111,7 +107,7 @@ describe('ChatHandler > session', () => {
     });
 
     it('excludeLive omits sessions whose sessionId has an alive channel', async () => {
-      const { container, claude } = await setup('alive-sess');
+      const { container, claude } = await setupSession('alive-sess');
       const sessionStore = container.get<SessionStore>(TYPES.SessionStore);
       // Persist a second session NOT backed by an alive channel
       await sessionStore.upsert({
@@ -138,7 +134,7 @@ describe('ChatHandler > session', () => {
     });
 
     it('excludeLive: false returns alive sessions too', async () => {
-      const { container, claude } = await setup('alive-sess-2');
+      const { container, claude } = await setupSession('alive-sess-2');
       const sessionStore = container.get<SessionStore>(TYPES.SessionStore);
       await sessionStore.upsert({
         id: 'historical-sess-2',
@@ -192,7 +188,7 @@ describe('ChatHandler > session', () => {
     });
 
     it('session:list with hasParentId only returns sessions with parentId', async () => {
-      const { claude } = await setup();
+      const { claude } = await setupSession();
 
       // Default session has no parentId
       const allResult = await (claude.send<SessionListResponse>(
@@ -214,7 +210,7 @@ describe('ChatHandler > session', () => {
 
   describe('session:get', () => {
     it('returns session metadata and events when found', async () => {
-      const { claude, channelId } = await setup();
+      const { claude, channelId } = await setupSession();
 
       await claude.send('chat:send', { channelId, message: 'hello' });
       await claude.emitSegment(s.assistant('hi'));
@@ -234,7 +230,7 @@ describe('ChatHandler > session', () => {
     });
 
     it('returns error when not found', async () => {
-      const { claude } = await setup();
+      const { claude } = await setupSession();
 
       const result = await claude.send<GetSessionResponse>('session:get', {
         channelId: 'nonexistent',
@@ -245,7 +241,7 @@ describe('ChatHandler > session', () => {
     });
 
     it('returns events excluding streaming and control types', async () => {
-      const { claude, channelId } = await setup();
+      const { claude, channelId } = await setupSession();
 
       await claude.send('chat:send', { channelId, message: 'hi' });
 

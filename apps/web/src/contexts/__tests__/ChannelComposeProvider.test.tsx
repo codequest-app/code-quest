@@ -205,17 +205,10 @@ describe('ChannelComposeProvider', () => {
   });
 
   describe('executeSlashCommand routing', () => {
-    it('calls feature.execute() for registry feature with execute — does not send to CLI', async () => {
+    it('falls through to sendMessage when command has no execute handler', async () => {
       const { claude } = await setup();
-      // /usage has execute() defined in registry
       const before = claude.received('user').length;
       const executeBtn = screen.getByText('Execute');
-      // Override the click to use /usage instead
-      const compose = screen.getByPlaceholderText('compose');
-      await userEvent.type(compose, '/usage');
-      // Directly invoke through button configured for /compact; we need a /usage button
-      // Instead, verify /usage opens the signal (execute was called) without a CLI message
-      await userEvent.clear(compose);
       await userEvent.click(executeBtn); // calls executeSlashCommand('/compact')
       // /compact has no execute, falls through to sendMessage → message sent
       expect(claude.received('user').length).toBeGreaterThan(before);

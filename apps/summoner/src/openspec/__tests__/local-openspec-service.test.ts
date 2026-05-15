@@ -131,7 +131,7 @@ describe('LocalOpenspecService', () => {
     });
 
     it('returns openspec-cli-not-found when the binary is missing (ENOENT)', async () => {
-      const { reader } = setup();
+      const { reader: _reader } = setup();
       // Replace process with one that throws ENOENT on runOnce
       const failing = new FakeProcessProvider();
       failing.enqueueRunOnce({ exitCode: 0, stdout: '', stderr: '' });
@@ -148,7 +148,6 @@ describe('LocalOpenspecService', () => {
       });
       const result = await broken.list('/repo');
       expect(result).toEqual({ error: 'openspec-cli-not-found' });
-      expect(reader).toBeDefined(); // silence unused
       expect(failing.runOnceCalls).toHaveLength(0);
     });
 

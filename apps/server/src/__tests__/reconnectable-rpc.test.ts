@@ -61,8 +61,8 @@ describe('ReconnectableRpc', () => {
     expect(rpc.connected).toBe(true);
 
     await rpc.request('test', {});
-    expect(second.request).toHaveBeenCalled();
-    expect(first.request).toHaveBeenCalledTimes(0);
+    expect(second.request).toHaveBeenCalledWith('test', {});
+    expect(first.request).not.toHaveBeenCalled();
   });
 
   it('old disconnect does not affect new connection', async () => {

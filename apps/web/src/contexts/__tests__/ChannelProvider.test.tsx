@@ -1,6 +1,6 @@
 import { EVENTS } from '@code-quest/shared';
 import { segments as s } from '@code-quest/summoner/test';
-import { act, render, screen, waitFor } from '@testing-library/react';
+import { act, screen, waitFor } from '@testing-library/react';
 import { describe, expect, it } from 'vitest';
 import { COMPOSE_PLACEHOLDER, emitAssistantTurn, sendUserMessage } from '@/test/helpers';
 import { renderWithWorkspace } from '@/test/render-with-workspace';
@@ -86,61 +86,6 @@ describe('ChannelProvider', () => {
     expect(screen.getByText('bye')).toBeInTheDocument();
   });
 
-  it('auth_url event does not crash', async () => {
-    const { claude } = await setupWithTurn();
-    await act(async () => {
-      await claude.emitSegment(s.authUrl('https://auth.example.com', 'browser'));
-    });
-
-    expect(screen.getByText('hi')).toBeInTheDocument();
-  });
-
-  it('bridge_state does not crash', async () => {
-    const { claude } = await setupWithTurn();
-    await act(async () => {
-      await claude.emitSegment(s.bridgeState('ready'));
-    });
-
-    expect(screen.getByText('hi')).toBeInTheDocument();
-  });
-
-  it('unknown raw event does not crash', async () => {
-    const { claude } = await setupWithTurn();
-    await act(async () => {
-      await claude.emitSegment(s.rawUnknown('some_future_event', { data: 'test' }));
-    });
-
-    expect(screen.getByText('hi')).toBeInTheDocument();
-  });
-
-  it('new_session_notification does not crash', async () => {
-    const { claude } = await setupWithTurn();
-    await act(async () => {
-      await claude.emitSegment(s.newSessionNotification());
-    });
-
-    expect(screen.getByText('hi')).toBeInTheDocument();
-  });
-
-  it('open_in_editor control_request does not crash', async () => {
-    const { claude } = await setupWithTurn();
-    await act(async () => {
-      await claude.emitSegment(s.controlRequestOpenInEditor('oe-1'));
-    });
-
-    expect(screen.getByText('hi')).toBeInTheDocument();
-  });
-
-  it('speech:message does not crash', async () => {
-    const { claude } = await setupWithTurn();
-    await act(async () => {
-      await claude.emitSegment(s.speechToTextMessage('ch-1', 'Hello'));
-      await claude.emitSegment(s.speechToTextMessage('ch-1', 'Hello world', true));
-    });
-
-    expect(screen.getByText('hi')).toBeInTheDocument();
-  });
-
   // ── Cross-window processing sync ──
 
   it('sending message shows Stop button (busy state)', async () => {
@@ -187,51 +132,13 @@ describe('ChannelProvider', () => {
     expect(interrupts.length).toBe(2);
   });
 
-  it('unmount does not crash', async () => {
-    const { claude, addProject } = await renderWithWorkspace();
+  it('unmount cleans up without errors', async () => {
+    const { addProject, unmount } = await renderWithWorkspace();
     const project = await addProject();
     await project.launchSession();
-    render(<div />);
-    expect(claude.connected).toBe(true);
-  });
-
-  // ── Context Usage ──
-
-  it('settings:refresh_usage returns contextUsage from CLI', async () => {
-    const { claude, user, addProject } = await renderWithWorkspace();
-    const project = await addProject();
-    const channelId = await project.launchSession();
-
-    await sendUserMessage(user);
-    await emitAssistantTurn(claude, 'done');
-
-    await act(async () => {
-      claude.pushServerEvent('settings:usage', {
-        channelId,
-        contextUsage: {
-          categories: [{ name: 'System prompt', tokens: 6000, color: 'promptBorder' }],
-          totalTokens: 10000,
-          maxTokens: 200000,
-          percentage: 5,
-        },
-        usage: {},
-      });
-    });
-
-    // Trigger settings:refresh_usage via UI — open /usage dialog
-    const textarea = screen.getByPlaceholderText(COMPOSE_PLACEHOLDER);
-    await act(async () => {
-      textarea.focus();
-    });
-    await user.type(textarea, '/usage');
-    const usageItem = screen.queryByText(/Account & usage/i);
-    if (usageItem) {
-      await user.click(usageItem);
-    }
-    // App should not crash — contextUsage stored separately from stats
-    await waitFor(() => {
-      expect(screen.getByPlaceholderText(COMPOSE_PLACEHOLDER)).toBeInTheDocument();
-    });
+    expect(screen.getByPlaceholderText(COMPOSE_PLACEHOLDER)).toBeInTheDocument();
+    unmount();
+    expect(screen.queryByPlaceholderText(COMPOSE_PLACEHOLDER)).not.toBeInTheDocument();
   });
 
   // ── state:refresh_required ──

@@ -1,6 +1,4 @@
 import { basename, dirname, join } from 'node:path';
-import { PathOutsideRootsError, type RootGuard } from '@code-quest/shared';
-import { mimeForPath } from '../filesystem/mime-types.ts';
 import type {
   DirectoryEntry,
   FileResult,
@@ -9,7 +7,9 @@ import type {
   ReadFileAbsoluteResult,
   ReadFileResult,
   WriteFileResult,
-} from '../filesystem/types.ts';
+} from '@code-quest/shared';
+import { PathOutsideRootsError, type RootGuard } from '@code-quest/shared';
+import { mimeForPath } from '../filesystem/mime-types.ts';
 
 export class FakeRootGuard implements RootGuard {
   private roots: string[] = [];

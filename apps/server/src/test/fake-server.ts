@@ -6,6 +6,7 @@ import type {
 } from '@code-quest/summoner';
 import {
   createFakeSocket,
+  type FakeClaude,
   type FakeFilesystemService,
   type FakeGitService,
   type FakeOpenspecService,
@@ -13,9 +14,11 @@ import {
   FakeProcessProvider,
   type FakeSocket,
   type FakeSummoner,
+  segments as s,
   createFakeSummoner as summonerCreateFakeSummoner,
 } from '@code-quest/summoner/test';
 import type { Container } from 'inversify';
+import type { ChannelManager } from '../socket/channel-manager.ts';
 import type { SocketServer } from '../socket/server.ts';
 import { TYPES } from '../types.ts';
 import { createTestContainer } from './create-test-container.ts';
@@ -87,4 +90,33 @@ export function createFakeServer(container?: Container): FakeServer {
 /** Create a FakeSummoner (one window). Optionally connect to a shared FakeServer. */
 export function createFakeSummoner(server?: FakeServer): FakeSummoner {
   return summonerCreateFakeSummoner(server ?? new FakeServer(createTestContainer()));
+}
+
+/**
+ * setupSession — shared setup for tests that need a fully initialized session.
+ * Creates container, server, summoner, claude, and runs initialize to get a channelId.
+ */
+export async function setupSession(
+  sessionId = 'cli-sess',
+  containerOpts?: Parameters<typeof createTestContainer>[0],
+): Promise<{
+  container: Container;
+  server: FakeServer;
+  summoner: FakeSummoner;
+  claude: FakeClaude;
+  channelId: string;
+}> {
+  const container = createTestContainer(containerOpts);
+  const server = new FakeServer(container);
+  const summoner = summonerCreateFakeSummoner(server);
+  const claude = summoner.claude();
+  const channelId = await claude.initialize(s.init(sessionId));
+  return { container, server, summoner, claude, channelId };
+}
+
+/**
+ * getChannelManager — retrieves the ChannelManager from a DI container.
+ */
+export function getChannelManager(container: Container): InstanceType<typeof ChannelManager> {
+  return container.get(TYPES.ChannelManager) as InstanceType<typeof ChannelManager>;
 }

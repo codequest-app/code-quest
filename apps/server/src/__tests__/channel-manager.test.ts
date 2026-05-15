@@ -1,22 +1,19 @@
 import type { SessionJoinResponse } from '@code-quest/shared';
 import { segments as s } from '@code-quest/summoner/test';
 import type { RawEventStore } from '../services/raw-event-store.ts';
-import { createFakeServer, createFakeSummoner, createTestContainer } from '../test/index.ts';
+import {
+  createFakeServer,
+  createFakeSummoner,
+  createTestContainer,
+  getChannelManager,
+  setupSession,
+} from '../test/index.ts';
 import { TYPES } from '../types.ts';
-
-async function setup(sessionId = 'test-session-001') {
-  const container = createTestContainer();
-  const server = createFakeServer(container);
-  const summoner = createFakeSummoner(server);
-  const claude = summoner.claude();
-  const channelId = await claude.initialize(s.init(sessionId));
-  return { container, claude, channelId };
-}
 
 describe('ChannelManager', () => {
   describe('create', () => {
     it('spawns runner, initializes, and stores channel', async () => {
-      const { channelId } = await setup();
+      const { channelId } = await setupSession('test-session-001');
       // Channel exists — init event was received
       expect(channelId).toBeTruthy();
     });
@@ -34,7 +31,7 @@ describe('ChannelManager', () => {
 
   describe('join', () => {
     it('returns channel and events for existing channel', async () => {
-      const { claude, channelId } = await setup();
+      const { claude, channelId } = await setupSession('test-session-001');
 
       const joinResult = await claude.send<SessionJoinResponse>('session:join', { channelId });
 
@@ -45,7 +42,7 @@ describe('ChannelManager', () => {
     });
 
     it('returns error for unknown channel', async () => {
-      const { claude } = await setup();
+      const { claude } = await setupSession('test-session-001');
 
       const joinResult = await claude.send<SessionJoinResponse>('session:join', {
         channelId: 'nonexistent',
@@ -104,7 +101,7 @@ describe('ChannelManager', () => {
 
   describe('destroy', () => {
     it('removes channel after destroy', async () => {
-      const { claude, channelId } = await setup();
+      const { claude, channelId } = await setupSession('test-session-001');
 
       await claude.send('session:close', { channelId });
 
@@ -112,7 +109,7 @@ describe('ChannelManager', () => {
     });
 
     it('session:closed fires after destroy', async () => {
-      const { claude } = await setup();
+      const { claude } = await setupSession('test-session-001');
 
       claude.handle.abort();
       await new Promise<void>((r) => queueMicrotask(r));
@@ -135,7 +132,7 @@ describe('ChannelManager', () => {
 
   describe('findByRequestId', () => {
     it('finds channel with pending control request', async () => {
-      const { claude, channelId } = await setup();
+      const { claude, channelId } = await setupSession('test-session-001');
 
       await claude.send('chat:send', { channelId, message: 'go' });
       await claude.emitSegment(
@@ -151,7 +148,7 @@ describe('ChannelManager', () => {
 
   describe('raw event recording', () => {
     it('records stdin and stdout events', async () => {
-      const { claude, channelId } = await setup();
+      const { claude, channelId } = await setupSession('test-session-001');
 
       await claude.send('chat:send', { channelId, message: 'hello' });
 
@@ -190,8 +187,7 @@ describe('ChannelManager', () => {
       const summoner = createFakeSummoner(server);
       await summoner.claude().initialize(s.init('sess-alive'));
 
-      const { ChannelManager } = await import('../socket/channel-manager.ts');
-      const mgr = container.get(TYPES.ChannelManager) as InstanceType<typeof ChannelManager>;
+      const mgr = getChannelManager(container);
       expect(mgr.getAliveSessionIds()).toContain('sess-alive');
     });
 
@@ -203,8 +199,7 @@ describe('ChannelManager', () => {
       claude.handle.abort();
       await new Promise<void>((r) => queueMicrotask(r));
 
-      const { ChannelManager } = await import('../socket/channel-manager.ts');
-      const mgr = container.get(TYPES.ChannelManager) as InstanceType<typeof ChannelManager>;
+      const mgr = getChannelManager(container);
       expect(mgr.getAliveSessionIds()).not.toContain('sess-zombie');
     });
   });
@@ -216,8 +211,7 @@ describe('ChannelManager', () => {
       const claude = createFakeSummoner(server).claude();
       await claude.initialize(s.init('sess-target'));
 
-      const { ChannelManager } = await import('../socket/channel-manager.ts');
-      const mgr = container.get(TYPES.ChannelManager) as InstanceType<typeof ChannelManager>;
+      const mgr = getChannelManager(container);
       const found = mgr.findAliveBySessionId('sess-target');
 
       expect(found).toBeDefined();
@@ -229,8 +223,7 @@ describe('ChannelManager', () => {
       const server = createFakeServer(container);
       await createFakeSummoner(server).claude().initialize(s.init('sess-other'));
 
-      const { ChannelManager } = await import('../socket/channel-manager.ts');
-      const mgr = container.get(TYPES.ChannelManager) as InstanceType<typeof ChannelManager>;
+      const mgr = getChannelManager(container);
       expect(mgr.findAliveBySessionId('sess-missing')).toBeUndefined();
     });
 
@@ -242,8 +235,7 @@ describe('ChannelManager', () => {
       claude.handle.abort();
       await new Promise<void>((r) => queueMicrotask(r));
 
-      const { ChannelManager } = await import('../socket/channel-manager.ts');
-      const mgr = container.get(TYPES.ChannelManager) as InstanceType<typeof ChannelManager>;
+      const mgr = getChannelManager(container);
       expect(mgr.findAliveBySessionId('sess-zombie')).toBeUndefined();
     });
   });
@@ -258,8 +250,7 @@ describe('ChannelManager', () => {
       claude.handle.abort();
       await new Promise<void>((r) => queueMicrotask(r));
 
-      const { ChannelManager } = await import('../socket/channel-manager.ts');
-      const mgr = container.get(TYPES.ChannelManager) as InstanceType<typeof ChannelManager>;
+      const mgr = getChannelManager(container);
       const channel = mgr.get(channelId);
       expect(channel?.exited).toBe(true);
     });
@@ -293,7 +284,7 @@ describe('ChannelManager', () => {
 
   describe('raw event persistence', () => {
     it('persists raw events to rawEventService', async () => {
-      const { container, claude, channelId } = await setup();
+      const { container, claude, channelId } = await setupSession('test-session-001');
 
       await claude.send('chat:send', { channelId, message: 'persist-test' });
       await claude.emitSegment(s.assistant('reply'));

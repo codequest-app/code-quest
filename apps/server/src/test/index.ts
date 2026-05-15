@@ -7,4 +7,6 @@ export {
   createFakeServer,
   createFakeSummoner,
   type FakeServer,
+  getChannelManager,
+  setupSession,
 } from './fake-server.ts';

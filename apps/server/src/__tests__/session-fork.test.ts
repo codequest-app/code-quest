@@ -6,26 +6,23 @@ import type {
 import { segments as s } from '@code-quest/summoner/test';
 import type { RawEventService } from '../services/raw-event-service.ts';
 import type { SessionStore } from '../services/session-store.ts';
-import { createFakeServer, createFakeSummoner, createTestContainer } from '../test/index.ts';
+import {
+  createFakeServer,
+  createFakeSummoner,
+  createTestContainer,
+  getChannelManager,
+  setupSession,
+} from '../test/index.ts';
 import { TYPES } from '../types.ts';
 
 type TeleportOk = Extract<TeleportSessionResponse, { ok: true }>;
 type ForkOk = Extract<ForkConversationResponse, { ok: true }>;
 type GetSessionOk = Extract<GetSessionResponse, { ok: true }>;
 
-async function setup(sessionId = 'cli-sess') {
-  const container = createTestContainer();
-  const server = createFakeServer(container);
-  const summoner = createFakeSummoner(server);
-  const claude = summoner.claude();
-  const channelId = await claude.initialize(s.init(sessionId));
-  return { container, claude, channelId };
-}
-
 describe('ChatHandler > session', () => {
   describe('session forking', () => {
     it('forked session persist includes parentId and is fire-and-forget', async () => {
-      const { container, claude, channelId } = await setup();
+      const { container, claude, channelId } = await setupSession();
 
       let persistResolved = false;
       const persistedArgs: unknown[][] = [];
@@ -60,7 +57,7 @@ describe('ChatHandler > session', () => {
     });
 
     it('forked session parentId !== newChannelId', async () => {
-      const { container, claude, channelId } = await setup();
+      const { container, claude, channelId } = await setupSession();
 
       await claude.send('session:fork', {
         forkedFromChannelId: channelId,
@@ -79,7 +76,7 @@ describe('ChatHandler > session', () => {
     });
 
     it('fork_conversation emits session:created exactly once', async () => {
-      const { claude, channelId } = await setup();
+      const { claude, channelId } = await setupSession();
 
       await claude.send('session:fork', {
         forkedFromChannelId: channelId,
@@ -143,8 +140,7 @@ describe('session:teleport', () => {
 
     expect(result.ok).toBe(true);
     expect(result.data.channelId).toBe('client-teleport-1');
-    const { ChannelManager } = await import('../socket/channel-manager.ts');
-    const mgr = container.get(TYPES.ChannelManager) as InstanceType<typeof ChannelManager>;
+    const mgr = getChannelManager(container);
     expect(mgr.get(result.data.channelId)).toBeDefined();
   });
 
@@ -181,7 +177,7 @@ describe('session:teleport', () => {
   });
 
   it('should return events from parent session history', async () => {
-    const { claude, channelId } = await setup();
+    const { claude, channelId } = await setupSession();
 
     await claude.send('chat:send', { channelId, message: 'hello' });
 
@@ -443,7 +439,7 @@ describe('session:fork pass-through + reject + ack (fix-fork-resume-sessionid)',
 
 describe('chat:fork enhanced', () => {
   it('should store parentId on forked session in session store', async () => {
-    const { claude, channelId } = await setup();
+    const { claude, channelId } = await setupSession();
 
     const forkResult = (await claude.send<ForkConversationResponse>('session:fork', {
       forkedFromChannelId: channelId,
@@ -467,7 +463,7 @@ describe('chat:fork enhanced', () => {
   });
 
   it('should include parentChannelId in fork response', async () => {
-    const { claude, channelId } = await setup();
+    const { claude, channelId } = await setupSession();
 
     const forkResult = (await claude.send<ForkConversationResponse>('session:fork', {
       forkedFromChannelId: channelId,

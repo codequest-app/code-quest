@@ -1,6 +1,7 @@
 /* biome-ignore-all lint/suspicious/noExplicitAny: test file uses type assertions */
 import { segments as s } from '@code-quest/summoner/test';
 import { createFakeServer, createFakeSummoner, createTestContainer } from '../test/index.ts';
+import { TYPES } from '../types.ts';
 
 describe('ChatHandler > connection', () => {
   it('init returns settings and sessions in one response', async () => {
@@ -72,7 +73,6 @@ describe('ChatHandler > connection', () => {
     const container = createTestContainer();
     const server = createFakeServer(container);
     const claude = createFakeSummoner(server).claude();
-    const { TYPES } = await import('../types.ts');
     const settingsStore = container.get<{
       getMany: (...args: unknown[]) => Promise<Record<string, unknown>>;
     }>(TYPES.SettingsStore);
@@ -91,7 +91,6 @@ describe('ChatHandler > connection', () => {
     const container = createTestContainer();
     const server = createFakeServer(container);
     const claude = createFakeSummoner(server).claude();
-    const { TYPES } = await import('../types.ts');
     const settingsStore = container.get<{
       get: (...args: unknown[]) => Promise<unknown>;
     }>(TYPES.SettingsStore);

@@ -3,17 +3,14 @@ import { tmpdir } from 'node:os';
 import { join } from 'node:path';
 import { type FakeClaude, segments as s } from '@code-quest/summoner/test';
 import type { SessionStore } from '../services/session-store.ts';
-import { createFakeServer, createFakeSummoner, createTestContainer } from '../test/index.ts';
+import {
+  createFakeServer,
+  createFakeSummoner,
+  createTestContainer,
+  getChannelManager,
+  setupSession,
+} from '../test/index.ts';
 import { TYPES } from '../types.ts';
-
-async function setup(sessionId = 'cli-sess') {
-  const container = createTestContainer();
-  const server = createFakeServer(container);
-  const summoner = createFakeSummoner(server);
-  const claude = summoner.claude();
-  const channelId = await claude.initialize(s.init(sessionId));
-  return { container, claude, channelId };
-}
 
 function waitForDiffReview(claude: FakeClaude): Promise<void> {
   return vi.waitFor(() => {
@@ -24,7 +21,7 @@ function waitForDiffReview(claude: FakeClaude): Promise<void> {
 describe('ChatHandler > control', () => {
   describe('pending control_request queue', () => {
     it('forwards control_request events to client', async () => {
-      const { claude, channelId } = await setup();
+      const { claude, channelId } = await setupSession();
 
       await claude.send('chat:send', { channelId, message: 'go' });
       await claude.emitSegment(
@@ -43,7 +40,7 @@ describe('ChatHandler > control', () => {
     });
 
     it('control_request tracked in channel', async () => {
-      const { container, claude, channelId } = await setup();
+      const { container, claude, channelId } = await setupSession();
 
       await claude.send('chat:send', { channelId, message: 'go' });
       await claude.emitSegment(
@@ -53,13 +50,12 @@ describe('ChatHandler > control', () => {
         s.controlRequest('req-1', 'can_use_tool', 'Bash', { command: 'ls' }),
       );
 
-      const { ChannelManager } = await import('../socket/channel-manager.ts');
-      const mgr = container.get(TYPES.ChannelManager) as InstanceType<typeof ChannelManager>;
+      const mgr = getChannelManager(container);
       expect(mgr.get(channelId)?.hasControlRequest('req-1')).toBe(true);
     });
 
     it('removes from pending after control_response', async () => {
-      const { container, claude, channelId } = await setup();
+      const { container, claude, channelId } = await setupSession();
 
       await claude.send('chat:send', { channelId, message: 'go' });
       await claude.emitSegment(
@@ -75,14 +71,13 @@ describe('ChatHandler > control', () => {
         response: { behavior: 'allow', updatedInput: {} },
       });
 
-      const { ChannelManager } = await import('../socket/channel-manager.ts');
-      const mgr = container.get(TYPES.ChannelManager) as InstanceType<typeof ChannelManager>;
+      const mgr = getChannelManager(container);
       expect(mgr.get(channelId)?.hasControlRequest('req-1')).toBe(false);
       expect(claude.received('control_response').length).toBeGreaterThan(0);
     });
 
     it('forwards hook_callback to client', async () => {
-      const { claude, channelId } = await setup();
+      const { claude, channelId } = await setupSession();
 
       await claude.send('chat:send', { channelId, message: 'go' });
       await claude.emitSegment(s.controlRequest('hook-1', 'hook_callback'));
@@ -92,7 +87,7 @@ describe('ChatHandler > control', () => {
     });
 
     it('removes pending on control_cancel_request and forwards chat:cancel_request', async () => {
-      const { container, claude, channelId } = await setup();
+      const { container, claude, channelId } = await setupSession();
 
       await claude.send('chat:send', { channelId, message: 'go' });
       await claude.emitSegment(
@@ -105,14 +100,13 @@ describe('ChatHandler > control', () => {
       expect(cancelEvents.length).toBeGreaterThan(0);
       expect(cancelEvents[0]!.targetRequestId).toBe('req-1');
 
-      const { ChannelManager } = await import('../socket/channel-manager.ts');
-      const mgr = container.get(TYPES.ChannelManager) as InstanceType<typeof ChannelManager>;
+      const mgr = getChannelManager(container);
       expect(mgr.get(channelId)?.hasControlRequest('req-1')).toBe(false);
     });
 
     describe('parallel control_requests', () => {
       it('forwards multiple control_requests to client', async () => {
-        const { claude, channelId } = await setup();
+        const { claude, channelId } = await setupSession();
 
         await claude.send('chat:send', { channelId, message: 'go' });
         await claude.emitSegment(
@@ -128,7 +122,7 @@ describe('ChatHandler > control', () => {
       });
 
       it('resumes after all parallel CRs responded', async () => {
-        const { claude, channelId } = await setup();
+        const { claude, channelId } = await setupSession();
 
         await claude.send('chat:send', { channelId, message: 'go' });
         await claude.emitSegment(
@@ -155,7 +149,7 @@ describe('ChatHandler > control', () => {
 
   describe('chat:respond for diff', () => {
     it('forwards accepted diff response', async () => {
-      const { claude, channelId } = await setup();
+      const { claude, channelId } = await setupSession();
 
       await claude.send('chat:send', { channelId, message: 'go' });
       await claude.emitSegment(
@@ -176,7 +170,7 @@ describe('ChatHandler > control', () => {
     });
 
     it('forwards rejected diff response', async () => {
-      const { claude, channelId } = await setup();
+      const { claude, channelId } = await setupSession();
 
       await claude.send('chat:send', { channelId, message: 'go' });
       await claude.emitSegment(
@@ -199,7 +193,7 @@ describe('ChatHandler > control', () => {
 
   describe('elicitation control_request', () => {
     it('pushes elicitation_request to client', async () => {
-      const { claude, channelId } = await setup();
+      const { claude, channelId } = await setupSession();
 
       await claude.send('chat:send', { channelId, message: 'go' });
       await claude.emitSegment(s.controlRequestElicitation('elicit-1', { message: 'Enter URL' }));
@@ -210,7 +204,7 @@ describe('ChatHandler > control', () => {
     });
 
     it('chat:respond forwards elicitation answer to CLI', async () => {
-      const { claude, channelId } = await setup();
+      const { claude, channelId } = await setupSession();
 
       await claude.send('chat:send', { channelId, message: 'go' });
       await claude.emitSegment(s.controlRequestElicitation('elicit-1', { message: 'Enter URL' }));
@@ -224,7 +218,7 @@ describe('ChatHandler > control', () => {
     });
 
     it('chat:respond with deny sends decline to CLI', async () => {
-      const { claude, channelId } = await setup();
+      const { claude, channelId } = await setupSession();
 
       await claude.send('chat:send', { channelId, message: 'go' });
       await claude.emitSegment(s.controlRequestElicitation('elicit-1', { message: 'Enter URL' }));
@@ -238,7 +232,7 @@ describe('ChatHandler > control', () => {
     });
 
     it('maps mode:"url" → inputType:"url"', async () => {
-      const { claude, channelId } = await setup();
+      const { claude, channelId } = await setupSession();
 
       await claude.send('chat:send', { channelId, message: 'go' });
       await claude.emitSegment(
@@ -254,7 +248,7 @@ describe('ChatHandler > control', () => {
     });
 
     it('maps mode:"form" → extracts options from schema', async () => {
-      const { claude, channelId } = await setup();
+      const { claude, channelId } = await setupSession();
 
       await claude.send('chat:send', { channelId, message: 'go' });
       await claude.emitSegment(
@@ -281,7 +275,7 @@ describe('ChatHandler > control', () => {
     });
 
     it('system/init persists session with session_id', async () => {
-      const { container, channelId } = await setup('my-session-id');
+      const { container, channelId } = await setupSession('my-session-id');
 
       const sessionStore = container.get<SessionStore>(TYPES.SessionStore);
       const record = await sessionStore.getByChannelId(channelId);
@@ -291,7 +285,7 @@ describe('ChatHandler > control', () => {
 
   describe('open_diff control_request', () => {
     it('pushes diff_review_request to client', async () => {
-      const { claude, channelId } = await setup();
+      const { claude, channelId } = await setupSession();
 
       await claude.send('chat:send', { channelId, message: 'go' });
       await claude.emitSegment(
@@ -306,7 +300,7 @@ describe('ChatHandler > control', () => {
 
   describe('open_url / open_file control_request', () => {
     it('open_in_editor: forwards as raw:event to client', async () => {
-      const { claude, channelId } = await setup();
+      const { claude, channelId } = await setupSession();
 
       await claude.send('chat:send', { channelId, message: 'go' });
       await claude.emitSegment(s.controlRequestOpenInEditor('open-1'));
@@ -337,7 +331,7 @@ describe('ChatHandler > control', () => {
 
   describe('elicitation modes', () => {
     it('maps mode:"form" → extracts options from requested_schema properties', async () => {
-      const { claude, channelId } = await setup();
+      const { claude, channelId } = await setupSession();
 
       await claude.send('chat:send', { channelId, message: 'go' });
       await claude.emitSegment(
@@ -356,7 +350,7 @@ describe('ChatHandler > control', () => {
     });
 
     it('maps mode:"url" → inputType:"url" and forwards url field', async () => {
-      const { claude, channelId } = await setup();
+      const { claude, channelId } = await setupSession();
 
       await claude.send('chat:send', { channelId, message: 'go' });
       await claude.emitSegment(
@@ -412,7 +406,7 @@ describe('ChatHandler > control', () => {
       writeFileSync(newPath, 'const a = 2;');
 
       try {
-        const { claude, channelId } = await setup();
+        const { claude, channelId } = await setupSession();
 
         await claude.send('chat:send', { channelId, message: 'go' });
         await claude.emitSegment(
@@ -428,7 +422,7 @@ describe('ChatHandler > control', () => {
     });
 
     it('uses empty string when file does not exist', async () => {
-      const { claude, channelId } = await setup();
+      const { claude, channelId } = await setupSession();
 
       await claude.send('chat:send', { channelId, message: 'go' });
       await claude.emitSegment(
@@ -443,7 +437,7 @@ describe('ChatHandler > control', () => {
 
   describe('open_url / open_file control_request (extended)', () => {
     it('open_url: pushes request to client as raw:event', async () => {
-      const { claude, channelId } = await setup();
+      const { claude, channelId } = await setupSession();
 
       await claude.send('chat:send', { channelId, message: 'go' });
       await claude.emitSegment(s.controlRequestOpenInEditor('open-url-1'));
@@ -456,7 +450,7 @@ describe('ChatHandler > control', () => {
 
   describe('partial CR response + reconnect', () => {
     it('removes only responded CR from pending', async () => {
-      const { container, claude, channelId } = await setup();
+      const { container, claude, channelId } = await setupSession();
 
       await claude.send('chat:send', { channelId, message: 'go' });
       await claude.emitSegment(
@@ -472,15 +466,14 @@ describe('ChatHandler > control', () => {
         response: { behavior: 'allow', updatedInput: {} },
       });
 
-      const { ChannelManager } = await import('../socket/channel-manager.ts');
-      const mgr = container.get(TYPES.ChannelManager) as InstanceType<typeof ChannelManager>;
+      const mgr = getChannelManager(container);
       expect(mgr.get(channelId)?.hasControlRequest('req-a')).toBe(false);
       expect(mgr.get(channelId)?.hasControlRequest('req-b')).toBe(true);
     });
   });
 
   it('responds to control request from scene', async () => {
-    const { claude, channelId } = await setup();
+    const { claude, channelId } = await setupSession();
 
     await claude.send('chat:send', { channelId, message: 'go' });
 
@@ -504,7 +497,7 @@ describe('ChatHandler > control', () => {
   });
 
   it('response from client triggers respondToControlRequest', async () => {
-    const { claude, channelId } = await setup();
+    const { claude, channelId } = await setupSession();
 
     await claude.send('chat:send', { channelId, message: 'go' });
 
@@ -529,7 +522,7 @@ describe('ChatHandler > control', () => {
 
   describe('reconnect / pending CR replay', () => {
     it('stores control_request in pending when session has CR', async () => {
-      const { container, claude, channelId } = await setup();
+      const { container, claude, channelId } = await setupSession();
 
       await claude.send('chat:send', { channelId, message: 'go' });
       await claude.emitSegment(
@@ -537,8 +530,7 @@ describe('ChatHandler > control', () => {
       );
       await claude.emitSegment(s.controlRequest('req-pending', 'can_use_tool', 'Bash', {}));
 
-      const { ChannelManager } = await import('../socket/channel-manager.ts');
-      const mgr = container.get(TYPES.ChannelManager) as InstanceType<typeof ChannelManager>;
+      const mgr = getChannelManager(container);
       expect(mgr.get(channelId)?.hasControlRequest('req-pending')).toBe(true);
     });
 
@@ -566,7 +558,7 @@ describe('ChatHandler > control', () => {
     });
 
     it('does not hang: mcp_message cleared on session kill', async () => {
-      const { claude, channelId } = await setup();
+      const { claude, channelId } = await setupSession();
 
       await claude.send('chat:send', { channelId, message: 'go' });
       await claude.emitSegment(

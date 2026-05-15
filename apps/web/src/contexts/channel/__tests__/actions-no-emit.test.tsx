@@ -33,8 +33,9 @@ describe('ChannelActions', () => {
     expect(screen.getByRole('status', { name: 'cancelling' })).toHaveTextContent('true');
   });
 
-  it('kill does not throw', async () => {
+  it('kill does not set status to cancelling (unlike abort)', async () => {
     await renderWithChannel(<ActionsTestUI />);
     await userEvent.click(screen.getByText('Kill'));
+    expect(screen.getByRole('status', { name: 'cancelling' })).toHaveTextContent('false');
   });
 });

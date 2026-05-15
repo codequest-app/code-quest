@@ -18,12 +18,16 @@ function turn(hasToolUse: boolean): AssistantTurn {
 }
 
 describe('dotClass', () => {
-  it.each([
-    'text',
-    'thinking',
-    'streamlined_text',
-  ] as const)('%s → bg-border (no result)', (type) => {
-    expect(dotClass(make(type))).toBe('bg-border');
+  it('text → bg-border (no result)', () => {
+    expect(dotClass(make('text'))).toBe('bg-border');
+  });
+
+  it('thinking → bg-border (no result)', () => {
+    expect(dotClass(make('thinking'))).toBe('bg-border');
+  });
+
+  it('streamlined_text → bg-border (no result)', () => {
+    expect(dotClass(make('streamlined_text'))).toBe('bg-border');
   });
 
   it('assistant_turn with no tool_use blocks → bg-border', () => {
