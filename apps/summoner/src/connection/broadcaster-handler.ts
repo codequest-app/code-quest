@@ -12,11 +12,12 @@ export class BroadcasterHandler implements AgentHandler {
 
   attach(rpc: AgentTransport): void {
     const subscriptions = new Map<string, () => void>();
+    const connectionId = Math.random().toString(36).slice(2);
 
     rpc.onRequest(REMOTE_METHODS.watch.start, async (params) => {
       const { cwd } = params as { cwd: string };
       if (subscriptions.has(cwd)) return { ok: true };
-      const off = this.broadcaster.subscribe(cwd, 'agent', (type, data) => {
+      const off = this.broadcaster.subscribe(cwd, connectionId, (type, data) => {
         rpc.emit(REMOTE_METHODS.watch.snapshot, { cwd, type, data });
       });
       subscriptions.set(cwd, off);

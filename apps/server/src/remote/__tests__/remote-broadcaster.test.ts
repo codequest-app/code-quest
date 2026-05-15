@@ -1,22 +1,25 @@
 import { REMOTE_METHODS } from '@code-quest/schemas';
 import { describe, expect, it, vi } from 'vitest';
 import { RemoteBroadcaster } from '../remote-broadcaster.ts';
+import type { RemoteRpcWithEvents } from '../types.ts';
 
 function makeFakeRpc() {
   const requests: Array<[string, unknown]> = [];
   const handlers = new Map<string, (...args: unknown[]) => void>();
-  return {
+  const rpc: RemoteRpcWithEvents = {
     request: vi.fn(async (method: string, params: unknown) => {
       requests.push([method, params]);
       return { ok: true };
-    }),
+    }) as RemoteRpcWithEvents['request'],
     on: vi.fn((event: string, fn: (...args: unknown[]) => void) => {
       handlers.set(event, fn);
       return () => handlers.delete(event);
     }),
+  };
+  return Object.assign(rpc, {
     simulate: (event: string, ...args: unknown[]) => handlers.get(event)?.(...args),
     requests,
-  };
+  });
 }
 
 describe('RemoteBroadcaster', () => {

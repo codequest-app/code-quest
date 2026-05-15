@@ -1,12 +1,8 @@
 import { REMOTE_METHODS } from '@code-quest/schemas';
+import type { RemoteRpcWithEvents } from './types.ts';
 
 type SnapshotCallback = (type: string, data: unknown) => void;
 type Unsubscribe = () => void;
-
-interface RemoteRpc {
-  request(method: string, params: unknown): Promise<unknown>;
-  on(event: string, fn: (...args: unknown[]) => void): Unsubscribe;
-}
 
 interface WatchSnapshot {
   cwd: string;
@@ -15,11 +11,11 @@ interface WatchSnapshot {
 }
 
 export class RemoteBroadcaster {
-  private readonly rpc: RemoteRpc;
+  private readonly rpc: RemoteRpcWithEvents;
   private readonly subscribers = new Map<string, Map<string, SnapshotCallback>>();
   private offSnapshot: Unsubscribe | null = null;
 
-  constructor(rpc: RemoteRpc) {
+  constructor(rpc: RemoteRpcWithEvents) {
     this.rpc = rpc;
   }
 
@@ -47,6 +43,12 @@ export class RemoteBroadcaster {
         void this.rpc.request(REMOTE_METHODS.watch.stop, { cwd });
       }
     };
+  }
+
+  dispose(): void {
+    this.offSnapshot?.();
+    this.offSnapshot = null;
+    this.subscribers.clear();
   }
 
   private ensureSnapshotListener(): void {
