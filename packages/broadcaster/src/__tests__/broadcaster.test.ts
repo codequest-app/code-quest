@@ -1,8 +1,8 @@
 import { describe, expect, it, vi } from 'vitest';
-import { Broadcaster } from '../broadcaster.ts';
-import type { DataSource } from '../types.ts';
+import { LocalBroadcaster } from '../broadcaster.ts';
+import type { DataSourceLike } from '../types.ts';
 
-function makeSource<T>(value: T): DataSource<T> & { notify(): void; readCount: number } {
+function makeSource<T>(value: T): DataSourceLike<T> & { notify(): void; readCount: number } {
   let readCount = 0;
   const cbs = new Set<() => void>();
   return {
@@ -25,13 +25,13 @@ function makeSource<T>(value: T): DataSource<T> & { notify(): void; readCount: n
 
 describe('Broadcaster', () => {
   it('add() returns this for chaining', () => {
-    const broadcaster = new Broadcaster();
+    const broadcaster = new LocalBroadcaster();
     const result = broadcaster.add('files', () => makeSource([]));
     expect(result).toBe(broadcaster);
   });
 
   it('new subscriber receives cb(type, data) for each registered type', async () => {
-    const broadcaster = new Broadcaster()
+    const broadcaster = new LocalBroadcaster()
       .add('files', () => makeSource(['a.ts']))
       .add('git', () => makeSource({ branch: 'main' }));
     const cb = vi.fn();
@@ -43,7 +43,7 @@ describe('Broadcaster', () => {
 
   it('second subscriber for same cwd gets cached lastValue synchronously', async () => {
     const source = makeSource('data');
-    const broadcaster = new Broadcaster().add('files', () => source);
+    const broadcaster = new LocalBroadcaster().add('files', () => source);
     const cb1 = vi.fn();
     broadcaster.subscribe('/repo', 's1', cb1);
     await vi.waitUntil(() => cb1.mock.calls.length > 0);
@@ -56,7 +56,7 @@ describe('Broadcaster', () => {
 
   it('all subscribers receive cb(type, data) when a DataSource changes', async () => {
     const source = makeSource('v1');
-    const broadcaster = new Broadcaster().add('files', () => source);
+    const broadcaster = new LocalBroadcaster().add('files', () => source);
     const cb1 = vi.fn();
     const cb2 = vi.fn();
     broadcaster.subscribe('/repo', 's1', cb1);
@@ -72,7 +72,7 @@ describe('Broadcaster', () => {
   it('only the changed type emits — other types stay silent', async () => {
     const filesSource = makeSource(['a.ts']);
     const gitSource = makeSource({ branch: 'main' });
-    const broadcaster = new Broadcaster()
+    const broadcaster = new LocalBroadcaster()
       .add('files', () => filesSource)
       .add('git', () => gitSource);
     const cb = vi.fn();
@@ -88,7 +88,10 @@ describe('Broadcaster', () => {
 
   it('last subscriber unsubscribing disposes all DataSources for that cwd', async () => {
     const dispose = vi.fn();
-    const broadcaster = new Broadcaster().add('files', () => ({ ...makeSource('x'), dispose }));
+    const broadcaster = new LocalBroadcaster().add('files', () => ({
+      ...makeSource('x'),
+      dispose,
+    }));
     const off = broadcaster.subscribe('/repo', 's1', vi.fn());
     await vi.waitUntil(() => dispose.mock.calls.length === 0);
     off();
@@ -97,7 +100,7 @@ describe('Broadcaster', () => {
 
   it('last subscriber unsubscribing removes cwd entry so next subscribe creates fresh sources', async () => {
     let sourceCreated = 0;
-    const broadcaster = new Broadcaster().add('files', () => {
+    const broadcaster = new LocalBroadcaster().add('files', () => {
       sourceCreated++;
       return makeSource('x');
     });
@@ -114,7 +117,7 @@ describe('Broadcaster', () => {
 
   it('different cwds use independent DataSource instances', async () => {
     const cwds: string[] = [];
-    const broadcaster = new Broadcaster().add('files', (cwd) => {
+    const broadcaster = new LocalBroadcaster().add('files', (cwd) => {
       cwds.push(cwd);
       return makeSource(cwd);
     });
@@ -128,9 +131,36 @@ describe('Broadcaster', () => {
     expect(cwds).toEqual(['/a', '/b']);
   });
 
+  it('second subscriber joining while initial read is in-flight receives correct data', async () => {
+    let resolveRead!: (v: string) => void;
+    const source: DataSourceLike<string> & { notify(): void } = {
+      read() {
+        return new Promise<string>((res) => {
+          resolveRead = res;
+        });
+      },
+      onChange(cb) {
+        return () => {};
+      },
+      notify() {},
+    };
+    const broadcaster = new LocalBroadcaster().add('files', () => source);
+    const cb1 = vi.fn();
+    const cb2 = vi.fn();
+
+    broadcaster.subscribe('/repo', 's1', cb1);
+    broadcaster.subscribe('/repo', 's2', cb2);
+
+    resolveRead('the-data');
+    await vi.waitUntil(() => cb1.mock.calls.length > 0 && cb2.mock.calls.length > 0);
+
+    expect(cb1).toHaveBeenCalledWith('files', 'the-data');
+    expect(cb2).toHaveBeenCalledWith('files', 'the-data');
+  });
+
   it('unsubscribed callback no longer receives updates', async () => {
     const source = makeSource('v1');
-    const broadcaster = new Broadcaster().add('files', () => source);
+    const broadcaster = new LocalBroadcaster().add('files', () => source);
     const cb = vi.fn();
     const off = broadcaster.subscribe('/repo', 's1', cb);
     await vi.waitUntil(() => cb.mock.calls.length > 0);
@@ -142,7 +172,7 @@ describe('Broadcaster', () => {
   });
 
   it('single subscribe covers all registered types without extra subscribe calls', async () => {
-    const broadcaster = new Broadcaster()
+    const broadcaster = new LocalBroadcaster()
       .add('files', () => makeSource(['a.ts']))
       .add('git', () => makeSource({ branch: 'main' }))
       .add('openspec', () => makeSource({ changes: [] }));

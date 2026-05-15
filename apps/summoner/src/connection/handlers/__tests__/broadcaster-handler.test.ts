@@ -1,14 +1,14 @@
 import {
-  Broadcaster,
-  CachedDataSource,
+  type Broadcaster,
   FilesDataSource,
   GitDataSource,
+  LocalBroadcaster,
 } from '@code-quest/broadcaster';
 import type { AgentTransport } from '@code-quest/schemas';
 import { REMOTE_METHODS } from '@code-quest/schemas';
 import { FakeFilesystemService, FakeGitService, FakeWatchService } from '@code-quest/test-kit';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
-import { BroadcasterHandler } from '../handlers/broadcaster-handler.ts';
+import { BroadcasterHandler } from '../broadcaster-handler.ts';
 
 function makeFakeRpc() {
   const handlers = new Map<string, (data: unknown) => Promise<unknown>>();
@@ -49,8 +49,8 @@ describe('BroadcasterHandler', () => {
     fs = new FakeFilesystemService();
     fs.setRoots(['/repo']);
     git = new FakeGitService();
-    broadcaster = new Broadcaster()
-      .add('files', (cwd) => new CachedDataSource(new FilesDataSource(cwd, '', watch, fs)))
+    broadcaster = new LocalBroadcaster()
+      .add('files', (cwd) => new FilesDataSource(cwd, watch, fs))
       .add('git', (cwd) => new GitDataSource(cwd, watch, git));
   });
 

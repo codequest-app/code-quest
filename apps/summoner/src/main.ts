@@ -1,25 +1,14 @@
 import 'dotenv/config';
-import {
-  Broadcaster,
-  CachedDataSource,
-  FilesDataSource,
-  GitDataSource,
-  OpenspecDataSource,
-} from '@code-quest/broadcaster';
-import { LocalFilesystemService, LocalRootGuard } from '@code-quest/filesystem';
-import { LocalGitService } from '@code-quest/git';
-import { LocalOpenspecService } from '@code-quest/openspec';
 import { formatBanner } from '@code-quest/schemas';
 import { WsClient } from '@code-quest/transport';
-import { LocalWatchService } from '@code-quest/watch';
 import { loadConfig } from './config.ts';
 import { Agent } from './connection/agent.ts';
 import { BroadcasterHandler } from './connection/handlers/broadcaster-handler.ts';
 import { FsHandler } from './connection/handlers/fs-handler.ts';
 import { GitHandler } from './connection/handlers/git-handler.ts';
 import { ProcessHandler } from './connection/handlers/process-handler.ts';
+import { createContainer, TOKENS } from './container.ts';
 import { logger } from './logger.ts';
-import { ChildProcessProvider } from './transports/child-process.ts';
 
 const config = loadConfig({
   argv: process.argv.slice(2),
@@ -57,20 +46,7 @@ logger.info(
   ]),
 );
 
-const processProvider = new ChildProcessProvider();
-const rootGuard = new LocalRootGuard(config.fsRoots);
-const filesystem = new LocalFilesystemService(config.fsRoots, rootGuard);
-const git = new LocalGitService();
-const watchService = new LocalWatchService();
-const openspec = new LocalOpenspecService(filesystem, processProvider);
-
-const broadcaster = new Broadcaster()
-  .add(
-    'files',
-    (cwd) => new CachedDataSource(new FilesDataSource(cwd, '', watchService, filesystem)),
-  )
-  .add('git', (cwd) => new GitDataSource(cwd, watchService, git))
-  .add('openspec', (cwd) => new OpenspecDataSource(cwd, watchService, openspec));
+const container = createContainer(config);
 
 const serverUrl = new URL(config.server);
 serverUrl.searchParams.set('sessionKey', crypto.randomUUID());
@@ -80,10 +56,10 @@ const client = new WsClient(serverUrl.toString(), {
 });
 
 const agent = new Agent([
-  new ProcessHandler(processProvider),
-  new FsHandler(filesystem),
-  new GitHandler(git),
-  new BroadcasterHandler(broadcaster),
+  new ProcessHandler(container.get(TOKENS.ProcessProvider)),
+  new FsHandler(container.get(TOKENS.Filesystem)),
+  new GitHandler(container.get(TOKENS.Git)),
+  new BroadcasterHandler(container.get(TOKENS.Broadcaster)),
 ]);
 agent.attach(client);
 

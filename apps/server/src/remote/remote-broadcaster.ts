@@ -1,16 +1,19 @@
+import type {
+  Broadcaster,
+  BroadcastType,
+  SnapshotCallback,
+  Unsubscribe,
+} from '@code-quest/broadcaster';
 import { REMOTE_METHODS } from '@code-quest/schemas';
 import type { RemoteRpcWithEvents } from './types.ts';
 
-type SnapshotCallback = (type: string, data: unknown) => void;
-type Unsubscribe = () => void;
-
 interface WatchSnapshot {
   cwd: string;
-  type: string;
+  type: BroadcastType;
   data: unknown;
 }
 
-export class RemoteBroadcaster {
+export class RemoteBroadcaster implements Broadcaster {
   private readonly rpc: RemoteRpcWithEvents;
   private readonly subscribers = new Map<string, Map<string, SnapshotCallback>>();
   private offSnapshot: Unsubscribe | null = null;

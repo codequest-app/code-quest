@@ -16,6 +16,18 @@
 
 ## 待完成
 
+### 8. DataSource 重構
+
+- [x] 8.1 `DataSource<T>` 從 interface 改為 abstract class，搬到 `data-source.ts`
+- [x] 8.2 資料夾 `datasources/` → `data-sources/`
+- [x] 8.3 `files.ts` → `files-data-source.ts`，改 `extends DataSource`
+- [x] 8.4 `git.ts` → `git-data-source.ts`，改 `extends DataSource`
+- [x] 8.5 `openspec.ts` → `openspec-data-source.ts`，改 `extends DataSource`
+- [x] 8.6 刪 `watch-callbacks.ts`、`matchers.ts`
+- [x] 8.7 刪 `cached.ts` + `cached.test.ts`，移除所有使用端的 `CachedDataSource` 包裝
+- [x] 8.8 更新 `index.ts` exports
+- [x] 8.9 更新 summoner `container.ts` + broadcaster-handler test
+
 ### 6. ProcessHandler 重構
 
 - [x] 6.1 新增 `ProcessHandler implements AgentHandler`：

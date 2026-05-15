@@ -1,9 +1,8 @@
 import 'reflect-metadata';
 import {
-  Broadcaster,
-  CachedDataSource,
   FilesDataSource,
   GitDataSource,
+  LocalBroadcaster,
   OpenspecDataSource,
 } from '@code-quest/broadcaster';
 import { type DiffFileService, LocalDiffFileService } from '@code-quest/diff-file';
@@ -228,10 +227,10 @@ function bindRemoteSnapshotBroadcasters(container: Container, remoteRpc: Reconne
 }
 
 function bindSnapshotBroadcasters(container: Container, watchService: WatchService): void {
-  const broadcaster = new Broadcaster()
+  const broadcaster = new LocalBroadcaster()
     .add('files', (cwd) => {
       const fs = container.get<FilesystemService>(TYPES.FilesystemService);
-      return new CachedDataSource(new FilesDataSource(cwd, '', watchService, fs));
+      return new FilesDataSource(cwd, watchService, fs);
     })
     .add('git', (cwd) => {
       const git = container.get<GitService>(TYPES.GitService);

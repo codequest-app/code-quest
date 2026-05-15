@@ -1,7 +1,7 @@
 ## Context
 
 已完成的部分（維持不動）：
-- `packages/broadcaster/` package 已建立，`DataSource<T>`、`CachedDataSource<T>` 已實作
+- `packages/broadcaster/` package 已建立
 - `FilesDataSource`、`GitDataSource`、`OpenspecDataSource` 已實作
 - Server local / remote 的訂閱流程已通
 - 前端 dirty event + snapshot 已串接
@@ -17,8 +17,6 @@
 - local mode server 只持有一個 `Broadcaster` binding
 
 **Non-Goals:**
-- 改變 `DataSource<T>` 介面
-- 改變 `CachedDataSource<T>` 實作
 - 改變各 DataSource 的過濾邏輯
 - 改變前端 dirty event 的 payload 結構
 
@@ -63,11 +61,30 @@ subscribe(cwd, subscriberId, cb)
     → 若 subs.size === 0：dispose 所有 DataSource，刪除 entry
 ```
 
+### DataSource abstract class
+
+`DataSource<T>` 改為 abstract class，把 `onChange` + `dispose` 的共用 watch 邏輯內建：
+
+```ts
+abstract class DataSource<T> {
+  constructor(cwd: string, watchService: WatchService, filter: (path: string) => boolean)
+  abstract read(): Promise<T>;
+  onChange(cb: () => void): Unsubscribe  // 由 abstract class 實作
+  dispose(): void                        // 由 abstract class 實作
+}
+```
+
+subclass 只需實作 `read()`，並在 constructor 呼叫 `super(cwd, watchService, filter)`。
+
+`watch-callbacks.ts` 的邏輯內化進 abstract class 後刪除。
+`matchers.ts` 的 `GIT_META_RE` inline 進各 subclass constructor 後刪除。
+`CachedDataSource` 因 `Broadcaster` 本身已有 `hasValue` + `lastValue` cache 而刪除。
+
 ### 建立方式（summoner）
 
 ```ts
-const broadcaster = new Broadcaster()
-  .add('files', (cwd) => new CachedDataSource(new FilesDataSource(cwd, '', watchService, fs)))
+const broadcaster = new LocalBroadcaster()
+  .add('files', (cwd) => new FilesDataSource(cwd, watchService, filesystem))
   .add('git', (cwd) => new GitDataSource(cwd, watchService, git))
   .add('openspec', (cwd) => new OpenspecDataSource(cwd, watchService, openspec));
 ```
@@ -147,9 +164,20 @@ apps/summoner/src/connection/
     git-handler.ts
     broadcaster-handler.ts
   index.ts
+
+packages/broadcaster/src/
+  broadcaster.ts          (LocalBroadcaster implements Broadcaster interface)
+  types.ts                (Broadcaster interface, BroadcastType, SnapshotCallback, Unsubscribe)
+  data-source.ts          (DataSource abstract class)
+  data-sources/
+    files-data-source.ts
+    git-data-source.ts
+    openspec-data-source.ts
+  index.ts
 ```
 
-`fs-handlers.ts` / `git-handlers.ts` inline 進各自的 handler 檔案後刪除。
+`watch-callbacks.ts`、`matchers.ts`、`cached.ts` 刪除。
+資料夾 `datasources/` → `data-sources/`，檔名對齊 class 名稱。
 
 ### RemoteBroadcaster 更新
 

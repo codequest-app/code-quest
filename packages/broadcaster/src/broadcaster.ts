@@ -1,9 +1,13 @@
-import type { BroadcastType, DataSource, Unsubscribe } from './types.ts';
-
-type SnapshotCallback = (type: BroadcastType, data: unknown) => void;
+import type {
+  Broadcaster,
+  BroadcastType,
+  DataSourceLike,
+  SnapshotCallback,
+  Unsubscribe,
+} from './types.ts';
 
 interface TypeEntry {
-  source: DataSource<unknown>;
+  source: DataSourceLike<unknown>;
   hasValue: boolean;
   lastValue: unknown;
   readPromise: Promise<unknown> | null;
@@ -15,11 +19,11 @@ interface CwdEntry {
   subs: Map<string, SnapshotCallback>;
 }
 
-export class Broadcaster {
+export class LocalBroadcaster implements Broadcaster {
   private readonly entries = new Map<string, CwdEntry>();
-  private readonly factories = new Map<BroadcastType, (cwd: string) => DataSource<unknown>>();
+  private readonly factories = new Map<BroadcastType, (cwd: string) => DataSourceLike<unknown>>();
 
-  add(type: BroadcastType, createSource: (cwd: string) => DataSource<unknown>): this {
+  add(type: BroadcastType, createSource: (cwd: string) => DataSourceLike<unknown>): this {
     this.factories.set(type, createSource);
     return this;
   }

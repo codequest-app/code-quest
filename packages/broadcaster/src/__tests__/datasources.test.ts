@@ -6,9 +6,12 @@ import type {
 } from '@code-quest/schemas';
 import { FakeWatchService } from '@code-quest/test-kit';
 import { describe, expect, it, vi } from 'vitest';
-import { FilesDataSource } from '../datasources/files.ts';
-import { GitDataSource } from '../datasources/git.ts';
-import { OpenspecDataSource, type OpenspecServiceLike } from '../datasources/openspec.ts';
+import { FilesDataSource } from '../data-sources/files-data-source.ts';
+import { GitDataSource } from '../data-sources/git-data-source.ts';
+import {
+  OpenspecDataSource,
+  type OpenspecServiceLike,
+} from '../data-sources/openspec-data-source.ts';
 
 // ── Fakes ──
 
@@ -43,7 +46,7 @@ describe('FilesDataSource', () => {
   it('read() returns files from filesystem service', async () => {
     const watch = new FakeWatchService();
     const fs = makeFakeFs([{ path: 'src/foo.ts', name: 'foo.ts', type: 'file' }]);
-    const ds = new FilesDataSource('/repo', '', watch, fs);
+    const ds = new FilesDataSource('/repo', watch, fs);
     const result = await ds.read();
     expect(result).toHaveLength(1);
     expect(result[0]?.path).toBe('src/foo.ts');
@@ -51,7 +54,7 @@ describe('FilesDataSource', () => {
 
   it('notifies onChange when a regular file changes', () => {
     const watch = new FakeWatchService();
-    const ds = new FilesDataSource('/repo', '', watch, makeFakeFs());
+    const ds = new FilesDataSource('/repo', watch, makeFakeFs());
     const cb = vi.fn();
     ds.onChange(cb);
     watch.simulate('/repo', { type: 'change', path: 'src/foo.ts' });
@@ -60,7 +63,7 @@ describe('FilesDataSource', () => {
 
   it('does NOT notify onChange for .git/HEAD changes', () => {
     const watch = new FakeWatchService();
-    const ds = new FilesDataSource('/repo', '', watch, makeFakeFs());
+    const ds = new FilesDataSource('/repo', watch, makeFakeFs());
     const cb = vi.fn();
     ds.onChange(cb);
     watch.simulate('/repo', { type: 'change', path: '.git/HEAD' });
@@ -69,7 +72,7 @@ describe('FilesDataSource', () => {
 
   it('does NOT notify onChange for node_modules changes', () => {
     const watch = new FakeWatchService();
-    const ds = new FilesDataSource('/repo', '', watch, makeFakeFs());
+    const ds = new FilesDataSource('/repo', watch, makeFakeFs());
     const cb = vi.fn();
     ds.onChange(cb);
     watch.simulate('/repo', { type: 'change', path: 'node_modules/pkg/index.js' });
@@ -78,7 +81,7 @@ describe('FilesDataSource', () => {
 
   it('does NOT notify onChange for dist changes', () => {
     const watch = new FakeWatchService();
-    const ds = new FilesDataSource('/repo', '', watch, makeFakeFs());
+    const ds = new FilesDataSource('/repo', watch, makeFakeFs());
     const cb = vi.fn();
     ds.onChange(cb);
     watch.simulate('/repo', { type: 'change', path: 'dist/bundle.js' });
@@ -87,7 +90,7 @@ describe('FilesDataSource', () => {
 
   it('unsubscribed onChange listener stops receiving callbacks', () => {
     const watch = new FakeWatchService();
-    const ds = new FilesDataSource('/repo', '', watch, makeFakeFs());
+    const ds = new FilesDataSource('/repo', watch, makeFakeFs());
     const cb = vi.fn();
     const off = ds.onChange(cb);
     off();

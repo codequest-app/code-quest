@@ -1,7 +1,8 @@
 import type { FileResult, FilesystemService, WatchService } from '@code-quest/schemas';
-import type { Unsubscribe } from '../types.ts';
+import { DataSource } from '../data-source.ts';
 
 const GIT_META_RE = /^\.git\/(HEAD|index|packed-refs|refs\/.*)$/;
+
 const IGNORE_RES: RegExp[] = [
   /^node_modules(\/|$)/,
   /^\.git\/objects(\/|$)/,
@@ -22,34 +23,19 @@ function matchesFs(path: string): boolean {
   return true;
 }
 
-export class FilesDataSource {
-  private readonly callbacks = new Set<() => void>();
-  private readonly unsub: Unsubscribe;
+export class FilesDataSource extends DataSource<FileResult[]> {
   private readonly cwd: string;
   private readonly pattern: string;
   private readonly fs: FilesystemService;
 
-  constructor(cwd: string, pattern: string, watchService: WatchService, fs: FilesystemService) {
+  constructor(cwd: string, watchService: WatchService, fs: FilesystemService, pattern = '') {
+    super(cwd, watchService, matchesFs);
     this.cwd = cwd;
     this.pattern = pattern;
     this.fs = fs;
-    this.unsub = watchService.subscribe(cwd, (ev) => {
-      if (matchesFs(ev.path)) {
-        for (const cb of this.callbacks) cb();
-      }
-    });
   }
 
   async read(): Promise<FileResult[]> {
     return this.fs.listFiles(this.cwd, this.pattern);
-  }
-
-  onChange(cb: () => void): Unsubscribe {
-    this.callbacks.add(cb);
-    return () => this.callbacks.delete(cb);
-  }
-
-  dispose(): void {
-    this.unsub();
   }
 }

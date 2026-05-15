@@ -1,6 +1,9 @@
-export { Broadcaster } from './broadcaster.ts';
-export { CachedDataSource } from './cached.ts';
-export { FilesDataSource } from './datasources/files.ts';
-export { GitDataSource } from './datasources/git.ts';
-export { OpenspecDataSource } from './datasources/openspec.ts';
-export type { DataSource, Unsubscribe } from './types.ts';
+export { LocalBroadcaster } from './broadcaster.ts';
+export { DataSource } from './data-source.ts';
+export { FilesDataSource } from './data-sources/files-data-source.ts';
+export { GitDataSource } from './data-sources/git-data-source.ts';
+export {
+  OpenspecDataSource,
+  type OpenspecServiceLike,
+} from './data-sources/openspec-data-source.ts';
+export type { Broadcaster, BroadcastType, SnapshotCallback, Unsubscribe } from './types.ts';

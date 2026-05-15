@@ -15,6 +15,8 @@ export function subscribeSnapshotForSocket(
       socket.emit(EVENTS.git.dirty, { cwd, snapshot: data });
     } else if (type === 'openspec') {
       socket.emit(EVENTS.openspec.dirty, { cwd, snapshot: data });
+    } else {
+      const _exhaustive: never = type satisfies never;
     }
   });
 }
