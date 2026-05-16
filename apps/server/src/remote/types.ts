@@ -1,4 +1,4 @@
-export interface RemoteRpc {
+interface RemoteRpc {
   request<R = unknown>(method: string, params: unknown): Promise<R>;
 }
 
