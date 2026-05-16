@@ -16,45 +16,45 @@ export { type Logger, type LogLevel, NOOP_LOGGER } from './logger.ts';
 // Process interfaces (shared contract; stays in schemas to avoid circular dep)
 export type { ProcessHandle, ProcessProvider, ProcessRunResult } from './process-provider.ts';
 // Zod schemas — server↔client contracts
-export * from './server/actions.ts';
-export * from './server/auth.ts';
-export * from './server/blocks.ts';
-export * from './server/common.ts';
-export * from './server/control.ts';
-export * from './server/control-response.ts';
-export * from './server/fs.ts';
-export * from './server/fs-dirty.ts';
-export * from './server/git.ts';
-export * from './server/hook.ts';
-export * from './server/mcp.ts';
-export * from './server/message.ts';
-export * from './server/message-meta.ts';
-export * from './server/message-payloads.ts';
-export * from './server/message-stats.ts';
-export * from './server/message-stream.ts';
-export * from './server/notification.ts';
-export * from './server/openspec.ts';
-export * from './server/permission-mode.ts';
-export * from './server/plan.ts';
-export * from './server/plugin.ts';
-export * from './server/projects.ts';
-export * from './server/provider.ts';
-export * from './server/question.ts';
-export * from './server/rpc.ts';
-export * from './server/session.ts';
-export * from './server/settings.ts';
+export * from './socket/actions.ts';
+export * from './socket/auth.ts';
+export * from './socket/blocks.ts';
+export * from './socket/common.ts';
+export * from './socket/control.ts';
+export * from './socket/control-response.ts';
+export * from './socket/fs.ts';
+export * from './socket/fs-dirty.ts';
+export * from './socket/git.ts';
+export * from './socket/hook.ts';
+export * from './socket/mcp.ts';
+export * from './socket/message.ts';
+export * from './socket/message-meta.ts';
+export * from './socket/message-payloads.ts';
+export * from './socket/message-stats.ts';
+export * from './socket/message-stream.ts';
+export * from './socket/notification.ts';
+export * from './socket/openspec.ts';
+export * from './socket/permission-mode.ts';
+export * from './socket/plan.ts';
+export * from './socket/plugin.ts';
+export * from './socket/projects.ts';
+export * from './socket/provider.ts';
+export * from './socket/question.ts';
+export * from './socket/rpc.ts';
+export * from './socket/session.ts';
+export * from './socket/settings.ts';
 // Socket event types
 export type {
   ClientMessage,
   ClientToServerEvents,
   MessagePayloadMap,
   ServerToClientEvents,
-} from './server/socket-events.ts';
-export { EVENTS } from './server/socket-events.ts';
-export * from './server/system.ts';
-export * from './server/task.ts';
-export * from './server/terminal.ts';
-export * from './server/worktree.ts';
+} from './socket/socket-events.ts';
+export { EVENTS } from './socket/socket-events.ts';
+export * from './socket/system.ts';
+export * from './socket/task.ts';
+export * from './socket/terminal.ts';
+export * from './socket/worktree.ts';
 // Topic pub/sub
 export { TopicEmitter } from './topic-emitter.ts';
 
