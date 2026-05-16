@@ -1,21 +1,20 @@
 import { z } from 'zod';
 
-export const colorThemeSchema: z.ZodEnum<{ system: 'system'; dark: 'dark'; light: 'light' }> =
-  z.enum(['dark', 'light', 'system']);
+const colorThemeSchema: z.ZodEnum<{ system: 'system'; dark: 'dark'; light: 'light' }> = z.enum([
+  'dark',
+  'light',
+  'system',
+]);
 export type ColorTheme = z.infer<typeof colorThemeSchema>;
 
 /** Concrete theme after resolving 'system' via OS preference; used as
  *  DOM data-theme value and by non-CSS consumers (e.g. Prism syntax theme). */
 export type EffectiveColorTheme = 'dark' | 'light';
 
-export const fontSizeSchema: z.ZodEnum<{ sm: 'sm'; md: 'md'; lg: 'lg' }> = z.enum([
-  'sm',
-  'md',
-  'lg',
-]);
+const fontSizeSchema: z.ZodEnum<{ sm: 'sm'; md: 'md'; lg: 'lg' }> = z.enum(['sm', 'md', 'lg']);
 export type FontSize = z.infer<typeof fontSizeSchema>;
 
-export const densitySchema: z.ZodEnum<{ comfortable: 'comfortable'; compact: 'compact' }> = z.enum([
+const densitySchema: z.ZodEnum<{ comfortable: 'comfortable'; compact: 'compact' }> = z.enum([
   'comfortable',
   'compact',
 ]);
