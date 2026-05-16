@@ -9,8 +9,8 @@ import type {
   OpenspecReadResult,
   OpenspecSpecSummary,
   OpenspecToggleTaskResult,
+  ProcessProvider,
 } from '@code-quest/schemas';
-import type { ProcessProvider } from '@code-quest/utils';
 import { z } from 'zod';
 import type { OpenspecArchiveOptions, OpenspecService } from './types.ts';
 

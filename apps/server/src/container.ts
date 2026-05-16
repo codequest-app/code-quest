@@ -15,6 +15,7 @@ import {
 import type { GitService } from '@code-quest/git';
 import { LocalGitService, RemoteGitService } from '@code-quest/git';
 import { LocalOpenspecService, type OpenspecService } from '@code-quest/openspec';
+import type { ProcessProvider } from '@code-quest/schemas';
 import {
   ChildProcessProvider,
   ClaudeAdapter,
@@ -22,7 +23,6 @@ import {
   type PluginCliService,
   ProcessRunner,
 } from '@code-quest/summoner';
-import type { ProcessProvider } from '@code-quest/utils';
 import { LocalWatchService, type WatchService } from '@code-quest/watch';
 import { Container } from 'inversify';
 import { config } from './config.ts';

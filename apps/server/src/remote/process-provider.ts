@@ -1,10 +1,10 @@
 import type { SpawnOptions } from 'node:child_process';
+import type { ProcessHandle, ProcessProvider, ProcessRunResult } from '@code-quest/schemas';
 import {
   processExitEventSchema,
   processLineEventSchema,
   REMOTE_METHODS,
 } from '@code-quest/schemas';
-import type { ProcessHandle, ProcessProvider, ProcessRunResult } from '@code-quest/utils';
 import { v4 as uuidv4 } from 'uuid';
 import { logger } from '../logger.ts';
 import type { RemoteRpcWithEvents } from './types.ts';

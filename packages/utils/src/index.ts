@@ -19,7 +19,6 @@ export {
   pdfDataUri,
 } from './mime.ts';
 export { parseFsRoots } from './parse-fs-roots.ts';
-export type { ProcessHandle, ProcessProvider, ProcessRunResult } from './process-provider.ts';
 export { TopicEmitter } from './topic-emitter.ts';
 export { validateBranchName } from './validate-branch-name.ts';
 export { validateWorktreeName } from './validate-worktree-name.ts';

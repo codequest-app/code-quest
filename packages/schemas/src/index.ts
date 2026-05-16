@@ -10,6 +10,8 @@ export type { Transport, TransportHandle } from './adapter/transport/transport.t
 export type { SocketCallback, TypedSocket } from './adapter/transport/types.ts';
 // Errors
 export { ERROR_CODES, type ErrorCode } from './errors.ts';
+// Process provider interface (summoner ↔ server contract)
+export type { ProcessHandle, ProcessProvider, ProcessRunResult } from './process-provider.ts';
 // Zod schemas — server↔client contracts
 export * from './socket/actions.ts';
 export * from './socket/auth.ts';
