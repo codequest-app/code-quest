@@ -90,10 +90,3 @@ Copy `apps/server/.env.example` and adjust as needed. Key variables:
 | `LOG_LEVEL` | `info` | Pino log level |
 | `EXPLORER_ROOTS` | home dir | Comma-separated allowed root directories |
 
-## Release
-
-Releases are published to [codequest-app/release](https://github.com/codequest-app/release).
-
-- Push to `main` triggers CI (lint + typecheck + test)
-- CI success triggers per-platform release build
-- Artifacts: `code-quest-{platform}.tar.gz` with bundled Node.js 22
