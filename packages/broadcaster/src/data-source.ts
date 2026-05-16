@@ -1,4 +1,4 @@
-import type { WatchService } from '@code-quest/schemas';
+import type { WatchService } from '@code-quest/watch';
 import type { DataSourceLike, Unsubscribe } from './types.ts';
 
 export const GIT_META_RE = /^\.git\/(HEAD|index|packed-refs|refs\/.*)$/;

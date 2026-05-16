@@ -64,7 +64,9 @@
     "use-debounce": "^10.1.1",
     "usehooks-ts": "^3.1.1",
     "zod": "^4.4.3",
-    "zustand": "^5.0.13"
+    "zustand": "^5.0.13",
+    "@code-quest/filesystem": "workspace:*",
+    "@code-quest/git": "workspace:*"
   },
   "devDependencies": {
     "@code-quest/server": "workspace:*",

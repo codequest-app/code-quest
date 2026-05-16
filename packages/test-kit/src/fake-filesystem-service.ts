@@ -1,15 +1,16 @@
 import { basename, dirname, join } from 'node:path';
+import {
+  type DirectoryEntry,
+  type FileResult,
+  type FilesystemService,
+  type FsMutationResult,
+  PathOutsideRootsError,
+  type ReadFileAbsoluteResult,
+  type ReadFileResult,
+  type RootGuard,
+  type WriteFileResult,
+} from '@code-quest/filesystem';
 import { mimeForPath } from '@code-quest/node-utils';
-import type {
-  DirectoryEntry,
-  FileResult,
-  FilesystemService,
-  FsMutationResult,
-  ReadFileAbsoluteResult,
-  ReadFileResult,
-  WriteFileResult,
-} from '@code-quest/schemas';
-import { PathOutsideRootsError, type RootGuard } from '@code-quest/schemas';
 
 export type FileTree = { [name: string]: string | FileTree };
 

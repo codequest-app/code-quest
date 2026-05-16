@@ -1,5 +1,3 @@
-export { AlreadyRepoError, NotARepoError } from '@code-quest/git';
-
 /** Canonical error codes used across socket RPC responses. */
 export const ERROR_CODES = {
   SESSION_NOT_FOUND: 'session_not_found',

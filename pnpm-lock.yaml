@@ -244,6 +244,12 @@ importers:
 
   apps/web:
     dependencies:
+      '@code-quest/filesystem':
+        specifier: workspace:*
+        version: link:../../packages/filesystem
+      '@code-quest/git':
+        specifier: workspace:*
+        version: link:../../packages/git
       '@code-quest/schemas':
         specifier: workspace:*
         version: link:../../packages/schemas
@@ -470,9 +476,18 @@ importers:
 
   packages/broadcaster:
     dependencies:
+      '@code-quest/filesystem':
+        specifier: workspace:*
+        version: link:../filesystem
+      '@code-quest/git':
+        specifier: workspace:*
+        version: link:../git
       '@code-quest/schemas':
         specifier: workspace:*
         version: link:../schemas
+      '@code-quest/watch':
+        specifier: workspace:*
+        version: link:../watch
     devDependencies:
       '@code-quest/test-kit':
         specifier: workspace:*
@@ -645,6 +660,9 @@ importers:
 
   packages/test-kit:
     dependencies:
+      '@code-quest/filesystem':
+        specifier: workspace:*
+        version: link:../filesystem
       '@code-quest/git':
         specifier: workspace:*
         version: link:../git
@@ -657,6 +675,9 @@ importers:
       '@code-quest/summoner':
         specifier: workspace:*
         version: link:../../apps/summoner
+      '@code-quest/watch':
+        specifier: workspace:*
+        version: link:../watch
       zod:
         specifier: ^4.4.3
         version: 4.4.3

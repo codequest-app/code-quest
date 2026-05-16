@@ -1,4 +1,5 @@
-import type { AgentTransport, FilesystemService } from '@code-quest/schemas';
+import type { FilesystemService } from '@code-quest/filesystem';
+import type { AgentTransport } from '@code-quest/schemas';
 import {
   fsBrowseDirectoriesParamsSchema,
   fsBrowseEntriesParamsSchema,

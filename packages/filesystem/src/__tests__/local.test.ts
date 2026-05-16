@@ -1,7 +1,9 @@
 import { join } from 'node:path';
-import { LocalFilesystemService } from '@code-quest/filesystem';
-import type { DirectoryEntry } from '@code-quest/schemas';
-import { PathOutsideRootsError } from '@code-quest/schemas';
+import {
+  type DirectoryEntry,
+  LocalFilesystemService,
+  PathOutsideRootsError,
+} from '@code-quest/filesystem';
 import { vol } from 'memfs';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { LocalRootGuard } from '../local-root-guard.ts';

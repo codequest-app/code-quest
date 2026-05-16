@@ -1,4 +1,5 @@
-import type { OpenspecListResult, WatchService } from '@code-quest/schemas';
+import type { OpenspecListResult } from '@code-quest/schemas';
+import type { WatchService } from '@code-quest/watch';
 import { DataSource } from '../data-source.ts';
 
 export interface OpenspecServiceLike {

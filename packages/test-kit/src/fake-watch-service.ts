@@ -1,4 +1,4 @@
-import type { Unsubscribe, WatchCallback, WatchEvent, WatchService } from '@code-quest/schemas';
+import type { Unsubscribe, WatchCallback, WatchEvent, WatchService } from '@code-quest/watch';
 
 /**
  * Deterministic WatchService for tests. Call `.simulate(cwd, event)` to fan

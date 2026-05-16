@@ -1,4 +1,4 @@
-import type { WatchService } from '@code-quest/schemas';
+import type { WatchService } from '@code-quest/watch';
 import { describe, expect, it, vi } from 'vitest';
 import { LocalWatchService } from '../local.ts';
 

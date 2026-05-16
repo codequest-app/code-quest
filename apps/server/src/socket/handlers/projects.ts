@@ -1,10 +1,10 @@
 import { homedir } from 'node:os';
 import { resolve } from 'node:path';
-import type { FilesystemService } from '@code-quest/schemas';
+import type { FilesystemService } from '@code-quest/filesystem';
+import { PathOutsideRootsError } from '@code-quest/filesystem';
 import {
   EVENTS,
   errMsg,
-  PathOutsideRootsError,
   type ProjectsError,
   type ProjectsRemoveResponse,
   type ProjectsUpdateResponse,

@@ -5,10 +5,12 @@ import {
   LocalBroadcaster,
   OpenspecDataSource,
 } from '@code-quest/broadcaster';
+import type { FilesystemService } from '@code-quest/filesystem';
 import { LocalFilesystemService, LocalRootGuard } from '@code-quest/filesystem';
+import type { GitService } from '@code-quest/git';
 import { LocalGitService } from '@code-quest/git';
 import { LocalOpenspecService } from '@code-quest/openspec';
-import type { FilesystemService, GitService, ProcessProvider } from '@code-quest/schemas';
+import type { ProcessProvider } from '@code-quest/schemas';
 import { LocalWatchService } from '@code-quest/watch';
 import type { RemoteConfig as Config } from './config.ts';
 import { ChildProcessProvider } from './transports/child-process.ts';

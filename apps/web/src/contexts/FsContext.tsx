@@ -1,8 +1,8 @@
+import type { FsMutationResult } from '@code-quest/filesystem';
 import {
   EVENTS,
   type FsDirectory,
   type FsFile,
-  type FsMutationResult,
   filesDirtyEventSchema,
   fsBrowseResponseSchema,
   fsMutationResultSchema,

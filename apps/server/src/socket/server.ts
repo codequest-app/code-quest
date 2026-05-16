@@ -1,7 +1,9 @@
 import type { Broadcaster } from '@code-quest/broadcaster';
 import type { DiffFileService } from '@code-quest/diff-file';
+import type { FilesystemService } from '@code-quest/filesystem';
+import type { GitService } from '@code-quest/git';
 import type { OpenspecService } from '@code-quest/openspec';
-import type { FilesystemService, GitService, TransportHandle } from '@code-quest/schemas';
+import type { TransportHandle } from '@code-quest/schemas';
 import type { PluginCliService } from '@code-quest/summoner';
 import { inject, injectable } from 'inversify';
 import type { ProjectAutoUpserter } from '../services/project-auto-upserter.ts';

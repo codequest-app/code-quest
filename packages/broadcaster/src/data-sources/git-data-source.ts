@@ -1,4 +1,6 @@
-import type { GitService, GitStatusResult, WatchService } from '@code-quest/schemas';
+import type { GitService } from '@code-quest/git';
+import type { GitStatusResult } from '@code-quest/schemas';
+import type { WatchService } from '@code-quest/watch';
 import { DataSource, GIT_META_RE } from '../data-source.ts';
 
 export class GitDataSource extends DataSource<GitStatusResult> {

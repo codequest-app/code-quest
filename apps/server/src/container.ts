@@ -6,14 +6,16 @@ import {
   OpenspecDataSource,
 } from '@code-quest/broadcaster';
 import { type DiffFileService, LocalDiffFileService } from '@code-quest/diff-file';
+import type { FilesystemService } from '@code-quest/filesystem';
 import {
   LocalFilesystemService,
   LocalRootGuard,
   RemoteFilesystemService,
 } from '@code-quest/filesystem';
+import type { GitService } from '@code-quest/git';
 import { LocalGitService, RemoteGitService } from '@code-quest/git';
 import { LocalOpenspecService, type OpenspecService } from '@code-quest/openspec';
-import type { FilesystemService, GitService, ProcessProvider } from '@code-quest/schemas';
+import type { ProcessProvider } from '@code-quest/schemas';
 import {
   ChildProcessProvider,
   ClaudeAdapter,

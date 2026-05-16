@@ -1,5 +1,5 @@
+import type { FilesystemService } from '@code-quest/filesystem';
 import type {
-  FilesystemService,
   OpenspecArchiveResult,
   OpenspecArtifactKind,
   OpenspecChangeNewResult,

@@ -1,10 +1,6 @@
 import type { Broadcaster } from '@code-quest/broadcaster';
-import type {
-  FileResult,
-  GitStatusResult,
-  OpenspecListResult,
-  TypedSocket,
-} from '@code-quest/schemas';
+import type { FileResult } from '@code-quest/filesystem';
+import type { GitStatusResult, OpenspecListResult, TypedSocket } from '@code-quest/schemas';
 import { EVENTS } from '@code-quest/schemas';
 import { describe, expect, it, vi } from 'vitest';
 import { subscribeSnapshotForSocket } from '../snapshot-subscriber.ts';

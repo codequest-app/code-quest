@@ -23,7 +23,9 @@
     "@code-quest/node-utils": "workspace:*",
     "@code-quest/schemas": "workspace:*",
     "@code-quest/summoner": "workspace:*",
-    "zod": "^4.4.3"
+    "zod": "^4.4.3",
+    "@code-quest/filesystem": "workspace:*",
+    "@code-quest/watch": "workspace:*"
   },
   "devDependencies": {
     "@types/node": "^25.7.0",

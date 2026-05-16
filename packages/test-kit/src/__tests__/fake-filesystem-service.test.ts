@@ -1,4 +1,4 @@
-import { PathOutsideRootsError } from '@code-quest/schemas';
+import { PathOutsideRootsError } from '@code-quest/filesystem';
 import { FakeFilesystemService } from '@code-quest/test-kit';
 import { describe, expect, it } from 'vitest';
 

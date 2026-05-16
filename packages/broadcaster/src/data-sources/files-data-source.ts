@@ -1,4 +1,5 @@
-import type { FileResult, FilesystemService, WatchService } from '@code-quest/schemas';
+import type { FileResult, FilesystemService } from '@code-quest/filesystem';
+import type { WatchService } from '@code-quest/watch';
 import { DataSource, GIT_META_RE } from '../data-source.ts';
 
 const IGNORE_RES: RegExp[] = [

@@ -1,4 +1,5 @@
-import type { AgentTransport, GitService } from '@code-quest/schemas';
+import type { GitService } from '@code-quest/git';
+import type { AgentTransport } from '@code-quest/schemas';
 import {
   gitAddParamsSchema,
   gitArchiveWorktreeParamsSchema,

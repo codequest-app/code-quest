@@ -1,20 +1,5 @@
 // Content types
 
-// Service interfaces (re-exported from their owning packages)
-export type {
-  DirectoryEntry,
-  FileKind,
-  FileResult,
-  FilesystemService,
-  FsMutationResult,
-  ReadFileAbsoluteResult,
-  ReadFileResult,
-  RootGuard,
-  WriteFileResult,
-} from '@code-quest/filesystem';
-export { PathOutsideRootsError } from '@code-quest/filesystem';
-export type { CreateWorktreeOptions, GitService } from '@code-quest/git';
-export type { Unsubscribe, WatchCallback, WatchEvent, WatchService } from '@code-quest/watch';
 // Remote summoner ↔ server protocol (JSON-RPC 2.0 over WebSocket)
 export { REMOTE_METHODS } from './adapter/remote/methods.ts';
 export * from './adapter/remote/protocol.ts';
@@ -25,7 +10,7 @@ export type { Transport, TransportHandle } from './adapter/transport/transport.t
 export type { SocketCallback, TypedSocket } from './adapter/transport/types.ts';
 export { CONTENT_TYPE } from './content-types.ts';
 // Errors
-export { AlreadyRepoError, ERROR_CODES, type ErrorCode, NotARepoError } from './errors.ts';
+export { ERROR_CODES, type ErrorCode } from './errors.ts';
 // Logger interface (runtime-free, isomorphic)
 export { type Logger, type LogLevel, NOOP_LOGGER } from './logger.ts';
 // Process interfaces (shared contract; stays in schemas to avoid circular dep)
