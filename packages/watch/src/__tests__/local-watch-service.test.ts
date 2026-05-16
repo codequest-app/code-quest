@@ -1,5 +1,5 @@
 import type { WatchCallback, WatchEvent, WatchService } from '@code-quest/schemas';
-import { beforeEach, describe, expect, it, vi } from 'vitest';
+import { describe, expect, it, vi } from 'vitest';
 import { LocalWatchService } from '../local.ts';
 
 describe('LocalWatchService', () => {
