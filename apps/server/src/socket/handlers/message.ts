@@ -108,7 +108,7 @@ export function create({
   function clearMcpTimeoutAndPassthrough(
     channel: Channel,
     requestId: string,
-    response: Record<string, unknown>,
+    response: ControlRespondPayload,
   ): Record<string, unknown> {
     channel.clearMcpTimeout(requestId);
     return { ...response };
@@ -161,7 +161,7 @@ export function create({
       const parsed = controlRespondPayloadSchema.parse(response);
 
       const subtypeBuilders: Record<string, () => Record<string, unknown>> = {
-        mcp_message: () => clearMcpTimeoutAndPassthrough(channel, requestId, response),
+        mcp_message: () => clearMcpTimeoutAndPassthrough(channel, requestId, parsed),
         elicitation: () => buildElicitationResponse(parsed),
       };
       const build = (meta?.subtype && subtypeBuilders[meta.subtype]) || null;

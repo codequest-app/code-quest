@@ -30,8 +30,6 @@ const CHOKIDAR_OPTS = {
   awaitWriteFinish: { stabilityThreshold: 100, pollInterval: 50 },
 };
 
-let inotifyWarned = false;
-
 const noopLogger: MinimalLogger = {
   debug: () => {},
   warn: () => {},
@@ -47,6 +45,7 @@ function errorCode(err: unknown): string | undefined {
 export class LocalWatchService implements WatchService {
   private readonly logger: MinimalLogger;
   private entries = new Map<string, { watcher: FSWatcher; subs: Set<WatchCallback> }>();
+  private inotifyWarned = false;
 
   constructor(logger?: MinimalLogger) {
     this.logger = logger ?? noopLogger;
@@ -91,8 +90,8 @@ export class LocalWatchService implements WatchService {
     });
     watcher.on('error', (err: unknown) => {
       const code = errorCode(err);
-      if (code === 'ENOSPC' && !inotifyWarned) {
-        inotifyWarned = true;
+      if (code === 'ENOSPC' && !this.inotifyWarned) {
+        this.inotifyWarned = true;
         this.logger.warn(
           '[LocalWatchService] inotify watch limit reached. ' +
             'Increase with: sudo sysctl -n fs.inotify.max_user_watches=524288',

@@ -15,7 +15,7 @@ function extractPayloadAndCb(args: unknown[]): { payload: unknown; cb?: SocketCa
 }
 
 /** Unified handler signature for all events (runner + client). */
-type EmitterHandler = (
+export type EmitterHandler = (
   ch: Channel | null,
   payload: unknown,
   socket?: TypedSocket,

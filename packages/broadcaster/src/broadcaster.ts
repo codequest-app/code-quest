@@ -1,3 +1,4 @@
+import { type Logger, NOOP_LOGGER } from '@code-quest/utils';
 import type {
   Broadcaster,
   BroadcastType,
@@ -22,6 +23,11 @@ interface CwdEntry {
 export class LocalBroadcaster implements Broadcaster {
   private readonly entries = new Map<string, CwdEntry>();
   private readonly factories = new Map<BroadcastType, (cwd: string) => DataSourceLike<unknown>>();
+  private readonly logger: Logger;
+
+  constructor(options?: { logger?: Logger }) {
+    this.logger = options?.logger ?? NOOP_LOGGER;
+  }
 
   add(type: BroadcastType, createSource: (cwd: string) => DataSourceLike<unknown>): this {
     this.factories.set(type, createSource);
@@ -73,9 +79,9 @@ export class LocalBroadcaster implements Broadcaster {
         for (const sub of e.subs.values()) sub(type, data);
         return data;
       })
-      .catch((err) => {
+      .catch((err: unknown) => {
         typeEntry.readPromise = null;
-        console.error('[Broadcaster] read failed on change', type, err);
+        this.logger.error({ err, type }, 'Broadcaster: read failed on change');
       });
   }
 
@@ -91,13 +97,13 @@ export class LocalBroadcaster implements Broadcaster {
       return;
     }
     if (typeEntry.readPromise) {
-      typeEntry.readPromise
-        .then((data) => {
-          const e = this.entries.get(cwd);
-          if (!e || !e.subs.has(subscriberId)) return;
-          cb(type, data);
-        })
-        .catch((err) => console.error('[Broadcaster] initial read failed', type, err));
+      typeEntry.readPromise.then(() => {
+        const e = this.entries.get(cwd);
+        if (!e || !e.subs.has(subscriberId)) return;
+        const te = e.types.get(type);
+        if (!te?.hasValue) return;
+        cb(type, te.lastValue);
+      });
       return;
     }
     typeEntry.readPromise = typeEntry.source
@@ -115,9 +121,9 @@ export class LocalBroadcaster implements Broadcaster {
         cb(type, data);
         return data;
       })
-      .catch((err) => {
+      .catch((err: unknown) => {
         typeEntry.readPromise = null;
-        console.error('[Broadcaster] initial read failed', type, err);
+        this.logger.error({ err, type }, 'Broadcaster: initial read failed');
       });
   }
 

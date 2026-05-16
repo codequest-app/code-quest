@@ -15,12 +15,13 @@ import {
   type ReactNode,
   useCallback,
   useContext,
-  useEffect,
   useMemo,
   useState,
   useSyncExternalStore,
 } from 'react';
+import { useDirtyQueryCache } from '../hooks/use-dirty-query-cache.ts';
 import { rpc } from '../socket/rpc.ts';
+import { parseSnapshot } from '../utils/parse-snapshot.ts';
 import { createQueryCache } from '../utils/query-cache.ts';
 import { useSocket } from './SocketContext.tsx';
 
@@ -65,8 +66,9 @@ export function useOpenspecList(cwd: string): OpenspecListResult | undefined {
 }
 
 const fetchOpenspecList =
-  (socket: ReturnType<typeof useSocket>['socket']) =>
+  (socket: ReturnType<typeof useSocket>['socket'] | null) =>
   async (cwd: string): Promise<OpenspecListResult> => {
+    if (!socket) return { error: 'Invalid response' };
     const response = await rpc(socket, EVENTS.openspec.list, { cwd });
     const parsed = openspecListResultSchema.safeParse(response);
     return parsed.success ? parsed.data : { error: 'Invalid response' };
@@ -77,11 +79,8 @@ const extractOpenspecCwd = (payload: unknown): string | null => {
   return parsed.success ? parsed.data.cwd : null;
 };
 
-const extractOpenspecSnapshot = (payload: unknown): OpenspecListResult | null => {
-  if (typeof payload !== 'object' || payload === null || !('snapshot' in payload)) return null;
-  const parsed = openspecListResultSchema.safeParse((payload as { snapshot: unknown }).snapshot);
-  return parsed.success ? parsed.data : null;
-};
+const extractOpenspecSnapshot = (payload: unknown): OpenspecListResult | null =>
+  parseSnapshot(payload, openspecListResultSchema);
 
 export function OpenspecProvider({ children }: { children: ReactNode }): React.JSX.Element {
   const { socket } = useSocket();
@@ -92,27 +91,14 @@ export function OpenspecProvider({ children }: { children: ReactNode }): React.J
     }),
   );
 
-  useEffect(() => {
-    store.setFetch(fetchOpenspecList(socket));
-  }, [socket, store]);
-
-  useEffect(() => {
-    if (!socket) return;
-    const onDirty = (payload: unknown) => {
-      const cwd = extractOpenspecCwd(payload);
-      if (!cwd) return;
-      const snapshot = extractOpenspecSnapshot(payload);
-      if (snapshot) {
-        store.set(cwd, snapshot);
-      } else {
-        void store.refetchIfSubscribed(cwd);
-      }
-    };
-    socket.on(EVENTS.openspec.dirty, onDirty);
-    return () => {
-      socket.off(EVENTS.openspec.dirty, onDirty);
-    };
-  }, [socket, store]);
+  useDirtyQueryCache(
+    socket,
+    store,
+    fetchOpenspecList,
+    EVENTS.openspec.dirty,
+    extractOpenspecCwd,
+    extractOpenspecSnapshot,
+  );
 
   const actions = useMemo<OpenspecActions>(
     () => ({

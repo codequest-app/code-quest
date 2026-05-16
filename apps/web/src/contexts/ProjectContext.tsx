@@ -4,7 +4,15 @@ import {
   type Project as ServerProject,
 } from '@code-quest/schemas';
 import { isRecord } from '@code-quest/utils';
-import { createContext, type ReactNode, useContext, useEffect, useRef, useState } from 'react';
+import {
+  createContext,
+  type ReactNode,
+  useContext,
+  useEffect,
+  useMemo,
+  useRef,
+  useState,
+} from 'react';
 import { toast } from 'sonner';
 import { useSocket } from './SocketContext.tsx';
 
@@ -230,10 +238,10 @@ export function ProjectProvider({ children }: { children: ReactNode }): React.JS
       removeProjectImpl(socketRef.current, serverProjectsRef.current, cwd),
   }));
 
-  const state: ProjectState = {
-    projects,
-    activeProjectCwd,
-  };
+  const state = useMemo<ProjectState>(
+    () => ({ projects, activeProjectCwd }),
+    [projects, activeProjectCwd],
+  );
   return (
     <ProjectStateContext.Provider value={state}>
       <ProjectActionsContext.Provider value={actions}>{children}</ProjectActionsContext.Provider>

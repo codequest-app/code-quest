@@ -1,3 +1,5 @@
+import type { Logger } from '@code-quest/utils';
+import { NOOP_LOGGER } from '@code-quest/utils';
 import { describe, expect, it, vi } from 'vitest';
 import { LocalBroadcaster } from '../broadcaster.ts';
 import type { DataSourceLike } from '../types.ts';
@@ -168,8 +170,88 @@ describe('Broadcaster', () => {
     off();
 
     source.notify();
-    await new Promise((r) => setTimeout(r, 20));
     expect(cb).toHaveBeenCalledTimes(1);
+  });
+
+  describe('logger', () => {
+    function makeFailingSource(): DataSourceLike<unknown> & { notify(): void } {
+      const cbs = new Set<() => void>();
+      return {
+        async read() {
+          throw new Error('read error');
+        },
+        onChange(cb) {
+          cbs.add(cb);
+          return () => cbs.delete(cb);
+        },
+        notify() {
+          for (const cb of cbs) cb();
+        },
+      };
+    }
+
+    it('calls logger.error when deliverInitial read fails', async () => {
+      const logger: Logger = { ...NOOP_LOGGER, error: vi.fn() };
+      const source = makeFailingSource();
+      const broadcaster = new LocalBroadcaster({ logger }).add('files', () => source);
+      const cb = vi.fn();
+      broadcaster.subscribe('/repo', 's1', cb);
+      await vi.waitUntil(() => (logger.error as ReturnType<typeof vi.fn>).mock.calls.length > 0);
+      expect(logger.error).toHaveBeenCalled();
+    });
+
+    it('calls logger.error when onSourceChange read fails', async () => {
+      const logger: Logger = { ...NOOP_LOGGER, error: vi.fn() };
+      let callCount = 0;
+      const cbs = new Set<() => void>();
+      const source: DataSourceLike<string> & { notify(): void } = {
+        async read() {
+          if (callCount++ === 0) return 'initial';
+          throw new Error('change read error');
+        },
+        onChange(cb) {
+          cbs.add(cb);
+          return () => cbs.delete(cb);
+        },
+        notify() {
+          for (const cb of cbs) cb();
+        },
+      };
+      const broadcaster = new LocalBroadcaster({ logger }).add('files', () => source);
+      const cb = vi.fn();
+      broadcaster.subscribe('/repo', 's1', cb);
+      await vi.waitUntil(() => cb.mock.calls.length > 0);
+
+      source.notify();
+      await vi.waitUntil(() => (logger.error as ReturnType<typeof vi.fn>).mock.calls.length > 0);
+      expect(logger.error).toHaveBeenCalled();
+    });
+
+    it('does not deliver undefined to subscriber when in-flight read fails', async () => {
+      const logger: Logger = { ...NOOP_LOGGER, error: vi.fn() };
+      let rejectRead!: (err: Error) => void;
+      const source: DataSourceLike<string> = {
+        read() {
+          return new Promise<string>((_, rej) => {
+            rejectRead = rej;
+          });
+        },
+        onChange() {
+          return () => {};
+        },
+      };
+      const broadcaster = new LocalBroadcaster({ logger }).add('files', () => source);
+      const cb1 = vi.fn();
+      const cb2 = vi.fn();
+      broadcaster.subscribe('/repo', 's1', cb1); // triggers readPromise
+      broadcaster.subscribe('/repo', 's2', cb2); // piggybacks on readPromise
+
+      rejectRead(new Error('fail'));
+      await vi.waitUntil(() => (logger.error as ReturnType<typeof vi.fn>).mock.calls.length > 0);
+
+      expect(cb1).not.toHaveBeenCalled();
+      expect(cb2).not.toHaveBeenCalled();
+    });
   });
 
   it('single subscribe covers all registered types without extra subscribe calls', async () => {

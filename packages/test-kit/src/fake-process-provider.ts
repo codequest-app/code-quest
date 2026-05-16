@@ -18,7 +18,6 @@ export interface ReceivedMessageMap {
 
 function makeAsyncQueue(
   getQueue: () => string[],
-  _getResolver: () => ((result: IteratorResult<string>) => void) | null,
   setResolver: (fn: ((result: IteratorResult<string>) => void) | null) => void,
   signal: AbortSignal,
 ): AsyncIterable<string> {
@@ -106,7 +105,6 @@ export class FakeProcessHandle implements ProcessHandle {
 
   readonly lines: AsyncIterable<string> = makeAsyncQueue(
     () => this.lineQueue,
-    () => this.resolver,
     (fn) => {
       this.resolver = fn;
     },
@@ -115,7 +113,6 @@ export class FakeProcessHandle implements ProcessHandle {
 
   readonly stderr: AsyncIterable<string> = makeAsyncQueue(
     () => this.stderrQueue,
-    () => this.stderrResolver,
     (fn) => {
       this.stderrResolver = fn;
     },

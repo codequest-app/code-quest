@@ -15,7 +15,12 @@ export function create({
   diffFileService,
 }: Pick<HandlerContext, 'emitter' | 'diffFileService'>): void {
   function onCancel(ch: Channel, payload: unknown): void {
-    const { requestId } = requestIdPayloadSchema.parse(payload);
+    const parsed = requestIdPayloadSchema.safeParse(payload);
+    if (!parsed.success) {
+      logger.warn({ err: parsed.error }, 'onCancel: invalid payload');
+      return;
+    }
+    const { requestId } = parsed.data;
     ch.removeControlRequest(requestId);
     emitter.emit(ch.channelId, EVENTS.chat.cancel_request, {
       channelId: ch.channelId,
@@ -24,18 +29,32 @@ export function create({
   }
 
   function onPermission(ch: Channel, payload: unknown): void {
-    const { requestId, toolName, toolUseId } = permissionPayloadSchema.parse(payload);
+    const parsed = permissionPayloadSchema.safeParse(payload);
+    if (!parsed.success) {
+      logger.warn({ err: parsed.error }, 'onPermission: invalid payload');
+      return;
+    }
+    const { requestId, toolName, toolUseId } = parsed.data;
     ch.trackControlRequest(requestId, { subtype: 'can_use_tool', toolName, toolUseId });
   }
 
   function onElicitation(ch: Channel, payload: unknown): void {
-    const { requestId } = requestIdPayloadSchema.parse(payload);
+    const parsed = requestIdPayloadSchema.safeParse(payload);
+    if (!parsed.success) {
+      logger.warn({ err: parsed.error }, 'onElicitation: invalid payload');
+      return;
+    }
+    const { requestId } = parsed.data;
     ch.trackControlRequest(requestId, { subtype: 'elicitation' });
   }
 
   function onForwardToClient(ch: Channel, payload: unknown): void {
-    const { requestId, subtype, toolName, toolUseId, input, suggestions, callbackId } =
-      controlForwardPayloadSchema.parse(payload);
+    const parsed = controlForwardPayloadSchema.safeParse(payload);
+    if (!parsed.success) {
+      logger.warn({ err: parsed.error }, 'onForwardToClient: invalid payload');
+      return;
+    }
+    const { requestId, subtype, toolName, toolUseId, input, suggestions, callbackId } = parsed.data;
 
     ch.trackControlRequest(requestId, { subtype, toolName, toolUseId });
     emitter.emit(ch.channelId, EVENTS.raw.event, {
@@ -46,7 +65,12 @@ export function create({
   }
 
   async function onOpenDiff(ch: Channel, payload: unknown): Promise<void> {
-    const { requestId, originalPath, newPath } = controlOpenDiffPayloadSchema.parse(payload);
+    const p = controlOpenDiffPayloadSchema.safeParse(payload);
+    if (!p.success) {
+      logger.warn({ err: p.error }, 'onOpenDiff: invalid payload');
+      return;
+    }
+    const { requestId, originalPath, newPath } = p.data;
     try {
       const [oldContent, newContent] = await Promise.all([
         diffFileService.read(originalPath),

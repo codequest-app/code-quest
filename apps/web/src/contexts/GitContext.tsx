@@ -16,7 +16,9 @@ import {
   useState,
   useSyncExternalStore,
 } from 'react';
+import { useDirtyQueryCache } from '../hooks/use-dirty-query-cache.ts';
 import { rpc } from '../socket/rpc.ts';
+import { parseSnapshot } from '../utils/parse-snapshot.ts';
 import { createQueryCache } from '../utils/query-cache.ts';
 import { useSocket } from './SocketContext.tsx';
 
@@ -118,8 +120,9 @@ export function useGitStatus(cwd: string): GitStatusByCwdResult | undefined {
 }
 
 const fetchGitStatus =
-  (socket: ReturnType<typeof useSocket>['socket']) =>
+  (socket: ReturnType<typeof useSocket>['socket'] | null) =>
   async (cwd: string): Promise<GitStatusByCwdResult> => {
+    if (!socket) return { error: 'invalid_response' };
     const response = await rpc(socket, EVENTS.git.status, { cwd });
     const parsed = gitStatusByCwdResultSchema.safeParse(response);
     return parsed.success ? parsed.data : { error: 'invalid_response' };
@@ -133,11 +136,8 @@ const extractGitDirtyCwd = (payload: unknown): string | null => {
   return null;
 };
 
-const extractGitSnapshot = (payload: unknown): GitStatusResult | null => {
-  if (typeof payload !== 'object' || payload === null || !('snapshot' in payload)) return null;
-  const parsed = gitStatusResultSchema.safeParse((payload as { snapshot: unknown }).snapshot);
-  return parsed.success ? parsed.data : null;
-};
+const extractGitSnapshot = (payload: unknown): GitStatusResult | null =>
+  parseSnapshot(payload, gitStatusResultSchema);
 
 export function GitProvider({ children }: { children: ReactNode }): React.JSX.Element {
   const { socket } = useSocket();
@@ -150,27 +150,14 @@ export function GitProvider({ children }: { children: ReactNode }): React.JSX.El
     }),
   );
 
-  useEffect(() => {
-    statusStore.setFetch(fetchGitStatus(socket));
-  }, [socket, statusStore]);
-
-  useEffect(() => {
-    if (!socket) return;
-    const onDirty = (payload: unknown) => {
-      const cwd = extractGitDirtyCwd(payload);
-      if (!cwd) return;
-      const snapshot = extractGitSnapshot(payload);
-      if (snapshot) {
-        statusStore.set(cwd, snapshot);
-      } else {
-        void statusStore.refetchIfSubscribed(cwd);
-      }
-    };
-    socket.on(EVENTS.git.dirty, onDirty);
-    return () => {
-      socket.off(EVENTS.git.dirty, onDirty);
-    };
-  }, [socket, statusStore]);
+  useDirtyQueryCache(
+    socket,
+    statusStore,
+    fetchGitStatus,
+    EVENTS.git.dirty,
+    extractGitDirtyCwd,
+    extractGitSnapshot,
+  );
 
   const actions = useMemo<WorktreeActions>(
     () => ({
@@ -259,6 +246,7 @@ export function GitProvider({ children }: { children: ReactNode }): React.JSX.El
       setListing((prev) => {
         const entry = prev[event.projectCwd];
         if (!Array.isArray(entry)) return prev;
+        if (!entry.some((w) => w.name === event.name)) return prev;
         return { ...prev, [event.projectCwd]: entry.filter((w) => w.name !== event.name) };
       });
     };
@@ -266,6 +254,8 @@ export function GitProvider({ children }: { children: ReactNode }): React.JSX.El
       setListing((prev) => {
         const entry = prev[event.projectCwd];
         if (!Array.isArray(entry)) return prev;
+        const target = entry.find((w) => w.path === event.worktreePath);
+        if (!target || target.branch === event.branch) return prev;
         return {
           ...prev,
           [event.projectCwd]: entry.map((w) =>

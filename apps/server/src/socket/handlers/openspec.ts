@@ -1,4 +1,3 @@
-import type { SocketCallback, TypedSocket } from '@code-quest/schemas';
 import {
   EVENTS,
   openspecArchivePayloadSchema,
@@ -10,13 +9,7 @@ import {
 import type { ZodType } from 'zod';
 import { logger } from '../../logger.ts';
 import type { HandlerContext } from '../../types.ts';
-
-type EmitterHandler = (
-  ch: unknown,
-  payload: unknown,
-  socket?: TypedSocket,
-  callback?: SocketCallback,
-) => Promise<void>;
+import type { EmitterHandler } from '../channel-emitter.ts';
 
 function createHandler<T>(
   schema: ZodType<T>,

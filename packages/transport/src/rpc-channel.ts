@@ -1,3 +1,4 @@
+import { type Logger, NOOP_LOGGER } from '@code-quest/utils';
 import { type Envelope, PONG_JSON, parseEnvelope } from './envelope.ts';
 
 export interface RpcSocket {
@@ -20,11 +21,13 @@ type PendingCall = {
 
 export interface RpcChannelOptions {
   requestTimeoutMs?: number;
+  logger?: Logger;
 }
 
 export class RpcChannel {
   private readonly socket: RpcSocket;
   private readonly requestTimeoutMs: number;
+  private readonly logger: Logger;
   private readonly handlers = new Map<string, RequestHandler>();
   private readonly listeners = new Map<string, Set<(...args: unknown[]) => void>>();
   private readonly pending = new Map<string, PendingCall>();
@@ -34,6 +37,7 @@ export class RpcChannel {
   constructor(socket: RpcSocket, options?: RpcChannelOptions) {
     this.socket = socket;
     this.requestTimeoutMs = options?.requestTimeoutMs ?? DEFAULT_REQUEST_TIMEOUT_MS;
+    this.logger = options?.logger ?? NOOP_LOGGER;
 
     socket.onMessage((raw) => this.handleMessage(raw));
     socket.onClose(() => this.handleClose());
@@ -127,7 +131,7 @@ export class RpcChannel {
       const response: Envelope = { kind: 'response', id, ok: true, data: result };
       this.socket.send(JSON.stringify(response));
     } catch (err) {
-      console.error('[rpc-channel] handler error:', err);
+      this.logger.error({ err }, 'rpc-channel: handler error');
       const response: Envelope = {
         kind: 'response',
         id,
@@ -153,10 +157,7 @@ export class RpcChannel {
   private fireEvent(event: string, data?: unknown): void {
     const set = this.listeners.get(event);
     if (!set) return;
-    for (const fn of set) {
-      if (data !== undefined) fn(data);
-      else fn();
-    }
+    for (const fn of set) fn(data);
   }
 
   private handleClose(): void {

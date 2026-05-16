@@ -1,8 +1,10 @@
-import { describe, expect, it } from 'vitest';
+import type { Logger } from '@code-quest/utils';
+import { NOOP_LOGGER } from '@code-quest/utils';
+import { describe, expect, it, vi } from 'vitest';
 import type { RpcSocket } from '../rpc-channel.ts';
 import { RpcChannel } from '../rpc-channel.ts';
 
-function createPair(): {
+function createPair(options?: { logger?: Logger }): {
   client: RpcChannel;
   server: RpcChannel;
   clientSocket: RpcSocket;
@@ -33,8 +35,8 @@ function createPair(): {
     },
   };
 
-  const client = new RpcChannel(clientSocket);
-  const server = new RpcChannel(serverSocket);
+  const client = new RpcChannel(clientSocket, options);
+  const server = new RpcChannel(serverSocket, options);
 
   return { client, server, clientSocket, serverSocket };
 }
@@ -125,6 +127,20 @@ describe('RpcChannel', () => {
       client.close();
 
       expect(disconnected).toBe(true);
+    });
+  });
+
+  describe('logger', () => {
+    it('calls logger.error when handler throws', async () => {
+      const logger: Logger = { ...NOOP_LOGGER, error: vi.fn() };
+      const { client, server } = createPair({ logger });
+
+      server.onRequest('fail', async () => {
+        throw new Error('boom');
+      });
+
+      await expect(client.request('fail', {})).rejects.toThrow('boom');
+      expect(logger.error).toHaveBeenCalled();
     });
   });
 

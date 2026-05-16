@@ -189,32 +189,38 @@ export function SessionProvider({ children }: { children: ReactNode }): React.JS
     };
   }, [socket]);
 
+  const socketRef = useRef(socket);
+  useEffect(() => {
+    socketRef.current = socket;
+  }, [socket]);
+
   const [actions] = useState<SessionActionsValue>(() => ({
-    listSessions: (opts) => rpc(socket, EVENTS.session.list, opts ?? {}),
-    listRemoteSessions: (opts) => rpc(socket, EVENTS.session.list_remote, opts ?? {}),
-    getSession: (channelId) => rpc(socket, EVENTS.session.get, { channelId }),
+    listSessions: (opts) => rpc(socketRef.current, EVENTS.session.list, opts ?? {}),
+    listRemoteSessions: (opts) => rpc(socketRef.current, EVENTS.session.list_remote, opts ?? {}),
+    getSession: (channelId) => rpc(socketRef.current, EVENTS.session.get, { channelId }),
     forkSession: (forkedFromChannelId, resumeSessionAt) =>
-      rpc(socket, EVENTS.session.fork, {
+      rpc(socketRef.current, EVENTS.session.fork, {
         forkedFromChannelId,
         resumeSessionAt,
         newChannelId: crypto.randomUUID(),
       }),
     teleportSession: (remoteChannelId, branch) =>
-      rpc(socket, EVENTS.session.teleport, {
+      rpc(socketRef.current, EVENTS.session.teleport, {
         remoteChannelId,
         branch,
         newChannelId: crypto.randomUUID(),
       }),
-    renameSession: (channelId, title) => rpc(socket, EVENTS.session.rename, { channelId, title }),
-    deleteSession: (channelId) => rpc(socket, EVENTS.session.delete, { channelId }),
+    renameSession: (channelId, title) =>
+      rpc(socketRef.current, EVENTS.session.rename, { channelId, title }),
+    deleteSession: (channelId) => rpc(socketRef.current, EVENTS.session.delete, { channelId }),
     updateSessionState: (channelId, update) =>
-      rpc(socket, EVENTS.session.update_state, { channelId, ...update }),
+      rpc(socketRef.current, EVENTS.session.update_state, { channelId, ...update }),
     closeSession: (channelId: string) => {
-      socket.emit(EVENTS.session.close, { channelId });
+      socketRef.current.emit(EVENTS.session.close, { channelId });
     },
     resume: (sessionId: string) =>
       new Promise<{ channelId: string }>((resolve, reject) => {
-        socket.emit(EVENTS.session.resume, { sessionId }, (raw: unknown) => {
+        socketRef.current.emit(EVENTS.session.resume, { sessionId }, (raw: unknown) => {
           const parsed = sessionResumeResponseSchema.safeParse(raw);
           if (!parsed.success) {
             reject(new Error('Invalid response'));
@@ -229,7 +235,7 @@ export function SessionProvider({ children }: { children: ReactNode }): React.JS
       }),
     login: () => {
       setAuth({ status: 'waiting', authUrl: null, errorMsg: null });
-      socket.emit(EVENTS.auth.login, { method: 'oauth' }, (res) => {
+      socketRef.current.emit(EVENTS.auth.login, { method: 'oauth' }, (res) => {
         if (!res.ok) {
           setAuth({ status: 'error', authUrl: null, errorMsg: res.error ?? 'Login failed' });
         }
@@ -237,7 +243,7 @@ export function SessionProvider({ children }: { children: ReactNode }): React.JS
     },
     submitOAuthCode: (code: string, state?: string) => {
       setAuth((prev) => ({ ...prev, status: 'waiting' }));
-      socket.emit(EVENTS.auth.oauth_code, { code, state }, (res) => {
+      socketRef.current.emit(EVENTS.auth.oauth_code, { code, state }, (res) => {
         if (res.ok) {
           setAuth({ status: 'success', authUrl: null, errorMsg: null });
         } else {

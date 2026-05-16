@@ -1,17 +1,13 @@
-import type {
-  Broadcaster,
-  BroadcastType,
-  SnapshotCallback,
-  Unsubscribe,
-} from '@code-quest/broadcaster';
+import type { Broadcaster, SnapshotCallback, Unsubscribe } from '@code-quest/broadcaster';
 import { REMOTE_METHODS } from '@code-quest/schemas';
+import { z } from 'zod';
 import type { RemoteRpcWithEvents } from './types.ts';
 
-interface WatchSnapshot {
-  cwd: string;
-  type: BroadcastType;
-  data: unknown;
-}
+const watchSnapshotSchema = z.object({
+  cwd: z.string(),
+  type: z.enum(['files', 'git', 'openspec']),
+  data: z.unknown(),
+});
 
 export class RemoteBroadcaster implements Broadcaster {
   private readonly rpc: RemoteRpcWithEvents;
@@ -51,17 +47,22 @@ export class RemoteBroadcaster implements Broadcaster {
   dispose(): void {
     this.offSnapshot?.();
     this.offSnapshot = null;
+    for (const cwd of this.subscribers.keys()) {
+      void this.rpc.request(REMOTE_METHODS.watch.stop, { cwd });
+    }
     this.subscribers.clear();
   }
 
   private ensureSnapshotListener(): void {
     if (this.offSnapshot) return;
     this.offSnapshot = this.rpc.on(REMOTE_METHODS.watch.snapshot, (...args: unknown[]) => {
-      const payload = args[0] as WatchSnapshot;
-      const subs = this.subscribers.get(payload.cwd);
+      const parsed = watchSnapshotSchema.safeParse(args[0]);
+      if (!parsed.success) return;
+      const { cwd, type, data } = parsed.data;
+      const subs = this.subscribers.get(cwd);
       if (!subs) return;
       for (const cb of subs.values()) {
-        cb(payload.type, payload.data);
+        cb(type, data);
       }
     });
   }
