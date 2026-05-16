@@ -1,4 +1,4 @@
-import { CONTENT_TYPE } from '@code-quest/schemas';
+import { CONTENT_TYPE } from './content-types.ts';
 
 const BINARY_EXT: Record<string, string> = {
   pdf: CONTENT_TYPE.pdf,

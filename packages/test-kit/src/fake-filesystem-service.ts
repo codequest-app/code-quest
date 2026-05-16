@@ -10,7 +10,7 @@ import {
   type RootGuard,
   type WriteFileResult,
 } from '@code-quest/filesystem';
-import { mimeForPath } from '@code-quest/node-utils';
+import { mimeForPath } from '@code-quest/utils';
 
 export type FileTree = { [name: string]: string | FileTree };
 

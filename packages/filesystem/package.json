@@ -14,7 +14,7 @@
   },
   "dependencies": {
     "@code-quest/schemas": "workspace:*",
-    "@code-quest/node-utils": "workspace:*",
+    "@code-quest/utils": "workspace:*",
     "fuse.js": "^7.3.0",
     "glob": "^13.0.6"
   },

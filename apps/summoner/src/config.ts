@@ -1,5 +1,5 @@
-import { type LogConfig, parseLogConfig } from '@code-quest/node-utils';
 import { parseFsRoots } from '@code-quest/schemas';
+import { type LogConfig, parseLogConfig } from '@code-quest/utils';
 
 type Env = Record<string, string | undefined>;
 

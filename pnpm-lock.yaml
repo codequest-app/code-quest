@@ -44,9 +44,6 @@ importers:
       '@code-quest/git':
         specifier: workspace:*
         version: link:../../packages/git
-      '@code-quest/node-utils':
-        specifier: workspace:*
-        version: link:../../packages/node-utils
       '@code-quest/openspec':
         specifier: workspace:*
         version: link:../../packages/openspec
@@ -59,6 +56,9 @@ importers:
       '@code-quest/transport':
         specifier: workspace:*
         version: link:../../packages/transport
+      '@code-quest/utils':
+        specifier: workspace:*
+        version: link:../../packages/utils
       '@code-quest/watch':
         specifier: workspace:*
         version: link:../../packages/watch
@@ -168,9 +168,6 @@ importers:
       '@code-quest/git':
         specifier: workspace:*
         version: link:../../packages/git
-      '@code-quest/node-utils':
-        specifier: workspace:*
-        version: link:../../packages/node-utils
       '@code-quest/openspec':
         specifier: workspace:*
         version: link:../../packages/openspec
@@ -180,6 +177,9 @@ importers:
       '@code-quest/transport':
         specifier: workspace:*
         version: link:../../packages/transport
+      '@code-quest/utils':
+        specifier: workspace:*
+        version: link:../../packages/utils
       '@code-quest/watch':
         specifier: workspace:*
         version: link:../../packages/watch
@@ -256,6 +256,9 @@ importers:
       '@code-quest/transport':
         specifier: workspace:*
         version: link:../../packages/transport
+      '@code-quest/utils':
+        specifier: workspace:*
+        version: link:../../packages/utils
       '@headless-tree/core':
         specifier: ^1.6.3
         version: 1.6.3
@@ -544,12 +547,12 @@ importers:
 
   packages/filesystem:
     dependencies:
-      '@code-quest/node-utils':
-        specifier: workspace:*
-        version: link:../node-utils
       '@code-quest/schemas':
         specifier: workspace:*
         version: link:../schemas
+      '@code-quest/utils':
+        specifier: workspace:*
+        version: link:../utils
       fuse.js:
         specifier: ^7.3.0
         version: 7.3.0
@@ -581,22 +584,6 @@ importers:
       simple-git:
         specifier: ^3.36.0
         version: 3.36.0
-    devDependencies:
-      '@types/node':
-        specifier: ^22.15.3
-        version: 22.19.19
-      typescript:
-        specifier: 6.0.3
-        version: 6.0.3
-      vitest:
-        specifier: ^4.1.6
-        version: 4.1.6(@types/node@22.19.19)(@vitest/coverage-v8@4.1.6)(@vitest/ui@4.1.6)(happy-dom@20.9.0)(vite@8.0.12(@types/node@22.19.19)(esbuild@0.27.3)(jiti@2.7.0)(tsx@4.21.0)(yaml@2.9.0))
-
-  packages/node-utils:
-    dependencies:
-      '@code-quest/schemas':
-        specifier: workspace:*
-        version: link:../schemas
     devDependencies:
       '@types/node':
         specifier: ^22.15.3
@@ -666,15 +653,15 @@ importers:
       '@code-quest/git':
         specifier: workspace:*
         version: link:../git
-      '@code-quest/node-utils':
-        specifier: workspace:*
-        version: link:../node-utils
       '@code-quest/schemas':
         specifier: workspace:*
         version: link:../schemas
       '@code-quest/summoner':
         specifier: workspace:*
         version: link:../../apps/summoner
+      '@code-quest/utils':
+        specifier: workspace:*
+        version: link:../utils
       '@code-quest/watch':
         specifier: workspace:*
         version: link:../watch
@@ -716,6 +703,22 @@ importers:
       vitest:
         specifier: ^4.1.6
         version: 4.1.6(@types/node@25.7.0)(@vitest/coverage-v8@4.1.6)(@vitest/ui@4.1.6)(happy-dom@20.9.0)(vite@8.0.12(@types/node@25.7.0)(esbuild@0.27.3)(jiti@2.7.0)(tsx@4.21.0)(yaml@2.9.0))
+
+  packages/utils:
+    dependencies:
+      '@code-quest/schemas':
+        specifier: workspace:*
+        version: link:../schemas
+    devDependencies:
+      '@types/node':
+        specifier: ^22.15.3
+        version: 22.19.19
+      typescript:
+        specifier: 6.0.3
+        version: 6.0.3
+      vitest:
+        specifier: ^4.1.6
+        version: 4.1.6(@types/node@22.19.19)(@vitest/coverage-v8@4.1.6)(@vitest/ui@4.1.6)(happy-dom@20.9.0)(vite@8.0.12(@types/node@22.19.19)(esbuild@0.27.3)(jiti@2.7.0)(tsx@4.21.0)(yaml@2.9.0))
 
   packages/watch:
     dependencies:

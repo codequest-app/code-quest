@@ -1,4 +1,4 @@
-import { CONTENT_TYPE } from '@code-quest/schemas';
+import { CONTENT_TYPE } from '@code-quest/utils';
 
 const EXT_TO_LANG: Record<string, string> = {
   ts: 'typescript',

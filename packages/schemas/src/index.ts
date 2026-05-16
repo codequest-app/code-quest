@@ -8,7 +8,6 @@ export * from './adapter/remote/protocol-schemas.ts';
 export type { AgentTransport } from './adapter/transport/agent-transport.ts';
 export type { Transport, TransportHandle } from './adapter/transport/transport.ts';
 export type { SocketCallback, TypedSocket } from './adapter/transport/types.ts';
-export { CONTENT_TYPE } from './content-types.ts';
 // Errors
 export { ERROR_CODES, type ErrorCode } from './errors.ts';
 // Logger interface (runtime-free, isomorphic)

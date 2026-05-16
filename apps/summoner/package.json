@@ -28,7 +28,7 @@
     "@code-quest/openspec": "workspace:*",
     "@code-quest/schemas": "workspace:*",
     "@code-quest/transport": "workspace:*",
-    "@code-quest/node-utils": "workspace:*",
+    "@code-quest/utils": "workspace:*",
     "@code-quest/watch": "workspace:*",
     "@types/ws": "^8.18.1",
     "chokidar": "^5.0.0",
