@@ -1,7 +1,5 @@
 import type { FileResult, FilesystemService, WatchService } from '@code-quest/schemas';
-import { DataSource } from '../data-source.ts';
-
-const GIT_META_RE = /^\.git\/(HEAD|index|packed-refs|refs\/.*)$/;
+import { DataSource, GIT_META_RE } from '../data-source.ts';
 
 const IGNORE_RES: RegExp[] = [
   /^node_modules(\/|$)/,
@@ -24,13 +22,11 @@ function matchesFs(path: string): boolean {
 }
 
 export class FilesDataSource extends DataSource<FileResult[]> {
-  private readonly cwd: string;
   private readonly pattern: string;
   private readonly fs: FilesystemService;
 
   constructor(cwd: string, watchService: WatchService, fs: FilesystemService, pattern = '') {
     super(cwd, watchService, matchesFs);
-    this.cwd = cwd;
     this.pattern = pattern;
     this.fs = fs;
   }

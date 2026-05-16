@@ -6,11 +6,11 @@ import type { AgentHandler } from '../agent-handler.ts';
 export class BroadcasterHandler implements AgentHandler {
   private readonly broadcaster: Broadcaster;
   private readonly connectionId: string;
-  private subscriptions = new Map<string, () => void>();
+  private readonly subscriptions = new Map<string, () => void>();
 
   constructor(broadcaster: Broadcaster) {
     this.broadcaster = broadcaster;
-    this.connectionId = Math.random().toString(36).slice(2);
+    this.connectionId = crypto.randomUUID();
   }
 
   attach(rpc: AgentTransport): void {

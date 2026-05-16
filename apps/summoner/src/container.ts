@@ -14,6 +14,7 @@ import type { RemoteConfig as Config } from './config.ts';
 import { ChildProcessProvider } from './transports/child-process.ts';
 
 export class Token<T> {
+  declare readonly _phantom: T;
   readonly symbol: symbol;
   readonly name: string;
   constructor(name: string) {

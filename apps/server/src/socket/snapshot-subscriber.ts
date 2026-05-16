@@ -16,7 +16,7 @@ export function subscribeSnapshotForSocket(
     } else if (type === 'openspec') {
       socket.emit(EVENTS.openspec.dirty, { cwd, snapshot: data });
     } else {
-      const _exhaustive: never = type satisfies never;
+      throw new Error(`Unhandled broadcast type: ${type satisfies never}`);
     }
   });
 }

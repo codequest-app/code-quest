@@ -6,12 +6,10 @@ export interface OpenspecServiceLike {
 }
 
 export class OpenspecDataSource extends DataSource<OpenspecListResult> {
-  private readonly cwd: string;
   private readonly openspec: OpenspecServiceLike;
 
   constructor(cwd: string, watchService: WatchService, openspec: OpenspecServiceLike) {
     super(cwd, watchService, (path) => /^openspec\//.test(path));
-    this.cwd = cwd;
     this.openspec = openspec;
   }
 

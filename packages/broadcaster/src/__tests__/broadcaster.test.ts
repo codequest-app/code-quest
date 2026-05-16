@@ -92,8 +92,9 @@ describe('Broadcaster', () => {
       ...makeSource('x'),
       dispose,
     }));
-    const off = broadcaster.subscribe('/repo', 's1', vi.fn());
-    await vi.waitUntil(() => dispose.mock.calls.length === 0);
+    const cb = vi.fn();
+    const off = broadcaster.subscribe('/repo', 's1', cb);
+    await vi.waitUntil(() => cb.mock.calls.length > 0);
     off();
     expect(dispose).toHaveBeenCalledTimes(1);
   });

@@ -1,15 +1,11 @@
 import type { GitService, GitStatusResult, WatchService } from '@code-quest/schemas';
-import { DataSource } from '../data-source.ts';
-
-const GIT_META_RE = /^\.git\/(HEAD|index|packed-refs|refs\/.*)$/;
+import { DataSource, GIT_META_RE } from '../data-source.ts';
 
 export class GitDataSource extends DataSource<GitStatusResult> {
-  private readonly cwd: string;
   private readonly git: GitService;
 
   constructor(cwd: string, watchService: WatchService, git: GitService) {
     super(cwd, watchService, (path) => GIT_META_RE.test(path));
-    this.cwd = cwd;
     this.git = git;
   }
 
