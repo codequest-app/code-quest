@@ -140,7 +140,7 @@ describe('Broadcaster', () => {
           resolveRead = res;
         });
       },
-      onChange(cb) {
+      onChange(_cb) {
         return () => {};
       },
       notify() {},
