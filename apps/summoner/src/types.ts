@@ -7,7 +7,7 @@ import { z } from 'zod';
 
 // --- Raw entry for recording ---
 
-export const rawEventSchema: z.ZodObject<{
+const rawEventSchema: z.ZodObject<{
   timestamp: z.ZodNumber;
   sessionId: z.ZodString;
   direction: z.ZodEnum<{ in: 'in'; out: 'out'; err: 'err' }>;
