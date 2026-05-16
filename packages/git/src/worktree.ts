@@ -1,11 +1,10 @@
 import { mkdir } from 'node:fs/promises';
 import { join, resolve } from 'node:path';
-import type { CreateWorktreeOptions } from '@code-quest/schemas';
-import { validateBranchName, validateWorktreeName, type WorktreeInfo } from '@code-quest/schemas';
+import { validateBranchName, validateWorktreeName } from '@code-quest/schemas';
 import type { GitCommands } from './commands.ts';
 import { NotARepoError } from './errors.ts';
 import { createGit, rawGit } from './git-runner.ts';
-import type { MinimalLogger } from './types.ts';
+import type { CreateWorktreeOptions, MinimalLogger, WorktreeInfo } from './types.ts';
 import { noopLogger } from './types.ts';
 
 const WORKTREE_PATH_RE = /[/\\]\.claude[/\\]worktrees[/\\]([^/\\]+)$/;

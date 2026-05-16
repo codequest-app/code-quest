@@ -1,10 +1,9 @@
 import { readFile } from 'node:fs/promises';
 import { isAbsolute, resolve, sep } from 'node:path';
-import type { GitDiffResult, GitLogResult, GitStatusResult } from '@code-quest/schemas';
 import type { SimpleGit } from 'simple-git';
 import { AlreadyRepoError, NotARepoError } from './errors.ts';
 import { createGit, rawGit } from './git-runner.ts';
-import type { MinimalLogger } from './types.ts';
+import type { GitDiffResult, GitLogResult, GitStatusResult, MinimalLogger } from './types.ts';
 import { noopLogger } from './types.ts';
 
 const GIT_STATUS_UNTRACKED = '??';

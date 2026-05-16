@@ -1,4 +1,7 @@
 import { z } from 'zod';
+
+export type { WorktreeInfo } from '@code-quest/git';
+
 import { rpcResult } from './rpc.ts';
 
 export const worktreeInfoSchema: z.ZodObject<
@@ -9,8 +12,6 @@ export const worktreeInfoSchema: z.ZodObject<
   path: z.string(),
   branch: z.string().optional(),
 });
-export type WorktreeInfo = z.infer<typeof worktreeInfoSchema>;
-
 export const createWorktreePayloadSchema: z.ZodObject<
   {
     cwd: z.ZodString;

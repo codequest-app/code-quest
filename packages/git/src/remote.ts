@@ -1,17 +1,3 @@
-import type {
-  CreateWorktreeOptions,
-  GitAddResult,
-  GitCommitResult,
-  GitDiffResult,
-  GitDiscardFileResult,
-  GitFetchResult,
-  GitLogResult,
-  GitPullResult,
-  GitPushResult,
-  GitService,
-  GitStatusResult,
-  WorktreeInfo,
-} from '@code-quest/schemas';
 import {
   fsMutationResultSchema,
   gitAddResultSchema,
@@ -30,7 +16,21 @@ import {
   REMOTE_METHODS,
   worktreeInfoSchema,
 } from '@code-quest/schemas';
-import type { RemoteRpc } from './types.ts';
+import type {
+  CreateWorktreeOptions,
+  GitAddResult,
+  GitCommitResult,
+  GitDiffResult,
+  GitDiscardFileResult,
+  GitFetchResult,
+  GitLogResult,
+  GitPullResult,
+  GitPushResult,
+  GitService,
+  GitStatusResult,
+  RemoteRpc,
+  WorktreeInfo,
+} from './types.ts';
 
 export class RemoteGitService implements GitService {
   readonly capabilities = { worktree: true };

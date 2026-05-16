@@ -1,5 +1,19 @@
 import { z } from 'zod';
 
+export type {
+  GitAddResult,
+  GitCommitResult,
+  GitDiffResult,
+  GitDiscardFileResult,
+  GitFetchResult,
+  GitFileChange,
+  GitLogEntry,
+  GitLogResult,
+  GitPullResult,
+  GitPushResult,
+  GitStatusResult,
+} from '@code-quest/git';
+
 // biome-ignore lint/complexity/noBannedTypes: Zod infers {} for empty object schemas
 export const gitStatusPayloadSchema: z.ZodObject<{}, z.core.$strip> = z.object({});
 export type GitStatusPayload = z.infer<typeof gitStatusPayloadSchema>;
@@ -52,8 +66,6 @@ export const gitFileChangeSchema: z.ZodObject<
   status: z.string(),
   file: z.string(),
 });
-export type GitFileChange = z.infer<typeof gitFileChangeSchema>;
-
 export const gitLogEntrySchema: z.ZodObject<
   { hash: z.ZodString; message: z.ZodString; author: z.ZodString; date: z.ZodString },
   z.core.$strip
@@ -63,8 +75,6 @@ export const gitLogEntrySchema: z.ZodObject<
   author: z.string(),
   date: z.string(),
 });
-export type GitLogEntry = z.infer<typeof gitLogEntrySchema>;
-
 export const gitStatusResultSchema: z.ZodObject<
   {
     branch: z.ZodString;
@@ -88,8 +98,6 @@ export const gitStatusResultSchema: z.ZodObject<
   /** True when the branch is tracking a remote (i.e. ahead/behind are meaningful). */
   hasUpstream: z.boolean().optional(),
 });
-export type GitStatusResult = z.infer<typeof gitStatusResultSchema>;
-
 export const gitLogResultSchema: z.ZodUnion<
   readonly [
     z.ZodObject<
@@ -106,13 +114,9 @@ export const gitLogResultSchema: z.ZodUnion<
     z.ZodObject<{ error: z.ZodString }, z.core.$strip>,
   ]
 > = z.union([z.object({ entries: z.array(gitLogEntrySchema) }), z.object({ error: z.string() })]);
-export type GitLogResult = z.infer<typeof gitLogResultSchema>;
-
 export const gitDiffResultSchema: z.ZodObject<{ diff: z.ZodString }, z.core.$strip> = z.object({
   diff: z.string(),
 });
-export type GitDiffResult = z.infer<typeof gitDiffResultSchema>;
-
 // ── Global by-cwd variants (no channel) ──
 
 export const gitStatusByCwdPayloadSchema: z.ZodObject<{ cwd: z.ZodString }, z.core.$strip> =
@@ -177,8 +181,6 @@ export const gitAddResultSchema: z.ZodUnion<
     z.ZodObject<{ error: z.ZodString }, z.core.$strip>,
   ]
 > = z.union([z.object({ ok: z.literal(true) }), z.object({ error: z.string() })]);
-export type GitAddResult = z.infer<typeof gitAddResultSchema>;
-
 export const gitCommitPayloadSchema: z.ZodObject<
   { cwd: z.ZodString; message: z.ZodString },
   z.core.$strip
@@ -194,8 +196,6 @@ export const gitCommitResultSchema: z.ZodUnion<
     z.ZodObject<{ error: z.ZodString }, z.core.$strip>,
   ]
 > = z.union([z.object({ ok: z.literal(true), hash: z.string() }), z.object({ error: z.string() })]);
-export type GitCommitResult = z.infer<typeof gitCommitResultSchema>;
-
 export const gitPushPayloadSchema: z.ZodObject<{ cwd: z.ZodString }, z.core.$strip> = z.object({
   cwd: z.string(),
 });
@@ -207,8 +207,6 @@ export const gitPushResultSchema: z.ZodUnion<
     z.ZodObject<{ error: z.ZodString }, z.core.$strip>,
   ]
 > = z.union([z.object({ ok: z.literal(true) }), z.object({ error: z.string() })]);
-export type GitPushResult = z.infer<typeof gitPushResultSchema>;
-
 export const gitFetchPayloadSchema: z.ZodObject<{ cwd: z.ZodString }, z.core.$strip> = z.object({
   cwd: z.string(),
 });
@@ -220,8 +218,6 @@ export const gitFetchResultSchema: z.ZodUnion<
     z.ZodObject<{ error: z.ZodString }, z.core.$strip>,
   ]
 > = z.union([z.object({ ok: z.literal(true) }), z.object({ error: z.string() })]);
-export type GitFetchResult = z.infer<typeof gitFetchResultSchema>;
-
 export const gitPullPayloadSchema: z.ZodObject<{ cwd: z.ZodString }, z.core.$strip> = z.object({
   cwd: z.string(),
 });
@@ -239,8 +235,6 @@ export const gitPullResultSchema: z.ZodUnion<
   z.object({ ok: z.literal(true), fastForwarded: z.boolean() }),
   z.object({ error: z.string() }),
 ]);
-export type GitPullResult = z.infer<typeof gitPullResultSchema>;
-
 export const gitDiscardFilePayloadSchema: z.ZodObject<
   { cwd: z.ZodString; file: z.ZodString },
   z.core.$strip
@@ -257,8 +251,6 @@ export const gitDiscardFileResultSchema: z.ZodUnion<
     z.ZodObject<{ error: z.ZodString }, z.core.$strip>,
   ]
 > = z.union([z.object({ ok: z.literal(true) }), z.object({ error: z.string() })]);
-export type GitDiscardFileResult = z.infer<typeof gitDiscardFileResultSchema>;
-
 export const gitExecResponseSchema: z.ZodObject<
   { exitCode: z.ZodNumber; stdout: z.ZodString; stderr: z.ZodString },
   z.core.$loose

@@ -620,6 +620,15 @@ importers:
 
   packages/schemas:
     dependencies:
+      '@code-quest/filesystem':
+        specifier: workspace:*
+        version: link:../filesystem
+      '@code-quest/git':
+        specifier: workspace:*
+        version: link:../git
+      '@code-quest/watch':
+        specifier: workspace:*
+        version: link:../watch
       zod:
         specifier: ^4.4.3
         version: 4.4.3

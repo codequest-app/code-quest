@@ -1,5 +1,5 @@
+import type { GitService } from '@code-quest/git';
 import { AlreadyRepoError, NotARepoError } from '@code-quest/git';
-import type { GitService } from '@code-quest/schemas';
 import { describe, expect, it } from 'vitest';
 
 /** Setup must produce a fresh service + a path we can pass as `cwd`.

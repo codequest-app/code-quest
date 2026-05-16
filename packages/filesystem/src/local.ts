@@ -1,20 +1,21 @@
 import { cp, mkdir, readdir, readFile, rename, rm, stat, writeFile } from 'node:fs/promises';
 import { basename, join, normalize, relative, resolve } from 'node:path';
 import { mimeForPath } from '@code-quest/node-utils';
+import { errMsg } from '@code-quest/schemas';
+import Fuse from 'fuse.js';
+import { glob } from 'glob';
 import type {
   DirectoryEntry,
   FileKind,
   FileResult,
   FilesystemService,
   FsMutationResult,
+  MinimalLogger,
   ReadFileAbsoluteResult,
   ReadFileResult,
   WriteFileResult,
-} from '@code-quest/schemas';
-import { errMsg, PathOutsideRootsError, type RootGuard } from '@code-quest/schemas';
-import Fuse from 'fuse.js';
-import { glob } from 'glob';
-import type { MinimalLogger } from './types.ts';
+} from './types.ts';
+import { PathOutsideRootsError, type RootGuard } from './types.ts';
 
 interface ListCacheEntry {
   files: string[];

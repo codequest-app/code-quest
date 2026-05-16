@@ -1,13 +1,13 @@
+import { GitCommands } from './commands.ts';
 import type {
   CreateWorktreeOptions,
   GitDiffResult,
   GitLogResult,
   GitService,
   GitStatusResult,
+  MinimalLogger,
   WorktreeInfo,
-} from '@code-quest/schemas';
-import { GitCommands } from './commands.ts';
-import type { MinimalLogger } from './types.ts';
+} from './types.ts';
 import { GitWorktreeOps } from './worktree.ts';
 
 export class LocalGitService implements GitService {

@@ -1,4 +1,7 @@
 import { z } from 'zod';
+
+export type { FsMutationResult } from '@code-quest/filesystem';
+
 import { rpcResult } from './rpc.ts';
 
 export const fsEntryTypeSchema: z.ZodEnum<{ file: 'file'; directory: 'directory' }> = z.enum([
@@ -128,8 +131,6 @@ export const fsMutationResultSchema: z.ZodUnion<
     z.ZodObject<{ error: z.ZodString }, z.core.$strip>,
   ]
 > = z.union([z.object({ ok: z.literal(true) }), z.object({ error: z.string() })]);
-export type FsMutationResult = z.infer<typeof fsMutationResultSchema>;
-
 export const fsCreatePayloadSchema: z.ZodObject<
   { path: z.ZodString; kind: typeof fsEntryTypeSchema },
   z.core.$strip

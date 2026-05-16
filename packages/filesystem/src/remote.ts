@@ -1,13 +1,3 @@
-import type {
-  DirectoryEntry,
-  FileKind,
-  FileResult,
-  FilesystemService,
-  FsMutationResult,
-  ReadFileAbsoluteResult,
-  ReadFileResult,
-  WriteFileResult,
-} from '@code-quest/schemas';
 import {
   fsBrowseDirectoriesResponseSchema,
   fsBrowseEntriesResponseSchema,
@@ -20,7 +10,17 @@ import {
   fsStatKindResponseSchema,
   REMOTE_METHODS,
 } from '@code-quest/schemas';
-import type { RemoteRpc } from './types.ts';
+import type {
+  DirectoryEntry,
+  FileKind,
+  FileResult,
+  FilesystemService,
+  FsMutationResult,
+  ReadFileAbsoluteResult,
+  ReadFileResult,
+  RemoteRpc,
+  WriteFileResult,
+} from './types.ts';
 
 export class RemoteFilesystemService implements FilesystemService {
   private readonly rpc: RemoteRpc;
