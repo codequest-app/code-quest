@@ -1,9 +1,8 @@
 import { EVENTS, fsReadResponseSchema } from '@code-quest/schemas';
-import { CONTENT_TYPE } from '@code-quest/utils';
+import { isMarkdownMime, isPdfMime, langForMime } from '@code-quest/utils';
 import { lazy, Suspense, useEffect, useState } from 'react';
 import { useSocket } from '@/contexts/SocketContext';
 import { rpc } from '@/socket/rpc';
-import { langFromContentType } from '@/utils/lang-from-path';
 import { CodeBlock } from '../chat/renderers/CodeBlock.tsx';
 import { MarkdownContent } from '../chat/renderers/MarkdownContent.tsx';
 import { Button } from '../ui/Button.tsx';
@@ -53,7 +52,7 @@ export function FilePreviewModal({
         return;
       }
       const { content, contentType, encoding } = parsed.data;
-      if (encoding === 'base64' && contentType === CONTENT_TYPE.pdf) {
+      if (encoding === 'base64' && isPdfMime(contentType)) {
         setState({ kind: 'pdf', data: content });
         return;
       }
@@ -69,9 +68,8 @@ export function FilePreviewModal({
   }, [path, socket]);
 
   const isPdf = state.kind === 'pdf';
-  const isMarkdown = state.kind === 'ready' && state.contentType === CONTENT_TYPE.markdown;
-  const language =
-    state.kind === 'ready' ? langFromContentType(state.contentType, path) : undefined;
+  const isMarkdown = state.kind === 'ready' && isMarkdownMime(state.contentType);
+  const language = state.kind === 'ready' ? langForMime(state.contentType, path) : undefined;
 
   return (
     <Dialog open onOpenChange={(open) => !open && onClose()}>

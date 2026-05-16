@@ -1,7 +1,7 @@
+import { langForPath } from '@code-quest/utils';
 import { Prism as SyntaxHighlighter } from 'react-syntax-highlighter';
 import { oneLight, vscDarkPlus } from 'react-syntax-highlighter/dist/esm/styles/prism';
 import { useEffectiveColorTheme } from '@/hooks/useEffectiveColorTheme';
-import { langFromPath } from '@/utils/lang-from-path';
 import { Pre } from './Pre.tsx';
 
 interface HighlightProps {
@@ -20,7 +20,7 @@ export function Highlight({
   const effective = useEffectiveColorTheme();
   const style = effective === 'light' ? oneLight : vscDarkPlus;
 
-  const resolvedLang = lang ?? (filePath ? langFromPath(filePath) : undefined);
+  const resolvedLang = lang ?? (filePath ? langForPath(filePath) : undefined);
 
   if (!resolvedLang) {
     return <Pre>{children}</Pre>;

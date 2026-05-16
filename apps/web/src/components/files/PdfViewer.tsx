@@ -1,4 +1,4 @@
-import { CONTENT_TYPE } from '@code-quest/utils';
+import { pdfDataUri } from '@code-quest/utils';
 import workerUrl from 'pdfjs-dist/build/pdf.worker.min.mjs?url';
 import type React from 'react';
 import { useEffect, useMemo, useRef, useState } from 'react';
@@ -142,7 +142,7 @@ export function PdfViewer({
     return () => el.removeEventListener('mousedown', onMouseDown);
   }, []);
 
-  const file = useMemo(() => `data:${CONTENT_TYPE.pdf};base64,${data}`, [data]);
+  const file = useMemo(() => pdfDataUri(data), [data]);
   const onPrev = () => setPage((p) => p - 1);
   const onNext = () => setPage((p) => p + 1);
   const onZoomOut = () => setScale((s) => Math.max(MIN_SCALE, s - SCALE_STEP));
