@@ -1,6 +1,6 @@
 import { EVENTS } from '@code-quest/schemas';
 import { FakeWatchService } from '@code-quest/test-kit';
-import { beforeEach, describe, expect, it } from 'vitest';
+import { beforeEach, describe, expect, it, vi } from 'vitest';
 import { createTestContainer } from '../../../test/create-test-container.ts';
 import { createFakeServer } from '../../../test/fake-server.ts';
 
@@ -20,27 +20,15 @@ describe('fs:watch snapshot integration', () => {
     return { socket: conn.socket, filesystem: conn.filesystem };
   }
 
-  function receivedEvents(socket: ReturnType<typeof setup>['socket'], event: string) {
-    return socket.listeners('to-client').length > 0
-      ? []
-      : ((socket as unknown as { _received: Array<[string, unknown]> })._received ?? []);
-  }
-
-  function serverSideEmits(socket: ReturnType<typeof setup>['socket'], event: string) {
-    // FakeSocket records server→client via serverSocket.emit interception in FakeSummoner.
-    // For raw socket access we watch the serverSocket directly.
-    const recorded: unknown[] = [];
-    const origEmit = socket.serverSocket.emit.bind(socket.serverSocket);
-    socket.serverSocket.emit = (ev: string, ...args: unknown[]) => {
-      if (ev === event) recorded.push(args[0]);
-      return origEmit(ev, ...args);
-    };
-    return recorded;
+  function collectEvents(socket: ReturnType<typeof setup>['socket'], event: string) {
+    const received: unknown[] = [];
+    socket.on(event, (payload: unknown) => received.push(payload));
+    return received;
   }
 
   it('after fs:watch, initial snapshot is pushed on subscribe', async () => {
     const { socket } = setup();
-    const snapshots = serverSideEmits(socket, EVENTS.fs.dirty);
+    const snapshots = collectEvents(socket, EVENTS.fs.dirty);
 
     socket.emit('fs:watch', { cwd: '/repo', subscriberId: 'sub-1' }, () => {});
 
@@ -52,7 +40,7 @@ describe('fs:watch snapshot integration', () => {
 
   it('after fs:watch, file change triggers files:dirty with snapshot', async () => {
     const { socket } = setup();
-    const snapshots = serverSideEmits(socket, EVENTS.fs.dirty);
+    const snapshots = collectEvents(socket, EVENTS.fs.dirty);
 
     socket.emit('fs:watch', { cwd: '/repo', subscriberId: 'sub-1' }, () => {});
     await vi.waitUntil(() => snapshots.length > 0, { timeout: 500 });
@@ -67,7 +55,7 @@ describe('fs:watch snapshot integration', () => {
 
   it('after fs:watch, git HEAD change triggers git:dirty with snapshot', async () => {
     const { socket } = setup();
-    const gitSnapshots = serverSideEmits(socket, EVENTS.git.dirty);
+    const gitSnapshots = collectEvents(socket, EVENTS.git.dirty);
 
     socket.emit('fs:watch', { cwd: '/repo', subscriberId: 'sub-1' }, () => {});
 
@@ -81,7 +69,7 @@ describe('fs:watch snapshot integration', () => {
 
   it('after fs:watch, openspec change triggers openspec:dirty with snapshot', async () => {
     const { socket } = setup();
-    const openspecSnapshots = serverSideEmits(socket, EVENTS.openspec.dirty);
+    const openspecSnapshots = collectEvents(socket, EVENTS.openspec.dirty);
 
     socket.emit('fs:watch', { cwd: '/repo', subscriberId: 'sub-1' }, () => {});
 
@@ -95,7 +83,7 @@ describe('fs:watch snapshot integration', () => {
 
   it('fs:unwatch stops snapshot delivery', async () => {
     const { socket } = setup();
-    const snapshots = serverSideEmits(socket, EVENTS.fs.dirty);
+    const snapshots = collectEvents(socket, EVENTS.fs.dirty);
 
     socket.emit('fs:watch', { cwd: '/repo', subscriberId: 'sub-1' }, () => {});
     await vi.waitUntil(() => snapshots.length > 0, { timeout: 500 });
@@ -112,7 +100,7 @@ describe('fs:watch snapshot integration', () => {
 
   it('two subscribers on same cwd both receive initial snapshot', async () => {
     const { socket } = setup();
-    const snapshots = serverSideEmits(socket, EVENTS.fs.dirty);
+    const snapshots = collectEvents(socket, EVENTS.fs.dirty);
 
     socket.emit('fs:watch', { cwd: '/repo', subscriberId: 'sub-1' }, () => {});
     await vi.waitUntil(() => snapshots.length > 0, { timeout: 500 });
@@ -126,7 +114,7 @@ describe('fs:watch snapshot integration', () => {
 
   it('unwatch one subscriber does not stop delivery to the other', async () => {
     const { socket } = setup();
-    const snapshots = serverSideEmits(socket, EVENTS.fs.dirty);
+    const snapshots = collectEvents(socket, EVENTS.fs.dirty);
 
     socket.emit('fs:watch', { cwd: '/repo', subscriberId: 'sub-1' }, () => {});
     socket.emit('fs:watch', { cwd: '/repo', subscriberId: 'sub-2' }, () => {});

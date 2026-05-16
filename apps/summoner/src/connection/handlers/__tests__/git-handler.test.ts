@@ -1,24 +1,7 @@
-import type { AgentTransport } from '@code-quest/schemas';
 import { REMOTE_METHODS } from '@code-quest/schemas';
-import { FakeGitService } from '@code-quest/test-kit';
-import { beforeEach, describe, expect, it, vi } from 'vitest';
+import { FakeAgentTransport, FakeGitService } from '@code-quest/test-kit';
+import { beforeEach, describe, expect, it } from 'vitest';
 import { GitHandler } from '../git-handler.ts';
-
-function makeFakeRpc() {
-  const handlers = new Map<string, (data: unknown) => Promise<unknown>>();
-  const rpc: AgentTransport = {
-    emit: vi.fn(),
-    on: vi.fn(() => () => {}),
-    onRequest: (event, handler) => {
-      handlers.set(event, handler);
-      return () => {};
-    },
-  };
-  return {
-    rpc,
-    request: (method: string, params: unknown) => handlers.get(method)?.(params),
-  };
-}
 
 describe('GitHandler', () => {
   let git: FakeGitService;
@@ -30,8 +13,9 @@ describe('GitHandler', () => {
   it('status returns git status for cwd', async () => {
     git.setBranch('feature');
     git.setClean(false);
-    const { rpc, request } = makeFakeRpc();
-    new GitHandler(git).attach(rpc);
+    const transport = new FakeAgentTransport();
+    new GitHandler(git).attach(transport);
+    const request = transport.request.bind(transport);
 
     const result = await request(REMOTE_METHODS.git.status, { cwd: '/repo' });
 
@@ -39,8 +23,9 @@ describe('GitHandler', () => {
   });
 
   it('checkout calls git.checkout and returns ok', async () => {
-    const { rpc, request } = makeFakeRpc();
-    new GitHandler(git).attach(rpc);
+    const transport = new FakeAgentTransport();
+    new GitHandler(git).attach(transport);
+    const request = transport.request.bind(transport);
 
     const result = await request(REMOTE_METHODS.git.checkout, { cwd: '/repo', branch: 'main' });
 
@@ -52,8 +37,9 @@ describe('GitHandler', () => {
       { hash: 'abc', message: 'first', author: 'Alice', date: '2024-01-01' },
       { hash: 'def', message: 'second', author: 'Bob', date: '2024-01-02' },
     ]);
-    const { rpc, request } = makeFakeRpc();
-    new GitHandler(git).attach(rpc);
+    const transport = new FakeAgentTransport();
+    new GitHandler(git).attach(transport);
+    const request = transport.request.bind(transport);
 
     const result = await request(REMOTE_METHODS.git.log, { cwd: '/repo', limit: 1 });
 
@@ -62,8 +48,9 @@ describe('GitHandler', () => {
 
   it('diff returns diff string', async () => {
     git.setDiff('- old\n+ new');
-    const { rpc, request } = makeFakeRpc();
-    new GitHandler(git).attach(rpc);
+    const transport = new FakeAgentTransport();
+    new GitHandler(git).attach(transport);
+    const request = transport.request.bind(transport);
 
     const result = await request(REMOTE_METHODS.git.diff, {
       cwd: '/repo',
@@ -76,8 +63,9 @@ describe('GitHandler', () => {
 
   it('add stages files and returns ok', async () => {
     git.setChangedFiles([{ file: 'src/foo.ts', status: 'M' }]);
-    const { rpc, request } = makeFakeRpc();
-    new GitHandler(git).attach(rpc);
+    const transport = new FakeAgentTransport();
+    new GitHandler(git).attach(transport);
+    const request = transport.request.bind(transport);
 
     const result = await request(REMOTE_METHODS.git.add, { cwd: '/repo', paths: ['src/foo.ts'] });
 
@@ -88,8 +76,9 @@ describe('GitHandler', () => {
   it('commit returns ok with hash after staging', async () => {
     git.setChangedFiles([{ file: 'src/foo.ts', status: 'M' }]);
     await git.add('/repo', ['src/foo.ts']);
-    const { rpc, request } = makeFakeRpc();
-    new GitHandler(git).attach(rpc);
+    const transport = new FakeAgentTransport();
+    new GitHandler(git).attach(transport);
+    const request = transport.request.bind(transport);
 
     const result = await request(REMOTE_METHODS.git.commit, {
       cwd: '/repo',
@@ -100,8 +89,9 @@ describe('GitHandler', () => {
   });
 
   it('push returns ok', async () => {
-    const { rpc, request } = makeFakeRpc();
-    new GitHandler(git).attach(rpc);
+    const transport = new FakeAgentTransport();
+    new GitHandler(git).attach(transport);
+    const request = transport.request.bind(transport);
 
     const result = await request(REMOTE_METHODS.git.push, { cwd: '/repo' });
 
@@ -109,8 +99,9 @@ describe('GitHandler', () => {
   });
 
   it('fetch returns ok', async () => {
-    const { rpc, request } = makeFakeRpc();
-    new GitHandler(git).attach(rpc);
+    const transport = new FakeAgentTransport();
+    new GitHandler(git).attach(transport);
+    const request = transport.request.bind(transport);
 
     const result = await request(REMOTE_METHODS.git.fetch, { cwd: '/repo' });
 
@@ -119,8 +110,9 @@ describe('GitHandler', () => {
 
   it('pull returns ok with fastForwarded flag', async () => {
     git.setPullFastForwarded(true);
-    const { rpc, request } = makeFakeRpc();
-    new GitHandler(git).attach(rpc);
+    const transport = new FakeAgentTransport();
+    new GitHandler(git).attach(transport);
+    const request = transport.request.bind(transport);
 
     const result = await request(REMOTE_METHODS.git.pull, { cwd: '/repo' });
 
@@ -128,8 +120,9 @@ describe('GitHandler', () => {
   });
 
   it('discardFile records the discarded file and returns ok', async () => {
-    const { rpc, request } = makeFakeRpc();
-    new GitHandler(git).attach(rpc);
+    const transport = new FakeAgentTransport();
+    new GitHandler(git).attach(transport);
+    const request = transport.request.bind(transport);
 
     const result = await request(REMOTE_METHODS.git.discardFile, {
       cwd: '/repo',
@@ -142,8 +135,9 @@ describe('GitHandler', () => {
 
   it('getRepoRoot returns the repo root', async () => {
     git.setRepoRoot('/repo');
-    const { rpc, request } = makeFakeRpc();
-    new GitHandler(git).attach(rpc);
+    const transport = new FakeAgentTransport();
+    new GitHandler(git).attach(transport);
+    const request = transport.request.bind(transport);
 
     const result = await request(REMOTE_METHODS.git.getRepoRoot, { cwd: '/repo/src' });
 
@@ -152,8 +146,9 @@ describe('GitHandler', () => {
 
   it('getProjectRoot returns the project root', async () => {
     git.setProjectRoot('/repo');
-    const { rpc, request } = makeFakeRpc();
-    new GitHandler(git).attach(rpc);
+    const transport = new FakeAgentTransport();
+    new GitHandler(git).attach(transport);
+    const request = transport.request.bind(transport);
 
     const result = await request(REMOTE_METHODS.git.getProjectRoot, { cwd: '/repo/src' });
 
@@ -161,8 +156,9 @@ describe('GitHandler', () => {
   });
 
   it('initRepo initializes a new repo and returns branch', async () => {
-    const { rpc, request } = makeFakeRpc();
-    new GitHandler(git).attach(rpc);
+    const transport = new FakeAgentTransport();
+    new GitHandler(git).attach(transport);
+    const request = transport.request.bind(transport);
 
     const result = await request(REMOTE_METHODS.git.initRepo, { cwd: '/new-project' });
 
@@ -170,8 +166,9 @@ describe('GitHandler', () => {
   });
 
   it('listBranches returns branches for a known repo', async () => {
-    const { rpc, request } = makeFakeRpc();
-    new GitHandler(git).attach(rpc);
+    const transport = new FakeAgentTransport();
+    new GitHandler(git).attach(transport);
+    const request = transport.request.bind(transport);
 
     const result = await request(REMOTE_METHODS.git.listBranches, { repoRoot: '/repo' });
 
@@ -179,8 +176,9 @@ describe('GitHandler', () => {
   });
 
   it('createWorktree creates a worktree and returns its info', async () => {
-    const { rpc, request } = makeFakeRpc();
-    new GitHandler(git).attach(rpc);
+    const transport = new FakeAgentTransport();
+    new GitHandler(git).attach(transport);
+    const request = transport.request.bind(transport);
 
     const result = await request(REMOTE_METHODS.git.createWorktree, {
       repoRoot: '/repo',
@@ -196,8 +194,9 @@ describe('GitHandler', () => {
       path: '/repo/.claude/worktrees/feature-x',
       branch: 'feature-x',
     });
-    const { rpc, request } = makeFakeRpc();
-    new GitHandler(git).attach(rpc);
+    const transport = new FakeAgentTransport();
+    new GitHandler(git).attach(transport);
+    const request = transport.request.bind(transport);
 
     const result = await request(REMOTE_METHODS.git.listWorktrees, { repoRoot: '/repo' });
 
@@ -212,8 +211,9 @@ describe('GitHandler', () => {
       path: '/repo/.claude/worktrees/to-delete',
       branch: 'to-delete',
     });
-    const { rpc, request } = makeFakeRpc();
-    new GitHandler(git).attach(rpc);
+    const transport = new FakeAgentTransport();
+    new GitHandler(git).attach(transport);
+    const request = transport.request.bind(transport);
 
     const result = await request(REMOTE_METHODS.git.deleteWorktree, {
       repoRoot: '/repo',
@@ -225,8 +225,9 @@ describe('GitHandler', () => {
 
   it('renameWorktree returns updated branch name', async () => {
     git.addWorktree({ name: 'wt1', path: '/repo/.claude/worktrees/wt1', branch: 'old-branch' });
-    const { rpc, request } = makeFakeRpc();
-    new GitHandler(git).attach(rpc);
+    const transport = new FakeAgentTransport();
+    new GitHandler(git).attach(transport);
+    const request = transport.request.bind(transport);
 
     const result = await request(REMOTE_METHODS.git.renameWorktree, {
       worktreeCwd: '/repo/.claude/worktrees/wt1',
@@ -242,8 +243,9 @@ describe('GitHandler', () => {
       path: '/repo/.claude/worktrees/to-archive',
       branch: 'to-archive',
     });
-    const { rpc, request } = makeFakeRpc();
-    new GitHandler(git).attach(rpc);
+    const transport = new FakeAgentTransport();
+    new GitHandler(git).attach(transport);
+    const request = transport.request.bind(transport);
 
     const result = await request(REMOTE_METHODS.git.archiveWorktree, {
       repoRoot: '/repo',

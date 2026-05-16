@@ -1,5 +1,6 @@
 // Fakes
 
+export { FakeAgentTransport } from './fake-agent-transport.ts';
 export { FakeClaude } from './fake-claude.ts';
 export type { FileTree } from './fake-filesystem-service.ts';
 export { FakeFilesystemService } from './fake-filesystem-service.ts';

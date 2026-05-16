@@ -1,24 +1,7 @@
-import type { AgentTransport } from '@code-quest/schemas';
 import { REMOTE_METHODS } from '@code-quest/schemas';
-import { FakeFilesystemService } from '@code-quest/test-kit';
-import { beforeEach, describe, expect, it, vi } from 'vitest';
+import { FakeAgentTransport, FakeFilesystemService } from '@code-quest/test-kit';
+import { beforeEach, describe, expect, it } from 'vitest';
 import { FsHandler } from '../fs-handler.ts';
-
-function makeFakeRpc() {
-  const handlers = new Map<string, (data: unknown) => Promise<unknown>>();
-  const rpc: AgentTransport = {
-    emit: vi.fn(),
-    on: vi.fn(() => () => {}),
-    onRequest: (event, handler) => {
-      handlers.set(event, handler);
-      return () => {};
-    },
-  };
-  return {
-    rpc,
-    request: (method: string, params: unknown) => handlers.get(method)?.(params),
-  };
-}
 
 describe('FsHandler', () => {
   let fs: FakeFilesystemService;
@@ -32,9 +15,9 @@ describe('FsHandler', () => {
   });
 
   function makeHandler() {
-    const { rpc, request } = makeFakeRpc();
-    new FsHandler(fs).attach(rpc);
-    return { request };
+    const transport = new FakeAgentTransport();
+    new FsHandler(fs).attach(transport);
+    return { request: transport.request.bind(transport) };
   }
 
   it('browseDirectories returns root entries when no path given', async () => {
