@@ -13,6 +13,7 @@
     "lint": "biome check src"
   },
   "dependencies": {
+    "@code-quest/schemas": "workspace:*",
     "chokidar": "^5.0.0"
   },
   "devDependencies": {
