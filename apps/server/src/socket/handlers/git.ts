@@ -3,7 +3,6 @@ import type { SocketCallback, TypedSocket } from '@code-quest/schemas';
 import {
   createWorktreePayloadSchema,
   EVENTS,
-  errMsg,
   gitAddPayloadSchema,
   gitCommitPayloadSchema,
   gitDiffByCwdPayloadSchema,
@@ -21,6 +20,7 @@ import {
   worktreeRenamePayloadSchema,
   worktreeStatusPayloadSchema,
 } from '@code-quest/schemas';
+import { errMsg } from '@code-quest/utils';
 import { logger } from '../../logger.ts';
 import type { HandlerContext } from '../../types.ts';
 import { err, ok } from '../utils/rpc.ts';

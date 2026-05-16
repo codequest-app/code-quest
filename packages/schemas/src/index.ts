@@ -10,10 +10,6 @@ export type { Transport, TransportHandle } from './adapter/transport/transport.t
 export type { SocketCallback, TypedSocket } from './adapter/transport/types.ts';
 // Errors
 export { ERROR_CODES, type ErrorCode } from './errors.ts';
-// Logger interface (runtime-free, isomorphic)
-export { type Logger, type LogLevel, NOOP_LOGGER } from './logger.ts';
-// Process interfaces (shared contract; stays in schemas to avoid circular dep)
-export type { ProcessHandle, ProcessProvider, ProcessRunResult } from './process-provider.ts';
 // Zod schemas — server↔client contracts
 export * from './socket/actions.ts';
 export * from './socket/auth.ts';
@@ -54,16 +50,3 @@ export * from './socket/system.ts';
 export * from './socket/task.ts';
 export * from './socket/terminal.ts';
 export * from './socket/worktree.ts';
-// Topic pub/sub
-export { TopicEmitter } from './topic-emitter.ts';
-
-// Utils
-export { type BannerItem, formatBanner } from './utils/banner.ts';
-export { errMsg } from './utils/err-msg.ts';
-export { getOrSet } from './utils/get-or-set.ts';
-export { isRecord } from './utils/is-record.ts';
-export { parseFsRoots } from './utils/parse-fs-roots.ts';
-
-// Validators
-export { validateBranchName } from './validators/branch-name.ts';
-export { validateWorktreeName } from './validators/worktree-name.ts';

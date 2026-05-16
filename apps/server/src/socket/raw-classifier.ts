@@ -1,4 +1,4 @@
-import { isRecord } from '@code-quest/schemas';
+import { isRecord } from '@code-quest/utils';
 
 /** Return true when the raw line is a stream_event carrying a content_block_delta.
  *  These are the high-volume token-streaming events; persisted to raw_deltas

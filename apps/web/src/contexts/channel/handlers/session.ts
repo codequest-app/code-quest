@@ -6,7 +6,8 @@ import type {
   RpcResult,
   SideQuestionResult,
 } from '@code-quest/schemas';
-import { EVENTS, isRecord } from '@code-quest/schemas';
+import { EVENTS } from '@code-quest/schemas';
+import { isRecord } from '@code-quest/utils';
 import type { TypedSocket } from '@/socket/client';
 import { rpc } from '@/socket/rpc';
 import type { ChannelState } from '@/types/chat';

@@ -1,5 +1,6 @@
 import type { SocketCallback, TypedSocket } from '@code-quest/schemas';
-import { EVENTS, errMsg, terminalOpenClaudePayloadSchema } from '@code-quest/schemas';
+import { EVENTS, terminalOpenClaudePayloadSchema } from '@code-quest/schemas';
+import { errMsg } from '@code-quest/utils';
 import { logger } from '../../logger.ts';
 import type { HandlerContext } from '../../types.ts';
 import type { Channel } from '../channel.ts';

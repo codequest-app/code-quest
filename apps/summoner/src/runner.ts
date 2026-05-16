@@ -1,5 +1,5 @@
 import { EventEmitter } from 'node:events';
-import type { ProcessHandle, ProcessProvider } from '@code-quest/schemas';
+import type { ProcessHandle, ProcessProvider } from '@code-quest/utils';
 import { logger } from './logger.ts';
 import type { ParseResult, ProviderAdapter } from './types.ts';
 

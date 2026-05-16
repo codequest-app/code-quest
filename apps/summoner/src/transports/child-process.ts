@@ -1,6 +1,6 @@
 import { type SpawnOptions, spawn } from 'node:child_process';
 import { createInterface } from 'node:readline';
-import type { ProcessHandle, ProcessProvider, ProcessRunResult } from '@code-quest/schemas';
+import type { ProcessHandle, ProcessProvider, ProcessRunResult } from '@code-quest/utils';
 import { logger } from '../logger.ts';
 
 export class ChildProcessProvider implements ProcessProvider {

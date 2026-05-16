@@ -11,12 +11,12 @@ import {
   controlInitResponseSchema,
   ERROR_CODES,
   EVENTS,
-  errMsg,
   sessionInitEventSchema,
   sessionJoinPayloadSchema,
   sessionLaunchPayloadSchema,
   sessionResumePayloadSchema,
 } from '@code-quest/schemas';
+import { errMsg } from '@code-quest/utils';
 import { config } from '../../../config.ts';
 import { logger } from '../../../logger.ts';
 import type { HandlerContext } from '../../../types.ts';

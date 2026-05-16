@@ -4,7 +4,6 @@ import type { DiffFileService } from '@code-quest/diff-file';
 import type { FilesystemService } from '@code-quest/filesystem';
 import type { GitService } from '@code-quest/git';
 import type { OpenspecService } from '@code-quest/openspec';
-import type { ProcessProvider } from '@code-quest/schemas';
 import type { PluginCliService } from '@code-quest/summoner';
 import {
   FakeDiffFileService,
@@ -12,6 +11,7 @@ import {
   FakePluginCliService,
 } from '@code-quest/summoner/test';
 import { FakeFilesystemService, FakeGitService, FakeWatchService } from '@code-quest/test-kit';
+import type { ProcessProvider } from '@code-quest/utils';
 import type { WatchService } from '@code-quest/watch';
 import { migrate } from 'drizzle-orm/better-sqlite3/migrator';
 import type { Container } from 'inversify';

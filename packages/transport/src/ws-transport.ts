@@ -1,13 +1,8 @@
 import { randomUUID } from 'node:crypto';
 import type { Server as HttpServer, IncomingMessage } from 'node:http';
 import type { Duplex } from 'node:stream';
-import {
-  type Logger,
-  NOOP_LOGGER,
-  type SocketCallback,
-  type TransportHandle,
-  type TypedSocket,
-} from '@code-quest/schemas';
+import type { SocketCallback, TransportHandle, TypedSocket } from '@code-quest/schemas';
+import { type Logger, NOOP_LOGGER } from '@code-quest/utils';
 import { type Envelope, PONG_JSON, parseEnvelope } from './envelope.ts';
 import { Pipeline } from './pipeline.ts';
 import { RESUME_EVENT, RpcChannel } from './rpc-channel.ts';

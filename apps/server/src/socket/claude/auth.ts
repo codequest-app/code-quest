@@ -2,10 +2,10 @@ import type { SocketCallback, TypedSocket } from '@code-quest/schemas';
 import {
   controlAuthenticateResponseSchema,
   EVENTS,
-  errMsg,
   loginPayloadSchema,
   oauthCodePayloadSchema,
 } from '@code-quest/schemas';
+import { errMsg } from '@code-quest/utils';
 import { logger } from '../../logger.ts';
 import type { HandlerContext } from '../../types.ts';
 import type { Channel } from '../channel.ts';

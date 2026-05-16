@@ -1,7 +1,6 @@
 import { cp, mkdir, readdir, readFile, rename, rm, stat, writeFile } from 'node:fs/promises';
 import { basename, join, normalize, relative, resolve } from 'node:path';
-import { errMsg } from '@code-quest/schemas';
-import { mimeForPath } from '@code-quest/utils';
+import { errMsg, mimeForPath } from '@code-quest/utils';
 import Fuse from 'fuse.js';
 import { glob } from 'glob';
 import type {

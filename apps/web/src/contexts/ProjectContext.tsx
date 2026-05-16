@@ -1,9 +1,9 @@
 import {
   EVENTS,
-  isRecord,
   type ProjectsRemovedEvent,
   type Project as ServerProject,
 } from '@code-quest/schemas';
+import { isRecord } from '@code-quest/utils';
 import { createContext, type ReactNode, useContext, useEffect, useRef, useState } from 'react';
 import { toast } from 'sonner';
 import { useSocket } from './SocketContext.tsx';

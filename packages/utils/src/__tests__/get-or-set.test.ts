@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { getOrSet } from '../utils/get-or-set.ts';
+import { getOrSet } from '../get-or-set.ts';
 
 describe('getOrSet', () => {
   it('calls factory and returns result on cache miss', async () => {

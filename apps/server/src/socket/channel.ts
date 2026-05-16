@@ -9,12 +9,12 @@ import type {
 } from '@code-quest/schemas';
 import {
   errorMessageEventSchema,
-  isRecord,
   sessionInitConfigSchema,
   sessionInitEventSchema,
   sessionStatusEventSchema,
 } from '@code-quest/schemas';
 import type { ProcessRunner } from '@code-quest/summoner';
+import { isRecord } from '@code-quest/utils';
 import type { z } from 'zod';
 import { logger } from '../logger.ts';
 import { ControlRequestTracker, DEFAULT_CONTROL_TIMEOUT } from './control-request-tracker.ts';

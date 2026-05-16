@@ -1,4 +1,4 @@
-import { getOrSet, TopicEmitter } from '@code-quest/schemas';
+import { getOrSet, TopicEmitter } from '@code-quest/utils';
 
 interface QueryCacheConfig<R> {
   fetch: (key: string) => Promise<R>;

@@ -1,6 +1,6 @@
 import os from 'node:os';
 import { describe, expect, it } from 'vitest';
-import { parseFsRoots } from '../utils/parse-fs-roots.ts';
+import { parseFsRoots } from '../parse-fs-roots.ts';
 
 describe('parseFsRoots', () => {
   it('defaults to os.homedir() when undefined', () => {

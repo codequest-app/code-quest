@@ -15,7 +15,8 @@
   },
   "dependencies": {
     "@code-quest/schemas": "workspace:*",
-    "simple-git": "^3.36.0"
+    "simple-git": "^3.36.0",
+    "@code-quest/utils": "workspace:*"
   },
   "devDependencies": {
     "@types/node": "^22.15.3",

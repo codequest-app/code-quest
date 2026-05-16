@@ -2,11 +2,11 @@ import type { SocketCallback, TypedSocket } from '@code-quest/schemas';
 import {
   ERROR_CODES,
   EVENTS,
-  errMsg,
   sessionGetPayloadSchema,
   sessionListPayloadSchema,
   sessionListRemotePayloadSchema,
 } from '@code-quest/schemas';
+import { errMsg } from '@code-quest/utils';
 import { z } from 'zod';
 import { logger } from '../../../logger.ts';
 import type { HandlerContext } from '../../../types.ts';

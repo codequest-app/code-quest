@@ -1,6 +1,6 @@
 import { mkdir } from 'node:fs/promises';
 import { join, resolve } from 'node:path';
-import { validateBranchName, validateWorktreeName } from '@code-quest/schemas';
+import { validateBranchName, validateWorktreeName } from '@code-quest/utils';
 import type { GitCommands } from './commands.ts';
 import { NotARepoError } from './errors.ts';
 import { createGit, rawGit } from './git-runner.ts';

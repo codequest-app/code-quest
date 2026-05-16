@@ -15,7 +15,8 @@
   "dependencies": {
     "@code-quest/filesystem": "workspace:*",
     "@code-quest/schemas": "workspace:*",
-    "zod": "^3.24.4"
+    "zod": "^3.24.4",
+    "@code-quest/utils": "workspace:*"
   },
   "devDependencies": {
     "@code-quest/test-kit": "workspace:*",

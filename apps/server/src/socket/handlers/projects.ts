@@ -4,7 +4,6 @@ import type { FilesystemService } from '@code-quest/filesystem';
 import { PathOutsideRootsError } from '@code-quest/filesystem';
 import {
   EVENTS,
-  errMsg,
   type ProjectsError,
   type ProjectsRemoveResponse,
   type ProjectsUpdateResponse,
@@ -15,6 +14,7 @@ import {
   type SocketCallback,
   type TypedSocket,
 } from '@code-quest/schemas';
+import { errMsg } from '@code-quest/utils';
 import { logger } from '../../logger.ts';
 import type { HandlerContext } from '../../types.ts';
 

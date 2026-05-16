@@ -1,8 +1,6 @@
 import type {
   AgentTransport,
   ProcessExitParams,
-  ProcessHandle,
-  ProcessProvider,
   ProcessStderrParams,
   ProcessStdoutParams,
 } from '@code-quest/schemas';
@@ -12,6 +10,7 @@ import {
   processStdinParamsSchema,
   REMOTE_METHODS,
 } from '@code-quest/schemas';
+import type { ProcessHandle, ProcessProvider } from '@code-quest/utils';
 import { logger } from '../../logger.ts';
 import type { AgentHandler } from '../agent-handler.ts';
 

@@ -4,9 +4,9 @@ import {
   contentBlockSchema,
   controlRequestEventSchema,
   EVENTS,
-  isRecord,
 } from '@code-quest/schemas';
 import type { ProviderAdapter, RawEvent } from '@code-quest/summoner';
+import { isRecord } from '@code-quest/utils';
 import { logger } from '../../../logger.ts';
 import type { RawEventService } from '../../../services/raw-event-service.ts';
 import type { SessionPreview } from '../../../services/raw-event-store.ts';

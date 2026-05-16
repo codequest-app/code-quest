@@ -1,4 +1,4 @@
-import { isRecord } from '@code-quest/schemas';
+import { isRecord } from '@code-quest/utils';
 
 export function getEventType(evt: unknown): string | undefined {
   if (!isRecord(evt)) return undefined;

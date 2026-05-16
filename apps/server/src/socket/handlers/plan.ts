@@ -2,11 +2,11 @@ import type { SocketCallback, TypedSocket } from '@code-quest/schemas';
 import {
   channelIdPayloadSchema,
   EVENTS,
-  errMsg,
   type PlanCommentData,
   planCommentPayloadSchema,
   planRemoveCommentPayloadSchema,
 } from '@code-quest/schemas';
+import { errMsg } from '@code-quest/utils';
 import { logger } from '../../logger.ts';
 import type { HandlerContext } from '../../types.ts';
 import type { Channel } from '../channel.ts';

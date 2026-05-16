@@ -581,6 +581,9 @@ importers:
       '@code-quest/schemas':
         specifier: workspace:*
         version: link:../schemas
+      '@code-quest/utils':
+        specifier: workspace:*
+        version: link:../utils
       simple-git:
         specifier: ^3.36.0
         version: 3.36.0
@@ -603,6 +606,9 @@ importers:
       '@code-quest/schemas':
         specifier: workspace:*
         version: link:../schemas
+      '@code-quest/utils':
+        specifier: workspace:*
+        version: link:../utils
       zod:
         specifier: ^3.24.4
         version: 3.25.76
@@ -628,6 +634,9 @@ importers:
       '@code-quest/git':
         specifier: workspace:*
         version: link:../git
+      '@code-quest/utils':
+        specifier: workspace:*
+        version: link:../utils
       '@code-quest/watch':
         specifier: workspace:*
         version: link:../watch
@@ -687,6 +696,9 @@ importers:
       '@code-quest/schemas':
         specifier: workspace:*
         version: link:../schemas
+      '@code-quest/utils':
+        specifier: workspace:*
+        version: link:../utils
       ws:
         specifier: ^8.20.1
         version: 8.20.1

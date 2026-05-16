@@ -1,6 +1,6 @@
 import type { SpawnOptions } from 'node:child_process';
-import type { ProcessHandle, ProcessProvider, ProcessRunResult } from '@code-quest/schemas';
 import type { controlRequestSchema, userSchema } from '@code-quest/summoner/schemas';
+import type { ProcessHandle, ProcessProvider, ProcessRunResult } from '@code-quest/utils';
 import type { z } from 'zod';
 
 /** Type map for messages tests inspect via `received(type)`. Each is a CLI

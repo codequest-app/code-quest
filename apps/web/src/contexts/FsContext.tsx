@@ -6,8 +6,8 @@ import {
   filesDirtyEventSchema,
   fsBrowseResponseSchema,
   fsMutationResultSchema,
-  TopicEmitter,
 } from '@code-quest/schemas';
+import { TopicEmitter } from '@code-quest/utils';
 import { createContext, type ReactNode, useContext, useEffect, useMemo, useRef } from 'react';
 import { rpc } from '../socket/rpc.ts';
 import { useSocket } from './SocketContext.tsx';

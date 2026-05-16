@@ -3,7 +3,6 @@ import {
   addMarketplacePayloadSchema,
   availablePluginSchema,
   EVENTS,
-  errMsg,
   listPluginsPayloadSchema,
   type MarketplaceRawItem,
   type MarketplaceSourceConfig,
@@ -16,6 +15,7 @@ import {
   removeMarketplacePayloadSchema,
 } from '@code-quest/schemas';
 import type { PluginCliService } from '@code-quest/summoner';
+import { errMsg } from '@code-quest/utils';
 import { z } from 'zod';
 import { logger } from '../../logger.ts';
 import type { HandlerContext } from '../../types.ts';

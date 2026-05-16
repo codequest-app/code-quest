@@ -1,6 +1,6 @@
 import 'dotenv/config';
-import { formatBanner } from '@code-quest/schemas';
 import { WsClient } from '@code-quest/transport';
+import { formatBanner } from '@code-quest/utils';
 import { loadConfig } from './config.ts';
 import { Agent } from './connection/agent.ts';
 import { BroadcasterHandler } from './connection/handlers/broadcaster-handler.ts';

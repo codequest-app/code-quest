@@ -15,6 +15,7 @@
   "dependencies": {
     "@code-quest/filesystem": "workspace:*",
     "@code-quest/git": "workspace:*",
+    "@code-quest/utils": "workspace:*",
     "@code-quest/watch": "workspace:*",
     "zod": "^4.4.3"
   },

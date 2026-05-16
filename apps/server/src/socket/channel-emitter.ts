@@ -1,11 +1,5 @@
-import {
-  ERROR_CODES,
-  EVENTS,
-  errMsg,
-  isRecord,
-  type SocketCallback,
-  type TypedSocket,
-} from '@code-quest/schemas';
+import { ERROR_CODES, EVENTS, type SocketCallback, type TypedSocket } from '@code-quest/schemas';
+import { errMsg, isRecord } from '@code-quest/utils';
 import { logger } from '../logger.ts';
 import type { Channel } from './channel.ts';
 

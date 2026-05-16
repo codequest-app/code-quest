@@ -16,7 +16,8 @@
   "dependencies": {
     "@code-quest/schemas": "workspace:*",
     "ws": "^8.20.1",
-    "zod": "^4.4.3"
+    "zod": "^4.4.3",
+    "@code-quest/utils": "workspace:*"
   },
   "devDependencies": {
     "@types/ws": "^8.18.1",
