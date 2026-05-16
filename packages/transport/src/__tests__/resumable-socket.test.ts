@@ -1,6 +1,6 @@
+import type { TypedSocket } from '@code-quest/schemas';
 import { describe, expect, it, vi } from 'vitest';
 import { ResumableSocket } from '../resumable-socket.ts';
-import type { TypedSocket } from '../types.ts';
 
 describe('ResumableSocket', () => {
   function makeInner(id = 's-1') {

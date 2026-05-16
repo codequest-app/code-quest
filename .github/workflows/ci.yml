@@ -42,6 +42,6 @@ jobs:
           cache: pnpm
       - run: |
           pnpm install --frozen-lockfile --ignore-scripts
-          cd $(find node_modules -path '*/better-sqlite3/package.json' -exec dirname {} \; | head -1)
+          cd $(find node_modules -path '*/better-sqlite3/package.json' -not -path '*/@types/*' -exec dirname {} \; | head -1)
           npx --yes prebuild-install || npx --yes node-gyp rebuild
       - run: pnpm -r --parallel run test
