@@ -1,5 +1,5 @@
 import { z } from 'zod';
-import { contentBlockSchema } from './message-blocks.ts';
+import { contentBlockSchema } from './blocks.ts';
 import { sessionStatsSchema } from './message-stats.ts';
 
 const messagePayloadBaseSchema = z.object({

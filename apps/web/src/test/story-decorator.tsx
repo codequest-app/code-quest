@@ -3,11 +3,7 @@
  * Builds sub-provider tree directly — ChannelProvider not used (no initialState needed).
  */
 
-import {
-  DISMISSIBLE_IDS,
-  type EffectiveColorTheme,
-  type PendingControl,
-} from '@code-quest/schemas';
+import type { PendingControl } from '@code-quest/schemas';
 import type { StoryObj } from '@storybook/react-vite';
 import { useEffect, useLayoutEffect, useRef, useState } from 'react';
 import { expect } from 'storybook/test';
@@ -32,6 +28,7 @@ import { SessionProvider } from '../contexts/SessionContext.tsx';
 import { SocketProvider } from '../contexts/SocketContext.tsx';
 import { TabProvider } from '../contexts/TabContext.tsx';
 import { createSocket, type TypedSocket } from '../socket/client.ts';
+import { DISMISSIBLE_IDS, type EffectiveColorTheme } from '../stores/preferences-schema.ts';
 import type { Density } from '../stores/usePreferencesStore.ts';
 import { usePreferencesStore } from '../stores/usePreferencesStore.ts';
 import type { ChannelState } from '../types/chat.ts';

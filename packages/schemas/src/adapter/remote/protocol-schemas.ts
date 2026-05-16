@@ -1,6 +1,6 @@
 import { z } from 'zod';
-import { fsEntryTypeSchema } from '../schemas/fs.ts';
-import { worktreeInfoSchema } from '../schemas/worktree.ts';
+import { fsEntryTypeSchema } from '../../server/fs.ts';
+import { worktreeInfoSchema } from '../../server/worktree.ts';
 
 // ── Process ──
 

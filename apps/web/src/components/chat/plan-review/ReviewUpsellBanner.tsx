@@ -1,7 +1,7 @@
-import { DISMISSIBLE_IDS } from '@code-quest/schemas';
 import { Button } from '@/components/ui/Button';
 import { useChannelConfig } from '@/contexts/channel';
 import { usePreferencesStore } from '@/stores/usePreferencesStore';
+import { DISMISSIBLE_IDS } from '../../../stores/preferences-schema.ts';
 
 export function ReviewUpsellBanner(): React.ReactNode {
   const { experimentGates } = useChannelConfig();

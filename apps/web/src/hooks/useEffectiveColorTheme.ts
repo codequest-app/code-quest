@@ -1,5 +1,5 @@
-import type { EffectiveColorTheme } from '@code-quest/schemas';
 import { useSyncExternalStore } from 'react';
+import type { EffectiveColorTheme } from '../stores/preferences-schema.ts';
 import { usePreferencesStore } from '../stores/usePreferencesStore.ts';
 
 const DARK_QUERY = '(prefers-color-scheme: dark)';

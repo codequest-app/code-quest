@@ -1,7 +1,15 @@
 import { z } from 'zod';
-import { channelMetaCacheSchema, clientMessageSchema } from './common.ts';
+import { channelMetaCacheSchema } from './common.ts';
 import { rpcResult } from './rpc.ts';
 import { effortLevelSchema } from './settings.ts';
+
+const clientMessageSchema: z.ZodObject<
+  { name: z.ZodString; payload: z.ZodRecord<z.ZodString, z.ZodUnknown> },
+  z.core.$strip
+> = z.object({
+  name: z.string(),
+  payload: z.record(z.string(), z.unknown()),
+});
 
 const SESSION_LIST_LIMIT = 100;
 

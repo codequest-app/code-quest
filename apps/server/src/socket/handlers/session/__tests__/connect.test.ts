@@ -3,7 +3,11 @@ import type {
   SessionLaunchResponse,
   SessionResumeResponse,
 } from '@code-quest/schemas';
-import { messageContentSchema } from '@code-quest/schemas';
+import { z } from 'zod';
+
+const messageContentSchema = z.object({
+  content: z.array(z.object({ type: z.string(), text: z.string() })),
+});
 
 type LaunchOk = Extract<SessionLaunchResponse, { ok: true }>;
 type JoinOk = Extract<SessionJoinResponse, { ok: true }>;

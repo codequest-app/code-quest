@@ -1,5 +1,20 @@
 import { z } from 'zod';
 
+/** Envelope returned by the summoner for every control_response — shared by summoner, server, and web. */
+export const controlResponseSchema: z.ZodObject<
+  {
+    success: z.ZodBoolean;
+    response: z.ZodOptional<z.ZodRecord<z.ZodString, z.ZodUnknown>>;
+    error: z.ZodOptional<z.ZodString>;
+  },
+  z.core.$strip
+> = z.object({
+  success: z.boolean(),
+  response: z.record(z.string(), z.unknown()).optional(),
+  error: z.string().optional(),
+});
+export type ControlResponse = z.infer<typeof controlResponseSchema>;
+
 /** initialize control_response.response shape */
 export const controlInitResponseSchema: z.ZodObject<
   {

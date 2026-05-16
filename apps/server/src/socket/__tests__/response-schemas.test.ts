@@ -1,28 +1,7 @@
-import {
-  controlResponseSchema,
-  sessionListResponseSchema,
-  successResponseSchema,
-} from '@code-quest/schemas';
+import { controlResponseSchema, sessionListResponseSchema } from '@code-quest/schemas';
 import { describe, expect, it } from 'vitest';
 
 describe('shared response schemas', () => {
-  describe('successResponseSchema', () => {
-    it('accepts { success: true }', () => {
-      expect(successResponseSchema.parse({ success: true })).toEqual({ success: true });
-    });
-
-    it('accepts { success: false, error: "msg" }', () => {
-      expect(successResponseSchema.parse({ success: false, error: 'fail' })).toEqual({
-        success: false,
-        error: 'fail',
-      });
-    });
-
-    it('rejects missing success', () => {
-      expect(() => successResponseSchema.parse({})).toThrow();
-    });
-  });
-
   describe('controlResponseSchema', () => {
     it('accepts { success: true, response: { key: "val" } }', () => {
       const input = { success: true, response: { key: 'val' } };

@@ -1,8 +1,8 @@
-import { DISMISSIBLE_IDS } from '@code-quest/schemas';
 import type { Meta, StoryObj } from '@storybook/react-vite';
 import { expect } from 'storybook/test';
 import { usePreferencesStore } from '@/stores/usePreferencesStore';
 import { withStoryChannel } from '@/test/story-decorator';
+import { DISMISSIBLE_IDS } from '../../../stores/preferences-schema.ts';
 import { ReviewUpsellBanner } from './ReviewUpsellBanner.tsx';
 
 const meta: Meta<typeof ReviewUpsellBanner> = {

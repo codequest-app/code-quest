@@ -1,43 +1,5 @@
 import { z } from 'zod';
 
-// ── Shared response schemas ──
-
-export const successResponseSchema: z.ZodObject<
-  { success: z.ZodBoolean; error: z.ZodOptional<z.ZodString> },
-  z.core.$strip
-> = z.object({
-  success: z.boolean(),
-  error: z.string().optional(),
-});
-
-export const controlResponseSchema: z.ZodObject<
-  {
-    success: z.ZodBoolean;
-    response: z.ZodOptional<z.ZodRecord<z.ZodString, z.ZodUnknown>>;
-    error: z.ZodOptional<z.ZodString>;
-  },
-  z.core.$strip
-> = z.object({
-  success: z.boolean(),
-  response: z.record(z.string(), z.unknown()).optional(),
-  error: z.string().optional(),
-});
-export type ControlResponse = z.infer<typeof controlResponseSchema>;
-
-export const clientMessageSchema: z.ZodObject<
-  { name: z.ZodString; payload: z.ZodRecord<z.ZodString, z.ZodUnknown> },
-  z.core.$strip
-> = z.object({
-  name: z.string(),
-  payload: z.record(z.string(), z.unknown()),
-});
-export const messageContentSchema: z.ZodObject<
-  { content: z.ZodArray<z.ZodObject<{ type: z.ZodString; text: z.ZodString }, z.core.$strip>> },
-  z.core.$strip
-> = z.object({
-  content: z.array(z.object({ type: z.string(), text: z.string() })),
-});
-
 export const channelIdPayloadSchema: z.ZodObject<{ channelId: z.ZodString }, z.core.$strip> =
   z.object({ channelId: z.string() });
 export type ChannelIdPayload = z.infer<typeof channelIdPayloadSchema>;
@@ -70,8 +32,6 @@ export const channelMetaCacheSchema: z.ZodObject<
 });
 export type ChannelMetaCache = z.infer<typeof channelMetaCacheSchema>;
 
-// ── Error ──
-
 export const errorMessagePayloadSchema: z.ZodObject<
   { channelId: z.ZodString; message: z.ZodString; kind: z.ZodOptional<z.ZodString> },
   z.core.$strip
@@ -81,8 +41,6 @@ export const errorMessagePayloadSchema: z.ZodObject<
   kind: z.string().optional(),
 });
 export type ErrorMessagePayload = z.infer<typeof errorMessagePayloadSchema>;
-
-// ── Speech ──
 
 export const speechToTextMessagePayloadSchema: z.ZodObject<
   { channelId: z.ZodString; text: z.ZodString; done: z.ZodBoolean },

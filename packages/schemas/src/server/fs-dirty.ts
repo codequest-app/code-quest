@@ -1,5 +1,5 @@
+import type { FileResult } from '@code-quest/filesystem';
 import { z } from 'zod';
-import type { FileResult } from '../services/filesystem.ts';
 import type { GitStatusResult } from './git.ts';
 
 export const filesDirtyEventSchema: z.ZodObject<

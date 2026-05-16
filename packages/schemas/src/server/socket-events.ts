@@ -1,19 +1,19 @@
-import type { ActionOpenFilePayload, ActionOpenUrlPayload } from './schemas/actions.ts';
-import type { AuthStatus, LoginPayload, OAuthCodePayload } from './schemas/auth.ts';
+import type { ActionOpenFilePayload, ActionOpenUrlPayload } from './actions.ts';
+import type { AuthStatus, LoginPayload, OAuthCodePayload } from './auth.ts';
 import type {
   CancelRequestPayload,
   ChannelIdPayload,
-  ControlResponse,
   ErrorMessagePayload,
   SpeechToTextMessagePayload,
-} from './schemas/common.ts';
+} from './common.ts';
 import type {
   ControlCancelPayload,
   ControlDiffReviewPayload,
   ControlElicitationPayload,
   ControlMcpPayload,
   ControlPermissionPayload,
-} from './schemas/control.ts';
+} from './control.ts';
+import type { ControlResponse } from './control-response.ts';
 import type {
   FsBrowsePayload,
   FsBrowseResponse,
@@ -29,8 +29,8 @@ import type {
   FsSearchResponse,
   FsUnwatchPayload,
   FsWatchPayload,
-} from './schemas/fs.ts';
-import type { FilesDirtyEvent, GitDirtyEvent } from './schemas/fs-dirty.ts';
+} from './fs.ts';
+import type { FilesDirtyEvent, GitDirtyEvent } from './fs-dirty.ts';
 import type {
   GitAddPayload,
   GitAddResult,
@@ -53,8 +53,8 @@ import type {
   GitStatusByCwdPayload,
   GitStatusByCwdResult,
   GitUpdateSkippedBranchPayload,
-} from './schemas/git.ts';
-import type { HookResponsePayload, HookStartedPayload } from './schemas/hook.ts';
+} from './git.ts';
+import type { HookResponsePayload, HookStartedPayload } from './hook.ts';
 import type {
   DisableChromeMcpResponse,
   DisableJupyterMcpResponse,
@@ -67,7 +67,7 @@ import type {
   McpReconnectPayload,
   McpSetEnabledPayload,
   McpSetServersPayload,
-} from './schemas/mcp.ts';
+} from './mcp.ts';
 import type {
   ChatAskSideQuestionPayload,
   ChatCancelAsyncMessagePayload,
@@ -77,12 +77,12 @@ import type {
   ChatSendPayload,
   ChatStopTaskPayload,
   SideQuestionResult,
-} from './schemas/message.ts';
+} from './message.ts';
 import type {
   MessageAssistantPayload,
   MessageResultPayload,
   MessageUserPayload,
-} from './schemas/message-payloads.ts';
+} from './message-payloads.ts';
 import type {
   StreamBlockStartPayload,
   StreamBlockStopPayload,
@@ -93,14 +93,14 @@ import type {
   StreamMessageStartPayload,
   StreamTextPayload,
   StreamToolSummaryPayload,
-} from './schemas/message-stream.ts';
+} from './message-stream.ts';
 import type {
   NotificationAuthStatusPayload,
   NotificationAuthUrlPayload,
   NotificationShowPayload,
   NotificationToastPayload,
   RawEventPayload,
-} from './schemas/notification.ts';
+} from './notification.ts';
 import type {
   OpenspecArchivePayload,
   OpenspecArchiveResult,
@@ -113,12 +113,12 @@ import type {
   OpenspecReadResult,
   OpenspecToggleTaskPayload,
   OpenspecToggleTaskResult,
-} from './schemas/openspec.ts';
+} from './openspec.ts';
 import type {
   GetPlanCommentsResponse,
   PlanCommentPayload,
   PlanRemoveCommentPayload,
-} from './schemas/plan.ts';
+} from './plan.ts';
 import type {
   AddMarketplacePayload,
   ListMarketplacesResponse,
@@ -134,7 +134,7 @@ import type {
   PluginUninstallPayload,
   RefreshMarketplacePayload,
   RemoveMarketplacePayload,
-} from './schemas/plugin.ts';
+} from './plugin.ts';
 import type {
   Project,
   ProjectsAddPayload,
@@ -146,9 +146,9 @@ import type {
   ProjectsRemoveResponse,
   ProjectsUpdatePayload,
   ProjectsUpdateResponse,
-} from './schemas/projects.ts';
-import type { GetProviderConfigResponse } from './schemas/provider.ts';
-import type { Ack, RpcResult } from './schemas/rpc.ts';
+} from './projects.ts';
+import type { GetProviderConfigResponse } from './provider.ts';
+import type { Ack, RpcResult } from './rpc.ts';
 import type {
   CancelRequestEventPayload,
   CloseChannelPayload,
@@ -182,7 +182,7 @@ import type {
   SessionTeleportPayload,
   SessionUpdateStatePayload,
   TeleportSessionResponse,
-} from './schemas/session.ts';
+} from './session.ts';
 import type {
   SettingsApplyPayload,
   SettingsGetStatePayload,
@@ -193,7 +193,7 @@ import type {
   SettingsSetThinkingLevelPayload,
   StateUsagePayload,
   UpdateStatePayload,
-} from './schemas/settings.ts';
+} from './settings.ts';
 import type {
   ChatHookCallbackRespondPayload,
   ControlHookCallbackPayload,
@@ -205,17 +205,13 @@ import type {
   SystemPostTurnSummaryPayload,
   SystemRateLimitPayload,
   SystemRemoteControlPayload,
-} from './schemas/system.ts';
-import type {
-  TaskNotificationPayload,
-  TaskProgressPayload,
-  TaskStartedPayload,
-} from './schemas/task.ts';
+} from './system.ts';
+import type { TaskNotificationPayload, TaskProgressPayload, TaskStartedPayload } from './task.ts';
 import type {
   TerminalGetContentsPayload,
   TerminalGetContentsResponse,
   TerminalOpenClaudePayload,
-} from './schemas/terminal.ts';
+} from './terminal.ts';
 import type {
   CreateWorktreePayload,
   CreateWorktreeResponse,
@@ -236,7 +232,7 @@ import type {
   WorktreeRenameResponse,
   WorktreeStatusPayload,
   WorktreeStatusResponse,
-} from './schemas/worktree.ts';
+} from './worktree.ts';
 
 export interface ClientToServerEvents {
   // ── Chat Operations ──

@@ -1,3 +1,6 @@
+import { create, type Mutate, type StoreApi, type UseBoundStore } from 'zustand';
+import { persist } from 'zustand/middleware';
+import { localStoragePersist } from './persistStorage.ts';
 import {
   type ColorTheme,
   type Density,
@@ -5,10 +8,7 @@ import {
   type FontSize,
   type PreferencesState as PersistedPreferences,
   preferencesStateSchema,
-} from '@code-quest/schemas';
-import { create, type Mutate, type StoreApi, type UseBoundStore } from 'zustand';
-import { persist } from 'zustand/middleware';
-import { localStoragePersist } from './persistStorage.ts';
+} from './preferences-schema.ts';
 
 export type { ColorTheme, Density, FontSize };
 

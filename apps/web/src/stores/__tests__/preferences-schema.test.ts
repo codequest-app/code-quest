@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { preferencesStateSchema } from '../preferences.ts';
+import { preferencesStateSchema } from '../preferences-schema.ts';
 
 describe('preferencesStateSchema', () => {
   it('accepts a fully-populated state', () => {
