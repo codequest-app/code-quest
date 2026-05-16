@@ -1,3 +1,4 @@
+import type { FsMutationResult } from '@code-quest/filesystem';
 import type { ActionOpenFilePayload, ActionOpenUrlPayload } from './actions.ts';
 import type { AuthStatus, LoginPayload, OAuthCodePayload } from './auth.ts';
 import type {
@@ -21,7 +22,6 @@ import type {
   FsCreatePayload,
   FsDeletePayload,
   FsMovePayload,
-  FsMutationResult,
   FsReadPayload,
   FsReadResponse,
   FsRenamePayload,

@@ -1,7 +1,5 @@
 import { z } from 'zod';
 
-export type { FsMutationResult } from '@code-quest/filesystem';
-
 import { rpcResult } from './rpc.ts';
 
 export const fsEntryTypeSchema: z.ZodEnum<{ file: 'file'; directory: 'directory' }> = z.enum([
