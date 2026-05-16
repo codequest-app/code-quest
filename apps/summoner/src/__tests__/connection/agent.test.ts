@@ -4,10 +4,10 @@ import { FakeFilesystemService, FakeGitService, FakeProcessProvider } from '@cod
 import { type Envelope, RpcChannel, toRpcSocket } from '@code-quest/transport';
 import { afterEach, beforeEach, describe, expect, it } from 'vitest';
 import { WebSocket, WebSocketServer } from 'ws';
-import { Agent } from '../../connection/agent.ts';
-import { FsHandler } from '../../connection/handlers/fs-handler.ts';
-import { GitHandler } from '../../connection/handlers/git-handler.ts';
-import { ProcessHandler } from '../../connection/handlers/process-handler.ts';
+import { Agent } from '../../agent/agent.ts';
+import { FsHandler } from '../../agent/handlers/fs-handler.ts';
+import { GitHandler } from '../../agent/handlers/git-handler.ts';
+import { ProcessHandler } from '../../agent/handlers/process-handler.ts';
 
 function makeSetup() {
   let httpServer: HttpServer;

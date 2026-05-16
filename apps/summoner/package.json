@@ -7,7 +7,7 @@
   "exports": {
     ".": "./src/index.ts",
     "./browser": "./src/browser.ts",
-    "./connection": "./src/connection/index.ts",
+    "./connection": "./src/agent/index.ts",
     "./test": "./src/test/index.ts",
     "./schemas": "./src/claude/schemas.ts"
   },

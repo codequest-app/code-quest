@@ -1,12 +1,12 @@
 import 'dotenv/config';
 import { WsClient } from '@code-quest/transport';
 import { formatBanner } from '@code-quest/utils';
+import { Agent } from './agent/agent.ts';
+import { BroadcasterHandler } from './agent/handlers/broadcaster-handler.ts';
+import { FsHandler } from './agent/handlers/fs-handler.ts';
+import { GitHandler } from './agent/handlers/git-handler.ts';
+import { ProcessHandler } from './agent/handlers/process-handler.ts';
 import { loadConfig } from './config.ts';
-import { Agent } from './connection/agent.ts';
-import { BroadcasterHandler } from './connection/handlers/broadcaster-handler.ts';
-import { FsHandler } from './connection/handlers/fs-handler.ts';
-import { GitHandler } from './connection/handlers/git-handler.ts';
-import { ProcessHandler } from './connection/handlers/process-handler.ts';
 import { createContainer, TOKENS } from './container.ts';
 import { logger } from './logger.ts';
 
