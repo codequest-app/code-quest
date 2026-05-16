@@ -44,6 +44,7 @@
     "terminal",
     "ai"
   ],
+  "packageManager": "pnpm@11.1.1",
   "author": "",
   "license": "MIT",
   "devDependencies": {
