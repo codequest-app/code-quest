@@ -13,6 +13,7 @@ Web-based Claude Code client with real-time session management, file explorer, a
 - **Multi-transport** — raw WebSocket (`/ws`) or Socket.IO (`/socket.io`), configurable at runtime
 - **Multi-provider ready** — Claude adapter ships built-in; Gemini and others can be added via `ProviderAdapter`
 - **Real-time push** — file/git/openspec changes flow from Summoner → server → browser automatically
+- **Full protocol implementation** — directly spawns Claude Code CLI with `--output-format stream-json --input-format stream-json`, parses the complete NDJSON protocol (system, assistant, user, result, stream_event, control_request), and responds to permission/elicitation prompts over stdin — no SDK abstraction in between
 
 ## Architecture
 

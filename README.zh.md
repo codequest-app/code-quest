@@ -13,6 +13,7 @@
 - **多傳輸層** — 原生 WebSocket（`/ws`）或 Socket.IO（`/socket.io`），可在執行期切換
 - **多 AI Provider** — 內建 Claude adapter；可透過 `ProviderAdapter` 介面新增 Gemini 等其他 provider
 - **即時推送** — 檔案、git、openspec 異動從 Summoner → Server → 瀏覽器自動同步
+- **完整 Protocol 實作** — 直接 spawn Claude Code CLI（`--output-format stream-json --input-format stream-json`），完整解析 NDJSON protocol（system、assistant、user、result、stream_event、control_request），並透過 stdin 回應 permission／elicitation 請求，不依賴任何 SDK 抽象層
 
 ## 架構
 
