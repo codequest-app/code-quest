@@ -1,15 +1,13 @@
 import {
   AlreadyRepoError,
   type CreateWorktreeOptions,
+  type GitDiffResult,
+  type GitLogResult,
   type GitService,
+  type GitStatusResult,
   NotARepoError,
+  type WorktreeInfo,
 } from '@code-quest/git';
-import type {
-  GitDiffResult,
-  GitLogResult,
-  GitStatusResult,
-  WorktreeInfo,
-} from '@code-quest/schemas';
 
 export class FakeGitService implements GitService {
   readonly capabilities = { worktree: true } as const;

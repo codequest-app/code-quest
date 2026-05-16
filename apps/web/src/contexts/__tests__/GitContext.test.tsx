@@ -1,4 +1,4 @@
-import type { WorktreeInfo } from '@code-quest/schemas';
+import type { WorktreeInfo } from '@code-quest/git';
 import { createFakeServer } from '@code-quest/server/test';
 import { act, render, renderHook, waitFor } from '@testing-library/react';
 import { type ReactNode, useRef } from 'react';

@@ -1,3 +1,4 @@
+import type { WorktreeInfo } from '@code-quest/git';
 import {
   type AccountInfo,
   type Ack,
@@ -9,7 +10,6 @@ import {
   type ProviderClientConfig,
   type RpcResult,
   type UsageQuota,
-  type WorktreeInfo,
 } from '@code-quest/schemas';
 import {
   createContext,

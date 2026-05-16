@@ -1,19 +1,5 @@
 import { z } from 'zod';
 
-export type {
-  GitAddResult,
-  GitCommitResult,
-  GitDiffResult,
-  GitDiscardFileResult,
-  GitFetchResult,
-  GitFileChange,
-  GitLogEntry,
-  GitLogResult,
-  GitPullResult,
-  GitPushResult,
-  GitStatusResult,
-} from '@code-quest/git';
-
 // biome-ignore lint/complexity/noBannedTypes: Zod infers {} for empty object schemas
 export const gitStatusPayloadSchema: z.ZodObject<{}, z.core.$strip> = z.object({});
 export type GitStatusPayload = z.infer<typeof gitStatusPayloadSchema>;

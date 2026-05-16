@@ -1,7 +1,5 @@
 import { z } from 'zod';
 
-export type { WorktreeInfo } from '@code-quest/git';
-
 import { rpcResult } from './rpc.ts';
 
 export const worktreeInfoSchema: z.ZodObject<

@@ -1,9 +1,8 @@
+import type { GitStatusResult, WorktreeInfo } from '@code-quest/git';
 import type {
   GitStatusByCwdResult,
-  GitStatusResult,
   WorktreeAddedEvent,
   WorktreeBranchChangedEvent,
-  WorktreeInfo,
   WorktreeRemovedEvent,
 } from '@code-quest/schemas';
 import { EVENTS, gitStatusByCwdResultSchema, gitStatusResultSchema } from '@code-quest/schemas';

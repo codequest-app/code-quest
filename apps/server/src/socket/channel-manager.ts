@@ -1,11 +1,7 @@
 import { resolve } from 'node:path';
+import type { WorktreeInfo } from '@code-quest/git';
 import type { ProviderClientConfig, TypedSocket } from '@code-quest/schemas';
-import {
-  type ControlResponse,
-  EVENTS,
-  type SessionBroadcastState,
-  type WorktreeInfo,
-} from '@code-quest/schemas';
+import { type ControlResponse, EVENTS, type SessionBroadcastState } from '@code-quest/schemas';
 import type { LaunchOptions, ProviderAdapter } from '@code-quest/summoner';
 import { logger } from '../logger.ts';
 import type { RunnerFactory } from '../types.ts';

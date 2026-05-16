@@ -1,4 +1,4 @@
-import type { WorktreeInfo } from '@code-quest/schemas';
+import type { WorktreeInfo } from '@code-quest/git';
 import { render, screen } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { describe, expect, it, vi } from 'vitest';

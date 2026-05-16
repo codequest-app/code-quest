@@ -1,4 +1,4 @@
-import type { WorktreeInfo } from '@code-quest/schemas';
+import type { WorktreeInfo } from '@code-quest/git';
 import { forwardRef, type HTMLAttributes, type ReactElement, type ReactNode } from 'react';
 import { Badge } from '@/components/ui/Badge';
 import { StatusDot } from '@/components/ui/StatusDot';

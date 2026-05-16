@@ -1,4 +1,13 @@
 import type { FsMutationResult } from '@code-quest/filesystem';
+import type {
+  GitAddResult,
+  GitCommitResult,
+  GitDiscardFileResult,
+  GitFetchResult,
+  GitLogResult,
+  GitPullResult,
+  GitPushResult,
+} from '@code-quest/git';
 import type { ActionOpenFilePayload, ActionOpenUrlPayload } from './actions.ts';
 import type { AuthStatus, LoginPayload, OAuthCodePayload } from './auth.ts';
 import type {
@@ -33,23 +42,16 @@ import type {
 import type { FilesDirtyEvent, GitDirtyEvent } from './fs-dirty.ts';
 import type {
   GitAddPayload,
-  GitAddResult,
   GitCommitPayload,
-  GitCommitResult,
   GitDiffByCwdPayload,
   GitDiffByCwdResult,
   GitDiscardFilePayload,
-  GitDiscardFileResult,
   GitExecPayload,
   GitExecResponse,
   GitFetchPayload,
-  GitFetchResult,
   GitLogPayload,
-  GitLogResult,
   GitPullPayload,
-  GitPullResult,
   GitPushPayload,
-  GitPushResult,
   GitStatusByCwdPayload,
   GitStatusByCwdResult,
   GitUpdateSkippedBranchPayload,

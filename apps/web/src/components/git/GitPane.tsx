@@ -1,10 +1,7 @@
+import type { GitAddResult, GitCommitResult, GitFileChange, GitPushResult } from '@code-quest/git';
 import type { ClientToServerEvents } from '@code-quest/schemas';
 import {
   EVENTS,
-  type GitAddResult,
-  type GitCommitResult,
-  type GitFileChange,
-  type GitPushResult,
   gitAddResultSchema,
   gitCommitResultSchema,
   gitDiffByCwdResultSchema,

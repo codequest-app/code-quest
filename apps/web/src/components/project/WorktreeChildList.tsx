@@ -1,4 +1,4 @@
-import type { WorktreeInfo } from '@code-quest/schemas';
+import type { WorktreeInfo } from '@code-quest/git';
 import { useEffect, useMemo, useState } from 'react';
 import { toast } from 'sonner';
 import { useGitActions } from '@/contexts/GitContext';

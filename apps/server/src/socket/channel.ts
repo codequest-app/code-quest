@@ -1,11 +1,10 @@
-import { detectWorktree } from '@code-quest/git';
+import { detectWorktree, type WorktreeInfo } from '@code-quest/git';
 import type {
   ChannelMetaCache,
   ClientMessage,
   ControlResponse,
   ResolvedControlResponse,
   SessionConfig,
-  WorktreeInfo,
 } from '@code-quest/schemas';
 import {
   errorMessageEventSchema,
