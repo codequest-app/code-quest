@@ -658,6 +658,11 @@ describe('MessageList streaming', () => {
       await claude.emitSegment(s.thinkingDelta(' think'));
     });
 
+    const allThinking = screen.queryAllByText('Thinking...');
+    if (allThinking.length !== 1) {
+      console.log('[DEBUG] Found', allThinking.length, 'elements with "Thinking..."');
+      console.log('[DEBUG] DOM:', document.body.innerHTML);
+    }
     expect(await screen.findByRole('button', { name: /Thinking\.\.\./i })).toBeInTheDocument();
   });
 
