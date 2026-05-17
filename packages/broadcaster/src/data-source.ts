@@ -1,7 +1,7 @@
 import type { WatchService } from '@code-quest/watch';
 import type { DataSourceLike, Unsubscribe } from './types.ts';
 
-export const GIT_META_RE = /^\.git\/(HEAD|index|packed-refs|refs\/.*)$/;
+export const GIT_META_RE: RegExp = /^\.git\/(HEAD|index|packed-refs|refs\/.*)$/;
 
 export abstract class DataSource<T> implements DataSourceLike<T> {
   protected readonly cwd: string;
