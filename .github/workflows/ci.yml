@@ -8,7 +8,7 @@ on:
 
 jobs:
   lint:
-    runs-on: self-hosted
+    runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
       - uses: pnpm/action-setup@v4
@@ -20,7 +20,7 @@ jobs:
       - run: pnpm biome check --max-diagnostics=200 .
 
   typecheck:
-    runs-on: self-hosted
+    runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
       - uses: pnpm/action-setup@v4
@@ -32,7 +32,7 @@ jobs:
       - run: pnpm -r exec tsc --noEmit
 
   test:
-    runs-on: self-hosted
+    runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
       - uses: pnpm/action-setup@v4
