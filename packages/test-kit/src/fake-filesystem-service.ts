@@ -30,6 +30,10 @@ export class FakeRootGuard implements RootGuard {
   }
 
   async isWithinRoots(path: string): Promise<boolean> {
+    return this.isStructurallyWithinRoots(path);
+  }
+
+  async isStructurallyWithinRoots(path: string): Promise<boolean> {
     for (const root of this.roots) {
       if (path === root) return true;
       if (root === '/') return true;

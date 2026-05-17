@@ -238,7 +238,8 @@ export class LocalFilesystemService implements FilesystemService {
   // ── Private helpers ──
 
   private async guardPath(path: string): Promise<string> {
-    if (!(await this.rootGuard.isWithinRoots(path))) throw new PathOutsideRootsError(path);
+    if (!(await this.rootGuard.isStructurallyWithinRoots(path)))
+      throw new PathOutsideRootsError(path);
     return resolve(path);
   }
 

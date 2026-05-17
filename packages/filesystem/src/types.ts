@@ -9,7 +9,10 @@ export type WriteFileResult = { ok: true } | { error: string };
 export type FsMutationResult = { ok: true } | { error: string };
 
 export interface RootGuard {
+  /** Strict check: uses realpath; returns false if path does not exist. */
   isWithinRoots(path: string): Promise<boolean>;
+  /** Structural check: uses resolve; allows nonexistent paths for write/create operations. */
+  isStructurallyWithinRoots(path: string): Promise<boolean>;
 }
 
 export class PathOutsideRootsError extends Error {
