@@ -663,7 +663,7 @@ describe('MessageList streaming', () => {
       console.log('[DEBUG] Found', allThinking.length, 'elements with "Thinking..."');
       console.log('[DEBUG] DOM:', document.body.innerHTML);
     }
-    expect(await screen.findByRole('button', { name: /Thinking\.\.\./i })).toBeInTheDocument();
+    expect(await screen.findByText('Thinking...')).toBeInTheDocument();
   });
 
   it('thinking shows "Thought for Xs" after result arrives', async () => {
