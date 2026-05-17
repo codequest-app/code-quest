@@ -658,7 +658,7 @@ describe('MessageList streaming', () => {
       await claude.emitSegment(s.thinkingDelta(' think'));
     });
 
-    expect(await screen.findByText('Thinking...')).toBeInTheDocument();
+    expect(await screen.findByRole('button', { name: /Thinking\.\.\./i })).toBeInTheDocument();
   });
 
   it('thinking shows "Thought for Xs" after result arrives', async () => {
