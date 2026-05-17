@@ -51,7 +51,9 @@ function makeSetup() {
     return { filesystem, git, rpc, fsService, gitService, clientWs };
   }
 
-  async function teardown() {
+  async function teardown(clientWs: WebSocket) {
+    clientWs.close();
+    await new Promise<void>((r) => clientWs.once('close', r));
     await new Promise<void>((r) => wss.close(() => r()));
     await new Promise<void>((r) => httpServer.close(() => r()));
   }
@@ -69,8 +71,7 @@ describe('RemoteFilesystemService', () => {
     ctx = await setup();
   });
   afterEach(async () => {
-    ctx.clientWs.close();
-    await teardown();
+    await teardown(ctx.clientWs);
   });
 
   it('browseDirectories — returns root entries', async () => {
@@ -193,8 +194,7 @@ describe('RemoteGitService', () => {
     ctx = await setup();
   });
   afterEach(async () => {
-    ctx.clientWs.close();
-    await teardown();
+    await teardown(ctx.clientWs);
   });
 
   it('status — returns branch and clean state', async () => {
