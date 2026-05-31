@@ -1,12 +1,18 @@
 // decodeProjectDir used as fallback when JSONL has no cwd field
-import { access, createReadStream } from 'node:fs';
+import { access as accessCb, createReadStream } from 'node:fs';
 import { readdir, stat } from 'node:fs/promises';
 import { homedir } from 'node:os';
 import { basename, join } from 'node:path';
 import { createInterface } from 'node:readline';
+import { promisify } from 'node:util';
 import { decodeProjectDir, encodeProjectDir, JsonlReader } from '@code-quest/jsonl-codec';
+import { logger } from '../logger.ts';
 import type { RawEventService } from '../services/raw-event-service.ts';
 import type { SessionRecord, SessionStore } from '../services/session-store.ts';
+
+const accessAsync = promisify(accessCb);
+
+const SESSION_STORE_LIMIT = 10000;
 
 export type ImportStatus = 'NOT_IMPORTED' | 'IMPORTED' | 'PARTIAL';
 export type ExportStatus = 'NOT_EXPORTED' | 'EXPORTED';
@@ -41,36 +47,55 @@ export interface ProjectInfo {
 
 async function readFirstLines(filePath: string, maxLines = 20): Promise<string[]> {
   const lines: string[] = [];
-  await new Promise<void>((resolve) => {
-    const rl = createInterface({
-      input: createReadStream(filePath, { encoding: 'utf-8' }),
-      crlfDelay: Infinity,
+  await new Promise<void>((resolve, reject) => {
+    const stream = createReadStream(filePath, { encoding: 'utf-8' });
+    const rl = createInterface({ input: stream, crlfDelay: Infinity });
+    stream.on('error', (err) => {
+      logger.warn({ err, filePath }, 'readFirstLines stream error');
+      resolve();
     });
     rl.on('line', (line) => {
       if (line.trim()) lines.push(line);
       if (lines.length >= maxLines) rl.close();
     });
     rl.on('close', resolve);
-    rl.on('error', resolve);
+    rl.on('error', (err) => {
+      logger.warn({ err, filePath }, 'readFirstLines readline error');
+      reject(err);
+    });
   });
   return lines;
 }
 
 async function countJsonlLines(filePath: string): Promise<number> {
   let count = 0;
-  await new Promise<void>((resolve) => {
+  await new Promise<void>((resolve, reject) => {
     const reader = new JsonlReader(basename(filePath, '.jsonl'));
-    const rl = createInterface({
-      input: createReadStream(filePath, { encoding: 'utf-8' }),
-      crlfDelay: Infinity,
+    const stream = createReadStream(filePath, { encoding: 'utf-8' });
+    const rl = createInterface({ input: stream, crlfDelay: Infinity });
+    stream.on('error', (err) => {
+      logger.warn({ err, filePath }, 'countJsonlLines stream error');
+      resolve();
     });
     rl.on('line', (line) => {
       if (reader.readLine(line) !== null) count++;
     });
     rl.on('close', resolve);
-    rl.on('error', resolve);
+    rl.on('error', (err) => {
+      logger.warn({ err, filePath }, 'countJsonlLines readline error');
+      reject(err);
+    });
   });
   return count;
+}
+
+async function fileExists(filePath: string): Promise<boolean> {
+  try {
+    await accessAsync(filePath);
+    return true;
+  } catch {
+    return false;
+  }
 }
 
 export class SessionScanner {
@@ -97,7 +122,9 @@ export class SessionScanner {
     }
 
     // fetch all imported session ids once to avoid N DB queries
-    const { sessions: importedSessions } = await this.sessionStore.list({ limit: 10000 });
+    const { sessions: importedSessions } = await this.sessionStore.list({
+      limit: SESSION_STORE_LIMIT,
+    });
     const importedIds = new Set(importedSessions.map((s) => s.id));
 
     const projects: ProjectInfo[] = [];
@@ -177,7 +204,7 @@ export class SessionScanner {
   }
 
   async scanExportable(): Promise<ExportableProject[]> {
-    const { sessions, total } = await this.sessionStore.list({ limit: 1000 });
+    const { sessions, total } = await this.sessionStore.list({ limit: SESSION_STORE_LIMIT });
     if (total === 0) return [];
 
     const byCwd = new Map<string, SessionRecord[]>();
@@ -198,13 +225,11 @@ export class SessionScanner {
       const exportable: ExportableSession[] = [];
       for (const s of cwdSessions) {
         const jsonlPath = join(projectDir, `${s.id}.jsonl`);
-        const exists = await new Promise<boolean>((resolve) => {
-          access(jsonlPath, (err) => resolve(!err));
-        });
+        const exists = await fileExists(jsonlPath);
         exportable.push({
           session: s,
           jsonlPath,
-          status: (exists ? 'EXPORTED' : 'NOT_EXPORTED') as ExportStatus,
+          status: exists ? 'EXPORTED' : 'NOT_EXPORTED',
         });
       }
 

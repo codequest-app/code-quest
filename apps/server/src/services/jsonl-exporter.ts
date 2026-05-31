@@ -1,6 +1,8 @@
 import { createWriteStream } from 'node:fs';
 import { mkdir } from 'node:fs/promises';
 import { dirname } from 'node:path';
+import { Readable } from 'node:stream';
+import { pipeline } from 'node:stream/promises';
 import { JsonlWriter } from '@code-quest/jsonl-codec';
 import type { RawEventService } from './raw-event-service.ts';
 import type { SessionRecord, SessionStore } from './session-store.ts';
@@ -19,12 +21,13 @@ function normalizeEntry(
   entry: Record<string, unknown>,
   session: SessionRecord,
 ): Record<string, unknown> {
-  const normalized = { ...entry };
-  normalized.sessionId = entry.session_id ?? entry.sessionId ?? session.id;
-  normalized.cwd = session.cwd;
-  normalized.isSidechain = false;
-  delete normalized.session_id;
-  return normalized;
+  const { session_id: _drop, ...rest } = entry;
+  return {
+    ...rest,
+    sessionId: _drop ?? rest.sessionId ?? session.id,
+    cwd: session.cwd,
+    isSidechain: false,
+  };
 }
 
 export class JsonlExporter {
@@ -43,23 +46,16 @@ export class JsonlExporter {
     const events = await this.rawEventService.getBySession(sessionId);
     const writer = new JsonlWriter();
 
+    const lines: string[] = [];
+    for (const event of events) {
+      const line = writer.writeLine(event);
+      if (!line) continue;
+      const entry = parseJsonLine(line);
+      if (!entry) continue;
+      lines.push(JSON.stringify(normalizeEntry(entry, session)) + '\n');
+    }
+
     await mkdir(dirname(outputPath), { recursive: true });
-
-    await new Promise<void>((resolve, reject) => {
-      const stream = createWriteStream(outputPath, { encoding: 'utf-8' });
-      stream.on('error', reject);
-      stream.on('finish', resolve);
-
-      for (const event of events) {
-        const line = writer.writeLine(event);
-        if (!line) continue;
-        const entry = parseJsonLine(line);
-        if (!entry) continue;
-        stream.write(JSON.stringify(normalizeEntry(entry, session)));
-        stream.write('\n');
-      }
-
-      stream.end();
-    });
+    await pipeline(Readable.from(lines), createWriteStream(outputPath, { encoding: 'utf-8' }));
   }
 }

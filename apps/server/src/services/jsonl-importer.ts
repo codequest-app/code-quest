@@ -24,10 +24,9 @@ export class JsonlImporter {
     const lines: string[] = [];
 
     await new Promise<void>((resolve, reject) => {
-      const rl = createInterface({
-        input: createReadStream(jsonlPath, { encoding: 'utf-8' }),
-        crlfDelay: Infinity,
-      });
+      const stream = createReadStream(jsonlPath, { encoding: 'utf-8' });
+      const rl = createInterface({ input: stream, crlfDelay: Infinity });
+      stream.on('error', reject);
       rl.on('line', (line) => {
         if (line.trim()) lines.push(line);
       });

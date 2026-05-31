@@ -11,7 +11,8 @@ export class JsonlWriter {
     } catch {
       return null;
     }
-    const type = entry.type as string;
+    const type = entry.type;
+    if (typeof type !== 'string') return null;
     if (SKIP_TYPES.has(type)) return null;
     // dir:out user entries are either echoes of stdin (text) or CLI-generated tool results.
     // Only keep tool results; skip echoes to avoid duplicates with dir:in user entries.

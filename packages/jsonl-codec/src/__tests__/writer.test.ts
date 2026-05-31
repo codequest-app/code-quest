@@ -47,17 +47,16 @@ describe('JsonlWriter', () => {
     const userLines = lines.filter((l) => JSON.parse(l).type === 'user');
     // 5 human (dir:in text) + 45 tool_result (dir:out) = 50
     expect(userLines).toHaveLength(50);
-    // no dir:out text user (echoes)
-    const echos = rawEvents.filter((r) => {
-      if (r.dir !== 'out') return false;
-      const d = JSON.parse(r.raw);
+    // dir:out text user (echoes) are skipped; dir:in text user (human messages) are kept.
+    // Echoes have session_id/uuid (added by CLI stdout), dir:in human messages don't.
+    const echoesInOutput = lines.filter((l) => {
+      const d = JSON.parse(l);
       if (d.type !== 'user') return false;
       const content = d.message?.content;
-      return Array.isArray(content) && content[0]?.type === 'text';
+      // echoes have session_id; human messages (dir:in) don't
+      return Array.isArray(content) && content[0]?.type === 'text' && d.session_id != null;
     });
-    for (const echo of echos) {
-      expect(lines).not.toContain(echo.raw);
-    }
+    expect(echoesInOutput).toHaveLength(0);
   });
 
   it('includes assistant entries', () => {

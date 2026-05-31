@@ -1,3 +1,4 @@
+import { randomUUID } from 'node:crypto';
 import { readFileSync, unlinkSync } from 'node:fs';
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
@@ -11,7 +12,6 @@ import type { SessionStore } from '../session-store.ts';
 const FIXTURES = join(import.meta.dirname, 'fixtures');
 const SESSION_ID = 'b3dbab57-8da8-40c9-86e8-11aadc1881e8';
 const CWD = '/Users/recca0120/WebstormProjects/cc-office';
-const OUT_PATH = join(tmpdir(), `jsonl-exporter-test-${SESSION_ID}.jsonl`);
 
 const rawEvents: Array<{ dir: string; raw: string }> = JSON.parse(
   readFileSync(join(FIXTURES, 'b3dbab57-raw-events.json'), 'utf-8'),
@@ -26,8 +26,10 @@ describe('JsonlExporter', () => {
   let exporter: JsonlExporter;
   let rawEventService: RawEventService;
   let sessionStore: SessionStore;
+  let OUT_PATH: string;
 
   beforeEach(async () => {
+    OUT_PATH = join(tmpdir(), `jsonl-exporter-test-${randomUUID()}.jsonl`);
     const container = createTestContainer();
     rawEventService = container.get<RawEventService>(TYPES.RawEventService);
     sessionStore = container.get<SessionStore>(TYPES.SessionStore);

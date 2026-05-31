@@ -36,16 +36,21 @@ function parseLine(line: string): JsonlEntry | null {
   if (!line.trim()) return null;
   try {
     const entry = JSON.parse(line) as JsonlEntry;
+    if (typeof entry.type !== 'string') return null;
     return entry.isSidechain ? null : entry;
   } catch {
     return null;
   }
 }
 
+function parseTimestamp(s: string | undefined): number | null {
+  if (s == null) return null;
+  const t = Date.parse(s);
+  return Number.isNaN(t) ? null : t;
+}
+
 function resolveTimestamp(entry: JsonlEntry, fallback: number): number {
-  if (entry.timestamp != null) return Date.parse(entry.timestamp);
-  if (entry.snapshot?.timestamp != null) return Date.parse(entry.snapshot.timestamp);
-  return fallback;
+  return parseTimestamp(entry.timestamp) ?? parseTimestamp(entry.snapshot?.timestamp) ?? fallback;
 }
 
 export class JsonlReader {
