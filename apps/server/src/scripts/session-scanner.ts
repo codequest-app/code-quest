@@ -13,7 +13,7 @@ const SESSION_STORE_LIMIT = 10000;
 const IMPORT_THRESHOLD = 0.95;
 
 export type ImportStatus = 'NOT_IMPORTED' | 'IMPORTED' | 'PARTIAL';
-export type ExportStatus = 'NOT_EXPORTED' | 'EXPORTED';
+type ExportStatus = 'NOT_EXPORTED' | 'EXPORTED';
 
 export interface JsonlSession {
   sessionId: string;
