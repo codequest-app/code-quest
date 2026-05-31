@@ -15,12 +15,12 @@ function enrichLine(raw: string, sessionId: string, cwd: string): string | null 
     if (cwd) entry.cwd = cwd;
     return `${JSON.stringify(entry)}\n`;
   } catch {
-    console.warn('JsonlWriter: failed to parse event raw, skipping');
+    console.warn('JsonlFileWriter: failed to parse event raw, skipping');
     return null;
   }
 }
 
-export class JsonlWriter implements SessionSink {
+export class JsonlFileWriter implements SessionSink {
   private readonly outputPath: string;
   constructor(outputPath: string) {
     this.outputPath = outputPath;

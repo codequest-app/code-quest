@@ -1,5 +1,5 @@
 import { join } from 'node:path';
-import { JsonlReader, MemoryWriter } from '@code-quest/jsonl-codec';
+import { JsonlFileReader, MemoryWriter } from '@code-quest/jsonl-codec';
 import { beforeEach, describe, expect, it } from 'vitest';
 import { createTestContainer } from '../../test/create-test-container.ts';
 import { TYPES } from '../../types.ts';
@@ -23,7 +23,7 @@ describe('DbWriter', () => {
   });
 
   it('writes session record and events to DB', async () => {
-    const data = await new JsonlReader(JSONL_PATH).read(SESSION_ID);
+    const data = await new JsonlFileReader(JSONL_PATH).read(SESSION_ID);
     const writer = new DbWriter(rawEventService, sessionStore);
     await writer.write(SESSION_ID, data);
 
@@ -36,7 +36,7 @@ describe('DbWriter', () => {
   });
 
   it('skip guard: does not re-write if already in DB', async () => {
-    const data = await new JsonlReader(JSONL_PATH).read(SESSION_ID);
+    const data = await new JsonlFileReader(JSONL_PATH).read(SESSION_ID);
     const writer = new DbWriter(rawEventService, sessionStore);
     await writer.write(SESSION_ID, data);
     const countFirst = (await rawEventService.getBySession(SESSION_ID)).length;
@@ -57,7 +57,7 @@ describe('DbReader', () => {
     rawEventService = container.get<RawEventService>(TYPES.RawEventService);
     sessionStore = container.get<SessionStore>(TYPES.SessionStore);
 
-    const data = await new JsonlReader(JSONL_PATH).read(SESSION_ID);
+    const data = await new JsonlFileReader(JSONL_PATH).read(SESSION_ID);
     await new DbWriter(rawEventService, sessionStore).write(SESSION_ID, data);
   });
 

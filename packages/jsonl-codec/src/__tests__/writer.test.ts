@@ -4,8 +4,8 @@ import { tmpdir } from 'node:os';
 import { join } from 'node:path';
 import { afterEach, beforeEach, describe, expect, it } from 'vitest';
 import { MemoryWriter } from '../memory.ts';
-import { JsonlReader } from '../reader.ts';
-import { JsonlWriter } from '../writer.ts';
+import { JsonlFileReader } from '../reader.ts';
+import { JsonlFileWriter } from '../writer.ts';
 
 const FIXTURES = join(import.meta.dirname, 'fixtures');
 const SESSION_ID = 'b3dbab57-8da8-40c9-86e8-11aadc1881e8';
@@ -16,7 +16,7 @@ const jsonlAssistants = readFileSync(JSONL_PATH, 'utf-8')
   .filter(Boolean)
   .filter((l) => JSON.parse(l).type === 'assistant');
 
-describe('JsonlWriter', () => {
+describe('JsonlFileWriter', () => {
   let outPath: string;
 
   beforeEach(() => {
@@ -29,8 +29,8 @@ describe('JsonlWriter', () => {
   });
 
   it('writes assistant entries with correct message.content', async () => {
-    const data = await new JsonlReader(JSONL_PATH).read(SESSION_ID);
-    await new JsonlWriter(outPath).write(SESSION_ID, data);
+    const data = await new JsonlFileReader(JSONL_PATH).read(SESSION_ID);
+    await new JsonlFileWriter(outPath).write(SESSION_ID, data);
 
     const written = readFileSync(outPath, 'utf-8').split('\n').filter(Boolean);
     const assistants = written.filter((l) => JSON.parse(l).type === 'assistant');
@@ -43,8 +43,8 @@ describe('JsonlWriter', () => {
   });
 
   it('skips stream_event entries', async () => {
-    const data = await new JsonlReader(JSONL_PATH).read(SESSION_ID);
-    await new JsonlWriter(outPath).write(SESSION_ID, data);
+    const data = await new JsonlFileReader(JSONL_PATH).read(SESSION_ID);
+    await new JsonlFileWriter(outPath).write(SESSION_ID, data);
     const written = readFileSync(outPath, 'utf-8').split('\n').filter(Boolean);
     expect(written.every((l) => JSON.parse(l).type !== 'stream_event')).toBe(true);
   });
@@ -52,7 +52,7 @@ describe('JsonlWriter', () => {
 
 describe('MemoryWriter', () => {
   it('stores written data accessible via .data', async () => {
-    const source = await new JsonlReader(JSONL_PATH).read(SESSION_ID);
+    const source = await new JsonlFileReader(JSONL_PATH).read(SESSION_ID);
     const writer = new MemoryWriter();
     await writer.write(SESSION_ID, source);
     const stored = writer.data.get(SESSION_ID);

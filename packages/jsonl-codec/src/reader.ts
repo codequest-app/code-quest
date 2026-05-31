@@ -3,7 +3,7 @@ import { createInterface } from 'node:readline';
 import { JsonlDecoder } from './decoder.ts';
 import type { SessionData, SessionSource } from './types.ts';
 
-export class JsonlReader implements SessionSource {
+export class JsonlFileReader implements SessionSource {
   private readonly jsonlPath: string;
   constructor(jsonlPath: string) {
     this.jsonlPath = jsonlPath;
