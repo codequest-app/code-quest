@@ -24,8 +24,7 @@ describe('DbWriter', () => {
 
   it('writes session record and events to DB', async () => {
     const data = await new JsonlFileReader(JSONL_PATH).read(SESSION_ID);
-    const writer = new DbWriter(rawEventService, sessionStore);
-    await writer.write(SESSION_ID, data);
+    await new DbWriter(rawEventService, sessionStore).write(SESSION_ID, data);
 
     const session = await sessionStore.getById(SESSION_ID);
     expect(session?.id).toBe(SESSION_ID);
@@ -51,6 +50,7 @@ describe('DbWriter', () => {
 describe('DbReader', () => {
   let rawEventService: RawEventService;
   let sessionStore: SessionStore;
+  let seededEventCount: number;
 
   beforeEach(async () => {
     const container = createTestContainer();
@@ -58,21 +58,22 @@ describe('DbReader', () => {
     sessionStore = container.get<SessionStore>(TYPES.SessionStore);
 
     const data = await new JsonlFileReader(JSONL_PATH).read(SESSION_ID);
+    seededEventCount = data.events.length;
     await new DbWriter(rawEventService, sessionStore).write(SESSION_ID, data);
   });
 
   it('reads back the same events that were written', async () => {
-    const reader = new DbReader(rawEventService, sessionStore);
-    const { events, record } = await reader.read(SESSION_ID);
+    const { events, record } = await new DbReader(rawEventService, sessionStore).read(SESSION_ID);
     expect(record.id).toBe(SESSION_ID);
-    expect(events.length).toBeGreaterThan(0);
+    expect(events.length).toBe(seededEventCount);
   });
 
-  it('round-trips: write to DB → read from DB → write to Memory', async () => {
-    const reader = new DbReader(rawEventService, sessionStore);
-    const data = await reader.read(SESSION_ID);
+  it('round-trips: write to DB -> read from DB -> write to Memory', async () => {
+    const data = await new DbReader(rawEventService, sessionStore).read(SESSION_ID);
     const sink = new MemoryWriter();
     await sink.write(SESSION_ID, data);
-    expect(sink.data.get(SESSION_ID)?.record.id).toBe(SESSION_ID);
+    const stored = sink.data.get(SESSION_ID);
+    expect(stored?.record.id).toBe(SESSION_ID);
+    expect(stored?.events.length).toBe(seededEventCount);
   });
 });

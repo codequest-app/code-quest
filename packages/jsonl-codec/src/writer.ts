@@ -3,10 +3,8 @@ import { mkdir } from 'node:fs/promises';
 import { dirname } from 'node:path';
 import { Readable } from 'node:stream';
 import { pipeline } from 'node:stream/promises';
-import { JsonlEncoder } from './encoder.ts';
+import { encoder } from './encoder.ts';
 import type { SessionData, SessionSink } from './types.ts';
-
-const encoder = new JsonlEncoder();
 
 function enrichLine(raw: string, sessionId: string, cwd: string): string | null {
   try {

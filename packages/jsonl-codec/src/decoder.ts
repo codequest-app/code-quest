@@ -24,13 +24,23 @@ interface JsonlEntry {
 }
 
 const SESSION_DEFAULTS = {
-  channelId: (id: string) => id,
   provider: 'claude',
   command: 'claude',
   args: '[]',
   mode: 'interactive',
   role: 'chat',
 } as const;
+
+export function makeDefaultSessionRecord(id: string): JsonlSessionRecord {
+  return {
+    id,
+    channelId: id,
+    ...SESSION_DEFAULTS,
+    cwd: '',
+    projectRoot: '',
+    createdAt: new Date().toISOString(),
+  };
+}
 
 function parseLine(line: string): JsonlEntry | null {
   if (!line.trim()) return null;
@@ -79,27 +89,12 @@ export class JsonlDecoder {
       return {
         id: entry.sessionId,
         channelId: entry.sessionId,
-        provider: SESSION_DEFAULTS.provider,
-        command: SESSION_DEFAULTS.command,
-        args: SESSION_DEFAULTS.args,
+        ...SESSION_DEFAULTS,
         cwd: entry.cwd,
         projectRoot: entry.cwd,
-        mode: SESSION_DEFAULTS.mode,
-        role: SESSION_DEFAULTS.role,
         createdAt: entry.timestamp,
       };
     }
-    return {
-      id: this.fallbackSessionId,
-      channelId: this.fallbackSessionId,
-      provider: SESSION_DEFAULTS.provider,
-      command: SESSION_DEFAULTS.command,
-      args: SESSION_DEFAULTS.args,
-      cwd: '',
-      projectRoot: '',
-      mode: SESSION_DEFAULTS.mode,
-      role: SESSION_DEFAULTS.role,
-      createdAt: new Date().toISOString(),
-    };
+    return makeDefaultSessionRecord(this.fallbackSessionId);
   }
 }

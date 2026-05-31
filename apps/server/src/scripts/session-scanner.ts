@@ -10,6 +10,7 @@ import type { RawEventService } from '../services/raw-event-service.ts';
 import type { SessionRecord, SessionStore } from '../services/session-store.ts';
 
 const SESSION_STORE_LIMIT = 10000;
+const IMPORT_THRESHOLD = 0.95;
 
 export type ImportStatus = 'NOT_IMPORTED' | 'IMPORTED' | 'PARTIAL';
 export type ExportStatus = 'NOT_EXPORTED' | 'EXPORTED';
@@ -62,6 +63,29 @@ async function streamLines(
       reject(err);
     });
   });
+}
+
+interface SessionMeta {
+  title?: string;
+  createdAt?: string;
+  cwd: string;
+}
+
+function extractSessionMeta(lines: string[]): SessionMeta {
+  let title: string | undefined;
+  let createdAt: string | undefined;
+  let cwd = '';
+  for (const line of lines) {
+    try {
+      const d = JSON.parse(line) as Record<string, unknown>;
+      if (d.type === 'ai-title' && typeof d.aiTitle === 'string') title = d.aiTitle;
+      if (!createdAt && d.timestamp && typeof d.timestamp === 'string') createdAt = d.timestamp;
+      if (!cwd && typeof d.cwd === 'string') cwd = d.cwd;
+    } catch {
+      // invalid JSON line, skip
+    }
+  }
+  return { title, createdAt, cwd };
 }
 
 async function readFirstLines(filePath: string, maxLines = 20): Promise<string[]> {
@@ -148,22 +172,7 @@ export class SessionScanner {
       const jsonlPath = join(projectPath, file);
       const sessionId = basename(file, '.jsonl');
       const lines = await readFirstLines(jsonlPath);
-
-      let title: string | undefined;
-      let createdAt: string | undefined;
-      let cwd = '';
-
-      for (const line of lines) {
-        try {
-          const d = JSON.parse(line) as Record<string, unknown>;
-          if (d.type === 'ai-title' && typeof d.aiTitle === 'string') title = d.aiTitle;
-          if (!createdAt && d.timestamp && typeof d.timestamp === 'string') createdAt = d.timestamp;
-          if (!cwd && typeof d.cwd === 'string') cwd = d.cwd;
-        } catch {
-          // invalid JSON line, skip
-        }
-      }
-
+      const { title, createdAt, cwd } = extractSessionMeta(lines);
       const fileInfo = await stat(jsonlPath).catch(() => null);
       sessions.push({
         sessionId,
@@ -181,7 +190,7 @@ export class SessionScanner {
   async getImportStatus(session: JsonlSession, dbCount: number): Promise<ImportStatus> {
     if (dbCount === 0) return 'NOT_IMPORTED';
     const jsonlCount = await countJsonlLines(session.jsonlPath);
-    return dbCount >= jsonlCount * 0.95 ? 'IMPORTED' : 'PARTIAL';
+    return dbCount >= jsonlCount * IMPORT_THRESHOLD ? 'IMPORTED' : 'PARTIAL';
   }
 
   async getDbCount(sessionId: string): Promise<number> {

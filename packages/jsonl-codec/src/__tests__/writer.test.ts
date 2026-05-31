@@ -34,7 +34,7 @@ describe('JsonlFileWriter', () => {
 
     const written = readFileSync(outPath, 'utf-8').split('\n').filter(Boolean);
     const assistants = written.filter((l) => JSON.parse(l).type === 'assistant');
-    expect(assistants).toHaveLength(64);
+    expect(assistants).toHaveLength(jsonlAssistants.length);
     assistants.forEach((line, i) => {
       const original = jsonlAssistants[i];
       if (!original) throw new Error(`No fixture for index ${i}`);

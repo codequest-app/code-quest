@@ -1,18 +1,5 @@
-import type { JsonlSessionRecord } from './decoder.ts';
+import { makeDefaultSessionRecord } from './decoder.ts';
 import type { SessionData, SessionSink, SessionSource } from './types.ts';
-
-const EMPTY_RECORD: JsonlSessionRecord = {
-  id: '',
-  channelId: '',
-  provider: 'claude',
-  command: 'claude',
-  args: '[]',
-  cwd: '',
-  projectRoot: '',
-  mode: 'interactive',
-  role: 'chat',
-  createdAt: '',
-};
 
 export class MemoryReader implements SessionSource {
   private readonly data: Map<string, SessionData>;
@@ -21,7 +8,7 @@ export class MemoryReader implements SessionSource {
   }
 
   async read(sessionId: string): Promise<SessionData> {
-    return this.data.get(sessionId) ?? { events: [], record: { ...EMPTY_RECORD, id: sessionId } };
+    return this.data.get(sessionId) ?? { events: [], record: makeDefaultSessionRecord(sessionId) };
   }
 }
 

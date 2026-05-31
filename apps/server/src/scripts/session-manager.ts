@@ -92,7 +92,7 @@ function buildGroupedChoices<T>(
   return choices;
 }
 
-async function selectProject<T extends { cwd: string }>(
+async function selectProject<T extends { cwd: string; sessions: unknown[] }>(
   message: string,
   projects: T[],
   formatCount: (p: T) => string,
@@ -101,7 +101,7 @@ async function selectProject<T extends { cwd: string }>(
     message,
     choices: [
       ...projects.map((p) => ({
-        name: `${p.cwd}   ${chalk.gray(`${String('sessions' in p ? (p as { sessions: unknown[] }).sessions.length : 0)} sessions`)} · ${formatCount(p)}`,
+        name: `${p.cwd}   ${chalk.gray(`${String(p.sessions.length)} sessions`)} · ${formatCount(p)}`,
         value: p,
       })),
       new Separator(),
