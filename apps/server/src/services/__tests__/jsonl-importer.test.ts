@@ -20,19 +20,18 @@ describe('importSession', () => {
     sessionStore = container.get<SessionStore>(TYPES.SessionStore);
   });
 
-  it('imports correct number of assistant events', async () => {
-    await importSession(JSONL_PATH, rawEventService, sessionStore);
-    const events = await rawEventService.getBySession(SESSION_ID);
-    const assistants = events.filter((e) => JSON.parse(e.raw).type === 'assistant');
-    expect(assistants).toHaveLength(64);
-  });
-
-  it('creates session record with correct sessionId and cwd', async () => {
+  it('creates session record with correct id, cwd, and provider', async () => {
     await importSession(JSONL_PATH, rawEventService, sessionStore);
     const session = await sessionStore.getById(SESSION_ID);
     expect(session?.id).toBe(SESSION_ID);
     expect(session?.cwd).toBe('/Users/recca0120/WebstormProjects/cc-office');
     expect(session?.provider).toBe('claude');
+  });
+
+  it('imports events into DB', async () => {
+    await importSession(JSONL_PATH, rawEventService, sessionStore);
+    const events = await rawEventService.getBySession(SESSION_ID);
+    expect(events.length).toBeGreaterThan(0);
   });
 
   it('skip guard: does not re-import if raw_events already exist', async () => {

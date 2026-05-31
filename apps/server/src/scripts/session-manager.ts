@@ -68,6 +68,48 @@ function groupByDate<T>(items: T[], getDate: (item: T) => string | undefined) {
   return groups.filter((g) => g.items.length > 0);
 }
 
+type ChoiceItem<T> = {
+  name: string;
+  value: T | null;
+  checked?: boolean;
+  disabled?: string | boolean;
+};
+
+function buildGroupedChoices<T>(
+  groups: { label: DateGroup; items: T[] }[],
+  formatItem: (item: T) => { name: string; checked: boolean; disabled: string | false },
+): Array<Separator | ChoiceItem<T>> {
+  const choices: Array<Separator | ChoiceItem<T>> = [];
+  for (const group of groups) {
+    choices.push(new Separator(chalk.bold(`──── ${group.label} ────`)));
+    for (const item of group.items) {
+      const { name, checked, disabled } = formatItem(item);
+      choices.push({ name, value: item, checked, disabled });
+    }
+  }
+  choices.push(new Separator());
+  choices.push({ name: chalk.dim('← Back'), value: null });
+  return choices;
+}
+
+async function selectProject<T extends { cwd: string }>(
+  message: string,
+  projects: T[],
+  formatCount: (p: T) => string,
+): Promise<T | null> {
+  return select({
+    message,
+    choices: [
+      ...projects.map((p) => ({
+        name: `${p.cwd}   ${chalk.gray(`${String('sessions' in p ? (p as { sessions: unknown[] }).sessions.length : 0)} sessions`)} · ${formatCount(p)}`,
+        value: p,
+      })),
+      new Separator(),
+      { name: chalk.dim('← Back'), value: null },
+    ],
+  });
+}
+
 async function runImport(
   scanner: SessionScanner,
   rawEventService: RawEventService,
@@ -82,22 +124,14 @@ async function runImport(
   }
 
   while (true) {
-    const projectChoice = await select({
-      message: `Select a project  ${chalk.dim('[import mode]')}`,
-      choices: [
-        ...projects.map((p) => ({
-          name: `${p.cwd}   ${chalk.gray(`${String(p.sessions.length)} sessions`)} · ${
-            p.notImportedCount > 0
-              ? chalk.yellow(`${p.notImportedCount} not imported`)
-              : chalk.gray('all imported')
-          }`,
-          value: p,
-        })),
-        new Separator(),
-        { name: chalk.dim('← Back'), value: null },
-      ],
-    });
-
+    const projectChoice = await selectProject(
+      `Select a project  ${chalk.dim('[import mode]')}`,
+      projects,
+      (p) =>
+        p.notImportedCount > 0
+          ? chalk.yellow(`${p.notImportedCount} not imported`)
+          : chalk.gray('all imported'),
+    );
     if (!projectChoice) break;
 
     console.log(chalk.dim('\nLoading session statuses...'));
@@ -110,31 +144,24 @@ async function runImport(
     );
 
     const groups = groupByDate(sessionStatuses, ({ session }) => session.createdAt);
-    const choices: Array<unknown> = [];
-    for (const group of groups) {
-      choices.push(new Separator(chalk.bold(`──── ${group.label} ────`)));
-      for (const { session, status } of group.items) {
-        choices.push({
-          name: formatImportSession(session, status),
-          value: session,
-          checked: status === 'NOT_IMPORTED' || status === 'PARTIAL',
-          disabled: status === 'IMPORTED' ? chalk.gray('(already imported)') : false,
-        });
-      }
-    }
-    choices.push(new Separator());
-    choices.push({ name: chalk.dim('← Back'), value: null });
+    const choices = buildGroupedChoices(groups, ({ session, status }) => ({
+      name: formatImportSession(session, status),
+      checked: status === 'NOT_IMPORTED' || status === 'PARTIAL',
+      disabled: status === 'IMPORTED' ? chalk.gray('(already imported)') : false,
+    }));
 
     const toImport = await checkbox({
       message: `${projectChoice.cwd} — select sessions to import`,
       choices,
     });
 
-    const selected = toImport.filter((s): s is JsonlSession => s !== null);
+    const selected = toImport.filter(
+      (s): s is { session: JsonlSession; status: ImportStatus } => s !== null,
+    );
     if (selected.length === 0) continue;
 
     console.log(`\nImporting ${selected.length} session(s)...`);
-    for (const session of selected) {
+    for (const { session } of selected) {
       process.stdout.write(`  ${chalk.dim(session.sessionId.slice(0, 8))}... `);
       await importSession(session.jsonlPath, rawEventService, sessionStore);
       console.log(chalk.green('✓'));
@@ -157,43 +184,26 @@ async function runExport(
   }
 
   while (true) {
-    const projectChoice = await select({
-      message: `Select a project  ${chalk.dim('[export mode]')}`,
-      choices: [
-        ...projects.map((p) => ({
-          name: `${p.cwd}   ${chalk.gray(`${String(p.sessions.length)} sessions`)} · ${
-            p.notExportedCount > 0
-              ? chalk.cyan(`${p.notExportedCount} exportable`)
-              : chalk.gray('all exported')
-          }`,
-          value: p,
-        })),
-        new Separator(),
-        { name: chalk.dim('← Back'), value: null },
-      ],
-    });
-
+    const projectChoice = await selectProject(
+      `Select a project  ${chalk.dim('[export mode]')}`,
+      projects,
+      (p) =>
+        p.notExportedCount > 0
+          ? chalk.cyan(`${p.notExportedCount} exportable`)
+          : chalk.gray('all exported'),
+    );
     if (!projectChoice) break;
 
     const exportGroups = groupByDate(projectChoice.sessions, (s) => s.session.createdAt);
-    const exportChoices: Array<unknown> = [];
-    for (const group of exportGroups) {
-      exportChoices.push(new Separator(chalk.bold(`──── ${group.label} ────`)));
-      for (const s of group.items) {
-        exportChoices.push({
-          name: formatExportSession(s),
-          value: s,
-          checked: s.status === 'NOT_EXPORTED',
-          disabled: s.status === 'EXPORTED' ? chalk.gray('(already exported)') : false,
-        });
-      }
-    }
-    exportChoices.push(new Separator());
-    exportChoices.push({ name: chalk.dim('← Back'), value: null });
+    const choices = buildGroupedChoices(exportGroups, (s) => ({
+      name: formatExportSession(s),
+      checked: s.status === 'NOT_EXPORTED',
+      disabled: s.status === 'EXPORTED' ? chalk.gray('(already exported)') : false,
+    }));
 
     const toExport = await checkbox({
       message: `${projectChoice.cwd} — select sessions to export`,
-      choices: exportChoices,
+      choices,
     });
 
     const selected = toExport.filter((s): s is ExportableSession => s !== null);

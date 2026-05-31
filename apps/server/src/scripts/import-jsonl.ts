@@ -33,10 +33,6 @@ console.log(`Importing: ${jsonlPath}`);
 await importSession(jsonlPath, rawEventService, sessionStore);
 
 const sessionId = basename(jsonlPath, '.jsonl');
-if (!sessionId) {
-  console.error('Could not extract sessionId from path');
-  process.exit(1);
-}
 const events = await rawEventService.getBySession(sessionId);
 const session = await sessionStore.getById(sessionId);
 

@@ -16,8 +16,6 @@ export class DbWriter implements SessionSink {
     if (existing.length > 0) return;
 
     await this.sessionStore.upsert(data.record);
-    for (const event of data.events) {
-      await this.rawEventService.appendEvent(event);
-    }
+    await Promise.all(data.events.map((event) => this.rawEventService.appendEvent(event)));
   }
 }

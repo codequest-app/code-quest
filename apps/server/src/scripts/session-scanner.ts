@@ -1,16 +1,13 @@
 // decodeProjectDir used as fallback when JSONL has no cwd field
-import { access as accessCb, createReadStream } from 'node:fs';
+import { createReadStream } from 'node:fs';
 import { readdir, stat } from 'node:fs/promises';
 import { homedir } from 'node:os';
 import { basename, join } from 'node:path';
 import { createInterface } from 'node:readline';
-import { promisify } from 'node:util';
 import { decodeProjectDir, encodeProjectDir, JsonlDecoder } from '@code-quest/jsonl-codec';
 import { logger } from '../logger.ts';
 import type { RawEventService } from '../services/raw-event-service.ts';
 import type { SessionRecord, SessionStore } from '../services/session-store.ts';
-
-const accessAsync = promisify(accessCb);
 
 const SESSION_STORE_LIMIT = 10000;
 
@@ -45,57 +42,44 @@ export interface ProjectInfo {
   notImportedCount: number;
 }
 
-async function readFirstLines(filePath: string, maxLines = 20): Promise<string[]> {
-  const lines: string[] = [];
+async function streamLines(
+  filePath: string,
+  onLine: (line: string) => boolean | void,
+): Promise<void> {
   await new Promise<void>((resolve, reject) => {
     const stream = createReadStream(filePath, { encoding: 'utf-8' });
     const rl = createInterface({ input: stream, crlfDelay: Infinity });
     stream.on('error', (err) => {
-      logger.warn({ err, filePath }, 'readFirstLines stream error');
+      logger.warn({ err, filePath }, 'streamLines stream error');
       resolve();
     });
     rl.on('line', (line) => {
-      if (line.trim()) lines.push(line);
-      if (lines.length >= maxLines) rl.close();
+      if (onLine(line) === false) rl.close();
     });
     rl.on('close', resolve);
     rl.on('error', (err) => {
-      logger.warn({ err, filePath }, 'readFirstLines readline error');
+      logger.warn({ err, filePath }, 'streamLines readline error');
       reject(err);
     });
+  });
+}
+
+async function readFirstLines(filePath: string, maxLines = 20): Promise<string[]> {
+  const lines: string[] = [];
+  await streamLines(filePath, (line) => {
+    if (line.trim()) lines.push(line);
+    if (lines.length >= maxLines) return false;
   });
   return lines;
 }
 
 async function countJsonlLines(filePath: string): Promise<number> {
   let count = 0;
-  await new Promise<void>((resolve, reject) => {
-    const reader = new JsonlDecoder(basename(filePath, '.jsonl'));
-    const stream = createReadStream(filePath, { encoding: 'utf-8' });
-    const rl = createInterface({ input: stream, crlfDelay: Infinity });
-    stream.on('error', (err) => {
-      logger.warn({ err, filePath }, 'countJsonlLines stream error');
-      resolve();
-    });
-    rl.on('line', (line) => {
-      if (reader.readLine(line) !== null) count++;
-    });
-    rl.on('close', resolve);
-    rl.on('error', (err) => {
-      logger.warn({ err, filePath }, 'countJsonlLines readline error');
-      reject(err);
-    });
+  const reader = new JsonlDecoder(basename(filePath, '.jsonl'));
+  await streamLines(filePath, (line) => {
+    if (reader.readLine(line) !== null) count++;
   });
   return count;
-}
-
-async function fileExists(filePath: string): Promise<boolean> {
-  try {
-    await accessAsync(filePath);
-    return true;
-  } catch {
-    return false;
-  }
 }
 
 export class SessionScanner {
@@ -175,7 +159,9 @@ export class SessionScanner {
           if (d.type === 'ai-title' && typeof d.aiTitle === 'string') title = d.aiTitle;
           if (!createdAt && d.timestamp && typeof d.timestamp === 'string') createdAt = d.timestamp;
           if (!cwd && typeof d.cwd === 'string') cwd = d.cwd;
-        } catch {}
+        } catch {
+          // invalid JSON line, skip
+        }
       }
 
       const fileInfo = await stat(jsonlPath).catch(() => null);
@@ -225,7 +211,9 @@ export class SessionScanner {
       const exportable: ExportableSession[] = [];
       for (const s of cwdSessions) {
         const jsonlPath = join(projectDir, `${s.id}.jsonl`);
-        const exists = await fileExists(jsonlPath);
+        const exists = await stat(jsonlPath)
+          .then(() => true)
+          .catch(() => false);
         exportable.push({
           session: s,
           jsonlPath,

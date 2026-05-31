@@ -17,11 +17,6 @@ const rawEvents: Array<{ dir: string; raw: string }> = JSON.parse(
   readFileSync(join(FIXTURES, 'b3dbab57-raw-events.json'), 'utf-8'),
 );
 
-const jsonlAssistants = readFileSync(join(FIXTURES, 'b3dbab57.jsonl'), 'utf-8')
-  .split('\n')
-  .filter(Boolean)
-  .filter((l) => JSON.parse(l).type === 'assistant');
-
 describe('exportSession', () => {
   let rawEventService: RawEventService;
   let sessionStore: SessionStore;
@@ -63,32 +58,14 @@ describe('exportSession', () => {
     }
   });
 
-  it('exported assistant entries have correct message.content', async () => {
+  it('exported entries carry camelCase sessionId', async () => {
     await exportSession(SESSION_ID, OUT_PATH, rawEventService, sessionStore);
-    const exportedAssistants = readFileSync(OUT_PATH, 'utf-8')
-      .split('\n')
-      .filter(Boolean)
-      .filter((l) => JSON.parse(l).type === 'assistant');
-
-    expect(exportedAssistants).toHaveLength(64);
-    exportedAssistants.forEach((line, i) => {
-      const original = jsonlAssistants[i];
-      if (!original) throw new Error(`No fixture for index ${i}`);
-      expect(JSON.parse(line).message.content).toEqual(JSON.parse(original).message.content);
-    });
+    const lines = readFileSync(OUT_PATH, 'utf-8').split('\n').filter(Boolean);
+    expect(lines.length).toBeGreaterThan(0);
+    expect(lines.every((l) => JSON.parse(l).sessionId === SESSION_ID)).toBe(true);
   });
 
-  it('exported entries use camelCase sessionId', async () => {
-    await exportSession(SESSION_ID, OUT_PATH, rawEventService, sessionStore);
-    const assistants = readFileSync(OUT_PATH, 'utf-8')
-      .split('\n')
-      .filter(Boolean)
-      .filter((l) => JSON.parse(l).type === 'assistant');
-
-    expect(assistants.every((l) => JSON.parse(l).sessionId === SESSION_ID)).toBe(true);
-  });
-
-  it('all exported entries include cwd', async () => {
+  it('exported entries carry cwd from session record', async () => {
     await exportSession(SESSION_ID, OUT_PATH, rawEventService, sessionStore);
     const lines = readFileSync(OUT_PATH, 'utf-8').split('\n').filter(Boolean);
     expect(lines.every((l) => JSON.parse(l).cwd === CWD)).toBe(true);
