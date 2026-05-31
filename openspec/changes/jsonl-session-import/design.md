@@ -33,19 +33,19 @@ packages/jsonl-codec/
   SessionSource      ← interface { read(sessionId): Promise<SessionData> }
   SessionSink        ← interface { write(sessionId, data): Promise<void> }
 
-  JsonlReader implements SessionSource  ← constructor(jsonlPath)，用 JsonlDecoder 讀 JSONL 檔
-  JsonlWriter implements SessionSink    ← constructor(outputPath)，用 JsonlEncoder 寫 JSONL 檔
+  JsonlFileReader implements SessionSource  ← constructor(jsonlPath)，用 JsonlDecoder 讀 JSONL 檔
+  JsonlFileWriter implements SessionSink    ← constructor(outputPath)，用 JsonlEncoder 寫 JSONL 檔，注入 sessionId + cwd
   MemoryReader implements SessionSource ← constructor(Map<sessionId, SessionData>)，for testing
   MemoryWriter implements SessionSink   ← .data: Map<sessionId, SessionData> 供 assertion，for testing
 
-  JsonlDecoder  ← 純轉換，JSONL lines → RawEvent[]（供 JsonlReader、scanner 使用）
-  JsonlEncoder  ← 純轉換，RawEvent → JSONL line（供 JsonlWriter 使用）
+  JsonlDecoder  ← 純轉換，JSONL lines → RawEvent[]（供 JsonlFileReader、scanner 使用）
+  JsonlEncoder  ← 純轉換，RawEvent → JSONL line（供 JsonlFileWriter 使用，internal only）
 
 apps/server/
   DbReader implements SessionSource  ← rawEventService + sessionStore → SessionData
   DbWriter implements SessionSink    ← SessionData → rawEventService + sessionStore
-  importSession(jsonlPath, dbWriter) ← JsonlReader + DbWriter 的組合
-  exportSession(sessionId, outputPath, dbReader) ← DbReader + JsonlWriter 的組合
+  importSession(jsonlPath, ...) ← JsonlFileReader + DbWriter 的組合
+  exportSession(sessionId, outputPath, ...) ← DbReader + JsonlFileWriter 的組合
 ```
 
 **Why**: Source/Sink 分離讓每個類別只做一件事（讀或寫），組合方式靈活。Import = JsonlReader + DbWriter；Export = DbReader + JsonlWriter。`MemoryReader/Writer` 讓 server 層測試完全不依賴 filesystem 或 DB。`JsonlDecoder/Encoder` 是實作細節，不在主要 API 中。
