@@ -1,79 +1,62 @@
-import { readFileSync } from 'node:fs';
+import { randomUUID } from 'node:crypto';
+import { readFileSync, unlinkSync } from 'node:fs';
+import { tmpdir } from 'node:os';
 import { join } from 'node:path';
-import type { RawEvent } from '@code-quest/summoner';
-import { describe, expect, it } from 'vitest';
+import { afterEach, beforeEach, describe, expect, it } from 'vitest';
+import { MemoryWriter } from '../memory.ts';
+import { JsonlReader } from '../reader.ts';
 import { JsonlWriter } from '../writer.ts';
 
 const FIXTURES = join(import.meta.dirname, 'fixtures');
 const SESSION_ID = 'b3dbab57-8da8-40c9-86e8-11aadc1881e8';
+const JSONL_PATH = join(FIXTURES, 'b3dbab57.jsonl');
 
-const rawEvents: Array<{ dir: string; raw: string }> = JSON.parse(
-  readFileSync(join(FIXTURES, 'b3dbab57-raw-events.json'), 'utf-8'),
-);
-
-const jsonlLines = readFileSync(join(FIXTURES, 'b3dbab57.jsonl'), 'utf-8')
+const jsonlAssistants = readFileSync(JSONL_PATH, 'utf-8')
   .split('\n')
-  .filter(Boolean);
-
-function toRawEvent(row: { dir: string; raw: string }): RawEvent {
-  return {
-    sessionId: SESSION_ID,
-    direction: row.dir as 'in' | 'out' | 'err',
-    raw: row.raw,
-    timestamp: 0,
-  };
-}
-
-function writeAll(events: RawEvent[]): string[] {
-  const writer = new JsonlWriter();
-  return events.map((e) => writer.writeLine(e)).filter((l): l is string => l !== null);
-}
+  .filter(Boolean)
+  .filter((l) => JSON.parse(l).type === 'assistant');
 
 describe('JsonlWriter', () => {
-  it('skips stream_event entries', () => {
-    const lines = writeAll(rawEvents.map(toRawEvent));
-    expect(lines.every((l) => JSON.parse(l).type !== 'stream_event')).toBe(true);
+  let outPath: string;
+
+  beforeEach(() => {
+    outPath = join(tmpdir(), `jsonl-writer-test-${randomUUID()}.jsonl`);
+  });
+  afterEach(() => {
+    try {
+      unlinkSync(outPath);
+    } catch {}
   });
 
-  it('skips control_request and control_response', () => {
-    const lines = writeAll(rawEvents.map(toRawEvent));
-    const types = lines.map((l) => JSON.parse(l).type);
-    expect(types).not.toContain('control_request');
-    expect(types).not.toContain('control_response');
-  });
+  it('writes assistant entries with correct message.content', async () => {
+    const data = await new JsonlReader(JSONL_PATH).read(SESSION_ID);
+    await new JsonlWriter(outPath).write(SESSION_ID, data);
 
-  it('skips dir:out user echo (text content) but keeps tool_result user', () => {
-    const lines = writeAll(rawEvents.map(toRawEvent));
-    const userLines = lines.filter((l) => JSON.parse(l).type === 'user');
-    // 5 human (dir:in text) + 45 tool_result (dir:out) = 50
-    expect(userLines).toHaveLength(50);
-    // dir:out text user (echoes) are skipped; dir:in text user (human messages) are kept.
-    // Echoes have session_id/uuid (added by CLI stdout), dir:in human messages don't.
-    const echoesInOutput = lines.filter((l) => {
-      const d = JSON.parse(l);
-      if (d.type !== 'user') return false;
-      const content = d.message?.content;
-      // echoes have session_id; human messages (dir:in) don't
-      return Array.isArray(content) && content[0]?.type === 'text' && d.session_id != null;
-    });
-    expect(echoesInOutput).toHaveLength(0);
-  });
-
-  it('includes assistant entries', () => {
-    const lines = writeAll(rawEvents.map(toRawEvent));
-    const assistants = lines.filter((l) => JSON.parse(l).type === 'assistant');
+    const written = readFileSync(outPath, 'utf-8').split('\n').filter(Boolean);
+    const assistants = written.filter((l) => JSON.parse(l).type === 'assistant');
     expect(assistants).toHaveLength(64);
+    assistants.forEach((line, i) => {
+      const original = jsonlAssistants[i];
+      if (!original) throw new Error(`No fixture for index ${i}`);
+      expect(JSON.parse(line).message.content).toEqual(JSON.parse(original).message.content);
+    });
   });
 
-  it('assistant message.content matches original JSONL', () => {
-    const lines = writeAll(rawEvents.map(toRawEvent));
-    const writtenAssistants = lines.filter((l) => JSON.parse(l).type === 'assistant');
-    const jsonlAssistants = jsonlLines.filter((l) => JSON.parse(l).type === 'assistant');
+  it('skips stream_event entries', async () => {
+    const data = await new JsonlReader(JSONL_PATH).read(SESSION_ID);
+    await new JsonlWriter(outPath).write(SESSION_ID, data);
+    const written = readFileSync(outPath, 'utf-8').split('\n').filter(Boolean);
+    expect(written.every((l) => JSON.parse(l).type !== 'stream_event')).toBe(true);
+  });
+});
 
-    writtenAssistants.forEach((line, i) => {
-      const written = JSON.parse(line).message.content;
-      const original = JSON.parse(jsonlAssistants[i]).message.content;
-      expect(written).toEqual(original);
-    });
+describe('MemoryWriter', () => {
+  it('stores written data accessible via .data', async () => {
+    const source = await new JsonlReader(JSONL_PATH).read(SESSION_ID);
+    const writer = new MemoryWriter();
+    await writer.write(SESSION_ID, source);
+    const stored = writer.data.get(SESSION_ID);
+    expect(stored?.events).toHaveLength(source.events.length);
+    expect(stored?.record.id).toBe(SESSION_ID);
   });
 });

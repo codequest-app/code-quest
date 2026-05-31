@@ -5,7 +5,7 @@ import { homedir } from 'node:os';
 import { basename, join } from 'node:path';
 import { createInterface } from 'node:readline';
 import { promisify } from 'node:util';
-import { decodeProjectDir, encodeProjectDir, JsonlReader } from '@code-quest/jsonl-codec';
+import { decodeProjectDir, encodeProjectDir, JsonlDecoder } from '@code-quest/jsonl-codec';
 import { logger } from '../logger.ts';
 import type { RawEventService } from '../services/raw-event-service.ts';
 import type { SessionRecord, SessionStore } from '../services/session-store.ts';
@@ -70,7 +70,7 @@ async function readFirstLines(filePath: string, maxLines = 20): Promise<string[]
 async function countJsonlLines(filePath: string): Promise<number> {
   let count = 0;
   await new Promise<void>((resolve, reject) => {
-    const reader = new JsonlReader(basename(filePath, '.jsonl'));
+    const reader = new JsonlDecoder(basename(filePath, '.jsonl'));
     const stream = createReadStream(filePath, { encoding: 'utf-8' });
     const rl = createInterface({ input: stream, crlfDelay: Infinity });
     stream.on('error', (err) => {

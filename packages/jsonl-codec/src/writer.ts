@@ -1,27 +1,33 @@
-import type { RawEvent } from '@code-quest/summoner';
+import { createWriteStream } from 'node:fs';
+import { mkdir } from 'node:fs/promises';
+import { dirname } from 'node:path';
+import { Readable } from 'node:stream';
+import { pipeline } from 'node:stream/promises';
+import { JsonlEncoder } from './encoder.ts';
+import type { SessionData, SessionSink } from './types.ts';
 
-const SKIP_TYPES = new Set(['stream_event', 'control_request', 'control_response']);
+export class JsonlWriter implements SessionSink {
+  private readonly outputPath: string;
+  constructor(outputPath: string) {
+    this.outputPath = outputPath;
+  }
 
-export class JsonlWriter {
-  writeLine(event: RawEvent): string | null {
-    if (event.direction === 'err') return null;
-    let entry: Record<string, unknown>;
-    try {
-      entry = JSON.parse(event.raw) as Record<string, unknown>;
-    } catch {
-      return null;
-    }
-    const type = entry.type;
-    if (typeof type !== 'string') return null;
-    if (SKIP_TYPES.has(type)) return null;
-    // dir:out user entries are either echoes of stdin (text) or CLI-generated tool results.
-    // Only keep tool results; skip echoes to avoid duplicates with dir:in user entries.
-    if (event.direction === 'out' && type === 'user') {
-      const content = (entry.message as Record<string, unknown> | undefined)?.content;
-      const firstBlock = Array.isArray(content) ? (content[0] as Record<string, unknown>) : null;
-      const isToolResult = firstBlock?.type === 'tool_result';
-      if (!isToolResult) return null;
-    }
-    return event.raw;
+  async write(sessionId: string, data: SessionData): Promise<void> {
+    const encoder = new JsonlEncoder();
+    const { cwd } = data.record;
+    const lines = data.events.flatMap((e) => {
+      const raw = encoder.writeLine(e);
+      if (!raw) return [];
+      try {
+        const entry = JSON.parse(raw) as Record<string, unknown>;
+        entry.sessionId = sessionId;
+        if (cwd) entry.cwd = cwd;
+        return [`${JSON.stringify(entry)}\n`];
+      } catch {
+        return [];
+      }
+    });
+    await mkdir(dirname(this.outputPath), { recursive: true });
+    await pipeline(Readable.from(lines), createWriteStream(this.outputPath, { encoding: 'utf-8' }));
   }
 }

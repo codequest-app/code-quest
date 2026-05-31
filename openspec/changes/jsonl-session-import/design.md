@@ -23,11 +23,32 @@ Some JSONL entry types (`ai-title`, `attachment`, `file-history-snapshot`, `queu
 
 ## Decisions
 
-### 1. `packages/jsonl-codec/` — 純函數，跨 package 共用
+### 1. `packages/jsonl-codec/` — Source / Sink 架構
 
-**Decision**: `JsonlReader` 和 `JsonlWriter` 放在獨立的 `packages/jsonl-codec/`。
+**Decision**: 以 `SessionSource` / `SessionSink` 兩個 interface 為核心，共用型別 `SessionData = { events: RawEvent[], record: JsonlSessionRecord }`。
 
-**Why**: JSONL 轉換邏輯同時被 `summoner`（I/O 層）和未來可能的其他消費者使用。純函數無 I/O 依賴，不帶入任何 package 的耦合���`packages/` 是這個 repo 中跨 package 共用邏輯的慣例位置。
+```
+packages/jsonl-codec/
+  SessionData        ← { events: RawEvent[], record: JsonlSessionRecord }
+  SessionSource      ← interface { read(sessionId): Promise<SessionData> }
+  SessionSink        ← interface { write(sessionId, data): Promise<void> }
+
+  JsonlReader implements SessionSource  ← constructor(jsonlPath)，用 JsonlDecoder 讀 JSONL 檔
+  JsonlWriter implements SessionSink    ← constructor(outputPath)，用 JsonlEncoder 寫 JSONL 檔
+  MemoryReader implements SessionSource ← constructor(Map<sessionId, SessionData>)，for testing
+  MemoryWriter implements SessionSink   ← .data: Map<sessionId, SessionData> 供 assertion，for testing
+
+  JsonlDecoder  ← 純轉換，JSONL lines → RawEvent[]（供 JsonlReader、scanner 使用）
+  JsonlEncoder  ← 純轉換，RawEvent → JSONL line（供 JsonlWriter 使用）
+
+apps/server/
+  DbReader implements SessionSource  ← rawEventService + sessionStore → SessionData
+  DbWriter implements SessionSink    ← SessionData → rawEventService + sessionStore
+  importSession(jsonlPath, dbWriter) ← JsonlReader + DbWriter 的組合
+  exportSession(sessionId, outputPath, dbReader) ← DbReader + JsonlWriter 的組合
+```
+
+**Why**: Source/Sink 分離讓每個類別只做一件事（讀或寫），組合方式靈活。Import = JsonlReader + DbWriter；Export = DbReader + JsonlWriter。`MemoryReader/Writer` 讓 server 層測試完全不依賴 filesystem 或 DB。`JsonlDecoder/Encoder` 是實作細節，不在主要 API 中。
 
 ### 2. 架構：Summoner 負責所有 JSONL I/O
 
