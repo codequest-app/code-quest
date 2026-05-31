@@ -12,17 +12,3 @@ export async function exportSession(
   const data = await new DbReader(rawEventService, sessionStore).read(sessionId);
   await new JsonlWriter(outputPath).write(sessionId, data);
 }
-
-// Keep class for backwards compatibility with existing tests and scripts
-export class JsonlExporter {
-  private readonly rawEventService: RawEventService;
-  private readonly sessionStore: SessionStore;
-  constructor(rawEventService: RawEventService, sessionStore: SessionStore) {
-    this.rawEventService = rawEventService;
-    this.sessionStore = sessionStore;
-  }
-
-  exportSession(sessionId: string, outputPath: string): Promise<void> {
-    return exportSession(sessionId, outputPath, this.rawEventService, this.sessionStore);
-  }
-}

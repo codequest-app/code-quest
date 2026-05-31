@@ -13,17 +13,3 @@ export async function importSession(
   const data = await new JsonlReader(jsonlPath).read(sessionId);
   await new DbWriter(rawEventService, sessionStore).write(sessionId, data);
 }
-
-// Keep class for backwards compatibility with existing tests and scripts
-export class JsonlImporter {
-  private readonly rawEventService: RawEventService;
-  private readonly sessionStore: SessionStore;
-  constructor(rawEventService: RawEventService, sessionStore: SessionStore) {
-    this.rawEventService = rawEventService;
-    this.sessionStore = sessionStore;
-  }
-
-  importFile(jsonlPath: string): Promise<void> {
-    return importSession(jsonlPath, this.rawEventService, this.sessionStore);
-  }
-}

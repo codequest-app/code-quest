@@ -4,7 +4,7 @@ import { migrate } from 'drizzle-orm/better-sqlite3/migrator';
 import { config } from '../config.ts';
 import { createContainer } from '../container.ts';
 import { createDatabaseFromUrl, parseDatabaseType } from '../db/create-database.ts';
-import { JsonlImporter } from '../services/jsonl-importer.ts';
+import { importSession } from '../services/jsonl-importer.ts';
 import type { RawEventService } from '../services/raw-event-service.ts';
 import type { SessionStore } from '../services/session-store.ts';
 import { TYPES } from '../types.ts';
@@ -29,10 +29,8 @@ const container = createContainer({
 
 const rawEventService = container.get<RawEventService>(TYPES.RawEventService);
 const sessionStore = container.get<SessionStore>(TYPES.SessionStore);
-const importer = new JsonlImporter(rawEventService, sessionStore);
-
 console.log(`Importing: ${jsonlPath}`);
-await importer.importFile(jsonlPath);
+await importSession(jsonlPath, rawEventService, sessionStore);
 
 const sessionId = basename(jsonlPath, '.jsonl');
 if (!sessionId) {

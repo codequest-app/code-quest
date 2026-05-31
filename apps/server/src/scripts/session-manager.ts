@@ -5,8 +5,8 @@ import { migrate } from 'drizzle-orm/better-sqlite3/migrator';
 import { config } from '../config.ts';
 import { createContainer } from '../container.ts';
 import { createDatabaseFromUrl, parseDatabaseType } from '../db/create-database.ts';
-import { JsonlExporter } from '../services/jsonl-exporter.ts';
-import { JsonlImporter } from '../services/jsonl-importer.ts';
+import { exportSession } from '../services/jsonl-exporter.ts';
+import { importSession } from '../services/jsonl-importer.ts';
 import type { RawEventService } from '../services/raw-event-service.ts';
 import type { SessionStore } from '../services/session-store.ts';
 import { TYPES } from '../types.ts';
@@ -68,7 +68,11 @@ function groupByDate<T>(items: T[], getDate: (item: T) => string | undefined) {
   return groups.filter((g) => g.items.length > 0);
 }
 
-async function runImport(scanner: SessionScanner, importer: JsonlImporter): Promise<void> {
+async function runImport(
+  scanner: SessionScanner,
+  rawEventService: RawEventService,
+  sessionStore: SessionStore,
+): Promise<void> {
   console.log(chalk.dim('\nScanning ~/.claude/projects/ ...'));
   const projects = await scanner.scanProjects();
 
@@ -132,14 +136,18 @@ async function runImport(scanner: SessionScanner, importer: JsonlImporter): Prom
     console.log(`\nImporting ${selected.length} session(s)...`);
     for (const session of selected) {
       process.stdout.write(`  ${chalk.dim(session.sessionId.slice(0, 8))}... `);
-      await importer.importFile(session.jsonlPath);
+      await importSession(session.jsonlPath, rawEventService, sessionStore);
       console.log(chalk.green('✓'));
     }
     console.log(chalk.green(`\nDone. ${selected.length} session(s) imported.\n`));
   }
 }
 
-async function runExport(scanner: SessionScanner, exporter: JsonlExporter): Promise<void> {
+async function runExport(
+  scanner: SessionScanner,
+  rawEventService: RawEventService,
+  sessionStore: SessionStore,
+): Promise<void> {
   console.log(chalk.dim('\nLoading exportable sessions...'));
   const projects = await scanner.scanExportable();
 
@@ -194,7 +202,7 @@ async function runExport(scanner: SessionScanner, exporter: JsonlExporter): Prom
     console.log(`\nExporting ${selected.length} session(s)...`);
     for (const s of selected) {
       process.stdout.write(`  ${chalk.dim(s.session.id.slice(0, 8))}... `);
-      await exporter.exportSession(s.session.id, s.jsonlPath);
+      await exportSession(s.session.id, s.jsonlPath, rawEventService, sessionStore);
       console.log(chalk.green('✓'));
     }
     console.log(chalk.green(`\nDone. ${selected.length} session(s) exported.\n`));
@@ -216,8 +224,6 @@ async function main() {
 
   const rawEventService = container.get<RawEventService>(TYPES.RawEventService);
   const sessionStore = container.get<SessionStore>(TYPES.SessionStore);
-  const importer = new JsonlImporter(rawEventService, sessionStore);
-  const exporter = new JsonlExporter(rawEventService, sessionStore);
   const scanner = new SessionScanner(rawEventService, sessionStore);
 
   console.log(chalk.bold.cyan('\n── Session Manager ──\n'));
@@ -234,8 +240,8 @@ async function main() {
     });
 
     if (action === 'exit') break;
-    if (action === 'import') await runImport(scanner, importer);
-    if (action === 'export') await runExport(scanner, exporter);
+    if (action === 'import') await runImport(scanner, rawEventService, sessionStore);
+    if (action === 'export') await runExport(scanner, rawEventService, sessionStore);
   }
 
   console.log(chalk.dim('\nBye.\n'));

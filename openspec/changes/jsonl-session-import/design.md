@@ -143,7 +143,7 @@ Server start 時發 `jsonl:import_request` 給 summoner，summoner 掃描所有 
 - `NOT EXPORTED`：sessionId 在 DB `sessions` table，但 `~/.claude/projects/<encoded-cwd>/<sessionId>.jsonl` 不存在
 - `EXPORTED`：JSONL 檔案已存在
 
-選擇後批次呼叫 `JsonlImporter`（import）或 `JsonlExporter`（export）。
+選擇後批次呼叫 `importSession(jsonlPath, rawEventService, sessionStore)` 或 `exportSession(sessionId, outputPath, rawEventService, sessionStore)`。
 
 ### 9. 驗證用 session
 

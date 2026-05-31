@@ -5,7 +5,7 @@ import { join } from 'node:path';
 import { afterEach, beforeEach, describe, expect, it } from 'vitest';
 import { createTestContainer } from '../../test/create-test-container.ts';
 import { TYPES } from '../../types.ts';
-import { JsonlExporter } from '../jsonl-exporter.ts';
+import { exportSession } from '../jsonl-exporter.ts';
 import type { RawEventService } from '../raw-event-service.ts';
 import type { SessionStore } from '../session-store.ts';
 
@@ -22,8 +22,7 @@ const jsonlAssistants = readFileSync(join(FIXTURES, 'b3dbab57.jsonl'), 'utf-8')
   .filter(Boolean)
   .filter((l) => JSON.parse(l).type === 'assistant');
 
-describe('JsonlExporter', () => {
-  let exporter: JsonlExporter;
+describe('exportSession', () => {
   let rawEventService: RawEventService;
   let sessionStore: SessionStore;
   let OUT_PATH: string;
@@ -33,7 +32,6 @@ describe('JsonlExporter', () => {
     const container = createTestContainer();
     rawEventService = container.get<RawEventService>(TYPES.RawEventService);
     sessionStore = container.get<SessionStore>(TYPES.SessionStore);
-    exporter = new JsonlExporter(rawEventService, sessionStore);
 
     await sessionStore.upsert({
       id: SESSION_ID,
@@ -66,7 +64,7 @@ describe('JsonlExporter', () => {
   });
 
   it('exported assistant entries have correct message.content', async () => {
-    await exporter.exportSession(SESSION_ID, OUT_PATH);
+    await exportSession(SESSION_ID, OUT_PATH, rawEventService, sessionStore);
     const exportedAssistants = readFileSync(OUT_PATH, 'utf-8')
       .split('\n')
       .filter(Boolean)
@@ -81,7 +79,7 @@ describe('JsonlExporter', () => {
   });
 
   it('exported entries use camelCase sessionId', async () => {
-    await exporter.exportSession(SESSION_ID, OUT_PATH);
+    await exportSession(SESSION_ID, OUT_PATH, rawEventService, sessionStore);
     const assistants = readFileSync(OUT_PATH, 'utf-8')
       .split('\n')
       .filter(Boolean)
@@ -91,7 +89,7 @@ describe('JsonlExporter', () => {
   });
 
   it('all exported entries include cwd', async () => {
-    await exporter.exportSession(SESSION_ID, OUT_PATH);
+    await exportSession(SESSION_ID, OUT_PATH, rawEventService, sessionStore);
     const lines = readFileSync(OUT_PATH, 'utf-8').split('\n').filter(Boolean);
     expect(lines.every((l) => JSON.parse(l).cwd === CWD)).toBe(true);
   });
